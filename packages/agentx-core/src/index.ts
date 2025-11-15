@@ -67,6 +67,9 @@ export type {
 // Export AgentProvider (SPI)
 export type { AgentProvider } from "./AgentProvider";
 
+// Export AgentEventBus (Core)
+export { AgentEventBus } from "./AgentEventBus";
+
 // Export LoggerProvider (SPI)
 export type { LoggerProvider, LogContext } from "./LoggerProvider";
 export { LogLevel, LogFormatter } from "./LoggerProvider";

@@ -6,10 +6,10 @@
  */
 
 import pino from "pino";
-import type {
-  LoggerProvider,
+import {
   LogLevel,
-  LogContext,
+  type LoggerProvider,
+  type LogContext,
 } from "@deepractice-ai/agentx-core";
 
 /**
@@ -92,7 +92,7 @@ export class PinoLoggerProvider implements LoggerProvider {
   private boundContext: LogContext;
 
   constructor(config: PinoLoggerConfig = {}, logger?: pino.Logger, boundContext?: LogContext) {
-    this.currentLevel = config.level || "info";
+    this.currentLevel = config.level || LogLevel.INFO;
     this.boundContext = boundContext || {};
 
     // If logger is provided (for child loggers), use it
@@ -139,19 +139,19 @@ export class PinoLoggerProvider implements LoggerProvider {
   }
 
   debug(message: string, ...args: any[]): void {
-    this.log("debug", message, ...args);
+    this.log(LogLevel.DEBUG, message, ...args);
   }
 
   info(message: string, ...args: any[]): void {
-    this.log("info", message, ...args);
+    this.log(LogLevel.INFO, message, ...args);
   }
 
   warn(message: string, ...args: any[]): void {
-    this.log("warn", message, ...args);
+    this.log(LogLevel.WARN, message, ...args);
   }
 
   error(message: string, ...args: any[]): void {
-    this.log("error", message, ...args);
+    this.log(LogLevel.ERROR, message, ...args);
   }
 
   withContext(context: LogContext): LoggerProvider {

@@ -3,13 +3,19 @@
  *
  * Adapts @anthropic-ai/claude-agent-sdk to AgentEvent standard.
  * This is the Node.js-specific implementation.
+ *
+ * Performance Optimization:
+ * - Uses Claude SDK's Streaming Input Mode (prompt: AsyncIterable)
+ * - Process starts once and stays alive for entire session
+ * - First message: ~6-7s (process startup)
+ * - Subsequent messages: ~1-2s (3-5x faster!)
  */
 
 import { query, type SDKMessage, type Query } from "@anthropic-ai/claude-agent-sdk";
-import type { AgentProvider } from "@deepractice-ai/agentx-core";
-import type { AgentConfig, AgentEvent } from "@deepractice-ai/agentx-api";
+import type { AgentProvider, AgentEventBus } from "@deepractice-ai/agentx-core";
+import type { AgentConfig, AgentEvent, UserMessageEvent } from "@deepractice-ai/agentx-api";
 import { AgentConfigError } from "@deepractice-ai/agentx-api";
-import type { Message } from "@deepractice-ai/agentx-types";
+import { observableToAsyncIterable } from "../utils/observableToAsyncIterable";
 
 export class ClaudeAgentProvider implements AgentProvider {
   readonly sessionId: string;
@@ -17,7 +23,7 @@ export class ClaudeAgentProvider implements AgentProvider {
   private abortController: AbortController;
   private config: AgentConfig;
   private currentQuery: Query | null = null;
-  private internalMessages: Message[] = []; // Internal message history from SDK events
+  private eventBus: AgentEventBus | null = null;
 
   constructor(config: AgentConfig) {
     this.config = config;
@@ -25,48 +31,74 @@ export class ClaudeAgentProvider implements AgentProvider {
     this.abortController = new AbortController();
   }
 
-  async *send(message: string, _messages: ReadonlyArray<Message>): AsyncGenerator<AgentEvent> {
-    try {
-      // Add user message to internal history
-      this.internalMessages.push({
-        id: this.generateId(),
-        role: "user",
-        content: message,
-        timestamp: Date.now(),
-      });
+  /**
+   * Connect to AgentEventBus and start Claude SDK in streaming mode
+   *
+   * This is called once when Agent is created.
+   * Claude SDK process starts here and stays alive.
+   */
+  async connect(eventBus: AgentEventBus): Promise<void> {
+    this.eventBus = eventBus;
 
-      // Capture stderr for debugging
-      const stderrLines: string[] = [];
-
-      // Create Claude SDK query
-      // Use resume for subsequent messages to maintain conversation context
-      this.currentQuery = query({
-        prompt: message,
-        options: {
-          model: this.config.model,
-          systemPrompt: this.config.systemPrompt,
-          maxThinkingTokens: this.config.maxThinkingTokens,
-          abortController: this.abortController,
-          mcpServers: this.transformMcpConfig(this.config.mcp),
-          includePartialMessages: true, // Enable stream_event and user message events
-          // Resume with provider's session ID (SDK's real session ID)
-          resume: this.providerSessionId || undefined,
-          // Pass API credentials to Claude Code subprocess via env
-          // Must include process.env to preserve PATH and other system variables
-          env: {
-            ...process.env,
-            ANTHROPIC_API_KEY: this.config.apiKey,
-            ...(this.config.baseUrl ? { ANTHROPIC_BASE_URL: this.config.baseUrl } : {}),
-          },
-          // Capture stderr output for debugging
-          stderr: (data: string) => {
-            stderrLines.push(data);
-            console.error('[ClaudeAgentProvider stderr]', data);
-          },
+    // Start Claude SDK in Streaming Input Mode (process starts ONCE)
+    this.currentQuery = query({
+      prompt: this.createMessageStream(eventBus) as any,  // Type mismatch between our Message and SDK's APIUserMessage
+      options: {
+        model: this.config.model,
+        systemPrompt: this.config.systemPrompt,
+        maxThinkingTokens: this.config.maxThinkingTokens,
+        abortController: this.abortController,
+        mcpServers: this.transformMcpConfig(this.config.mcp),
+        includePartialMessages: true,
+        // Resume with provider's session ID (SDK's real session ID)
+        resume: this.providerSessionId || undefined,
+        // Pass API credentials to Claude Code subprocess via env
+        // Must include process.env to preserve PATH and other system variables
+        env: {
+          ...process.env,
+          ANTHROPIC_API_KEY: this.config.apiKey,
+          ...(this.config.baseUrl ? { ANTHROPIC_BASE_URL: this.config.baseUrl } : {}),
         },
-      });
+        // Capture stderr output for debugging
+        stderr: (data: string) => {
+          console.error('[ClaudeAgentProvider stderr]', data);
+        },
+      },
+    });
 
-      // Stream SDK messages and transform to AgentEvent
+    // Start listening to Claude SDK responses
+    this.startListening();
+  }
+
+  /**
+   * Create AsyncIterable message stream for Claude SDK
+   * Converts AgentEventBus.outbound() → AsyncIterable<SDKUserMessage>
+   */
+  private async *createMessageStream(eventBus: AgentEventBus) {
+    // Subscribe to outbound (UserMessageEvent) and convert to AsyncIterable
+    const outbound$ = eventBus.outbound();
+    for await (const userEvent of observableToAsyncIterable<UserMessageEvent>(outbound$)) {
+      // Convert to SDKUserMessage format
+      yield {
+        type: 'user' as const,
+        message: userEvent.message.content as any,  // Type mismatch between our Message and SDK's APIUserMessage
+        parent_tool_use_id: null,
+        session_id: this.sessionId,
+      };
+    }
+  }
+
+  /**
+   * Listen to Claude SDK responses and emit to AgentEventBus
+   * This runs in the background for the lifetime of the provider
+   */
+  private async startListening(): Promise<void> {
+    if (!this.currentQuery || !this.eventBus) {
+      console.error('[ClaudeAgentProvider] Cannot start listening: query or eventBus is null');
+      return;
+    }
+
+    try {
       for await (const sdkMessage of this.currentQuery) {
         const agentEvent = this.transformToAgentEvent(sdkMessage);
         if (agentEvent) {
@@ -75,10 +107,33 @@ export class ClaudeAgentProvider implements AgentProvider {
             this.providerSessionId = agentEvent.sessionId;
           }
 
-          // Capture messages to internal history
-          this.captureMessage(agentEvent);
-          yield agentEvent;
+          // Emit to AgentEventBus (inbound)
+          this.eventBus.emit(agentEvent);
         }
+      }
+    } catch (error) {
+      console.error('[ClaudeAgentProvider] Error in startListening:', error);
+
+      // Emit error event to AgentEventBus
+      if (this.eventBus) {
+        this.eventBus.emit({
+          type: "result",
+          subtype: "error_during_execution",
+          uuid: this.generateId(),
+          sessionId: this.sessionId,
+          durationMs: 0,
+          durationApiMs: 0,
+          numTurns: 0,
+          totalCostUsd: 0,
+          usage: {
+            input: 0,
+            output: 0,
+            cacheRead: 0,
+            cacheWrite: 0,
+          },
+          error: error instanceof Error ? error : new Error(String(error)),
+          timestamp: Date.now(),
+        });
       }
     } finally {
       this.currentQuery = null;
@@ -94,10 +149,6 @@ export class ClaudeAgentProvider implements AgentProvider {
     }
   }
 
-  getMessages(): ReadonlyArray<Message> {
-    return this.internalMessages;
-  }
-
   abort(): void {
     this.abortController.abort();
     this.abortController = new AbortController();
@@ -105,6 +156,8 @@ export class ClaudeAgentProvider implements AgentProvider {
 
   async destroy(): Promise<void> {
     this.abort();
+    this.currentQuery = null;
+    this.eventBus = null;
   }
 
   /**
@@ -234,37 +287,6 @@ export class ClaudeAgentProvider implements AgentProvider {
       result[name] = serverConfig;
     }
     return result;
-  }
-
-  /**
-   * Capture messages from SDK events to maintain internal history
-   * This ensures we have the complete conversation including tool use/results
-   */
-  private captureMessage(agentEvent: AgentEvent): void {
-    if (agentEvent.type === "user") {
-      // SDK sends tool results as user messages
-      // Don't add duplicates (we already added the original user message)
-      const lastMessage = this.internalMessages[this.internalMessages.length - 1];
-      const isDuplicate =
-        lastMessage?.role === "user" && lastMessage?.content === agentEvent.message.content;
-
-      if (!isDuplicate) {
-        this.internalMessages.push({
-          id: agentEvent.message.id,
-          role: "user",
-          content: agentEvent.message.content,
-          timestamp: agentEvent.message.timestamp,
-        });
-      }
-    } else if (agentEvent.type === "assistant") {
-      // Assistant messages (including tool_use in content array)
-      this.internalMessages.push({
-        id: agentEvent.message.id,
-        role: "assistant",
-        content: agentEvent.message.content,
-        timestamp: agentEvent.message.timestamp,
-      });
-    }
   }
 
   private generateSessionId(): string {

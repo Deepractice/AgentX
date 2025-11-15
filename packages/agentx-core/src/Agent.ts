@@ -11,12 +11,15 @@ import type {
   EventType,
   EventPayload,
   AgentEvent,
+  UserMessageEvent,
 } from "@deepractice-ai/agentx-api";
 import { AgentAbortError } from "@deepractice-ai/agentx-api";
 import type { Message } from "@deepractice-ai/agentx-types";
 import type { AgentProvider } from "./AgentProvider";
 import type { LoggerProvider } from "./LoggerProvider";
 import { LogFormatter } from "./LoggerProvider";
+import { AgentEventBus } from "./AgentEventBus";
+import type { Subscription } from "rxjs";
 
 export class Agent implements IAgent {
   readonly id: string;
@@ -26,6 +29,8 @@ export class Agent implements IAgent {
   private eventHandlers: Map<EventType, Set<(payload: any) => void>> = new Map();
   private provider: AgentProvider;
   private logger?: LoggerProvider;
+  private eventBus: AgentEventBus;
+  private inboundSubscription: Subscription | null = null;
 
   constructor(config: AgentConfig, provider: AgentProvider, logger?: LoggerProvider) {
     // Validate config
@@ -36,6 +41,9 @@ export class Agent implements IAgent {
     this.id = this.generateId();
     this.sessionId = provider.sessionId;
 
+    // Create AgentEventBus
+    this.eventBus = new AgentEventBus();
+
     // Log agent creation
     this.logger?.info(
       LogFormatter.agentLifecycle("created", this.id),
@@ -45,6 +53,31 @@ export class Agent implements IAgent {
         providerSessionId: provider.providerSessionId,
       }
     );
+
+    // Connect provider to event bus and start listening to responses
+    this.initializeEventBus();
+  }
+
+  private async initializeEventBus(): Promise<void> {
+    // Connect provider (provider will subscribe to outbound)
+    await this.provider.connect(this.eventBus);
+
+    // Subscribe to inbound events
+    this.inboundSubscription = this.eventBus.inbound().subscribe({
+      next: (event) => {
+        this.handleInboundEvent(event);
+      },
+      error: (error) => {
+        this.logger?.error(
+          LogFormatter.error("AgentEventBus error", error instanceof Error ? error : new Error(String(error))),
+          {
+            agentId: this.id,
+            sessionId: this.sessionId,
+            error,
+          }
+        );
+      },
+    });
   }
 
   get messages(): ReadonlyArray<Message> {
@@ -71,121 +104,72 @@ export class Agent implements IAgent {
     };
     this._messages.push(userMessage);
 
-    // Emit user message event
-    this.emitEvent({
+    // Create and emit UserMessageEvent to AgentEventBus
+    const userEvent: UserMessageEvent = {
       type: "user",
       uuid: this.generateId(),
       sessionId: this.sessionId,
-      message: {
-        id: this.generateId(),
-        role: "user",
-        content: message,
-        timestamp: Date.now(),
-      },
+      message: userMessage,
       timestamp: Date.now(),
-    });
+    };
 
-    try {
+    this.logger?.debug(
+      "Emitting user message to AgentEventBus",
+      {
+        agentId: this.id,
+        sessionId: this.sessionId,
+        historyLength: this._messages.length,
+      }
+    );
+
+    // Emit to AgentEventBus (provider will consume via outbound)
+    this.eventBus.emit(userEvent);
+
+    // Also emit to local event handlers (for backward compatibility)
+    this.emitEvent(userEvent);
+  }
+
+  /**
+   * Handle inbound events from AgentEventBus
+   * Called when provider emits responses
+   */
+  private handleInboundEvent(event: Exclude<AgentEvent, UserMessageEvent>): void {
+    const eventSubtype = "subtype" in event ? event.subtype : undefined;
+
+    this.logger?.debug(
+      `Received inbound event: ${event.type}${eventSubtype ? `/${eventSubtype}` : ""}`,
+      {
+        agentId: this.id,
+        sessionId: this.sessionId,
+        eventType: event.type,
+        eventSubtype,
+      }
+    );
+
+    // Emit to local event handlers
+    this.emitEvent(event);
+
+    // Update messages on assistant response
+    if (event.type === "assistant") {
+      this._messages.push({
+        id: event.message.id,
+        role: "assistant",
+        content: event.message.content,
+        timestamp: event.message.timestamp,
+      });
+
       this.logger?.debug(
-        "Starting provider message stream",
+        LogFormatter.messageFlow("assistant",
+          typeof event.message.content === "string"
+            ? event.message.content
+            : JSON.stringify(event.message.content)
+        ),
         {
           agentId: this.id,
           sessionId: this.sessionId,
-          historyLength: this._messages.length,
+          messageId: event.message.id,
         }
       );
-
-      // Provider yields AgentEvent directly (already transformed)
-      let eventCount = 0;
-      for await (const agentEvent of this.provider.send(message, this._messages)) {
-        eventCount++;
-        const eventSubtype = "subtype" in agentEvent ? agentEvent.subtype : undefined;
-
-        this.logger?.debug(
-          `Received event from provider: ${agentEvent.type}${eventSubtype ? `/${eventSubtype}` : ""}`,
-          {
-            agentId: this.id,
-            sessionId: this.sessionId,
-            eventType: agentEvent.type,
-            eventSubtype,
-            eventNumber: eventCount,
-          }
-        );
-
-        this.emitEvent(agentEvent);
-
-        // Update messages on assistant response
-        if (agentEvent.type === "assistant") {
-          this._messages.push({
-            id: agentEvent.message.id,
-            role: "assistant",
-            content: agentEvent.message.content,
-            timestamp: agentEvent.message.timestamp,
-          });
-
-          this.logger?.debug(
-            LogFormatter.messageFlow("assistant",
-              typeof agentEvent.message.content === "string"
-                ? agentEvent.message.content
-                : JSON.stringify(agentEvent.message.content)
-            ),
-            {
-              agentId: this.id,
-              sessionId: this.sessionId,
-              messageId: agentEvent.message.id,
-            }
-          );
-        }
-      }
-
-      this.logger?.debug(
-        "Provider message stream completed",
-        {
-          agentId: this.id,
-          sessionId: this.sessionId,
-          totalEvents: eventCount,
-          finalHistoryLength: this._messages.length,
-        }
-      );
-    } catch (error) {
-      // Handle errors
-      if (error instanceof Error) {
-        this.logger?.error(
-          LogFormatter.error("Failed to process message", error),
-          {
-            agentId: this.id,
-            sessionId: this.sessionId,
-            errorName: error.name,
-            errorMessage: error.message,
-            error,
-          }
-        );
-
-        if (error.name === "AbortError") {
-          throw new AgentAbortError(error.message);
-        }
-
-        // Emit error result event
-        this.emitEvent({
-          uuid: this.generateId(),
-          type: "result",
-          subtype: "error_during_execution",
-          sessionId: this.sessionId,
-          durationMs: 0,
-          durationApiMs: 0,
-          numTurns: 0,
-          totalCostUsd: 0,
-          usage: {
-            input: 0,
-            output: 0,
-            cacheRead: 0,
-            cacheWrite: 0,
-          },
-          error,
-          timestamp: Date.now(),
-        });
-      }
-      throw error;
     }
   }
 
@@ -255,6 +239,17 @@ export class Agent implements IAgent {
 
     this.clear();
     this.eventHandlers.clear();
+
+    // Unsubscribe from inbound events
+    if (this.inboundSubscription) {
+      this.inboundSubscription.unsubscribe();
+      this.inboundSubscription = null;
+    }
+
+    // Close event bus
+    this.eventBus.close();
+
+    // Destroy provider
     this.provider.destroy();
 
     this.logger?.info(

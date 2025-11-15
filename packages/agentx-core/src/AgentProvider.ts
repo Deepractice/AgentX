@@ -13,10 +13,18 @@
  *
  * Key principle: Provider must understand and produce AgentEvent,
  * NOT the other way around. We define the standard, providers adapt to it.
+ *
+ * Architecture (with AgentEventBus):
+ * 1. Provider connects to AgentEventBus via connect()
+ * 2. Provider subscribes to eventBus.outbound() for user messages
+ * 3. Provider calls external SDK (e.g., Claude SDK in streaming mode)
+ * 4. Provider emits responses via eventBus.emit()
+ *
+ * This enables persistent SDK connections and eliminates repeated process spawning.
  */
 
-import type { Message } from "@deepractice-ai/agentx-types";
-import type { AgentConfig, AgentEvent } from "@deepractice-ai/agentx-api";
+import type { AgentConfig } from "@deepractice-ai/agentx-api";
+import type { AgentEventBus } from "./AgentEventBus";
 
 /**
  * AgentProvider interface
@@ -49,49 +57,49 @@ export interface AgentProvider {
   readonly providerSessionId: string | null;
 
   /**
-   * Send a message and stream responses
+   * Connect provider to AgentEventBus
    *
-   * Provider must yield AgentEvent types (our standard).
-   * It's the provider's job to adapt external SDK events to AgentEvent.
+   * Provider should:
+   * 1. Subscribe to eventBus.outbound() for user messages
+   * 2. Start external SDK in streaming/persistent mode (e.g., Claude SDK streaming input)
+   * 3. Emit responses via eventBus.emit()
    *
-   * @param message - User message to send
-   * @param messages - Full conversation history (for context)
-   * @returns AsyncGenerator that yields AgentEvent (our standard)
+   * This method is called once when Agent is created.
+   * The connection persists for the lifetime of the provider.
+   *
+   * @param eventBus - AgentEventBus instance
    *
    * @example
    * ```typescript
    * // ClaudeProvider implementation
-   * async *send(message: string, messages: Message[]): AsyncGenerator<AgentEvent> {
-   *   const query = claudeSdk.query({ prompt: message });
-   *   for await (const sdkMsg of query) {
-   *     // Adapt Claude SDK message to our AgentEvent
-   *     yield this.adaptToAgentEvent(sdkMsg);
+   * async connect(eventBus: AgentEventBus): Promise<void> {
+   *   this.eventBus = eventBus;
+   *
+   *   // Start Claude SDK in streaming input mode (only once!)
+   *   this.currentQuery = query({
+   *     prompt: this.createMessageStream(eventBus),  // AsyncIterable
+   *     options: { model: this.config.model }
+   *   });
+   *
+   *   // Listen to SDK responses and emit to eventBus
+   *   this.startListening();
+   * }
+   *
+   * private async *createMessageStream(eventBus: AgentEventBus) {
+   *   for await (const userEvent of observableToAsyncIterable(eventBus.outbound())) {
+   *     yield { type: 'user', message: userEvent.message.content };
+   *   }
+   * }
+   *
+   * private async startListening() {
+   *   for await (const sdkMessage of this.currentQuery) {
+   *     const agentEvent = this.transformToAgentEvent(sdkMessage);
+   *     this.eventBus.emit(agentEvent);  // Emit to bus
    *   }
    * }
    * ```
    */
-  send(message: string, messages: ReadonlyArray<Message>): AsyncGenerator<AgentEvent>;
-
-  /**
-   * Get complete message history maintained by the provider
-   *
-   * Provider must capture all messages from events (user, assistant, tool results)
-   * to maintain a complete conversation history including tool use cycles.
-   *
-   * @returns Complete message history including tool use and tool results
-   *
-   * @example
-   * ```typescript
-   * const messages = provider.getMessages();
-   * // Returns: [
-   * //   { role: "user", content: "Hello" },
-   * //   { role: "assistant", content: [...] },
-   * //   { role: "user", content: [tool_result] },  // Tool result
-   * //   { role: "assistant", content: [...] }
-   * // ]
-   * ```
-   */
-  getMessages(): ReadonlyArray<Message>;
+  connect(eventBus: AgentEventBus): Promise<void>;
 
   /**
    * Validate configuration
