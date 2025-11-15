@@ -5,19 +5,18 @@
 
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { createBrowserAgent } from "@deepractice-ai/agent-sdk/browser";
-import type { BrowserAgent, VirtualSession } from "@deepractice-ai/agent-sdk/browser";
+import { createAgent } from "@deepractice-ai/agentx-browser";
+import type { Agent } from "@deepractice-ai/agentx-browser";
 
 interface AgentState {
   // State
-  agent: BrowserAgent | null;
+  agent: Agent | null;
   isInitialized: boolean;
   isConnected: boolean;
   error: Error | null;
 
   // Actions
   initialize: () => Promise<void>;
-  getSession: (sessionId: string) => VirtualSession;
   destroy: () => Promise<void>;
 }
 

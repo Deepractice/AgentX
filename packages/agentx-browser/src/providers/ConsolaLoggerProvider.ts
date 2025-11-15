@@ -87,7 +87,7 @@ export class ConsolaLoggerProvider implements LoggerProvider {
     consola?: ConsolaInstance,
     boundContext?: LogContext
   ) {
-    this.currentLevel = config.level || "info";
+    this.currentLevel = (config.level || "info") as LogLevel;
     this.boundContext = boundContext || {};
 
     // If consola is provided (for child loggers), use it
@@ -99,7 +99,6 @@ export class ConsolaLoggerProvider implements LoggerProvider {
     // Create consola instance
     this.consola = createConsola({
       level: LOG_LEVEL_MAP[this.currentLevel],
-      fancy: config.fancy !== false, // Default to true
       ...config.consolaOptions,
     });
 
@@ -136,19 +135,19 @@ export class ConsolaLoggerProvider implements LoggerProvider {
   }
 
   debug(message: string, ...args: any[]): void {
-    this.log("debug", message, ...args);
+    this.log("debug" as LogLevel, message, ...args);
   }
 
   info(message: string, ...args: any[]): void {
-    this.log("info", message, ...args);
+    this.log("info" as LogLevel, message, ...args);
   }
 
   warn(message: string, ...args: any[]): void {
-    this.log("warn", message, ...args);
+    this.log("warn" as LogLevel, message, ...args);
   }
 
   error(message: string, ...args: any[]): void {
-    this.log("error", message, ...args);
+    this.log("error" as LogLevel, message, ...args);
   }
 
   withContext(context: LogContext): LoggerProvider {

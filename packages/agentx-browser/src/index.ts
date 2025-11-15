@@ -99,16 +99,12 @@ export interface CreateAgentOptions {
  * ```
  */
 export function createAgent(config: BrowserAgentConfig, options?: CreateAgentOptions): Agent {
-  const provider = new BrowserProvider({
-    ...config,
-    // Browser doesn't need apiKey, server handles it
-    apiKey: config.apiKey || "",
-  });
+  const provider = new BrowserProvider(config);
 
   // Create logger if enabled
   const logger = options?.enableLogging
     ? new ConsolaLoggerProvider({
-        level: options.logLevel || "info",
+        level: (options.logLevel || "info") as LogLevel,
         tag: options.loggerTag,
         fancy: options.fancy !== false, // Default to true
       })
@@ -117,10 +113,12 @@ export function createAgent(config: BrowserAgentConfig, options?: CreateAgentOpt
   return createAgentCore(config, provider, logger);
 }
 
+// Export BrowserAgentConfig
+export type { BrowserAgentConfig } from "./config/BrowserAgentConfig";
+
 // Re-export types for convenience
 export type {
   Agent,
-  AgentConfig,
   AgentEvent,
   EventType,
   EventPayload,
@@ -131,8 +129,6 @@ export type {
   SystemInitEvent,
 } from "@deepractice-ai/agentx-api";
 
-export type { BrowserAgentConfig } from "./types";
-
 // Re-export errors
 export { AgentConfigError, AgentAbortError } from "@deepractice-ai/agentx-api";
 
@@ -142,5 +138,5 @@ export { ConsolaLoggerProvider } from "./providers/ConsolaLoggerProvider";
 export type { ConsolaLoggerConfig } from "./providers/ConsolaLoggerProvider";
 
 // Re-export LoggerProvider types from core
-export type { LoggerProvider, LogLevel, LogContext } from "@deepractice-ai/agentx-core";
-export { LogFormatter } from "@deepractice-ai/agentx-core";
+export type { LoggerProvider, LogContext } from "@deepractice-ai/agentx-core";
+export { LogLevel, LogFormatter } from "@deepractice-ai/agentx-core";

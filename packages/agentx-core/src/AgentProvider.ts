@@ -23,7 +23,6 @@
  * This enables persistent SDK connections and eliminates repeated process spawning.
  */
 
-import type { AgentConfig } from "@deepractice-ai/agentx-api";
 import type { AgentEventBus } from "./AgentEventBus";
 
 /**
@@ -105,9 +104,11 @@ export interface AgentProvider {
    * Validate configuration
    * Throws if configuration is invalid
    *
-   * @param config - Agent configuration to validate
+   * Each provider defines its own config type and validates accordingly.
+   *
+   * @param config - Provider-specific configuration to validate
    */
-  validateConfig(config: AgentConfig): void;
+  validateConfig(config: unknown): void;
 
   /**
    * Abort current operation

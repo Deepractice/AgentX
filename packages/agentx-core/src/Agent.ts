@@ -7,7 +7,6 @@
 
 import type {
   Agent as IAgent,
-  AgentConfig,
   EventType,
   EventPayload,
   AgentEvent,
@@ -32,8 +31,8 @@ export class Agent implements IAgent {
   private eventBus: AgentEventBus;
   private inboundSubscription: Subscription | null = null;
 
-  constructor(config: AgentConfig, provider: AgentProvider, logger?: LoggerProvider) {
-    // Validate config
+  constructor(config: unknown, provider: AgentProvider, logger?: LoggerProvider) {
+    // Validate config (provider knows its own config type)
     provider.validateConfig(config);
 
     this.provider = provider;

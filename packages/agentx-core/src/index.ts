@@ -11,7 +11,7 @@
  * @packageDocumentation
  */
 
-import type { AgentConfig, Agent as IAgent } from "@deepractice-ai/agentx-api";
+import type { Agent as IAgent } from "@deepractice-ai/agentx-api";
 import { Agent } from "./Agent";
 import type { AgentProvider } from "./AgentProvider";
 
@@ -22,7 +22,7 @@ import type { AgentProvider } from "./AgentProvider";
  * - @deepractice-ai/agentx-node for Node.js
  * - @deepractice-ai/agentx-browser for Browser
  *
- * @param config - Agent configuration
+ * @param config - Provider-specific configuration (unknown type, validated by provider)
  * @param provider - Platform-specific provider implementation
  * @param logger - Optional logger provider for agent logging
  * @returns Agent instance
@@ -45,7 +45,7 @@ import type { AgentProvider } from "./AgentProvider";
  * ```
  */
 export function createAgent(
-  config: AgentConfig,
+  config: unknown,
   provider: AgentProvider,
   logger?: import("./LoggerProvider").LoggerProvider
 ): IAgent {

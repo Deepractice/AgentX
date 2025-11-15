@@ -13,19 +13,20 @@
 
 import { query, type SDKMessage, type Query } from "@anthropic-ai/claude-agent-sdk";
 import type { AgentProvider, AgentEventBus } from "@deepractice-ai/agentx-core";
-import type { AgentConfig, AgentEvent, UserMessageEvent } from "@deepractice-ai/agentx-api";
+import type { AgentEvent, UserMessageEvent } from "@deepractice-ai/agentx-api";
 import { AgentConfigError } from "@deepractice-ai/agentx-api";
+import type { NodeAgentConfig } from "../config/NodeAgentConfig";
 import { observableToAsyncIterable } from "../utils/observableToAsyncIterable";
 
 export class ClaudeAgentProvider implements AgentProvider {
   readonly sessionId: string;
   providerSessionId: string | null = null; // Claude SDK's real session ID
   private abortController: AbortController;
-  private config: AgentConfig;
+  private config: NodeAgentConfig;
   private currentQuery: Query | null = null;
   private eventBus: AgentEventBus | null = null;
 
-  constructor(config: AgentConfig) {
+  constructor(config: NodeAgentConfig) {
     this.config = config;
     this.sessionId = this.generateSessionId();
     this.abortController = new AbortController();
@@ -78,14 +79,53 @@ export class ClaudeAgentProvider implements AgentProvider {
     // Subscribe to outbound (UserMessageEvent) and convert to AsyncIterable
     const outbound$ = eventBus.outbound();
     for await (const userEvent of observableToAsyncIterable<UserMessageEvent>(outbound$)) {
+      // Convert UserMessage.content to SDK format
+      // UserMessage.content can be: string | Array<TextPart | ImagePart | FilePart>
+      // SDK expects: { role: "user", content: string | APIContentBlock[] }
+      const sdkContent = this.convertUserMessageContent(userEvent.message.content);
+
       // Convert to SDKUserMessage format
+      // SDK expects: { type: "user", message: { role: "user", content: ... } }
       yield {
         type: 'user' as const,
-        message: userEvent.message.content as any,  // Type mismatch between our Message and SDK's APIUserMessage
+        message: {
+          role: 'user',
+          content: sdkContent,
+        },
         parent_tool_use_id: null,
         session_id: this.sessionId,
       };
     }
+  }
+
+  /**
+   * Convert UserMessage content to Claude SDK format
+   */
+  private convertUserMessageContent(content: string | Array<any>): any {
+    // If already a string, return as-is
+    if (typeof content === 'string') {
+      return content;
+    }
+
+    // If array, convert each part to SDK format
+    return content.map((part) => {
+      if (part.type === 'text') {
+        return { type: 'text', text: part.text };
+      } else if (part.type === 'image') {
+        return {
+          type: 'image',
+          source: part.source,
+        };
+      } else if (part.type === 'file') {
+        // Claude SDK might not support file parts directly
+        // Convert to text representation
+        return {
+          type: 'text',
+          text: `[File: ${part.name || 'unknown'}]`,
+        };
+      }
+      return part;
+    });
   }
 
   /**
@@ -140,11 +180,13 @@ export class ClaudeAgentProvider implements AgentProvider {
     }
   }
 
-  validateConfig(config: AgentConfig): void {
-    if (!config.apiKey) {
+  validateConfig(config: unknown): void {
+    const nodeConfig = config as NodeAgentConfig;
+
+    if (!nodeConfig.apiKey) {
       throw new AgentConfigError("apiKey is required", "apiKey");
     }
-    if (!config.model) {
+    if (!nodeConfig.model) {
       throw new AgentConfigError("model is required", "model");
     }
   }
@@ -277,7 +319,7 @@ export class ClaudeAgentProvider implements AgentProvider {
     }
   }
 
-  private transformMcpConfig(mcp?: AgentConfig["mcp"]) {
+  private transformMcpConfig(mcp?: NodeAgentConfig["mcp"]) {
     if (!mcp || !mcp.servers) {
       return undefined;
     }

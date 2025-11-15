@@ -8,7 +8,8 @@
  */
 
 import { createAgent as createAgentCore, type LogLevel } from "@deepractice-ai/agentx-core";
-import type { AgentConfig, Agent } from "@deepractice-ai/agentx-api";
+import type { Agent } from "@deepractice-ai/agentx-api";
+import type { NodeAgentConfig } from "./config/NodeAgentConfig";
 import { ClaudeAgentProvider } from "./providers/ClaudeAgentProvider";
 import { PinoLoggerProvider } from "./providers/PinoLoggerProvider";
 
@@ -86,7 +87,7 @@ export interface CreateAgentOptions {
  * await agent.send('Hello! How are you?');
  * ```
  */
-export function createAgent(config: AgentConfig, options?: CreateAgentOptions): Agent {
+export function createAgent(config: NodeAgentConfig, options?: CreateAgentOptions): Agent {
   const provider = new ClaudeAgentProvider(config);
 
   // Create logger if enabled
@@ -100,11 +101,12 @@ export function createAgent(config: AgentConfig, options?: CreateAgentOptions): 
   return createAgentCore(config, provider, logger);
 }
 
+// Export NodeAgentConfig
+export type { NodeAgentConfig } from "./config/NodeAgentConfig";
+
 // Re-export types for convenience
 export type {
   Agent,
-  AgentConfig,
-  ApiConfig,
   LLMConfig,
   McpConfig,
   AgentEvent,
