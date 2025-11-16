@@ -39,5 +39,3 @@ export type MessageEventType =
   | import("./ToolUseMessageEvent").ToolUseMessageEvent
   | import("./ErrorMessageEvent").ErrorMessageEvent;
 
-// Reactor interface
-export type { MessageReactor, PartialMessageReactor } from "./MessageReactor";

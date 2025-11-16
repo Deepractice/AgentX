@@ -1,82 +1,94 @@
 /**
  * AgentX Core
  *
- * Provider-agnostic core implementation of the AgentX ecosystem.
- * Requires a Provider to be injected (e.g., ClaudeProvider, WebSocketProvider).
+ * Core implementation of the AgentX ecosystem with layered event architecture.
+ * Requires a Driver to be injected (e.g., ClaudeDriver, WebSocketDriver).
  *
  * For platform-specific SDKs, use:
- * - @deepractice-ai/agentx-node (Node.js with ClaudeProvider)
- * - @deepractice-ai/agentx-browser (Browser with WebSocketProvider)
+ * - @deepractice-ai/agentx-node (Node.js with ClaudeDriver)
+ * - @deepractice-ai/agentx-browser (Browser with WebSocketDriver)
  *
  * @packageDocumentation
  */
 
-import type { Agent as IAgent } from "@deepractice-ai/agentx-api";
-import { Agent } from "./Agent";
-import type { AgentProvider } from "./AgentProvider";
+import { AgentService } from "./AgentService";
+import type { AgentDriver } from "./AgentDriver";
+import type { LoggerProvider } from "./LoggerProvider";
+import type { RuntimeConfig } from "./AgentRuntime";
 
 /**
- * Create a new Agent instance with provider injection
+ * Create a new Agent instance with driver injection
  *
  * This is the low-level API. Most users should use platform-specific SDKs:
  * - @deepractice-ai/agentx-node for Node.js
  * - @deepractice-ai/agentx-browser for Browser
  *
- * @param config - Provider-specific configuration (unknown type, validated by provider)
- * @param provider - Platform-specific provider implementation
+ * @param driver - Platform-specific driver implementation
  * @param logger - Optional logger provider for agent logging
- * @returns Agent instance
+ * @param config - Optional runtime configuration (reactors, etc.)
+ * @returns AgentService instance
  *
  * @example
  * ```typescript
  * import { createAgent } from "@deepractice-ai/agentx-core";
- * import { ClaudeProvider } from "@deepractice-ai/agentx-node";
- * import { NodeLoggerProvider } from "@deepractice-ai/agentx-node";
+ * import { ClaudeDriver } from "@deepractice-ai/agentx-node";
+ * import { PinoLoggerProvider } from "@deepractice-ai/agentx-node";
  *
- * const provider = new ClaudeProvider(config);
- * const logger = new NodeLoggerProvider();
- * const agent = createAgent(config, provider, logger);
+ * const driver = new ClaudeDriver(config);
+ * const logger = new PinoLoggerProvider();
+ * const agent = createAgent(driver, logger, {
+ *   reactors: [new MyChatHandler()]
+ * });
  *
- * agent.on("assistant_message", (event) => {
- *   console.log("Assistant:", event.message);
+ * await agent.initialize();
+ *
+ * agent.react({
+ *   onAssistantMessage(event) {
+ *     console.log("Assistant:", event.data.content);
+ *   },
  * });
  *
  * await agent.send("Hello!");
  * ```
  */
 export function createAgent(
-  config: unknown,
-  provider: AgentProvider,
-  logger?: import("./LoggerProvider").LoggerProvider
-): IAgent {
-  return new Agent(config, provider, logger);
+  driver: AgentDriver,
+  logger?: LoggerProvider,
+  config?: RuntimeConfig
+): AgentService {
+  return new AgentService(driver, logger, config);
 }
 
-// Re-export types from API for convenience
-export type {
-  Agent as IAgent,
-  AgentConfig,
-  ApiConfig,
-  LLMConfig,
-  McpConfig,
-  AgentEvent,
-  EventType,
-  EventPayload,
-} from "@deepractice-ai/agentx-api";
+// Export AgentDriver (SPI - Service Provider Interface)
+export type { AgentDriver } from "./AgentDriver";
 
-// Export AgentProvider (SPI)
-export type { AgentProvider } from "./AgentProvider";
+// Export AgentRuntime (Core orchestration)
+export { AgentRuntime, type RuntimeConfig } from "./AgentRuntime";
+
+// Export AgentService (User-facing API)
+export { AgentService } from "./AgentService";
 
 // Export AgentEventBus (Core)
 export { AgentEventBus } from "./AgentEventBus";
+
+// Export 4-layer event generation components
+export { AgentStateMachine } from "./AgentStateMachine";
+export { AgentMessageAssembler } from "./AgentMessageAssembler";
+export { AgentExchangeTracker } from "./AgentExchangeTracker";
 
 // Export LoggerProvider (SPI)
 export type { LoggerProvider, LogContext } from "./LoggerProvider";
 export { LogLevel, LogFormatter } from "./LoggerProvider";
 
-// Export Handlers (Framework)
-export type { MessageHandler } from "./handlers";
-export { MessageHandlerChain } from "./handlers";
-
-// Re-export errors
-export { AgentConfigError, AgentAbortError } from "@deepractice-ai/agentx-api";
+// Export Reactors (type-safe interfaces)
+export type {
+  StreamReactor,
+  PartialStreamReactor,
+  StateReactor,
+  PartialStateReactor,
+  MessageReactor,
+  PartialMessageReactor,
+  ExchangeReactor,
+  PartialExchangeReactor,
+  Reactor,
+} from "./AgentReactors";

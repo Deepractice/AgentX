@@ -26,5 +26,3 @@ export type ExchangeEventType =
   | import("./ExchangeRequestEvent").ExchangeRequestEvent
   | import("./ExchangeResponseEvent").ExchangeResponseEvent;
 
-// Reactor interface
-export type { ExchangeReactor, PartialExchangeReactor } from "./ExchangeReactor";

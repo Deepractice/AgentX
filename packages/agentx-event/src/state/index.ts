@@ -69,5 +69,3 @@ export type StateEventType =
   | import("./StreamCompleteStateEvent").StreamCompleteStateEvent
   | import("./ErrorOccurredStateEvent").ErrorOccurredStateEvent;
 
-// Reactor interface
-export type { StateReactor, PartialStateReactor } from "./StateReactor";

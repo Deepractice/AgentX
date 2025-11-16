@@ -7,8 +7,7 @@
 
 import { Subject, type Observable, type Subscription } from "rxjs";
 import { filter } from "rxjs/operators";
-import type { EventBus, EventProducer, EventConsumer, Unsubscribe } from "@deepractice-ai/agentx-event/bus";
-import type { AgentEventType } from "@deepractice-ai/agentx-event/base";
+import type { EventBus, EventProducer, EventConsumer, Unsubscribe, AgentEventType } from "@deepractice-ai/agentx-event";
 
 /**
  * RxJS-based EventBus implementation

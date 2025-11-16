@@ -55,5 +55,3 @@ export type StreamEventType =
   | import("./InputJsonDeltaEvent").InputJsonDeltaEvent
   | import("./ToolUseContentBlockStopEvent").ToolUseContentBlockStopEvent;
 
-// Reactor interface
-export type { StreamReactor, PartialStreamReactor } from "./StreamReactor";

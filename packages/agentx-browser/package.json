@@ -45,7 +45,7 @@
   },
   "homepage": "https://github.com/Deepractice/Agent#readme",
   "dependencies": {
-    "@deepractice-ai/agentx-api": "workspace:*",
+    "@deepractice-ai/agentx-framework": "workspace:*",
     "@deepractice-ai/agentx-core": "workspace:*",
     "@deepractice-ai/agentx-types": "workspace:*",
     "consola": "^3.2.3",

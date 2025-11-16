@@ -1,7 +1,7 @@
 {
-  "name": "@deepractice-ai/agentx-api",
+  "name": "@deepractice-ai/agentx-framework",
   "version": "0.1.0",
-  "description": "API interface definitions for AgentX ecosystem",
+  "description": "Unified framework for the AgentX ecosystem - re-exports all public APIs",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -11,13 +11,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    },
-    "./features": "./features",
-    "./features/*": "./features/*"
+    }
   },
   "files": [
-    "dist",
-    "features"
+    "dist"
   ],
   "scripts": {
     "build": "tsup",
@@ -26,7 +23,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@deepractice-ai/agentx-types": "workspace:*"
+    "@deepractice-ai/agentx-types": "workspace:*",
+    "@deepractice-ai/agentx-event": "workspace:*",
+    "@deepractice-ai/agentx-core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

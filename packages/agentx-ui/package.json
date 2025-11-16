@@ -29,7 +29,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@deepractice-ai/agentx-api": "workspace:*",
+    "@deepractice-ai/agentx-framework": "workspace:*",
     "@deepractice-ai/agentx-browser": "workspace:*",
     "@deepractice-ai/agentx-types": "workspace:*",
     "allotment": "^1.20.4",
