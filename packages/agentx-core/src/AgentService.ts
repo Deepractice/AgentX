@@ -8,7 +8,7 @@
  * 1. Provide simple public API (send, react, clear, destroy)
  * 2. Manage message history
  * 3. Delegate to AgentRuntime for orchestration
- * 4. Support dynamic Reactor injection
+ * 4. Support dynamic event handlers via react() method
  *
  * Architecture:
  * ```
@@ -28,7 +28,7 @@
  *
  * await agent.initialize();
  *
- * // Use Partial Reactor (only implement handlers you need)
+ * // Subscribe to events directly
  * agent.react({
  *   onAssistantMessage(event) {
  *     console.log("Assistant:", event.data.content);
@@ -41,10 +41,10 @@
  * ```
  */
 
-import { AgentRuntime, type RuntimeConfig } from "./AgentRuntime";
-import type { AgentDriver } from "./AgentDriver";
-import type { LoggerProvider } from "./LoggerProvider";
-import type { Reactor } from "./AgentReactors";
+import { AgentEngine, type EngineConfig } from "./AgentEngine";
+import type { AgentDriver } from "./driver";
+import type { AgentLogger } from "./AgentLogger";
+// Reactor type removed - users just pass event handler objects
 import type { Message, UserMessage } from "@deepractice-ai/agentx-types";
 import type {
   UserMessageEvent,
@@ -62,32 +62,32 @@ export class AgentService {
   readonly id: string;
   readonly sessionId: string;
 
-  // Core runtime
-  private runtime: AgentRuntime;
-  private logger?: LoggerProvider;
+  // Core engine
+  private engine: AgentEngine;
+  private logger?: AgentLogger;
 
   // Message history
   private _messages: Message[] = [];
 
-  // Event consumer for message tracking and dynamic reactors
+  // Event consumer for message tracking and event handlers
   private consumer: EventConsumer | null = null;
-  private reactorUnsubscribers: Unsubscribe[] = [];
+  private handlerUnsubscribers: Unsubscribe[] = [];
 
-  constructor(driver: AgentDriver, logger?: LoggerProvider, config?: RuntimeConfig) {
-    this.runtime = new AgentRuntime(driver, logger, config);
+  constructor(driver: AgentDriver, logger?: AgentLogger, config?: EngineConfig) {
+    this.engine = new AgentEngine(driver, logger, config);
     this.logger = logger;
-    this.id = this.runtime.agentId;
-    this.sessionId = this.runtime.sessionId;
+    this.id = this.engine.agentId;
+    this.sessionId = this.engine.sessionId;
   }
 
   /**
    * Initialize agent and start event pipeline
    */
   async initialize(): Promise<void> {
-    await this.runtime.initialize();
+    await this.engine.initialize();
 
     // Create consumer for user event subscriptions
-    this.consumer = this.runtime.eventBus.createConsumer();
+    this.consumer = this.engine.eventBus.createConsumer();
 
     // Subscribe to message events to maintain history
     this.subscribeToMessageEvents();
@@ -138,7 +138,7 @@ export class AgentService {
       data: userMessage,
     };
 
-    const producer = this.runtime.eventBus.createProducer();
+    const producer = this.engine.eventBus.createProducer();
     producer.produce(userEvent);
 
     this.logger?.debug("[AgentService] User message emitted", {
@@ -148,10 +148,10 @@ export class AgentService {
   }
 
   /**
-   * Inject a Reactor to handle events
+   * Register event handlers
    *
-   * Supports Partial Reactors - you only need to implement the handlers you care about.
-   * The reactor will be automatically bound to the corresponding event types.
+   * Automatically discovers all handler methods (starting with "on") and binds them
+   * to corresponding event types.
    *
    * Method naming convention:
    * - onTextDelta → subscribes to "text_delta" event
@@ -159,40 +159,47 @@ export class AgentService {
    * - onUserMessage → subscribes to "user_message" event
    * - onAssistantMessage → subscribes to "assistant_message" event
    *
-   * @param reactor - A Reactor object (or Partial Reactor)
-   * @returns Unsubscribe function to remove this reactor
+   * @param handlers - An object with event handler methods
+   * @returns Unsubscribe function to remove all handlers
    *
    * @example
    * ```typescript
-   * // Partial MessageReactor
+   * // Simple event handlers
    * agent.react({
    *   onAssistantMessage(event) {
    *     console.log("Assistant:", event.data.content);
    *   },
+   *   onUserMessage(event) {
+   *     console.log("User:", event.data.content);
+   *   },
    * });
    *
-   * // Full MessageReactor
-   * class ChatUI implements MessageReactor {
-   *   onUserMessage(event) { ... }
-   *   onAssistantMessage(event) { ... }
+   * // Handler class
+   * class ChatUI {
+   *   onUserMessage(event) {
+   *     this.displayUserMessage(event.data);
+   *   }
+   *   onAssistantMessage(event) {
+   *     this.displayAssistantMessage(event.data);
+   *   }
    * }
    *
    * agent.react(new ChatUI());
    * ```
    */
-  react(reactor: Reactor): () => void {
+  react(handlers: Record<string, any>): () => void {
     if (!this.consumer) {
       throw new Error("[AgentService] Agent not initialized. Call initialize() first.");
     }
 
-    // Bind the reactor using the same mechanism as AgentRuntime
-    const unsubscribe = this.bindReactor(this.consumer, reactor);
-    this.reactorUnsubscribers.push(unsubscribe);
+    // Bind the handlers
+    const unsubscribe = this.bindHandlers(this.consumer, handlers);
+    this.handlerUnsubscribers.push(unsubscribe);
 
-    this.logger?.debug("[AgentService] Reactor injected", {
+    this.logger?.debug("[AgentService] Event handlers registered", {
       agentId: this.id,
-      reactorType: reactor.constructor?.name || "Anonymous",
-      totalReactors: this.reactorUnsubscribers.length,
+      handlerType: handlers.constructor?.name || "Anonymous",
+      totalHandlers: this.handlerUnsubscribers.length,
     });
 
     return unsubscribe;
@@ -208,7 +215,7 @@ export class AgentService {
     });
 
     this._messages = [];
-    this.runtime.abort();
+    this.engine.abort();
   }
 
   /**
@@ -223,12 +230,12 @@ export class AgentService {
     // Clear message history
     this._messages = [];
 
-    // Unbind all reactors
-    this.reactorUnsubscribers.forEach((unsub) => unsub());
-    this.reactorUnsubscribers = [];
+    // Unbind all handlers
+    this.handlerUnsubscribers.forEach((unsub) => unsub());
+    this.handlerUnsubscribers = [];
 
-    // Destroy runtime
-    await this.runtime.destroy();
+    // Destroy engine
+    await this.engine.destroy();
 
     this.consumer = null;
 
@@ -238,20 +245,19 @@ export class AgentService {
   }
 
   /**
-   * Bind a single reactor to EventConsumer
+   * Bind event handlers to EventConsumer
    *
-   * Uses the same auto-discovery mechanism as AgentRuntime.
    * Discovers all handler methods (starting with "on") and binds them
    * to corresponding event types.
    *
    * @private
    */
-  private bindReactor(consumer: EventConsumer, reactor: Reactor): Unsubscribe {
+  private bindHandlers(consumer: EventConsumer, handlers: Record<string, any>): Unsubscribe {
     const unsubscribers: Unsubscribe[] = [];
 
     // Discover all handler methods (methods starting with "on")
-    const handlerMethods = Object.keys(reactor).filter(
-      (key) => key.startsWith("on") && typeof reactor[key] === "function"
+    const handlerMethods = Object.keys(handlers).filter(
+      (key) => key.startsWith("on") && typeof handlers[key] === "function"
     );
 
     // Bind each handler method
@@ -262,11 +268,11 @@ export class AgentService {
       const eventType = this.methodNameToEventType(methodName);
 
       // Bind the handler
-      const handler = reactor[methodName].bind(reactor);
+      const handler = handlers[methodName].bind(handlers);
       const unsubscribe = consumer.consumeByType(eventType as any, handler);
       unsubscribers.push(unsubscribe);
 
-      this.logger?.debug("[AgentService] Reactor method bound", {
+      this.logger?.debug("[AgentService] Event handler bound", {
         agentId: this.id,
         methodName,
         eventType,
@@ -321,7 +327,7 @@ export class AgentService {
       }
     );
 
-    this.reactorUnsubscribers.push(unsubAssistant);
+    this.handlerUnsubscribers.push(unsubAssistant);
   }
 
   private generateId(): string {

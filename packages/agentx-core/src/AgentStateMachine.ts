@@ -1,13 +1,13 @@
 /**
- * AgentStateMachine
+ * StateMachineReactor
  *
- * State machine that automatically generates State Layer events from Stream Layer events.
+ * Reactor that automatically generates State Layer events from Stream Layer events.
  *
  * Architecture:
  * ```
- * Stream Events (from Driver)
+ * Stream Events (from DriverReactor)
  *     ↓ Subscribe
- * AgentStateMachine (this class)
+ * StateMachineReactor (this class)
  *     ↓ Emit
  * State Events (to EventBus)
  * ```
@@ -30,20 +30,10 @@
  *     ↓ (MessageStopEvent)
  * ConversationEnd
  * ```
- *
- * Example:
- * ```typescript
- * const stateMachine = new AgentStateMachine(agentId, eventBus);
- *
- * // Stream event arrives
- * eventBus.emit(messageStartEvent);
- *
- * // StateMachine automatically emits
- * // → ConversationStartStateEvent
- * ```
  */
 
-import type { EventBus, EventConsumer, Unsubscribe } from "@deepractice-ai/agentx-event";
+import type { Reactor } from "./reactor/Reactor";
+import type { ReactorContext } from "./reactor/ReactorContext";
 import type {
   // Stream Events (input)
   MessageStartEvent,
@@ -77,15 +67,15 @@ type AgentState =
   | "idle";
 
 /**
- * AgentStateMachine
+ * StateMachineReactor
  *
  * Automatically generates State Layer events from Stream Layer events.
  */
-export class AgentStateMachine {
-  private agentId: string;
-  private eventBus: EventBus;
-  private consumer: EventConsumer;
-  private unsubscribers: Unsubscribe[] = [];
+export class AgentStateMachine implements Reactor {
+  readonly id = "state-machine";
+  readonly name = "StateMachineReactor";
+
+  private context: ReactorContext | null = null;
 
   // State tracking
   private currentState: AgentState = "initializing";
@@ -93,75 +83,87 @@ export class AgentStateMachine {
   // Conversation tracking
   private conversationStartTime: number | null = null;
 
-  constructor(agentId: string, eventBus: EventBus) {
-    this.agentId = agentId;
-    this.eventBus = eventBus;
-    this.consumer = eventBus.createConsumer();
+  async initialize(context: ReactorContext): Promise<void> {
+    this.context = context;
 
+    context.logger?.debug(`[StateMachineReactor] Initializing`, {
+      reactorId: this.id,
+    });
+
+    // Subscribe to Stream Layer events
     this.subscribeToStreamEvents();
+
+    context.logger?.info(`[StateMachineReactor] Initialized`, {
+      reactorId: this.id,
+    });
+  }
+
+  async destroy(): Promise<void> {
+    const logger = this.context?.logger;
+
+    logger?.debug(`[StateMachineReactor] Destroying`, {
+      reactorId: this.id,
+    });
+
+    // No explicit unsubscribe needed - ReactorContext handles lifecycle
+
+    this.context = null;
+
+    logger?.info(`[StateMachineReactor] Destroyed`, {
+      reactorId: this.id,
+    });
   }
 
   /**
    * Subscribe to Stream Layer events
    */
   private subscribeToStreamEvents(): void {
-    // Message lifecycle
-    this.unsubscribers.push(
-      this.consumer.consumeByType("message_start", (event: MessageStartEvent) => {
-        this.onMessageStart(event);
-      })
-    );
+    if (!this.context) return;
 
-    this.unsubscribers.push(
-      this.consumer.consumeByType("message_stop", (event: MessageStopEvent) => {
-        this.onMessageStop(event);
-      })
-    );
+    const { consumer } = this.context;
+
+    // Message lifecycle
+    consumer.consumeByType("message_start", (event: MessageStartEvent) => {
+      this.onMessageStart(event);
+    });
+
+    consumer.consumeByType("message_stop", (event: MessageStopEvent) => {
+      this.onMessageStop(event);
+    });
 
     // Content blocks
-    this.unsubscribers.push(
-      this.consumer.consumeByType(
-        "text_content_block_start",
-        (event: TextContentBlockStartEvent) => {
-          this.onTextContentBlockStart(event);
-        }
-      )
+    consumer.consumeByType(
+      "text_content_block_start",
+      (event: TextContentBlockStartEvent) => {
+        this.onTextContentBlockStart(event);
+      }
     );
 
-    this.unsubscribers.push(
-      this.consumer.consumeByType(
-        "text_content_block_stop",
-        (event: TextContentBlockStopEvent) => {
-          this.onTextContentBlockStop(event);
-        }
-      )
+    consumer.consumeByType(
+      "text_content_block_stop",
+      (event: TextContentBlockStopEvent) => {
+        this.onTextContentBlockStop(event);
+      }
     );
 
-    this.unsubscribers.push(
-      this.consumer.consumeByType(
-        "tool_use_content_block_start",
-        (event: ToolUseContentBlockStartEvent) => {
-          this.onToolUseContentBlockStart(event);
-        }
-      )
+    consumer.consumeByType(
+      "tool_use_content_block_start",
+      (event: ToolUseContentBlockStartEvent) => {
+        this.onToolUseContentBlockStart(event);
+      }
     );
 
-    this.unsubscribers.push(
-      this.consumer.consumeByType(
-        "tool_use_content_block_stop",
-        (event: ToolUseContentBlockStopEvent) => {
-          this.onToolUseContentBlockStop(event);
-        }
-      )
+    consumer.consumeByType(
+      "tool_use_content_block_stop",
+      (event: ToolUseContentBlockStopEvent) => {
+        this.onToolUseContentBlockStop(event);
+      }
     );
   }
 
   /**
    * Handle MessageStartEvent
    * Triggers: StreamStartStateEvent
-   *
-   * Note: ConversationStartStateEvent requires UserMessage which we don't have here.
-   * It should be emitted by MessageAssembler or ExchangeTracker.
    */
   private onMessageStart(event: MessageStartEvent): void {
     this.conversationStartTime = event.timestamp;
@@ -170,7 +172,7 @@ export class AgentStateMachine {
     const streamStartEvent: StreamStartStateEvent = {
       type: "stream_start",
       uuid: this.generateId(),
-      agentId: this.agentId,
+      agentId: this.context!.agentId,
       timestamp: Date.now(),
       previousState: this.currentState,
       transition: {
@@ -188,9 +190,6 @@ export class AgentStateMachine {
   /**
    * Handle MessageStopEvent
    * Triggers: StreamCompleteStateEvent
-   *
-   * Note: ConversationEndStateEvent is generated by MessageAssembler
-   * because it needs AssistantMessage which we don't have here
    */
   private onMessageStop(event: MessageStopEvent): void {
     const duration = this.conversationStartTime
@@ -201,7 +200,7 @@ export class AgentStateMachine {
     const streamCompleteEvent: StreamCompleteStateEvent = {
       type: "stream_complete",
       uuid: this.generateId(),
-      agentId: this.agentId,
+      agentId: this.context!.agentId,
       timestamp: Date.now(),
       previousState: this.currentState,
       transition: {
@@ -226,7 +225,7 @@ export class AgentStateMachine {
     const respondingEvent: ConversationRespondingStateEvent = {
       type: "conversation_responding",
       uuid: this.generateId(),
-      agentId: this.agentId,
+      agentId: this.context!.agentId,
       timestamp: Date.now(),
       previousState: this.currentState,
       transition: {
@@ -252,17 +251,15 @@ export class AgentStateMachine {
    * Triggers: ToolPlannedStateEvent, ToolExecutingStateEvent
    */
   private onToolUseContentBlockStart(event: ToolUseContentBlockStartEvent): void {
-
     // Emit ToolPlannedStateEvent
     const toolPlannedEvent: ToolPlannedStateEvent = {
       type: "tool_planned",
       uuid: this.generateId(),
-      agentId: this.agentId,
+      agentId: this.context!.agentId,
       timestamp: Date.now(),
       data: {
         id: event.data.id,
         name: event.data.name,
-        // Input will be accumulated from InputJsonDeltaEvent
         input: {},
       },
     };
@@ -272,7 +269,7 @@ export class AgentStateMachine {
     const toolExecutingEvent: ToolExecutingStateEvent = {
       type: "tool_executing",
       uuid: this.generateId(),
-      agentId: this.agentId,
+      agentId: this.context!.agentId,
       timestamp: Date.now(),
       previousState: this.currentState,
       transition: {
@@ -288,17 +285,8 @@ export class AgentStateMachine {
 
   /**
    * Handle ToolUseContentBlockStopEvent
-   * Triggers: ToolCompletedStateEvent
-   *
-   * Note: We don't have the actual tool result here, it comes from external execution.
-   * This event just marks that the tool invocation block in the stream has ended.
-   * Actual ToolCompletedStateEvent with results should be emitted when tool execution finishes.
    */
   private onToolUseContentBlockStop(_event: ToolUseContentBlockStopEvent): void {
-    // Don't emit ToolCompletedStateEvent here because we don't have the result yet.
-    // The actual tool execution happens outside the stream.
-    // ToolCompletedStateEvent should be emitted by the tool execution layer.
-
     this.transitionState("conversation_active");
   }
 
@@ -324,16 +312,8 @@ export class AgentStateMachine {
       | StreamStartStateEvent
       | StreamCompleteStateEvent
   ): void {
-    const producer = this.eventBus.createProducer();
-    producer.produce(event as any);
-  }
-
-  /**
-   * Destroy state machine and unsubscribe
-   */
-  destroy(): void {
-    this.unsubscribers.forEach((unsub) => unsub());
-    this.unsubscribers = [];
+    if (!this.context) return;
+    this.context.producer.produce(event as any);
   }
 
   private generateId(): string {

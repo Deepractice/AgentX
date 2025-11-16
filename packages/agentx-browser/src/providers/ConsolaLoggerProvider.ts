@@ -1,13 +1,13 @@
 /**
  * ConsolaLoggerProvider
  *
- * Browser implementation of LoggerProvider using Consola.
+ * Browser implementation of AgentLogger using Consola.
  * Provides beautiful, colorful console logging for browser environments.
  */
 
 import { createConsola, type ConsolaInstance } from "consola";
 import type {
-  LoggerProvider,
+  AgentLogger,
   LogLevel,
   LogContext,
 } from "@deepractice-ai/agentx-core";
@@ -77,7 +77,7 @@ const LOG_LEVEL_MAP: Record<LogLevel, number> = {
  * logger.error("Failed to send", error);
  * ```
  */
-export class ConsolaLoggerProvider implements LoggerProvider {
+export class ConsolaLoggerProvider implements AgentLogger {
   private consola: ConsolaInstance;
   private currentLevel: LogLevel;
   private boundContext: LogContext;
@@ -150,7 +150,7 @@ export class ConsolaLoggerProvider implements LoggerProvider {
     this.log("error" as LogLevel, message, ...args);
   }
 
-  withContext(context: LogContext): LoggerProvider {
+  withContext(context: LogContext): AgentLogger {
     // Create child logger with merged context
     const mergedContext = { ...this.boundContext, ...context };
 

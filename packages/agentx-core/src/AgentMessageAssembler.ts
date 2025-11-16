@@ -1,13 +1,13 @@
 /**
- * AgentMessageAssembler
+ * MessageAssemblerReactor
  *
- * Assembles complete Message Layer events from Stream Layer events.
+ * Reactor that assembles complete Message Layer events from Stream Layer events.
  *
  * Architecture:
  * ```
- * Stream Events (deltas from Driver)
+ * Stream Events (deltas from DriverReactor)
  *     ↓ Subscribe & Accumulate
- * AgentMessageAssembler (this class)
+ * MessageAssemblerReactor (this class)
  *     ↓ Emit
  * Message Events (to EventBus)
  * ```
@@ -17,33 +17,10 @@
  * 2. Accumulate incremental data (text deltas, tool input JSON, etc.)
  * 3. Detect completion signals (MessageStopEvent, ContentBlockStopEvent)
  * 4. Assemble and emit complete Message events
- *
- * Event Assembly:
- * ```
- * TextDeltaEvent ("Hello") + TextDeltaEvent (" world") + TextContentBlockStopEvent
- *     ↓
- * AssistantMessageEvent { content: "Hello world" }
- *
- * InputJsonDeltaEvent ('{"a":') + InputJsonDeltaEvent ('2}') + ToolUseContentBlockStopEvent
- *     ↓
- * ToolUseMessageEvent { toolCall, toolResult }
- * ```
- *
- * Example:
- * ```typescript
- * const assembler = new AgentMessageAssembler(agentId, eventBus);
- *
- * // Stream deltas arrive
- * eventBus.emit(textDeltaEvent1);
- * eventBus.emit(textDeltaEvent2);
- * eventBus.emit(textContentBlockStopEvent);
- *
- * // Assembler automatically emits
- * // → AssistantMessageEvent { content: "Hello world" }
- * ```
  */
 
-import type { EventBus, EventConsumer, Unsubscribe } from "@deepractice-ai/agentx-event";
+import type { Reactor } from "./reactor/Reactor";
+import type { ReactorContext } from "./reactor/ReactorContext";
 import type {
   // Stream Events (input)
   TextDeltaEvent,
@@ -79,84 +56,93 @@ interface PendingContent {
 }
 
 /**
- * AgentMessageAssembler
+ * MessageAssemblerReactor
  *
  * Assembles complete Message events from Stream deltas.
  */
-export class AgentMessageAssembler {
-  private agentId: string;
-  private eventBus: EventBus;
-  private consumer: EventConsumer;
-  private unsubscribers: Unsubscribe[] = [];
+export class AgentMessageAssembler implements Reactor {
+  readonly id = "message-assembler";
+  readonly name = "MessageAssemblerReactor";
+
+  private context: ReactorContext | null = null;
 
   // Content accumulation
   private pendingContents: Map<number, PendingContent> = new Map();
   private currentMessageId: string | null = null;
   private messageStartTime: number | null = null;
 
-  constructor(agentId: string, eventBus: EventBus) {
-    this.agentId = agentId;
-    this.eventBus = eventBus;
-    this.consumer = eventBus.createConsumer();
+  async initialize(context: ReactorContext): Promise<void> {
+    this.context = context;
+
+    context.logger?.debug(`[MessageAssemblerReactor] Initializing`, {
+      reactorId: this.id,
+    });
 
     this.subscribeToStreamEvents();
+
+    context.logger?.info(`[MessageAssemblerReactor] Initialized`, {
+      reactorId: this.id,
+    });
+  }
+
+  async destroy(): Promise<void> {
+    const logger = this.context?.logger;
+
+    logger?.debug(`[MessageAssemblerReactor] Destroying`, {
+      reactorId: this.id,
+    });
+
+    this.pendingContents.clear();
+    this.context = null;
+
+    logger?.info(`[MessageAssemblerReactor] Destroyed`, {
+      reactorId: this.id,
+    });
   }
 
   /**
    * Subscribe to Stream Layer events
    */
   private subscribeToStreamEvents(): void {
-    // Text content deltas
-    this.unsubscribers.push(
-      this.consumer.consumeByType("text_delta", (event) => {
-        this.onTextDelta(event as TextDeltaEvent);
-      })
-    );
+    if (!this.context) return;
 
-    this.unsubscribers.push(
-      this.consumer.consumeByType("text_content_block_stop", (event) => {
-        this.onTextContentBlockStop(event as TextContentBlockStopEvent);
-      })
-    );
+    const { consumer } = this.context;
+
+    // Text content deltas
+    consumer.consumeByType("text_delta", (event) => {
+      this.onTextDelta(event as TextDeltaEvent);
+    });
+
+    consumer.consumeByType("text_content_block_stop", (event) => {
+      this.onTextContentBlockStop(event as TextContentBlockStopEvent);
+    });
 
     // Tool use content
-    this.unsubscribers.push(
-      this.consumer.consumeByType("tool_use_content_block_start", (event) => {
-        this.onToolUseContentBlockStart(event as ToolUseContentBlockStartEvent);
-      })
-    );
+    consumer.consumeByType("tool_use_content_block_start", (event) => {
+      this.onToolUseContentBlockStart(event as ToolUseContentBlockStartEvent);
+    });
 
-    this.unsubscribers.push(
-      this.consumer.consumeByType("input_json_delta", (event) => {
-        this.onInputJsonDelta(event as InputJsonDeltaEvent);
-      })
-    );
+    consumer.consumeByType("input_json_delta", (event) => {
+      this.onInputJsonDelta(event as InputJsonDeltaEvent);
+    });
 
-    this.unsubscribers.push(
-      this.consumer.consumeByType("tool_use_content_block_stop", (event) => {
-        this.onToolUseContentBlockStop(event as ToolUseContentBlockStopEvent);
-      })
-    );
+    consumer.consumeByType("tool_use_content_block_stop", (event) => {
+      this.onToolUseContentBlockStop(event as ToolUseContentBlockStopEvent);
+    });
 
     // Message lifecycle
-    this.unsubscribers.push(
-      this.consumer.consumeByType("message_start", (event) => {
-        this.onMessageStart(event);
-      })
-    );
+    consumer.consumeByType("message_start", (event) => {
+      this.onMessageStart(event);
+    });
 
-    this.unsubscribers.push(
-      this.consumer.consumeByType("message_stop", (event) => {
-        this.onMessageStop(event as MessageStopEvent);
-      })
-    );
+    consumer.consumeByType("message_stop", (event) => {
+      this.onMessageStop(event as MessageStopEvent);
+    });
 
     // User messages (pass-through)
-    this.unsubscribers.push(
-      this.consumer.consumeByType("user_message", (event) => {
-        this.onUserMessage(event as UserMessageEvent);
-      })
-    );
+    consumer.consumeByType("user_message", (event) => {
+      this.onUserMessage(event as UserMessageEvent);
+    });
   }
 
   /**
@@ -280,7 +266,7 @@ export class AgentMessageAssembler {
       const toolUseEvent: ToolUseMessageEvent = {
         type: "tool_use_message",
         uuid: this.generateId(),
-        agentId: this.agentId,
+        agentId: this.context!.agentId,
         timestamp: Date.now(),
         data: toolUseMessage,
       };
@@ -330,7 +316,7 @@ export class AgentMessageAssembler {
     const assistantEvent: AssistantMessageEvent = {
       type: "assistant_message",
       uuid: this.generateId(),
-      agentId: this.agentId,
+      agentId: this.context!.agentId,
       timestamp: Date.now(),
       data: assistantMessage,
     };
@@ -359,17 +345,8 @@ export class AgentMessageAssembler {
   private emitMessageEvent(
     event: UserMessageEvent | AssistantMessageEvent | ToolUseMessageEvent
   ): void {
-    const producer = this.eventBus.createProducer();
-    producer.produce(event as any);
-  }
-
-  /**
-   * Destroy assembler and unsubscribe
-   */
-  destroy(): void {
-    this.unsubscribers.forEach((unsub) => unsub());
-    this.unsubscribers = [];
-    this.pendingContents.clear();
+    if (!this.context) return;
+    this.context.producer.produce(event as any);
   }
 
   private generateId(): string {

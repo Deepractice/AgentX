@@ -135,8 +135,8 @@ export { AgentConfigError, AgentAbortError } from "@deepractice-ai/agentx-api";
 export { ClaudeAgentProvider, PinoLoggerProvider } from "./providers";
 export type { PinoLoggerConfig } from "./providers";
 
-// Re-export LoggerProvider types from core
-export type { LoggerProvider, LogLevel, LogContext } from "@deepractice-ai/agentx-core";
+// Re-export AgentLogger types from core
+export type { AgentLogger, LogLevel, LogContext } from "@deepractice-ai/agentx-core";
 export { LogFormatter } from "@deepractice-ai/agentx-core";
 
 // Export WebSocket server

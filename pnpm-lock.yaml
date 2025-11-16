@@ -248,30 +248,14 @@ importers:
         specifier: ^1.1.0-beta34
         version: 1.1.0-beta9
 
-  packages/agentx-api:
-    dependencies:
-      '@deepractice-ai/agentx-types':
-        specifier: workspace:*
-        version: link:../agentx-types
-    devDependencies:
-      '@types/node':
-        specifier: ^22.10.2
-        version: 22.19.1
-      tsup:
-        specifier: ^8.3.5
-        version: 8.5.0(@microsoft/api-extractor@7.55.0(@types/node@22.19.1))(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
-
   packages/agentx-browser:
     dependencies:
-      '@deepractice-ai/agentx-api':
-        specifier: workspace:*
-        version: link:../agentx-api
       '@deepractice-ai/agentx-core':
         specifier: workspace:*
         version: link:../agentx-core
+      '@deepractice-ai/agentx-framework':
+        specifier: workspace:*
+        version: link:../agentx-framework
       '@deepractice-ai/agentx-types':
         specifier: workspace:*
         version: link:../agentx-types
@@ -297,9 +281,6 @@ importers:
 
   packages/agentx-core:
     dependencies:
-      '@deepractice-ai/agentx-api':
-        specifier: workspace:*
-        version: link:../agentx-api
       '@deepractice-ai/agentx-event':
         specifier: workspace:*
         version: link:../agentx-event
@@ -310,15 +291,24 @@ importers:
         specifier: ^7.8.2
         version: 7.8.2
     devDependencies:
+      '@deepracticex/vitest-cucumber':
+        specifier: ^1.4.0
+        version: 1.4.0(vitest@3.2.4)
       '@types/node':
         specifier: ^24.9.2
         version: 24.9.2
+      '@vitest/ui':
+        specifier: ^3.2.4
+        version: 3.2.4(vitest@3.2.4)
       tsup:
         specifier: ^8.5.0
         version: 8.5.0(@microsoft/api-extractor@7.55.0(@types/node@24.9.2))(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@24.9.2)(@vitest/ui@3.2.4)(jiti@2.6.1)(tsx@4.20.6)
 
   packages/agentx-event:
     dependencies:
@@ -339,6 +329,28 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
+  packages/agentx-framework:
+    dependencies:
+      '@deepractice-ai/agentx-core':
+        specifier: workspace:*
+        version: link:../agentx-core
+      '@deepractice-ai/agentx-event':
+        specifier: workspace:*
+        version: link:../agentx-event
+      '@deepractice-ai/agentx-types':
+        specifier: workspace:*
+        version: link:../agentx-types
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.19.1
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.0(@microsoft/api-extractor@7.55.0(@types/node@22.19.1))(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
   packages/agentx-node:
     dependencies:
       '@anthropic-ai/claude-agent-sdk':
@@ -347,12 +359,12 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.32.1
         version: 0.32.1(encoding@0.1.13)
-      '@deepractice-ai/agentx-api':
-        specifier: workspace:*
-        version: link:../agentx-api
       '@deepractice-ai/agentx-core':
         specifier: workspace:*
         version: link:../agentx-core
+      '@deepractice-ai/agentx-framework':
+        specifier: workspace:*
+        version: link:../agentx-framework
       '@deepractice-ai/agentx-types':
         specifier: workspace:*
         version: link:../agentx-types
@@ -399,12 +411,12 @@ importers:
 
   packages/agentx-ui:
     dependencies:
-      '@deepractice-ai/agentx-api':
-        specifier: workspace:*
-        version: link:../agentx-api
       '@deepractice-ai/agentx-browser':
         specifier: workspace:*
         version: link:../agentx-browser
+      '@deepractice-ai/agentx-framework':
+        specifier: workspace:*
+        version: link:../agentx-framework
       '@deepractice-ai/agentx-types':
         specifier: workspace:*
         version: link:../agentx-types

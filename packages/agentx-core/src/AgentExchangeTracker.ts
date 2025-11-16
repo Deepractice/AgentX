@@ -1,13 +1,13 @@
 /**
- * AgentExchangeTracker
+ * ExchangeTrackerReactor
  *
- * Tracks request-response exchange pairs and generates Exchange Layer events.
+ * Reactor that tracks request-response exchange pairs and generates Exchange Layer events.
  *
  * Architecture:
  * ```
- * Message Events (from MessageAssembler)
+ * Message Events (from MessageAssemblerReactor)
  *     ↓ Subscribe & Track
- * AgentExchangeTracker (this class)
+ * ExchangeTrackerReactor (this class)
  *     ↓ Emit
  * Exchange Events (to EventBus)
  * ```
@@ -18,33 +18,10 @@
  * 3. Pair requests with responses to form exchanges
  * 4. Calculate exchange-level metrics (duration, cost, tokens)
  * 5. Emit Exchange Layer events
- *
- * Exchange Flow:
- * ```
- * UserMessageEvent
- *     ↓
- * ExchangeRequestEvent { userMessage, requestedAt }
- *     ↓ [Agent processes...]
- * AssistantMessageEvent
- *     ↓
- * ExchangeResponseEvent { assistantMessage, duration, cost, tokens }
- * ```
- *
- * Example:
- * ```typescript
- * const tracker = new AgentExchangeTracker(agentId, eventBus);
- *
- * // User message arrives
- * eventBus.emit(userMessageEvent);
- * // → ExchangeRequestEvent
- *
- * // Assistant responds
- * eventBus.emit(assistantMessageEvent);
- * // → ExchangeResponseEvent { duration: 1500ms, tokens: 120, cost: $0.002 }
- * ```
  */
 
-import type { EventBus, EventConsumer, Unsubscribe } from "@deepractice-ai/agentx-event";
+import type { Reactor } from "./reactor/Reactor";
+import type { ReactorContext } from "./reactor/ReactorContext";
 import type {
   // Message Events (input)
   UserMessageEvent,
@@ -65,15 +42,15 @@ interface PendingExchange {
 }
 
 /**
- * AgentExchangeTracker
+ * ExchangeTrackerReactor
  *
  * Tracks request-response pairs and generates Exchange events.
  */
-export class AgentExchangeTracker {
-  private agentId: string;
-  private eventBus: EventBus;
-  private consumer: EventConsumer;
-  private unsubscribers: Unsubscribe[] = [];
+export class AgentExchangeTracker implements Reactor {
+  readonly id = "exchange-tracker";
+  readonly name = "ExchangeTrackerReactor";
+
+  private context: ReactorContext | null = null;
 
   // Exchange tracking
   private pendingExchange: PendingExchange | null = null;
@@ -82,12 +59,33 @@ export class AgentExchangeTracker {
   private costPerInputToken: number = 0.000003; // $3 per 1M tokens
   private costPerOutputToken: number = 0.000015; // $15 per 1M tokens
 
-  constructor(agentId: string, eventBus: EventBus) {
-    this.agentId = agentId;
-    this.eventBus = eventBus;
-    this.consumer = eventBus.createConsumer();
+  async initialize(context: ReactorContext): Promise<void> {
+    this.context = context;
+
+    context.logger?.debug(`[ExchangeTrackerReactor] Initializing`, {
+      reactorId: this.id,
+    });
 
     this.subscribeToMessageEvents();
+
+    context.logger?.info(`[ExchangeTrackerReactor] Initialized`, {
+      reactorId: this.id,
+    });
+  }
+
+  async destroy(): Promise<void> {
+    const logger = this.context?.logger;
+
+    logger?.debug(`[ExchangeTrackerReactor] Destroying`, {
+      reactorId: this.id,
+    });
+
+    this.pendingExchange = null;
+    this.context = null;
+
+    logger?.info(`[ExchangeTrackerReactor] Destroyed`, {
+      reactorId: this.id,
+    });
   }
 
   /**
@@ -102,19 +100,19 @@ export class AgentExchangeTracker {
    * Subscribe to Message Layer events
    */
   private subscribeToMessageEvents(): void {
+    if (!this.context) return;
+
+    const { consumer } = this.context;
+
     // User messages start new exchanges
-    this.unsubscribers.push(
-      this.consumer.consumeByType("user_message", (event) => {
-        this.onUserMessage(event as UserMessageEvent);
-      })
-    );
+    consumer.consumeByType("user_message", (event) => {
+      this.onUserMessage(event as UserMessageEvent);
+    });
 
     // Assistant messages complete exchanges
-    this.unsubscribers.push(
-      this.consumer.consumeByType("assistant_message", (event) => {
-        this.onAssistantMessage(event as AssistantMessageEvent);
-      })
-    );
+    consumer.consumeByType("assistant_message", (event) => {
+      this.onAssistantMessage(event as AssistantMessageEvent);
+    });
   }
 
   /**
@@ -135,7 +133,7 @@ export class AgentExchangeTracker {
     const requestEvent: ExchangeRequestEvent = {
       type: "exchange_request",
       uuid: this.generateId(),
-      agentId: this.agentId,
+      agentId: this.context!.agentId,
       timestamp: Date.now(),
       exchangeId,
       data: {
@@ -169,7 +167,7 @@ export class AgentExchangeTracker {
     const responseEvent: ExchangeResponseEvent = {
       type: "exchange_response",
       uuid: this.generateId(),
-      agentId: this.agentId,
+      agentId: this.context!.agentId,
       timestamp: Date.now(),
       exchangeId,
       data: {
@@ -200,17 +198,8 @@ export class AgentExchangeTracker {
    * Emit Exchange event to EventBus
    */
   private emitExchangeEvent(event: ExchangeRequestEvent | ExchangeResponseEvent): void {
-    const producer = this.eventBus.createProducer();
-    producer.produce(event as any);
-  }
-
-  /**
-   * Destroy tracker and unsubscribe
-   */
-  destroy(): void {
-    this.unsubscribers.forEach((unsub) => unsub());
-    this.unsubscribers = [];
-    this.pendingExchange = null;
+    if (!this.context) return;
+    this.context.producer.produce(event as any);
   }
 
   private generateId(): string {

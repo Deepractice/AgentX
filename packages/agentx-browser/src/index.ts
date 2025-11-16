@@ -137,6 +137,6 @@ export { BrowserProvider } from "./providers/BrowserProvider";
 export { ConsolaLoggerProvider } from "./providers/ConsolaLoggerProvider";
 export type { ConsolaLoggerConfig } from "./providers/ConsolaLoggerProvider";
 
-// Re-export LoggerProvider types from core
-export type { LoggerProvider, LogContext } from "@deepractice-ai/agentx-core";
+// Re-export AgentLogger types from core
+export type { AgentLogger, LogContext } from "@deepractice-ai/agentx-core";
 export { LogLevel, LogFormatter } from "@deepractice-ai/agentx-core";

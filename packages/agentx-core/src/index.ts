@@ -12,9 +12,9 @@
  */
 
 import { AgentService } from "./AgentService";
-import type { AgentDriver } from "./AgentDriver";
-import type { LoggerProvider } from "./LoggerProvider";
-import type { RuntimeConfig } from "./AgentRuntime";
+import type { AgentDriver } from "./driver";
+import type { AgentLogger } from "./AgentLogger";
+import type { EngineConfig } from "./AgentEngine";
 
 /**
  * Create a new Agent instance with driver injection
@@ -53,17 +53,17 @@ import type { RuntimeConfig } from "./AgentRuntime";
  */
 export function createAgent(
   driver: AgentDriver,
-  logger?: LoggerProvider,
-  config?: RuntimeConfig
+  logger?: AgentLogger,
+  config?: EngineConfig
 ): AgentService {
   return new AgentService(driver, logger, config);
 }
 
 // Export AgentDriver (SPI - Service Provider Interface)
-export type { AgentDriver } from "./AgentDriver";
+export type { AgentDriver } from "./driver";
 
-// Export AgentRuntime (Core orchestration)
-export { AgentRuntime, type RuntimeConfig } from "./AgentRuntime";
+// Export AgentEngine (Core orchestration)
+export { AgentEngine, type EngineConfig } from "./AgentEngine";
 
 // Export AgentService (User-facing API)
 export { AgentService } from "./AgentService";
@@ -76,19 +76,13 @@ export { AgentStateMachine } from "./AgentStateMachine";
 export { AgentMessageAssembler } from "./AgentMessageAssembler";
 export { AgentExchangeTracker } from "./AgentExchangeTracker";
 
-// Export LoggerProvider (SPI)
-export type { LoggerProvider, LogContext } from "./LoggerProvider";
-export { LogLevel, LogFormatter } from "./LoggerProvider";
+// Export AgentLogger (SPI)
+export type { AgentLogger, LogContext } from "./AgentLogger";
+export { LogLevel, LogFormatter } from "./AgentLogger";
 
-// Export Reactors (type-safe interfaces)
-export type {
-  StreamReactor,
-  PartialStreamReactor,
-  StateReactor,
-  PartialStateReactor,
-  MessageReactor,
-  PartialMessageReactor,
-  ExchangeReactor,
-  PartialExchangeReactor,
-  Reactor,
-} from "./AgentReactors";
+// Export Reactor Pattern (Advanced - for custom implementations)
+export type { Reactor, ReactorContext } from "./reactor";
+export { ReactorRegistry, type ReactorRegistryConfig } from "./reactor";
+
+// Note: User event handlers are registered via agent.react({ onEventName() {} })
+// No need to export type-safe Reactor interfaces for users anymore

@@ -1,14 +1,14 @@
 /**
  * PinoLoggerProvider
  *
- * Node.js implementation of LoggerProvider using Pino.
+ * Node.js implementation of AgentLogger using Pino.
  * Provides high-performance structured logging with pretty-printing support.
  */
 
 import pino from "pino";
 import {
   LogLevel,
-  type LoggerProvider,
+  type AgentLogger,
   type LogContext,
 } from "@deepractice-ai/agentx-core";
 
@@ -86,7 +86,7 @@ const LOG_LEVEL_MAP: Record<LogLevel, pino.Level> = {
  * logger.error("Failed to send", error);
  * ```
  */
-export class PinoLoggerProvider implements LoggerProvider {
+export class PinoLoggerProvider implements AgentLogger {
   private pino: pino.Logger;
   private currentLevel: LogLevel;
   private boundContext: LogContext;
@@ -168,7 +168,7 @@ export class PinoLoggerProvider implements LoggerProvider {
     this.log(LogLevel.ERROR, message, ...args);
   }
 
-  withContext(context: LogContext): LoggerProvider {
+  withContext(context: LogContext): AgentLogger {
     // Create child logger with merged context
     const mergedContext = { ...this.boundContext, ...context };
     const childPino = this.pino.child(context);
