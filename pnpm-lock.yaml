@@ -331,6 +331,9 @@ importers:
 
   packages/agentx-framework:
     dependencies:
+      '@anthropic-ai/claude-agent-sdk':
+        specifier: ^0.1.30
+        version: 0.1.30(zod@4.1.12)
       '@deepractice-ai/agentx-core':
         specifier: workspace:*
         version: link:../agentx-core

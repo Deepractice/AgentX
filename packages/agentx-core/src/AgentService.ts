@@ -51,6 +51,7 @@ import type {
   AssistantMessageEvent,
   EventConsumer,
   Unsubscribe,
+  StreamEventType,
 } from "@deepractice-ai/agentx-event";
 import { emitError } from "./utils/emitError";
 
@@ -58,14 +59,16 @@ import { emitError } from "./utils/emitError";
  * AgentService
  *
  * Simple, user-friendly API for Agent interactions.
+ * Also implements AgentDriver, allowing Agents to be composed/nested.
  */
-export class AgentService {
+export class AgentService implements AgentDriver {
   readonly id: string;
   readonly sessionId: string;
 
   // Core engine
   private engine: AgentEngine;
   private logger?: AgentLogger;
+  private driver: AgentDriver;
 
   // Message history
   private _messages: Message[] = [];
@@ -77,8 +80,16 @@ export class AgentService {
   constructor(driver: AgentDriver, logger?: AgentLogger, config?: EngineConfig) {
     this.engine = new AgentEngine(driver, logger, config);
     this.logger = logger;
+    this.driver = driver;
     this.id = this.engine.agentId;
     this.sessionId = this.engine.sessionId;
+  }
+
+  /**
+   * Get driver session ID (implements AgentDriver)
+   */
+  get driverSessionId(): string | null {
+    return this.driver.driverSessionId;
   }
 
   /**
@@ -233,6 +244,28 @@ export class AgentService {
   }
 
   /**
+   * Send message(s) and yield stream events (implements AgentDriver)
+   *
+   * This allows AgentService to be used as a Driver in nested Agent compositions.
+   *
+   * @param messages - Single message or async iterable of messages
+   * @returns Async iterable of stream events
+   */
+  async *sendMessage(
+    messages: UserMessage | AsyncIterable<UserMessage>
+  ): AsyncIterable<StreamEventType> {
+    // Delegate directly to underlying driver
+    yield* this.driver.sendMessage(messages);
+  }
+
+  /**
+   * Abort current operation (implements AgentDriver)
+   */
+  abort(): void {
+    this.engine.abort();
+  }
+
+  /**
    * Clear message history and abort current operation
    */
   clear(): void {
@@ -244,7 +277,7 @@ export class AgentService {
     });
 
     this._messages = [];
-    this.engine.abort();
+    this.abort();
 
     this.logger?.debug("[AgentService] Messages cleared", {
       agentId: this.id,

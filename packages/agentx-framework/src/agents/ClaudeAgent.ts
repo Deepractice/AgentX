@@ -1,0 +1,35 @@
+/**
+ * ClaudeAgent
+ *
+ * Pre-configured Agent using Claude SDK Driver.
+ *
+ * @example
+ * ```typescript
+ * import { ClaudeAgent } from "@deepractice-ai/agentx-framework/agents";
+ *
+ * const agent = ClaudeAgent.create({
+ *   apiKey: process.env.ANTHROPIC_API_KEY,
+ *   model: "claude-3-5-sonnet-20241022",
+ * });
+ *
+ * await agent.initialize();
+ * await agent.send("Hello!");
+ * ```
+ */
+
+import { defineAgent } from "../defineAgent";
+import { ClaudeSDKDriver } from "../drivers/ClaudeSDKDriver";
+import { defineConfig } from "../defineConfig";
+
+/**
+ * ClaudeAgent - Pre-configured Claude SDK Agent
+ */
+export const ClaudeAgent = defineAgent({
+  name: "Claude",
+  driver: ClaudeSDKDriver,
+  config: defineConfig({
+    apiKey: { type: "string", required: true },
+    model: { type: "string", default: "claude-3-5-sonnet-20241022" },
+    // Add other common config fields as needed
+  }),
+});

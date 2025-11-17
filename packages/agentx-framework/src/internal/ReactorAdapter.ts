@@ -7,10 +7,10 @@
 
 import { generateId } from "../utils/generateId";
 import type { Reactor, ReactorContext } from "@deepractice-ai/agentx-core";
-import type { StreamReactor } from "./StreamReactor";
-import type { StateReactor } from "./StateReactor";
-import type { MessageReactor } from "./MessageReactor";
-import type { ExchangeReactor } from "./ExchangeReactor";
+import type { StreamReactor } from "../interfaces/StreamReactor";
+import type { StateReactor } from "../interfaces/StateReactor";
+import type { MessageReactor } from "../interfaces/MessageReactor";
+import type { ExchangeReactor } from "../interfaces/ExchangeReactor";
 
 /**
  * Base adapter for wrapping user reactors

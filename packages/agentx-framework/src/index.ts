@@ -150,7 +150,7 @@ export type {
   StateReactor,
   MessageReactor,
   ExchangeReactor,
-} from "./reactors";
+} from "./interfaces";
 
 // Reactor adapters (for advanced framework usage)
 export {
@@ -185,28 +185,78 @@ export { LogLevel, LogFormatter } from "@deepractice-ai/agentx-core";
  */
 export type { EngineConfig } from "@deepractice-ai/agentx-core";
 
-// ==================== Agent Definition (Vue-like API) ====================
-// Framework's high-level API for defining agents
+// ==================== Framework Define API ====================
+// Simplified APIs for building custom drivers, reactors, and agents
 
 /**
- * Define an agent structure (similar to Vue's defineComponent)
+ * defineDriver - Simplified driver creation
  *
  * @example
  * ```typescript
- * import { defineAgent } from "@deepractice-ai/agentx-framework";
- * import { ClaudeDriver, PinoLogger } from "@deepractice-ai/agentx-node";
- * import { ChatLogger } from "./reactors";
+ * const MyDriver = defineDriver({
+ *   name: "MyDriver",
+ *   generate: async function* (message) {
+ *     yield "Hello: " + message;
+ *   }
+ * });
+ * ```
+ */
+export { defineDriver } from "./defineDriver";
+export type {
+  DriverDefinition,
+  DefinedDriver,
+} from "./defineDriver";
+
+/**
+ * defineReactor - Simplified reactor creation
  *
+ * @example
+ * ```typescript
+ * const Logger = defineReactor({
+ *   name: "Logger",
+ *   onTextDelta: (event) => console.log(event.data.text)
+ * });
+ * ```
+ */
+export { defineReactor } from "./defineReactor";
+export type {
+  ReactorDefinition,
+  DefinedReactor,
+} from "./defineReactor";
+
+/**
+ * defineConfig - Schema-based configuration
+ *
+ * @example
+ * ```typescript
+ * const MyConfig = defineConfig({
+ *   apiKey: { type: "string", required: true },
+ *   model: { type: "string", default: "claude-3-5-sonnet" }
+ * });
+ * ```
+ */
+export { defineConfig, ConfigValidationError } from "./defineConfig";
+export type {
+  DefinedConfig,
+  ConfigSchema,
+  FieldDefinition,
+  FieldType,
+  InferConfig,
+} from "./defineConfig";
+
+/**
+ * defineAgent - Compose driver, reactors, and config
+ *
+ * @example
+ * ```typescript
  * const MyAgent = defineAgent({
- *   driver: ClaudeDriver,
- *   reactors: [ChatLogger],
- *   logger: PinoLogger,
+ *   name: "MyAgent",
+ *   driver: defineDriver({ ... }),
+ *   reactors: [defineReactor({ ... })],
+ *   config: defineConfig({ ... })
  * });
  *
- * const agent = MyAgent.create({
- *   driver: { apiKey: "...", model: "..." },
- *   reactors: [{ prefix: "[Chat]" }],
- * });
+ * const agent = MyAgent.create({ apiKey: "xxx" });
  * ```
  */
 export { defineAgent } from "./defineAgent";
@@ -215,34 +265,57 @@ export type {
   DefinedAgent,
 } from "./defineAgent";
 
-// Config Schema
-export type {
-  ConfigSchema,
-  SchemaField,
-  SchemaFieldType,
-  InferConfig,
-} from "./schema";
-
 // ==================== Errors ====================
 // Framework-specific errors
 
 export { AgentConfigError, AgentAbortError } from "./errors";
 
-// ==================== WebSocket Bridge ====================
-// Bidirectional WebSocket communication for AgentX
+// ==================== Drivers ====================
+// Platform-specific and framework drivers
+
+/**
+ * ClaudeSDKDriver - Node.js driver using @anthropic-ai/claude-agent-sdk
+ * Full-featured Claude SDK integration with streaming, tools, and MCP
+ */
+export { ClaudeSDKDriver, type ClaudeSDKDriverConfig } from "./drivers";
 
 /**
  * WebSocketDriver - Client-side WebSocket driver for browser
  * Converts WebSocket messages → Agent events
  */
-export { WebSocketDriver, type WebSocketDriverConfig } from "./ws";
+export { WebSocketDriver, type WebSocketDriverConfig } from "./drivers";
+
+// ==================== Reactor Implementations ====================
+// Built-in reactor implementations
 
 /**
  * WebSocketReactor - Server-side event forwarder
  * Converts Agent events → WebSocket messages
  * Implements all 4 reactor layers (Stream, State, Message, Exchange)
  */
-export { WebSocketReactor, type WebSocketLike } from "./ws";
+export { WebSocketReactor, type WebSocketLike, type WebSocketReactorConfig } from "./reactors";
+
+// ==================== Pre-configured Agents ====================
+// Ready-to-use agent compositions
+
+/**
+ * ClaudeAgent - Pre-configured Agent using Claude SDK
+ * @example
+ * ```typescript
+ * const agent = ClaudeAgent.create({ apiKey: "xxx" });
+ * ```
+ */
+export { ClaudeAgent } from "./agents";
+
+/**
+ * WebSocketServerAgent - Claude + WebSocket forwarding (Agent composition!)
+ * Demonstrates Agent-as-Driver pattern: ClaudeAgent → WebSocketReactor
+ * @example
+ * ```typescript
+ * const agent = WebSocketServerAgent.create({ apiKey: "xxx", ws: websocket });
+ * ```
+ */
+export { WebSocketServerAgent } from "./agents";
 
 // ==================== MCP (Model Context Protocol) ====================
 // Re-export from @deepractice-ai/agentx-types (for users working with MCP servers)

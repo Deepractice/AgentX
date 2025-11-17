@@ -1,15 +1,18 @@
 /**
- * User-facing Reactor interfaces
+ * Reactors
  *
- * 4-layer event handling interfaces for AgentX.
- * All methods are optional - users only implement what they need.
+ * - Interfaces: Pure interface definitions (re-exported from ../interfaces)
+ * - Adapters: Internal adapter implementations
+ * - Implementations: Concrete reactor implementations (WebSocketReactor, etc.)
  */
 
-export type { StreamReactor } from "./StreamReactor";
-export type { StateReactor } from "./StateReactor";
-export type { MessageReactor } from "./MessageReactor";
-export type { ExchangeReactor } from "./ExchangeReactor";
+// Re-export interfaces from interfaces/
+export type { StreamReactor } from "../interfaces/StreamReactor";
+export type { StateReactor } from "../interfaces/StateReactor";
+export type { MessageReactor } from "../interfaces/MessageReactor";
+export type { ExchangeReactor } from "../interfaces/ExchangeReactor";
 
+// Export adapters (from internal/)
 export {
   StreamReactorAdapter,
   StateReactorAdapter,
@@ -17,4 +20,7 @@ export {
   ExchangeReactorAdapter,
   wrapUserReactor,
   type UserReactor,
-} from "./ReactorAdapter";
+} from "../internal";
+
+// Export reactor implementations
+export { WebSocketReactor, type WebSocketLike, type WebSocketReactorConfig } from "./WebSocketReactor";

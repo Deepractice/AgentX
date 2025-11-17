@@ -61,6 +61,8 @@ export function createAgent(
 
 // Export AgentDriver (SPI - Service Provider Interface)
 export type { AgentDriver } from "./driver";
+export { BaseAgentDriver } from "./driver";
+export { StreamEventBuilder } from "./driver";
 
 // Export AgentEngine (Core orchestration)
 export { AgentEngine, type EngineConfig } from "./AgentEngine";

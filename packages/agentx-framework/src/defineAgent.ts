@@ -1,202 +1,206 @@
 /**
  * defineAgent
  *
- * Vue-like API for defining agents with config-first approach.
+ * Framework's top-level API for composing agents.
+ * Combines driver, reactors, and config into a complete agent definition.
+ *
+ * @example
+ * ```typescript
+ * import { defineAgent, defineDriver, defineReactor, defineConfig } from "@deepractice-ai/agentx-framework";
+ *
+ * const MyAgent = defineAgent({
+ *   name: "MyAgent",
+ *
+ *   driver: defineDriver({
+ *     name: "MyDriver",
+ *     generate: async function* (message) {
+ *       yield "Hello: " + message;
+ *     }
+ *   }),
+ *
+ *   reactors: [
+ *     defineReactor({
+ *       name: "Logger",
+ *       onTextDelta: (event) => console.log(event.data.text)
+ *     })
+ *   ],
+ *
+ *   config: defineConfig({
+ *     sessionId: { type: "string" },
+ *     logLevel: { type: "enum", values: ["debug", "info"], default: "info" }
+ *   })
+ * });
+ *
+ * const agent = MyAgent.create({
+ *   sessionId: "test",
+ *   logLevel: "debug"
+ * });
+ * ```
  */
 
-import type { AgentDriver } from "@deepractice-ai/agentx-core";
-import type { AgentLogger } from "@deepractice-ai/agentx-core";
-import type { Reactor } from "@deepractice-ai/agentx-core";
-import { createAgent } from "@deepractice-ai/agentx-core";
-import type { ConfigSchema, InferConfig } from "./schema";
-import { validateAndMergeConfig } from "./schema";
+import { createAgent, AgentService, type AgentDriver } from "@deepractice-ai/agentx-core";
+import type { DefinedDriver } from "./defineDriver";
+import type { DefinedReactor } from "./defineReactor";
+import type { DefinedConfig, ConfigSchema, InferConfig } from "./defineConfig";
 
 /**
  * Agent definition
- *
- * Defines the structure of an agent:
- * 1. Config schema - What configuration is needed
- * 2. Driver factory - How to create the driver from config
- * 3. Reactors factories - Optional event handlers
- * 4. Logger factory - Optional logger
  */
-export interface AgentDefinition<TSchema extends ConfigSchema> {
+export interface AgentDefinition<TConfig extends ConfigSchema = any> {
   /**
-   * Configuration schema
-   *
-   * Defines the structure and validation rules for agent config.
-   *
-   * @example
-   * ```typescript
-   * config: {
-   *   apiKey: { type: String, required: true },
-   *   model: { type: String, default: "claude-3-5-sonnet-20241022" },
-   *   maxTurns: { type: Number, default: 10 },
-   *   debug: { type: Boolean, optional: true },
-   * }
-   * ```
+   * Agent name (for identification)
    */
-  config: TSchema;
+  name: string;
 
   /**
-   * Driver factory function
-   *
-   * Creates an AgentDriver instance from the validated config.
-   *
-   * @param config - Validated configuration (with defaults applied)
-   * @returns AgentDriver instance
-   *
-   * @example
-   * ```typescript
-   * driver: (config) => new ClaudeDriver({
-   *   apiKey: config.apiKey,
-   *   model: config.model,
-   * })
-   * ```
+   * Driver definition
+   * Can be:
+   * - DefinedDriver (from defineDriver())
+   * - DefinedAgent (from defineAgent()) - enables Agent composition!
+   * - AgentService instance - for dynamic composition
    */
-  driver: (config: InferConfig<TSchema>) => AgentDriver;
+  driver: DefinedDriver<any> | DefinedAgent<any> | AgentService | { create: (config: any) => any };
 
   /**
-   * Reactor factory functions (optional)
-   *
-   * Array of functions that create Reactor instances.
-   * Each reactor receives the validated config.
-   * Return null to skip a reactor based on config.
-   *
-   * @example
-   * ```typescript
-   * reactors: [
-   *   (config) => new ChatLogger({ level: config.logLevel }),
-   *   (config) => config.enableDb ? new Database() : null,
-   * ]
-   * ```
+   * Reactor definitions (optional)
+   * Array of reactors created by defineReactor()
    */
-  reactors?: ((config: InferConfig<TSchema>) => Reactor | null)[];
+  reactors?: DefinedReactor<any>[];
 
   /**
-   * Logger factory function (optional)
-   *
-   * Creates an AgentLogger instance from the validated config.
-   *
-   * @example
-   * ```typescript
-   * logger: (config) => new PinoLogger({
-   *   level: config.logLevel || "info"
-   * })
-   * ```
+   * Config definition (optional)
+   * Created by defineConfig() or undefined for no config
    */
-  logger?: (config: InferConfig<TSchema>) => AgentLogger;
+  config?: DefinedConfig<TConfig>;
+
+  /**
+   * Logger (optional)
+   * TODO: Integrate with logger system
+   */
+  logger?: any;
 }
 
 /**
- * Defined agent
- *
- * Result of calling defineAgent().
- * Provides a create() method to instantiate agents with config.
+ * Defined agent factory
  */
-export interface DefinedAgent<TSchema extends ConfigSchema> {
+export interface DefinedAgent<TConfig extends ConfigSchema = any> {
   /**
-   * Create an agent instance
-   *
-   * Validates config against schema, applies defaults,
-   * and creates driver, reactors, and logger.
-   *
-   * @param config - User configuration (partial, will be merged with defaults)
-   * @returns AgentService instance
-   *
-   * @example
-   * ```typescript
-   * const agent = MyAgent.create({
-   *   apiKey: process.env.ANTHROPIC_API_KEY,
-   *   model: "claude-3-5-sonnet-20241022",
-   * });
-   *
-   * await agent.initialize();
-   * ```
+   * Agent name
    */
-  create(config: Partial<InferConfig<TSchema>>): ReturnType<typeof createAgent>;
+  name: string;
 
   /**
-   * Get the agent definition
+   * Create agent instance
    *
-   * @returns The original definition passed to defineAgent()
+   * @param userConfig - User configuration (merged with defaults)
+   * @returns AgentService instance
    */
-  getDefinition(): AgentDefinition<TSchema>;
+  create: (userConfig?: Partial<InferConfig<TConfig>>) => AgentService;
+
+  /**
+   * Get agent definition
+   */
+  getDefinition: () => AgentDefinition<TConfig>;
 }
 
 /**
  * Define an agent
  *
- * Creates a reusable agent definition with config schema, driver, reactors, and logger.
- * Similar to Vue's defineComponent pattern.
+ * Top-level framework API for composing agents from:
+ * - Driver (how to communicate with LLM)
+ * - Reactors (how to handle events)
+ * - Config (schema and validation)
  *
- * @param definition - Agent definition with config schema and factories
- * @returns DefinedAgent with create() method
+ * @param definition - Agent definition
+ * @returns Defined agent factory
  *
- * @example
+ * @example Simple agent
  * ```typescript
- * import { defineAgent } from "@deepractice-ai/agentx-framework";
- * import { ClaudeDriver } from "@deepractice-ai/agentx-node";
- * import { ChatLogger, Analytics } from "./reactors";
+ * const EchoAgent = defineAgent({
+ *   name: "Echo",
+ *   driver: defineDriver({
+ *     name: "Echo",
+ *     generate: async function* (msg) {
+ *       yield "You said: " + msg;
+ *     }
+ *   })
+ * });
  *
+ * const agent = EchoAgent.create();
+ * ```
+ *
+ * @example Agent with reactors
+ * ```typescript
  * const MyAgent = defineAgent({
- *   config: {
- *     apiKey: { type: String, required: true },
- *     model: { type: String, default: "claude-3-5-sonnet-20241022" },
- *     logLevel: { type: String, default: "info" },
- *   },
- *
- *   driver: (config) => new ClaudeDriver({
- *     apiKey: config.apiKey,
- *     model: config.model,
- *   }),
- *
+ *   name: "MyAgent",
+ *   driver: ClaudeSDKDriver,
  *   reactors: [
- *     (config) => new ChatLogger({ level: config.logLevel }),
- *     (config) => new Analytics(),
+ *     defineReactor({
+ *       name: "Logger",
+ *       onTextDelta: (e) => console.log(e.data.text)
+ *     })
  *   ],
- *
- *   logger: (config) => new PinoLogger({ level: config.logLevel }),
+ *   config: defineConfig({
+ *     apiKey: { type: "string", required: true }
+ *   })
  * });
  *
- * // Create instance
- * const agent = MyAgent.create({
- *   apiKey: process.env.ANTHROPIC_API_KEY,
- *   logLevel: "debug", // Override default
- * });
+ * const agent = MyAgent.create({ apiKey: "xxx" });
+ * ```
  *
- * await agent.initialize();
- * await agent.send("Hello!");
+ * @example Agent with pre-built drivers
+ * ```typescript
+ * import { ClaudeSDKDriver } from "@deepractice-ai/agentx-framework/drivers";
+ *
+ * const ClaudeAgent = defineAgent({
+ *   name: "Claude",
+ *   driver: ClaudeSDKDriver,
+ *   config: defineConfig({
+ *     apiKey: { type: "string", required: true },
+ *     model: { type: "string", default: "claude-3-5-sonnet-20241022" }
+ *   })
+ * });
  * ```
  */
-export function defineAgent<TSchema extends ConfigSchema>(
-  definition: AgentDefinition<TSchema>
-): DefinedAgent<TSchema> {
+export function defineAgent<TConfig extends ConfigSchema = any>(
+  definition: AgentDefinition<TConfig>
+): DefinedAgent<TConfig> {
   return {
-    create(userConfig: Partial<InferConfig<TSchema>>) {
-      // 1. Validate and merge config with defaults
-      const config = validateAndMergeConfig(definition.config, userConfig);
+    name: definition.name,
 
-      // 2. Create driver
-      const driver = definition.driver(config);
+    create: (userConfig?: Partial<InferConfig<TConfig>>) => {
+      // 1. Validate and merge config
+      let config: any = userConfig || {};
 
-      // 3. Create logger (optional)
-      const logger = definition.logger ? definition.logger(config) : undefined;
-
-      // 4. Create reactors (optional)
-      let reactors: Reactor[] | undefined;
-      if (definition.reactors) {
-        reactors = definition.reactors
-          .map((factory) => factory(config))
-          .filter((reactor): reactor is Reactor => reactor !== null);
+      if (definition.config) {
+        config = definition.config.create(userConfig || {});
       }
 
-      // 5. Create agent using core API
-      return createAgent(driver, logger, reactors ? { reactors } : undefined);
+      // 2. Create or get driver
+      let driver: AgentDriver;
+
+      // Check if driver is an AgentService instance
+      if (definition.driver instanceof AgentService) {
+        // Direct AgentService instance
+        driver = definition.driver;
+      } else if ("create" in definition.driver) {
+        // DefinedDriver or DefinedAgent - both have create() method
+        driver = definition.driver.create(config);
+      } else {
+        throw new Error(`[defineAgent] Invalid driver type for agent "${definition.name}"`);
+      }
+
+      // 3. Create reactors (optional)
+      const reactors = definition.reactors?.map((reactor) => reactor.create(config));
+
+      // 4. Create agent using core API
+      return createAgent(
+        driver,
+        definition.logger,
+        reactors ? { reactors } : undefined
+      );
     },
 
-    getDefinition() {
-      return definition;
-    },
+    getDefinition: () => definition,
   };
 }

@@ -1,16 +1,15 @@
 # @deepractice-ai/agentx-framework
 
-**AgentX Framework** - Unified API for defining and creating AI agents with a Vue-like developer experience.
+**AgentX Framework** - Build composable AI agents with a simple, powerful API.
 
-## 📋 Overview
+## 🌟 Highlights
 
-AgentX Framework is the **developer toolkit** for building AI agents. It provides:
-
-- 🎯 **Config-first approach** - Define configuration schema with validation
-- 🔌 **Platform-agnostic** - Works with any driver (Claude, WebSocket, custom)
-- 🎭 **Reactor pattern** - Type-safe event handling
-- 📦 **Reusable definitions** - Define once, create many times
-- 🔍 **Type inference** - Full TypeScript support with automatic type inference
+- 🔗 **Agent Chaining** - Agents can be used as Drivers → unlimited composition!
+- 🎯 **Simple Define API** - `defineDriver`, `defineReactor`, `defineAgent`
+- 🚀 **Pre-configured Agents** - Ready-to-use `ClaudeAgent`, `WebSocketServerAgent`
+- 🔌 **Cross-platform** - Node.js ↔ Browser via WebSocket
+- 📦 **Type-safe** - Full TypeScript support
+- 🎭 **Event-driven** - 4-layer reactor system (Stream, State, Message, Exchange)
 
 ## 🚀 Quick Start
 
@@ -18,465 +17,412 @@ AgentX Framework is the **developer toolkit** for building AI agents. It provide
 
 ```bash
 pnpm add @deepractice-ai/agentx-framework
-
-# Platform-specific drivers
-pnpm add @deepractice-ai/agentx-node  # For Node.js with Claude SDK
-# or
-pnpm add @deepractice-ai/agentx-browser  # For browser with WebSocket
 ```
 
-### Basic Usage
+### Simplest Usage - Pre-configured Agent
 
 ```typescript
-import { defineAgent } from "@deepractice-ai/agentx-framework";
-import { ClaudeDriver } from "@deepractice-ai/agentx-node";
-import { PinoLogger } from "@deepractice-ai/agentx-node";
+import { ClaudeAgent } from "@deepractice-ai/agentx-framework/agents";
 
-// 1. Define your agent structure
-const MyAgent = defineAgent({
-  // Config schema - defines what configuration is needed
-  config: {
-    apiKey: { type: String, required: true },
-    model: { type: String, default: "claude-3-5-sonnet-20241022" },
-    maxTurns: { type: Number, default: 10 },
-  },
-
-  // Driver factory - how to create the driver
-  driver: (config) => new ClaudeDriver({
-    apiKey: config.apiKey,
-    model: config.model,
-    maxTurns: config.maxTurns,
-  }),
-
-  // Logger factory (optional)
-  logger: (config) => new PinoLogger({ level: "info" }),
-});
-
-// 2. Create an instance with your config
-const agent = MyAgent.create({
+// 1. Create agent
+const agent = ClaudeAgent.create({
   apiKey: process.env.ANTHROPIC_API_KEY,
-  // model and maxTurns use defaults
 });
 
-// 3. Use the agent
+// 2. Initialize
 await agent.initialize();
 
-agent.react({
-  onAssistantMessage(event) {
-    console.log("Assistant:", event.data.content);
-  },
+// 3. Use it
+await agent.send("Hello!");
+
+// 4. Clean up
+await agent.destroy();
+```
+
+## 🔥 Agent Chaining - The Game Changer
+
+**Agents implement the Driver interface**, which means **Agents can be used as Drivers**!
+
+### Example: WebSocket Server Agent
+
+```typescript
+import { ClaudeAgent } from "@deepractice-ai/agentx-framework/agents";
+import { WebSocketReactor } from "@deepractice-ai/agentx-framework";
+import { defineAgent } from "@deepractice-ai/agentx-framework";
+
+// Agent 1: Base Claude Agent
+const claudeAgent = ClaudeAgent.create({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-await agent.send("Hello!");
-await agent.destroy();
+// Agent 2: Wrap Claude Agent + add WebSocket forwarding
+const wsAgent = defineAgent({
+  name: "WebSocketServer",
+  driver: claudeAgent,  // ← Agent as Driver!
+  reactors: [WebSocketReactor.create({ ws: websocket })],
+});
+
+await wsAgent.initialize();
+await wsAgent.send("Hello!");
+// Events are automatically forwarded to WebSocket!
+```
+
+### Or use the pre-configured version:
+
+```typescript
+import { WebSocketServerAgent } from "@deepractice-ai/agentx-framework/agents";
+
+const agent = WebSocketServerAgent.create({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  ws: websocket,
+});
+
+// WebSocketServerAgent = ClaudeAgent + WebSocketReactor
+```
+
+### Cross-platform Architecture
+
+```
+┌─────────────────────┐          ┌─────────────────────┐
+│   Server (Node.js)  │          │   Browser (Web)     │
+├─────────────────────┤          ├─────────────────────┤
+│ WebSocketServerAgent│  ←───→   │ defineAgent({       │
+│ = ClaudeAgent       │   WS     │   driver: WebSocket │
+│   + WebSocketReactor│          │   Driver            │
+│                     │          │ })                  │
+│ • Generates Events  │  ─────→  │ • Receives Events   │
+│ • Forwards via WS   │  Events  │ • Renders to UI     │
+└─────────────────────┘          └─────────────────────┘
+```
+
+### Unlimited Chaining
+
+```typescript
+// Agent A: Base Claude
+const agentA = ClaudeAgent.create({ apiKey: "xxx" });
+
+// Agent B: A + Translation
+const agentB = defineAgent({
+  driver: agentA,  // Agent as Driver!
+  reactors: [TranslationReactor],
+});
+
+// Agent C: B + WebSocket
+const agentC = defineAgent({
+  driver: agentB,  // Chain continues!
+  reactors: [WebSocketReactor],
+});
+
+// A → B → C → ... unlimited!
 ```
 
 ## 🎯 Core Concepts
 
-### 1. defineAgent - Vue-like Agent Definition
+### 1. defineDriver - Create Custom Drivers
 
 ```typescript
-const MyAgent = defineAgent({
-  config: { /* schema */ },
-  driver: (config) => /* driver instance */,
-  reactors: [(config) => /* reactor instance */],
-  logger: (config) => /* logger instance */,
+import { defineDriver } from "@deepractice-ai/agentx-framework";
+import { StreamEventBuilder } from "@deepractice-ai/agentx-core";
+
+const EchoDriver = defineDriver({
+  name: "Echo",
+
+  async *sendMessage(message, config) {
+    // Extract text
+    const firstMsg = await extractFirst(message);
+    const text = firstMsg.content;
+
+    // Create builder
+    const builder = new StreamEventBuilder("echo");
+
+    // Yield events
+    yield builder.messageStart("msg_1", "echo-v1");
+    yield builder.textContentBlockStart(0);
+    yield builder.textDelta(`You said: ${text}`, 0);
+    yield builder.textContentBlockStop(0);
+    yield builder.messageStop();
+  },
 });
+
+// Use it
+const driver = EchoDriver.create({ sessionId: "test" });
 ```
 
 **Key points**:
-- **Separates definition from instantiation** - Like Vue's `defineComponent`
-- **Config-first** - Schema defines what configuration is needed
-- **Factory functions** - Driver, reactors, and logger are created from config
-- **Type-safe** - TypeScript infers config types from schema
+- Only one method: `sendMessage(message, config)`
+- Developer fully controls event generation
+- Returns `AsyncIterable<StreamEventType>`
 
-### 2. Config Schema - Type-safe Configuration
-
-Define your configuration structure with validation:
+### 2. defineReactor - Handle Events
 
 ```typescript
-config: {
-  // Required field
-  apiKey: { type: String, required: true },
+import { defineReactor } from "@deepractice-ai/agentx-framework";
 
-  // Field with default value
-  model: { type: String, default: "claude-3-5-sonnet-20241022" },
+const LoggerReactor = defineReactor({
+  name: "Logger",
 
-  // Optional field
-  debug: { type: Boolean, optional: true },
-
-  // Number field
-  maxTurns: { type: Number, default: 10 },
-}
-```
-
-**Supported types**:
-- `String` - string values
-- `Number` - number values
-- `Boolean` - boolean values
-- `Object` - object values
-
-**Field properties**:
-- `type` - Field type (required)
-- `required` - Must be provided by user
-- `default` - Default value if not provided
-- `optional` - Can be undefined
-
-### 3. Driver Factory - Platform Abstraction
-
-```typescript
-driver: (config) => new ClaudeDriver({
-  apiKey: config.apiKey,
-  model: config.model,
-})
-```
-
-**Available drivers**:
-- `ClaudeDriver` (from `@deepractice-ai/agentx-node`) - Node.js with Claude SDK
-- `BrowserDriver` (from `@deepractice-ai/agentx-browser`) - Browser with WebSocket
-- Custom drivers implementing `AgentDriver` interface
-
-### 4. Reactors - Event Handling
-
-Reactors are type-safe event handlers that receive events from the agent.
-
-```typescript
-import type { MessageReactor } from "@deepractice-ai/agentx-framework";
-
-// Define your reactor
-class ChatLogger implements MessageReactor {
-  constructor(private config: { prefix: string }) {}
-
-  onUserMessage(event) {
-    console.log(`${this.config.prefix} User:`, event.data.content);
-  }
-
-  onAssistantMessage(event) {
-    console.log(`${this.config.prefix} Assistant:`, event.data.content);
-  }
-
-  onToolUseMessage(event) {
-    console.log(`${this.config.prefix} Tool:`, event.data.toolCall.name);
-  }
-
-  onErrorMessage(event) {
-    console.error(`${this.config.prefix} Error:`, event.data.message);
-  }
-}
-
-// Use in defineAgent
-const MyAgent = defineAgent({
-  config: {
-    apiKey: { type: String, required: true },
-    logPrefix: { type: String, default: "[App]" },
+  // Only implement events you care about
+  onTextDelta: (event, config) => {
+    console.log(event.data.text);
   },
 
-  driver: (config) => new ClaudeDriver({ apiKey: config.apiKey }),
-
-  // Reactor factories get the config
-  reactors: [
-    (config) => new ChatLogger({ prefix: config.logPrefix }),
-  ],
-});
-```
-
-**Reactor types**:
-- `StreamReactor` - Handle streaming events (text deltas, tool use, etc.)
-- `StateReactor` - Handle state transitions (thinking, responding, etc.)
-- `MessageReactor` - Handle complete messages (user, assistant, tool use)
-- `ExchangeReactor` - Handle request/response pairs (analytics, cost tracking)
-
-**Partial reactors**:
-All reactors support partial implementation - only implement methods you need!
-
-```typescript
-agent.react({
-  // Only handle assistant messages
-  onAssistantMessage(event) {
-    console.log(event.data.content);
+  onMessageComplete: (event, config) => {
+    console.log("Message done!");
   },
 });
+
+// Use it
+const reactor = LoggerReactor.create({ logLevel: "debug" });
 ```
 
-## 📚 Complete Example
+**Supported event types**:
+- **Stream layer**: `onTextDelta`, `onMessageStart`, `onMessageStop`, etc.
+- **State layer**: `onConversationStart`, `onToolPlanned`, `onErrorOccurred`, etc.
+- **Message layer**: `onUserMessage`, `onAssistantMessage`, `onToolUseMessage`
+- **Exchange layer**: `onExchangeRequest`, `onExchangeResponse`
+
+### 3. defineAgent - Compose Everything
 
 ```typescript
-import { defineAgent } from "@deepractice-ai/agentx-framework";
-import { ClaudeDriver } from "@deepractice-ai/agentx-node";
-import { PinoLogger } from "@deepractice-ai/agentx-node";
-import type { MessageReactor, ExchangeReactor } from "@deepractice-ai/agentx-framework";
+import { defineAgent, defineConfig } from "@deepractice-ai/agentx-framework";
 
-// Define custom reactors
-class ChatLogger implements MessageReactor {
-  constructor(private options: { level: string }) {}
-
-  onUserMessage(event) {
-    if (this.options.level === "debug") {
-      console.log("[User]", event.data.content);
-    }
-  }
-
-  onAssistantMessage(event) {
-    console.log("[Assistant]", event.data.content);
-  }
-
-  onToolUseMessage(event) {
-    console.log("[Tool]", event.data.toolCall.name);
-  }
-
-  onErrorMessage(event) {
-    console.error("[Error]", event.data.message);
-  }
-}
-
-class Analytics implements ExchangeReactor {
-  onExchangeRequest(event) {
-    console.log("Request started:", event.data.userMessage.id);
-  }
-
-  onExchangeResponse(event) {
-    console.log("Response completed:", {
-      duration: event.data.durationMs,
-      cost: event.data.costUsd,
-      tokens: event.data.usage,
-    });
-  }
-}
-
-// Define agent
 const MyAgent = defineAgent({
-  // Configuration schema
-  config: {
-    // Driver config
-    apiKey: { type: String, required: true },
-    model: { type: String, default: "claude-3-5-sonnet-20241022" },
-    maxTurns: { type: Number, default: 10 },
+  name: "MyAgent",
 
-    // Reactor config
-    logLevel: { type: String, default: "info" },
-    enableAnalytics: { type: Boolean, default: false },
-  },
+  // Driver: how to communicate
+  driver: EchoDriver,
 
-  // Driver factory
-  driver: (config) => new ClaudeDriver({
-    apiKey: config.apiKey,
-    model: config.model,
-    maxTurns: config.maxTurns,
-  }),
+  // Reactors: how to handle events (optional)
+  reactors: [LoggerReactor],
 
-  // Reactors factories
-  reactors: [
-    (config) => new ChatLogger({ level: config.logLevel }),
-    (config) => config.enableAnalytics ? new Analytics() : null,
-  ],
-
-  // Logger factory
-  logger: (config) => new PinoLogger({
-    level: config.logLevel,
+  // Config: schema and validation (optional)
+  config: defineConfig({
+    apiKey: { type: "string", required: true },
+    model: { type: "string", default: "claude-3-5-sonnet" },
   }),
 });
 
 // Create instance
 const agent = MyAgent.create({
+  apiKey: "xxx",
+  // model uses default
+});
+```
+
+## 📦 Pre-configured Agents
+
+### ClaudeAgent
+
+Uses Claude SDK for Node.js:
+
+```typescript
+import { ClaudeAgent } from "@deepractice-ai/agentx-framework/agents";
+
+const agent = ClaudeAgent.create({
   apiKey: process.env.ANTHROPIC_API_KEY,
-  logLevel: "debug",
-  enableAnalytics: true,
+  model: "claude-3-5-sonnet-20241022",  // optional
+});
+```
+
+### WebSocketServerAgent
+
+ClaudeAgent + WebSocket forwarding (Agent composition!):
+
+```typescript
+import { WebSocketServerAgent } from "@deepractice-ai/agentx-framework/agents";
+import { WebSocket } from "ws";
+
+const ws = new WebSocket("...");
+
+const agent = WebSocketServerAgent.create({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  ws: ws,
 });
 
-// Initialize and use
-await agent.initialize();
+// All events automatically forwarded to WebSocket!
+```
 
-// Can still add dynamic reactors
-agent.react({
-  onAssistantMessage(event) {
-    // Update UI or do something else
+## 🎨 Built-in Drivers & Reactors
+
+### Drivers
+
+- **ClaudeSDKDriver** - Node.js Claude SDK integration
+- **WebSocketDriver** - Browser WebSocket client
+
+### Reactors
+
+- **WebSocketReactor** - Forward events to WebSocket
+
+## 📚 Complete Example
+
+```typescript
+import {
+  defineAgent,
+  defineDriver,
+  defineReactor,
+  defineConfig,
+} from "@deepractice-ai/agentx-framework";
+import { ClaudeAgent } from "@deepractice-ai/agentx-framework/agents";
+
+// 1. Define custom reactor
+const ConsoleReactor = defineReactor({
+  name: "Console",
+
+  onTextDelta: (event) => {
+    process.stdout.write(event.data.text);
+  },
+
+  onMessageStop: () => {
+    console.log("\n--- Message Complete ---");
   },
 });
 
-await agent.send("Hello, how can you help me?");
+// 2. Compose with Claude
+const MyAgent = defineAgent({
+  name: "MyAgent",
+  driver: ClaudeAgent,  // Use pre-built agent!
+  reactors: [ConsoleReactor],
+  config: defineConfig({
+    apiKey: { type: "string", required: true },
+  }),
+});
 
-// Clean up
+// 3. Create and use
+const agent = MyAgent.create({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+await agent.initialize();
+await agent.send("Write a haiku about code");
 await agent.destroy();
 ```
 
-## 🎨 Advanced Patterns
+## 🏗️ Architecture
 
-### Multi-Environment Configuration
+### Directory Structure
+
+```
+src/
+├── interfaces/     # Pure interface definitions
+│   ├── StreamReactor.ts
+│   ├── StateReactor.ts
+│   ├── MessageReactor.ts
+│   └── ExchangeReactor.ts
+│
+├── drivers/        # Driver implementations
+│   ├── ClaudeSDKDriver.ts
+│   └── WebSocketDriver.ts
+│
+├── reactors/       # Reactor implementations
+│   └── WebSocketReactor.ts
+│
+├── agents/         # Pre-configured Agents
+│   ├── ClaudeAgent.ts
+│   └── WebSocketServerAgent.ts
+│
+├── internal/       # Internal implementations
+│   └── ReactorAdapter.ts
+│
+├── defineDriver.ts
+├── defineReactor.ts
+├── defineConfig.ts
+└── defineAgent.ts
+```
+
+### 4-Layer Event System
+
+```
+Driver produces Stream events
+         ↓
+State layer (lifecycle, tool execution)
+         ↓
+Message layer (complete messages)
+         ↓
+Exchange layer (analytics, cost)
+```
+
+## 🎓 Advanced Patterns
+
+### Multi-stage Processing Pipeline
 
 ```typescript
-// config/agents.ts
-import { defineAgent } from "@deepractice-ai/agentx-framework";
-import { ClaudeDriver } from "@deepractice-ai/agentx-node";
+// Stage 1: Raw generation
+const rawAgent = ClaudeAgent.create({ apiKey: "xxx" });
 
-const baseDefinition = {
-  config: {
-    apiKey: { type: String, required: true },
-    model: { type: String, default: "claude-3-5-sonnet-20241022" },
-    logLevel: { type: String, default: "info" },
-  },
-  driver: (config) => new ClaudeDriver({
-    apiKey: config.apiKey,
-    model: config.model,
-  }),
-};
-
-export const ProductionAgent = defineAgent({
-  ...baseDefinition,
-  logger: (config) => new PinoLogger({ level: "error" }),
-  reactors: [
-    (config) => new SentryReactor(),
-    (config) => new AnalyticsReactor(),
-  ],
+// Stage 2: Add translation
+const translatedAgent = defineAgent({
+  driver: rawAgent,
+  reactors: [TranslationReactor],
 });
 
-export const DevelopmentAgent = defineAgent({
-  ...baseDefinition,
-  logger: (config) => new PinoLogger({ level: "debug", pretty: true }),
-  reactors: [
-    (config) => new DebugReactor(),
-  ],
+// Stage 3: Add formatting
+const formattedAgent = defineAgent({
+  driver: translatedAgent,
+  reactors: [MarkdownReactor],
 });
 
-// app.ts
-const AgentType = process.env.NODE_ENV === "production"
-  ? ProductionAgent
-  : DevelopmentAgent;
-
-const agent = AgentType.create({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// rawAgent → translatedAgent → formattedAgent
 ```
 
 ### Conditional Reactors
 
 ```typescript
-const MyAgent = defineAgent({
-  config: {
-    apiKey: { type: String, required: true },
-    enableDb: { type: Boolean, default: false },
-    dbUrl: { type: String, optional: true },
-    enableMetrics: { type: Boolean, default: false },
-  },
-
-  driver: (config) => new ClaudeDriver({ apiKey: config.apiKey }),
-
+const agent = defineAgent({
+  driver: ClaudeAgent,
   reactors: [
-    // Always enabled
-    (config) => new ChatLogger(),
-
-    // Conditional - only if enableDb is true
-    (config) => config.enableDb && config.dbUrl
-      ? new DatabaseReactor({ url: config.dbUrl })
-      : null,
-
-    // Conditional - only if enableMetrics is true
-    (config) => config.enableMetrics
-      ? new MetricsReactor()
-      : null,
+    LoggerReactor,
+    config.enableDb ? DatabaseReactor : null,
+    config.enableMetrics ? MetricsReactor : null,
   ].filter(Boolean),
 });
 ```
 
-### Testing with Mock Driver
+### Dynamic Composition
 
 ```typescript
-// tests/agent.test.ts
-import { defineAgent } from "@deepractice-ai/agentx-framework";
+// Create base agent
+const base = ClaudeAgent.create({ apiKey: "xxx" });
 
-class MockDriver implements AgentDriver {
-  readonly sessionId = "test-session";
-  readonly driverSessionId = "mock-driver";
-
-  async connect(eventBus) {
-    // Mock implementation
-  }
-
-  abort() {}
-  async destroy() {}
-}
-
-const TestAgent = defineAgent({
-  config: {
-    mockResponses: { type: Object, default: [] },
-  },
-
-  driver: (config) => new MockDriver(config.mockResponses),
-});
-
-describe("MyAgent", () => {
-  it("should handle messages", async () => {
-    const agent = TestAgent.create({
-      mockResponses: ["Hello!", "How are you?"],
-    });
-
-    await agent.initialize();
-    await agent.send("Hi");
-
-    expect(agent.messages).toHaveLength(2);
-  });
+// Dynamically add capabilities
+const enhanced = defineAgent({
+  driver: base,
+  reactors: getUserSelectedReactors(),
 });
 ```
 
-## 📖 API Reference
+## 🧪 Testing
 
-### defineAgent(definition)
+Agents can be easily mocked for testing:
 
-Defines a reusable agent structure.
+```typescript
+import { defineDriver } from "@deepractice-ai/agentx-framework";
 
-**Parameters**:
-- `definition.config` - Config schema defining required and optional fields
-- `definition.driver` - Factory function creating AgentDriver from config
-- `definition.reactors` - Optional array of reactor factory functions
-- `definition.logger` - Optional factory function creating AgentLogger
+const MockDriver = defineDriver({
+  name: "Mock",
+  async *sendMessage(message, config) {
+    const builder = new StreamEventBuilder("mock");
+    yield builder.messageStart("msg_1", "mock");
+    yield builder.textDelta(config.mockResponse, 0);
+    yield builder.messageStop();
+  },
+});
 
-**Returns**: `DefinedAgent` with `create()` method
+// Test agent
+const testAgent = defineAgent({
+  driver: MockDriver,
+  reactors: [YourReactor],
+});
 
-### DefinedAgent.create(config)
-
-Creates an agent instance with the provided configuration.
-
-**Parameters**:
-- `config` - User configuration (partial, merged with defaults)
-
-**Returns**: `AgentService` instance
-
-**Throws**: Error if required config fields are missing or types are invalid
-
-### DefinedAgent.getDefinition()
-
-Returns the original definition passed to `defineAgent()`.
-
-**Returns**: `AgentDefinition`
+const agent = testAgent.create({
+  mockResponse: "Mocked response",
+});
+```
 
 ## 🔗 Related Packages
 
-- **[@deepractice-ai/agentx-core](../agentx-core)** - Core implementation (AgentService, EventBus, Reactors)
-- **[@deepractice-ai/agentx-node](../agentx-node)** - Node.js platform (ClaudeDriver, PinoLogger)
-- **[@deepractice-ai/agentx-browser](../agentx-browser)** - Browser platform (BrowserDriver, ConsoleLogger)
+- **[@deepractice-ai/agentx-core](../agentx-core)** - Core engine (EventBus, AgentService)
 - **[@deepractice-ai/agentx-types](../agentx-types)** - Message types
 - **[@deepractice-ai/agentx-event](../agentx-event)** - Event types
-
-## 📝 Design Philosophy
-
-### Framework vs SDK
-
-- **Framework** (this package) - Developer toolkit for **defining** agents
-  - Provides `defineAgent` for creating reusable agent definitions
-  - Config schema, validation, and type inference
-  - Re-exports all necessary types
-
-- **SDK** (`agentx-node`, `agentx-browser`) - Platform-specific **implementations**
-  - Provides ready-to-use drivers and loggers
-  - Platform-optimized (Node.js or Browser)
-  - Can provide convenience wrappers (e.g., `createClaudeAgent()`)
-
-### Inspiration
-
-AgentX Framework draws inspiration from:
-- **Vue 3** - `defineComponent` pattern, composition API
-- **Zod** - Schema validation with type inference
-- **React** - Component-based architecture
-- **GraphQL** - Schema-first design
 
 ## 📄 License
 
