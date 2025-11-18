@@ -51,6 +51,12 @@ export class WebSocketLogger implements LoggerProvider {
   }
 
   private connect(): void {
+    // Only connect in development environment
+    const isDev = import.meta.env?.DEV || process.env?.NODE_ENV === 'development';
+    if (!isDev) {
+      return; // Skip WebSocket connection in production
+    }
+
     try {
       this.ws = new WebSocket(this.wsUrl);
 

@@ -30,6 +30,12 @@ export const ClaudeAgent = defineAgent({
   config: defineConfig({
     apiKey: { type: "string", required: true },
     model: { type: "string", default: "claude-3-5-sonnet-20241022" },
+    baseUrl: { type: "string" },
+    cwd: { type: "string" },
+    systemPrompt: { type: "string" },
+    maxTurns: { type: "number" },
+    permissionMode: { type: "string" },
+    mcpServers: { type: "object" },
     // Add other common config fields as needed
   }),
 });

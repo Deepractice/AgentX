@@ -45,6 +45,12 @@ export interface WebSocketServerConfig {
    * @default "/ws"
    */
   path?: string;
+
+  /**
+   * Optional HTTP request handler for serving static files
+   * Useful for production deployments where you want to serve the built frontend
+   */
+  onRequest?: (req: http.IncomingMessage, res: http.ServerResponse) => void;
 }
 
 /**
@@ -175,10 +181,10 @@ export class WebSocketServer {
   constructor(config: WebSocketServerConfig) {
     this.config = config;
 
-    const { port, host = "0.0.0.0", path = "/ws" } = config;
+    const { port, host = "0.0.0.0", path = "/ws", onRequest } = config;
 
-    // Create HTTP server
-    this.httpServer = http.createServer();
+    // Create HTTP server with optional request handler
+    this.httpServer = http.createServer(onRequest || undefined);
 
     // Create WebSocket server
     this.wss = new WsServer({
@@ -258,27 +264,31 @@ export class WebSocketServer {
   async close(): Promise<void> {
     console.log("[WebSocketServer] Closing server...");
 
+    // Close all WebSocket connections first
+    for (const ws of this.sessions.keys()) {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close(1000, "Server shutting down");
+      }
+    }
+
     // Destroy all sessions
     const destroyPromises = Array.from(this.sessions.values()).map((session) =>
-      session.destroy()
+      session.destroy().catch((err) => {
+        console.error("[WebSocketServer] Error destroying session:", err);
+      })
     );
     await Promise.all(destroyPromises);
     this.sessions.clear();
 
     // Close WebSocket server
-    await new Promise<void>((resolve, reject) => {
-      this.wss.close((err) => {
-        if (err) reject(err);
-        else resolve();
-      });
+    await new Promise<void>((resolve) => {
+      this.wss.close(() => resolve());
     });
 
-    // Close HTTP server
-    await new Promise<void>((resolve, reject) => {
-      this.httpServer.close((err) => {
-        if (err) reject(err);
-        else resolve();
-      });
+    // Close HTTP server and force close all connections
+    await new Promise<void>((resolve) => {
+      this.httpServer.closeAllConnections();
+      this.httpServer.close(() => resolve());
     });
 
     console.log("[WebSocketServer] Server closed");

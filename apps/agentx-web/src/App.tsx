@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { WebSocketBrowserAgent } from "@deepractice-ai/agentx-framework/browser";
 import type { AgentService } from "@deepractice-ai/agentx-framework/browser";
 import { Chat } from "@deepractice-ai/agentx-ui";
-import "./App.css";
 
 export default function App() {
   const [agent, setAgent] = useState<AgentService | null>(null);
@@ -23,7 +22,7 @@ export default function App() {
     const agentInstance = WebSocketBrowserAgent.create({
       url: wsUrl,
       sessionId,
-    });
+    } as any);
 
     // Initialize agent and connect
     agentInstance
@@ -68,15 +67,10 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-[#667eea] to-[#764ba2]">
-      {/* Header */}
-      <div className="h-14 flex items-center justify-center px-4 bg-white/10 backdrop-blur-sm border-b border-white/20">
-        <h1 className="font-semibold text-lg text-white">Deepractice Agent</h1>
-      </div>
-
+    <div className="h-screen flex flex-col bg-white">
       {/* Chat area */}
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-7xl h-full bg-white rounded-xl shadow-2xl overflow-hidden">
+      <div className="flex-1 flex items-center justify-center">
+        <div className="w-full max-w-7xl h-full">
           <Chat agent={agent} />
         </div>
       </div>

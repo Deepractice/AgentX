@@ -41,9 +41,13 @@ import {
 import { StreamEventBuilder } from "@deepractice-ai/agentx-core";
 import type { UserMessage } from "@deepractice-ai/agentx-types";
 import type { StreamEventType } from "@deepractice-ai/agentx-event";
+import { LoggerFactory } from "@deepractice-ai/agentx-logger";
 import { defineDriver } from "~/defineDriver";
 import { observableToAsyncIterable } from "~/utils/observableToAsyncIterable";
 import { Subject } from "rxjs";
+
+// Create logger for ClaudeSDKDriver
+const logger = LoggerFactory.getLogger("ClaudeSDKDriver");
 
 /**
  * Configuration for ClaudeSDKDriver
@@ -389,7 +393,7 @@ async function* transformSDKMessages(
         break;
 
       default:
-        console.warn("[ClaudeSDKDriver] Unknown SDK message type:", sdkMsg);
+        logger.warn("Unknown SDK message type:", sdkMsg);
     }
   }
 }
@@ -429,24 +433,35 @@ export const ClaudeSDKDriver = defineDriver<ClaudeSDKDriverConfig>({
     const state = getDriverState(ClaudeSDKDriver, config);
 
     if (state.isInitialized) {
-      console.log("🔄 [ClaudeSDKDriver] Already initialized (process reused)");
+      logger.debug("Already initialized (process reused)");
       return;
     }
 
-    console.log("🚀 [ClaudeSDKDriver] ========================================");
-    console.log("🚀 [ClaudeSDKDriver] STREAMING INPUT MODE ENABLED");
-    console.log("🚀 [ClaudeSDKDriver] Claude SDK process will start ONCE and stay alive");
-    console.log("🚀 [ClaudeSDKDriver] Expected performance:");
-    console.log("🚀 [ClaudeSDKDriver]   - First message: ~6-7s (process startup)");
-    console.log("🚀 [ClaudeSDKDriver]   - Subsequent messages: ~1-2s (3-5x faster!)");
-    console.log("🚀 [ClaudeSDKDriver] ========================================");
+    logger.info("========================================");
+    logger.info("STREAMING INPUT MODE ENABLED");
+    logger.info("Claude SDK process will start ONCE and stay alive");
+    logger.info("========================================");
+    logger.info("Configuration:", {
+      model: config.model || "default",
+      baseUrl: config.baseUrl || "default",
+      cwd: config.cwd || "default",
+      permissionMode: config.permissionMode || "default",
+      maxTurns: config.maxTurns || "unlimited",
+      mcpServers: config.mcpServers ? Object.keys(config.mcpServers).join(", ") : "none",
+      systemPrompt: config.systemPrompt
+        ? (typeof config.systemPrompt === "string"
+            ? config.systemPrompt.substring(0, 50) + (config.systemPrompt.length > 50 ? "..." : "")
+            : "preset")
+        : "default",
+    });
+    logger.info("========================================");
 
     // Get stored Claude SDK session ID (if exists)
     const frameworkSessionId = config.sessionId;
     const claudeSessionId = frameworkSessionId ? state.sessionMap.get(frameworkSessionId) : undefined;
 
     if (claudeSessionId) {
-      console.log(`[ClaudeSDKDriver] Resuming Claude session: ${claudeSessionId}`);
+      logger.info(`Resuming Claude session: ${claudeSessionId}`);
     }
 
     // Build SDK options
@@ -472,31 +487,31 @@ export const ClaudeSDKDriver = defineDriver<ClaudeSDKDriverConfig>({
     // Start background thread to forward responses to responseSubject
     (async () => {
       try {
-        console.log("🎧 [ClaudeSDKDriver] Background listener started (waiting for SDK responses)");
+        logger.debug("Background listener started (waiting for SDK responses)");
         for await (const sdkMsg of state.claudeQuery!) {
           // Capture session ID
           if (sdkMsg.session_id && frameworkSessionId) {
             state.sessionMap.set(frameworkSessionId, sdkMsg.session_id);
-            console.log(`📝 [ClaudeSDKDriver] Captured Claude session_id: ${sdkMsg.session_id}`);
+            logger.debug(`Captured Claude session_id: ${sdkMsg.session_id}`);
           }
 
           // Broadcast to all subscribers
-          console.log(`📡 [ClaudeSDKDriver] Broadcasting SDK message (type: ${sdkMsg.type})`);
+          logger.debug(`Broadcasting SDK message (type: ${sdkMsg.type})`);
           state.responseSubject.next(sdkMsg);
         }
 
         // Query completed
-        console.log("🏁 [ClaudeSDKDriver] Claude SDK query completed");
+        logger.info("Claude SDK query completed");
         state.responseSubject.complete();
       } catch (error) {
-        console.error("❌ [ClaudeSDKDriver] Background listener error:", error);
+        logger.error("Background listener error:", { error: error instanceof Error ? error.message : String(error) });
         state.responseSubject.error(error);
       }
     })();
 
-    console.log("✅ [ClaudeSDKDriver] Streaming Input Mode initialized successfully");
-    console.log("✅ [ClaudeSDKDriver] Claude SDK process is now RUNNING in background");
-    console.log("✅ [ClaudeSDKDriver] Ready to handle messages with persistent process");
+    logger.info("Streaming Input Mode initialized successfully");
+    logger.debug("Claude SDK process is now RUNNING in background");
+    logger.debug("Ready to handle messages with persistent process");
   },
 
   async *sendMessage(message, config) {
@@ -523,8 +538,8 @@ export const ClaudeSDKDriver = defineDriver<ClaudeSDKDriverConfig>({
       const prompt = buildPrompt(msg);
 
       // Push to Subject (Claude SDK reads from promptSubject)
-      console.log(`📤 [ClaudeSDKDriver] Pushing message to Subject (reusing existing process)`);
-      console.log(`📤 [ClaudeSDKDriver] Message: ${prompt.substring(0, 80)}...`);
+      logger.debug("Pushing message to Subject (reusing existing process)");
+      logger.debug(`Message: ${prompt.substring(0, 80)}...`);
       state.promptSubject.next(sdkUserMessage);
 
       // Subscribe to responseSubject (broadcast from background thread)
@@ -536,7 +551,7 @@ export const ClaudeSDKDriver = defineDriver<ClaudeSDKDriverConfig>({
           // Only stop after result event (entire exchange complete, including tool calls)
           // Do NOT stop after message_stop - that's just one turn, tool calls need multiple turns
           if (sdkMsg.type === "result") {
-            console.log(`🏁 [ClaudeSDKDriver] Result received, stopping this subscription`);
+            logger.debug("Result received, stopping this subscription");
             break;
           }
         }
@@ -556,7 +571,7 @@ export const ClaudeSDKDriver = defineDriver<ClaudeSDKDriverConfig>({
   },
 
   onDestroy: async () => {
-    console.log("🛑 [ClaudeSDKDriver] Destroying driver (shutting down persistent process)...");
+    logger.info("Destroying driver (shutting down persistent process)...");
     const state = driverStates.get(ClaudeSDKDriver);
 
     if (state) {
@@ -569,10 +584,10 @@ export const ClaudeSDKDriver = defineDriver<ClaudeSDKDriverConfig>({
 
       state.isInitialized = false;
       driverStates.delete(ClaudeSDKDriver);
-      console.log("🛑 [ClaudeSDKDriver] Claude SDK process terminated");
-      console.log("🛑 [ClaudeSDKDriver] Streaming Input Mode disabled");
+      logger.debug("Claude SDK process terminated");
+      logger.debug("Streaming Input Mode disabled");
     }
 
-    console.log("🛑 [ClaudeSDKDriver] Driver destroyed");
+    logger.info("Driver destroyed");
   },
 });
