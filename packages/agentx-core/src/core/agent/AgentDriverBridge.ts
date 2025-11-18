@@ -16,6 +16,7 @@ import type { AgentReactor, AgentReactorContext } from "~/interfaces/AgentReacto
 import type { AgentDriver } from "~/interfaces/AgentDriver";
 import type { UserMessageEvent, ErrorMessageEvent } from "@deepractice-ai/agentx-event";
 import type { ErrorMessage } from "@deepractice-ai/agentx-types";
+import { createLogger, type LoggerProvider } from "@deepractice-ai/agentx-logger";
 
 /**
  * AgentDriverBridge
@@ -28,22 +29,30 @@ export class AgentDriverBridge implements AgentReactor {
 
   private context: AgentReactorContext | null = null;
   private abortController: AbortController | null = null;
+  private logger: LoggerProvider;
 
-  constructor(private driver: AgentDriver) {}
+  constructor(private driver: AgentDriver) {
+    this.logger = createLogger("core/agent/AgentDriverBridge");
+  }
 
   async initialize(context: AgentReactorContext): Promise<void> {
     this.context = context;
 
-    console.log("[AgentDriverBridge] ========== INITIALIZING ==========");
-    console.log("[AgentDriverBridge] About to subscribe to user_message events");
+    this.logger.info("Initializing DriverBridge", {
+      agentId: context.agentId,
+      sessionId: context.sessionId,
+      driverType: this.driver.constructor.name,
+    });
 
     // Subscribe to user_message events
     context.consumer.consumeByType("user_message", this.handleUserMessage.bind(this));
 
-    console.log("[AgentDriverBridge] Successfully subscribed to user_message");
+    this.logger.debug("Subscribed to user_message events");
   }
 
   async destroy(): Promise<void> {
+    this.logger.info("Destroying DriverBridge");
+
     // Abort any ongoing operations
     if (this.abortController) {
       this.abortController.abort();
@@ -55,6 +64,7 @@ export class AgentDriverBridge implements AgentReactor {
     await this.driver.destroy();
 
     this.context = null;
+    this.logger.debug("DriverBridge destroyed");
   }
 
   /**
@@ -63,13 +73,16 @@ export class AgentDriverBridge implements AgentReactor {
    * Calls driver.sendMessage() and forwards all Stream events to EventBus.
    */
   private async handleUserMessage(event: UserMessageEvent): Promise<void> {
-    console.log("[AgentDriverBridge] ========== HANDLING USER MESSAGE ==========");
-    console.log("[AgentDriverBridge] Event UUID:", event.uuid);
-    console.log("[AgentDriverBridge] Message ID:", event.data.id);
-    console.log("[AgentDriverBridge] Message content:", event.data.content);
+    this.logger.info("Handling user message", {
+      messageId: event.data.id,
+      eventUuid: event.uuid,
+      contentPreview: typeof event.data.content === "string"
+        ? event.data.content.substring(0, 50)
+        : "[complex content]",
+    });
 
     if (!this.context) {
-      console.error("[AgentDriverBridge] ERROR: No context available");
+      this.logger.error("No context available");
       return;
     }
 
@@ -80,31 +93,42 @@ export class AgentDriverBridge implements AgentReactor {
     this.abortController = new AbortController();
 
     try {
-      console.log("[AgentDriverBridge] About to call driver.sendMessage()");
-      console.log("[AgentDriverBridge] Driver type:", this.driver.constructor.name);
+      this.logger.debug("Calling driver.sendMessage", {
+        driverType: this.driver.constructor.name,
+      });
 
       // Iterate through Stream events from driver
       let eventCount = 0;
       for await (const streamEvent of this.driver.sendMessage(event.data)) {
         eventCount++;
 
-        // Log tool-related events and message_delta with full data
-        if (streamEvent.type.includes('tool') || streamEvent.type.includes('json') || streamEvent.type === 'message_delta') {
-          console.log(`[AgentDriverBridge] Received stream event #${eventCount}:`, streamEvent.type, streamEvent);
-        } else {
-          console.log(`[AgentDriverBridge] Received stream event #${eventCount}:`, streamEvent.type);
+        // Log important events at DEBUG level
+        if (streamEvent.type.includes('tool') ||
+            streamEvent.type.includes('json') ||
+            streamEvent.type === 'message_delta') {
+          this.logger.debug("Received stream event", {
+            eventNum: eventCount,
+            eventType: streamEvent.type,
+            event: streamEvent,
+          });
         }
 
         // Check if aborted (null-safe check)
         if (this.abortController?.signal.aborted) {
+          this.logger.debug("Stream processing aborted", { eventCount });
           break;
         }
 
         // Forward event to EventBus (no transformation needed)
         context.producer.produce(streamEvent);
       }
+
+      this.logger.debug("Stream processing completed", { totalEvents: eventCount });
     } catch (error) {
-      console.error("[AgentDriverBridge] Error processing stream:", error);
+      this.logger.error("Error processing stream", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       // Create and emit ErrorMessageEvent
       const errorMessage: ErrorMessage = {

@@ -6,13 +6,13 @@
  * - Implementations: Concrete reactor implementations (WebSocketReactor, etc.)
  */
 
-// Re-export interfaces from agentx-core
+// Re-export interfaces and adapters from agentx-core
 export type { StreamReactor } from "@deepractice-ai/agentx-core";
 export type { StateReactor } from "@deepractice-ai/agentx-core";
 export type { MessageReactor } from "@deepractice-ai/agentx-core";
 export type { ExchangeReactor } from "@deepractice-ai/agentx-core";
 
-// Export adapters (from internal/)
+// Export adapters (from agentx-core, not internal/)
 export {
   StreamReactorAdapter,
   StateReactorAdapter,
@@ -20,7 +20,7 @@ export {
   ExchangeReactorAdapter,
   wrapUserReactor,
   type UserReactor,
-} from "../internal";
+} from "@deepractice-ai/agentx-core";
 
 // Export reactor implementations
 export { WebSocketReactor, type WebSocketLike, type WebSocketReactorConfig } from "./WebSocketReactor";

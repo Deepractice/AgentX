@@ -50,6 +50,7 @@ import type {
   StreamEventType,
 } from "@deepractice-ai/agentx-event";
 import { emitError } from "~/utils/emitError";
+import { createLogger, type LoggerProvider } from "@deepractice-ai/agentx-logger";
 
 /**
  * AgentServiceImpl
@@ -76,12 +77,22 @@ export class AgentServiceImpl implements AgentService {
   private consumer: EventConsumer | null = null;
   private handlerUnsubscribers: Unsubscribe[] = [];
 
+  // Logger
+  private logger: LoggerProvider;
+
   constructor(agent: Agent, driver: AgentDriver, config?: EngineConfig) {
     this.agentData = agent;
     this.engine = new AgentEngine(driver, config);
     this.driver = driver;
     this.id = agent.id;
     this.sessionId = this.engine.sessionId;
+    this.logger = createLogger(`core/agent/AgentServiceImpl/${agent.id}`);
+
+    this.logger.debug("AgentService created", {
+      agentId: agent.id,
+      sessionId: this.sessionId,
+      driverType: driver.constructor.name,
+    });
   }
 
   /**
@@ -95,6 +106,8 @@ export class AgentServiceImpl implements AgentService {
    * Initialize agent and start event pipeline
    */
   async initialize(): Promise<void> {
+    this.logger.info("Initializing agent", { agentId: this.id });
+
     await this.engine.initialize();
 
     // Create consumer for user event subscriptions
@@ -102,6 +115,8 @@ export class AgentServiceImpl implements AgentService {
 
     // Subscribe to message events to maintain history
     this.subscribeToMessageEvents();
+
+    this.logger.info("Agent initialized successfully", { agentId: this.id });
   }
 
   /**
@@ -136,19 +151,16 @@ export class AgentServiceImpl implements AgentService {
    * Send a message to the agent
    */
   async send(message: string): Promise<void> {
-    console.log("[AgentService.send] ========== START ==========");
-    console.log("[AgentService.send] Message:", message);
-    // console.trace("[AgentService.send] Call stack");
+    this.logger.info("Sending message", { messagePreview: message.substring(0, 50) });
 
     if (!this.consumer) {
-      console.error("[AgentService.send] ERROR: No consumer!");
+      this.logger.error("Send failed: Agent not initialized");
       throw new Error("[AgentService] Agent not initialized. Call initialize() first.");
     }
 
-    console.log("[AgentService.send] Consumer exists, proceeding...");
-
     // Validate message
     if (!message || message.trim().length === 0) {
+      this.logger.warn("Empty message rejected");
       const producer = this.engine.eventBus.createProducer();
       emitError(
         producer,
@@ -174,11 +186,14 @@ export class AgentServiceImpl implements AgentService {
       timestamp: Date.now(),
     };
 
-    console.log("[AgentService.send] Created UserMessage:", userMessage.id);
+    this.logger.debug("UserMessage created", { messageId: userMessage.id });
 
     // Add to history
     this._messages.push(userMessage);
-    console.log("[AgentService.send] Added to history. Total messages:", this._messages.length);
+    this.logger.debug("Message added to history", {
+      messageId: userMessage.id,
+      totalMessages: this._messages.length,
+    });
 
     // Create UserMessageEvent and emit to EventBus
     const userEvent: UserMessageEvent = {
@@ -189,13 +204,9 @@ export class AgentServiceImpl implements AgentService {
       data: userMessage,
     };
 
-    console.log("[AgentService.send] Created UserMessageEvent:", userEvent.uuid);
-
     const producer = this.engine.eventBus.createProducer();
-    console.log("[AgentService.send] About to produce event to EventBus...");
     producer.produce(userEvent);
-    console.log("[AgentService.send] Event produced successfully!");
-    console.log("[AgentService.send] ========== END ==========");
+    this.logger.debug("UserMessageEvent produced", { eventUuid: userEvent.uuid });
   }
 
   /**
@@ -239,20 +250,22 @@ export class AgentServiceImpl implements AgentService {
    * ```
    */
   react(handlers: Record<string, any>): () => void {
-    console.log("[AgentService.react] Called with handlers:", Object.keys(handlers));
+    const handlerNames = Object.keys(handlers).filter((k) => k.startsWith("on"));
+    this.logger.debug("Registering event handlers", { handlers: handlerNames });
 
     if (!this.consumer) {
-      console.log("[AgentService.react] ERROR: No consumer, agent not initialized");
+      this.logger.error("React failed: Agent not initialized");
       throw new Error("[AgentService] Agent not initialized. Call initialize() first.");
     }
-
-    console.log("[AgentService.react] Consumer exists, binding handlers...");
 
     // Bind the handlers
     const unsubscribe = this.bindHandlers(this.consumer, handlers);
     this.handlerUnsubscribers.push(unsubscribe);
 
-    console.log("[AgentService.react] Handlers bound successfully. Total: ", this.handlerUnsubscribers.length);
+    this.logger.info("Event handlers registered", {
+      handlerCount: handlerNames.length,
+      totalSubscriptions: this.handlerUnsubscribers.length,
+    });
     return unsubscribe;
   }
 
@@ -282,6 +295,9 @@ export class AgentServiceImpl implements AgentService {
    * Clear message history and abort current operation
    */
   clear(): void {
+    this.logger.debug("Clearing message history", {
+      messageCount: this._messages.length,
+    });
     this._messages = [];
     this.abort();
   }
@@ -290,6 +306,8 @@ export class AgentServiceImpl implements AgentService {
    * Destroy agent and clean up all resources
    */
   async destroy(): Promise<void> {
+    this.logger.info("Destroying agent", { agentId: this.id });
+
     // Clear message history
     this._messages = [];
 
@@ -301,6 +319,8 @@ export class AgentServiceImpl implements AgentService {
     await this.engine.destroy();
 
     this.consumer = null;
+
+    this.logger.info("Agent destroyed", { agentId: this.id });
   }
 
   /**
@@ -314,14 +334,12 @@ export class AgentServiceImpl implements AgentService {
   private bindHandlers(consumer: EventConsumer, handlers: Record<string, any>): Unsubscribe {
     const unsubscribers: Unsubscribe[] = [];
 
-    console.log("[bindHandlers] All handler keys:", Object.keys(handlers));
-
     // Discover all handler methods (methods starting with "on")
     const handlerMethods = Object.keys(handlers).filter(
       (key) => key.startsWith("on") && typeof handlers[key] === "function"
     );
 
-    console.log("[bindHandlers] Handler methods found:", handlerMethods);
+    this.logger.debug("Binding event handlers", { methods: handlerMethods });
 
     // Bind each handler method
     for (const methodName of handlerMethods) {
@@ -330,17 +348,15 @@ export class AgentServiceImpl implements AgentService {
       // onMessageStop → message_stop
       const eventType = this.methodNameToEventType(methodName);
 
-      console.log(`[bindHandlers] Binding ${methodName} → ${eventType}`);
+      this.logger.debug("Binding handler", { methodName, eventType });
 
       // Bind the handler
       const handler = handlers[methodName].bind(handlers);
       const unsubscribe = consumer.consumeByType(eventType as any, handler);
       unsubscribers.push(unsubscribe);
-
-      console.log(`[bindHandlers] Successfully bound ${eventType}`);
     }
 
-    console.log(`[bindHandlers] Total handlers bound: ${unsubscribers.length}`);
+    this.logger.debug("All handlers bound", { count: unsubscribers.length });
 
     // Return combined unsubscribe function
     return () => {

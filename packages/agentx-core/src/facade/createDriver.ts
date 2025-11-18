@@ -23,6 +23,7 @@ import type { AgentDriver } from "~/interfaces/AgentDriver";
 import type { UserMessage } from "@deepractice-ai/agentx-types";
 import type { StreamEventType } from "@deepractice-ai/agentx-event";
 import { StreamEventBuilder } from "~/utils/StreamEventBuilder";
+import { createLogger } from "@deepractice-ai/agentx-logger";
 
 /**
  * High-level content builder
@@ -135,8 +136,12 @@ export interface DriverConfig {
  * ```
  */
 export function createDriver(config: DriverConfig): AgentDriver {
+  const logger = createLogger("facade/createDriver");
+
   const agentId = `agent_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   const sessionId = config.sessionId || agentId;
+
+  logger.info("Creating driver", { agentId, sessionId });
 
   // Internal state
   let aborted = false;
@@ -146,6 +151,7 @@ export function createDriver(config: DriverConfig): AgentDriver {
     driverSessionId: null,
 
     async *sendMessage(messages: UserMessage | AsyncIterable<UserMessage>): AsyncIterable<StreamEventType> {
+      logger.debug("Driver sendMessage called");
       // Normalize to iterable
       const messageIterable = Symbol.asyncIterator in Object(messages)
         ? (messages as AsyncIterable<UserMessage>)
@@ -157,7 +163,12 @@ export function createDriver(config: DriverConfig): AgentDriver {
 
       // Process each message
       for await (const message of messageIterable) {
-        if (aborted) break;
+        if (aborted) {
+          logger.debug("Message processing aborted");
+          break;
+        }
+
+        logger.debug("Processing message", { messageId: message.id });
 
         // Reset content builder for new message
         contentBuilder.reset();
@@ -174,7 +185,9 @@ export function createDriver(config: DriverConfig): AgentDriver {
 
           // Yield message_stop
           yield eventBuilder.messageStop();
+          logger.debug("Message completed", { messageId });
         } catch (error) {
+          logger.error("Error generating message", { messageId, error });
           // On error, still close the message properly
           yield eventBuilder.messageStop();
           throw error;
@@ -183,10 +196,12 @@ export function createDriver(config: DriverConfig): AgentDriver {
     },
 
     abort(): void {
+      logger.debug("Driver aborted");
       aborted = true;
     },
 
     async destroy(): Promise<void> {
+      logger.info("Driver destroyed");
       aborted = false;
     },
   };

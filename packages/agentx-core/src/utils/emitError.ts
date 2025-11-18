@@ -7,6 +7,9 @@
 import type { ErrorMessage } from "@deepractice-ai/agentx-types";
 import type { ErrorMessageEvent } from "@deepractice-ai/agentx-event";
 import type { EventProducer } from "@deepractice-ai/agentx-event";
+import { createLogger } from "@deepractice-ai/agentx-logger";
+
+const logger = createLogger("core/utils/emitError");
 
 export interface ErrorContext {
   agentId: string;
@@ -66,15 +69,15 @@ export function emitError(
     timestamp: Date.now(),
   };
 
-  // Log context for debugging
-  if (context.componentName) {
-    console.error(`[${context.componentName}] Emitting error:`, {
-      subtype,
-      severity,
-      message: errorMessage.message,
-      code,
-    });
-  }
+  // Log error for debugging
+  logger.error("Emitting error event", {
+    componentName: context.componentName,
+    subtype,
+    severity,
+    message: errorMessage.message,
+    code,
+    agentId: context.agentId,
+  });
 
   producer.produce(errorEvent);
 }

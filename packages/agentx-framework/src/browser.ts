@@ -120,7 +120,6 @@ export type {
 
 // ==================== Platform Abstraction ====================
 export type { AgentDriver } from "@deepractice-ai/agentx-core";
-export type { EngineConfig } from "@deepractice-ai/agentx-core";
 
 // ==================== Framework Define API ====================
 export { defineDriver } from "./defineDriver";

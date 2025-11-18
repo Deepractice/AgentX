@@ -40,6 +40,7 @@ import type {
   ToolResultPart,
 } from "@deepractice-ai/agentx-types";
 import { emitError } from "~/utils/emitError";
+import { createLogger, type LoggerProvider } from "@deepractice-ai/agentx-logger";
 
 /**
  * Pending content accumulator
@@ -65,14 +66,20 @@ export class AgentMessageAssembler implements AgentReactor {
   readonly name = "MessageAssemblerReactor";
 
   private context: AgentReactorContext | null = null;
+  private logger: LoggerProvider;
 
   // Content accumulation
   private pendingContents: Map<number, PendingContent> = new Map();
   private currentMessageId: string | null = null;
   private messageStartTime: number | null = null;
 
+  constructor() {
+    this.logger = createLogger("core/agent/AgentMessageAssembler");
+  }
+
   async initialize(context: AgentReactorContext): Promise<void> {
     this.context = context;
+    this.logger.debug("MessageAssembler initialized");
     this.subscribeToStreamEvents();
   }
 
@@ -168,7 +175,7 @@ export class AgentMessageAssembler implements AgentReactor {
    * Initialize tool use accumulator
    */
   private onToolUseContentBlockStart(event: ToolUseContentBlockStartEvent): void {
-    console.log("[AgentMessageAssembler] Tool use content block start:", {
+    this.logger.debug("Tool use content block start", {
       toolId: event.data.id,
       toolName: event.data.name,
     });
@@ -196,12 +203,12 @@ export class AgentMessageAssembler implements AgentReactor {
 
     if (pending && pending.type === "tool_use") {
       pending.toolInputJson! += event.data.partialJson;
-      console.log("[AgentMessageAssembler] Input JSON delta accumulated:", {
+      this.logger.debug("Input JSON delta accumulated", {
         partialJson: event.data.partialJson,
         totalLength: pending.toolInputJson!.length,
       });
     } else {
-      console.warn("[AgentMessageAssembler] Input JSON delta received but no pending tool_use content!");
+      this.logger.warn("Input JSON delta received but no pending tool_use content");
     }
   }
 
@@ -210,18 +217,18 @@ export class AgentMessageAssembler implements AgentReactor {
    * Assemble complete ToolUseMessage event
    */
   private onToolUseContentBlockStop(_event: ToolUseContentBlockStopEvent): void {
-    console.log("[AgentMessageAssembler] Tool use content block stop");
+    this.logger.debug("Tool use content block stop");
 
     // Use index 1 for tool content
     const index = 1;
     const pending = this.pendingContents.get(index);
 
     if (!pending || pending.type !== "tool_use") {
-      console.warn("[AgentMessageAssembler] No pending tool_use content found!");
+      this.logger.warn("No pending tool_use content found");
       return;
     }
 
-    console.log("[AgentMessageAssembler] Assembling tool use message:", {
+    this.logger.debug("Assembling tool use message", {
       toolId: pending.toolId,
       toolName: pending.toolName,
       toolInputJson: pending.toolInputJson,
@@ -233,7 +240,7 @@ export class AgentMessageAssembler implements AgentReactor {
         ? JSON.parse(pending.toolInputJson)
         : {};
 
-      console.log("[AgentMessageAssembler] Parsed tool input:", toolInput);
+      this.logger.debug("Parsed tool input", { toolInput });
 
       // Emit high-level tool_call event (complete tool call assembled)
       const toolCallEvent: ToolCallEvent = {
@@ -286,14 +293,16 @@ export class AgentMessageAssembler implements AgentReactor {
         data: toolUseMessage,
       };
 
-      console.log("[AgentMessageAssembler] Emitting tool_use_message event:", toolUseEvent);
+      this.logger.debug("Emitting tool_use_message event", { toolUseEvent });
 
       this.emitMessageEvent(toolUseEvent);
 
       // Remove from pending
       this.pendingContents.delete(index);
     } catch (error) {
-      console.error("[AgentMessageAssembler] Failed to parse tool input JSON:", error);
+      this.logger.error("Failed to parse tool input JSON", {
+        error: error instanceof Error ? error.message : String(error),
+      });
 
       // Emit error_message event
       if (this.context) {
@@ -341,7 +350,7 @@ export class AgentMessageAssembler implements AgentReactor {
 
     // Skip empty messages (e.g., tool-only messages with no text)
     if (!content || content.trim().length === 0) {
-      console.log("[AgentMessageAssembler] Skipping empty assistant message");
+      this.logger.debug("Skipping empty assistant message");
       // Reset state
       this.currentMessageId = null;
       this.messageStartTime = null;

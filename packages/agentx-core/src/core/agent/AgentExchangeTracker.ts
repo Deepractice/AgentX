@@ -32,6 +32,7 @@ import type {
   ExchangeResponseEvent,
 } from "@deepractice-ai/agentx-event";
 import type { UserMessage, TokenUsage } from "@deepractice-ai/agentx-types";
+import { createLogger, type LoggerProvider } from "@deepractice-ai/agentx-logger";
 
 /**
  * Pending exchange tracking
@@ -53,6 +54,7 @@ export class AgentExchangeTracker implements AgentReactor {
   readonly name = "ExchangeTrackerReactor";
 
   private context: AgentReactorContext | null = null;
+  private logger: LoggerProvider;
 
   // Exchange tracking
   private pendingExchange: PendingExchange | null = null;
@@ -61,8 +63,13 @@ export class AgentExchangeTracker implements AgentReactor {
   private costPerInputToken: number = 0.000003; // $3 per 1M tokens
   private costPerOutputToken: number = 0.000015; // $15 per 1M tokens
 
+  constructor() {
+    this.logger = createLogger("core/agent/AgentExchangeTracker");
+  }
+
   async initialize(context: AgentReactorContext): Promise<void> {
     this.context = context;
+    this.logger.debug("ExchangeTracker initialized");
     this.subscribeToMessageEvents();
   }
 
@@ -146,7 +153,9 @@ export class AgentExchangeTracker implements AgentReactor {
     // Save stop reason from message delta
     if (event.data.delta.stopReason) {
       this.pendingExchange.lastStopReason = event.data.delta.stopReason;
-      console.log("[AgentExchangeTracker] Captured stop reason:", event.data.delta.stopReason);
+      this.logger.debug("Captured stop reason", {
+        stopReason: event.data.delta.stopReason,
+      });
 
       // If stop_reason is "end_turn", complete the exchange immediately
       // (Don't wait for assistant_message which might be empty or delayed)
@@ -174,7 +183,7 @@ export class AgentExchangeTracker implements AgentReactor {
     }
 
     const { exchangeId, requestedAt } = this.pendingExchange;
-    console.log("[AgentExchangeTracker] Completing exchange:", exchangeId);
+    this.logger.debug("Completing exchange", { exchangeId });
 
     const duration = completedAt - requestedAt;
 

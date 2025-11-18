@@ -30,6 +30,7 @@ import type { AgentService } from "~/interfaces/AgentService";
 import type { AgentDriver } from "~/interfaces/AgentDriver";
 import { AgentServiceImpl } from "~/core/agent/AgentServiceImpl";
 import type { EngineConfig } from "~/core/agent/AgentEngine";
+import { createLogger } from "@deepractice-ai/agentx-logger";
 
 /**
  * AgentInstance = Agent data + AgentService methods
@@ -132,6 +133,15 @@ export function createAgent(
   driver: AgentDriver,
   options?: CreateAgentOptions
 ): AgentInstance {
+  const logger = createLogger("facade/createAgent");
+
+  logger.info("Creating agent", {
+    id,
+    name: options?.name,
+    driverType: driver.constructor.name,
+    reactorCount: options?.reactors?.length || 0,
+  });
+
   // 1. Assemble Agent data internally
   const agentData: Agent = {
     id,
@@ -142,6 +152,8 @@ export function createAgent(
     tags: options?.tags,
     ...(options?.metadata || {}),
   };
+
+  logger.debug("Agent data assembled", { agentData });
 
   // 2. Prepare EngineConfig
   const engineConfig: EngineConfig | undefined = options?.reactors
@@ -155,5 +167,9 @@ export function createAgent(
   // This allows external code to access both:
   // - agent.id, agent.name (from Agent data)
   // - agent.send(), agent.react() (from AgentService methods)
-  return Object.assign(service, agentData) as AgentInstance;
+  const instance = Object.assign(service, agentData) as AgentInstance;
+
+  logger.info("Agent created successfully", { id, sessionId: service.sessionId });
+
+  return instance;
 }

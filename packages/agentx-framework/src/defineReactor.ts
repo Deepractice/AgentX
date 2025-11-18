@@ -4,6 +4,10 @@
  * Framework helper for creating Reactor implementations with minimal boilerplate.
  * Developers only need to define handlers for events they care about.
  *
+ * This function creates reactors that are compatible with agentx-core's 4-layer
+ * reactor interfaces (StreamReactor, StateReactor, MessageReactor, ExchangeReactor)
+ * and automatically wraps them using wrapUserReactor.
+ *
  * @example
  * ```typescript
  * const myReactor = defineReactor({
@@ -14,7 +18,7 @@
  *     console.log("Text:", event.data.text);
  *   },
  *
- *   onMessageComplete: (event) => {
+ *   onAssistantMessage: (event) => {
  *     console.log("Message complete:", event.data.content);
  *   },
  *
@@ -29,6 +33,7 @@
  */
 
 import type { AgentReactor, AgentReactorContext } from "@deepractice-ai/agentx-core";
+import { wrapUserReactor as coreWrapUserReactor } from "@deepractice-ai/agentx-core";
 import type {
   // Stream events
   MessageStartEvent,
@@ -142,141 +147,137 @@ export interface DefinedReactor<TConfig = any> {
 }
 
 /**
- * Internal reactor implementation
+ * Build user reactor object from definition
+ *
+ * This creates an object that implements the appropriate layer interfaces
+ * (StreamReactor, StateReactor, MessageReactor, ExchangeReactor) based on
+ * which event handlers are defined.
+ *
+ * The object is then wrapped by core's wrapUserReactor to become an AgentReactor.
  */
-class SimpleReactor implements AgentReactor {
-  readonly id: string;
-  readonly name: string;
+function buildUserReactor(definition: ReactorDefinition, config: any): any {
+  const userReactor: any = {};
 
-  constructor(
-    private definition: ReactorDefinition,
-    private config: any
-  ) {
-    this.id = `${definition.name}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    this.name = definition.name;
+  // ==================== Lifecycle ====================
+  if (definition.onInit) {
+    userReactor.onInitialize = (context: AgentReactorContext) => definition.onInit!(context, config);
+  }
+  if (definition.onDestroy) {
+    userReactor.onDestroy = () => definition.onDestroy!();
   }
 
-  async initialize(context: AgentReactorContext): Promise<void> {
-    // Subscribe to all events defined in the definition
-    this.subscribeEvents(context);
-
-    // Call onInit if provided
-    if (this.definition.onInit) {
-      await this.definition.onInit(context, this.config);
-    }
+  // ==================== Stream Layer ====================
+  if (definition.onMessageStart) {
+    userReactor.onMessageStart = (e: MessageStartEvent) => definition.onMessageStart!(e, config);
+  }
+  if (definition.onMessageDelta) {
+    userReactor.onMessageDelta = (e: MessageDeltaEvent) => definition.onMessageDelta!(e, config);
+  }
+  if (definition.onMessageStop) {
+    userReactor.onMessageStop = (e: MessageStopEvent) => definition.onMessageStop!(e, config);
+  }
+  if (definition.onTextContentBlockStart) {
+    userReactor.onTextContentBlockStart = (e: TextContentBlockStartEvent) =>
+      definition.onTextContentBlockStart!(e, config);
+  }
+  if (definition.onTextDelta) {
+    userReactor.onTextDelta = (e: TextDeltaEvent) => definition.onTextDelta!(e, config);
+  }
+  if (definition.onTextContentBlockStop) {
+    userReactor.onTextContentBlockStop = (e: TextContentBlockStopEvent) =>
+      definition.onTextContentBlockStop!(e, config);
+  }
+  if (definition.onToolUseContentBlockStart) {
+    userReactor.onToolUseContentBlockStart = (e: ToolUseContentBlockStartEvent) =>
+      definition.onToolUseContentBlockStart!(e, config);
+  }
+  if (definition.onInputJsonDelta) {
+    userReactor.onInputJsonDelta = (e: InputJsonDeltaEvent) => definition.onInputJsonDelta!(e, config);
+  }
+  if (definition.onToolUseContentBlockStop) {
+    userReactor.onToolUseContentBlockStop = (e: ToolUseContentBlockStopEvent) =>
+      definition.onToolUseContentBlockStop!(e, config);
+  }
+  if (definition.onToolCall) {
+    userReactor.onToolCall = (e: ToolCallEvent) => definition.onToolCall!(e, config);
+  }
+  if (definition.onToolResult) {
+    userReactor.onToolResult = (e: ToolResultEvent) => definition.onToolResult!(e, config);
   }
 
-  async destroy(): Promise<void> {
-    if (this.definition.onDestroy) {
-      await this.definition.onDestroy();
-    }
+  // ==================== State Layer ====================
+  if (definition.onAgentReady) {
+    userReactor.onAgentReady = (e: AgentReadyStateEvent) => definition.onAgentReady!(e, config);
+  }
+  if (definition.onConversationStart) {
+    userReactor.onConversationStart = (e: ConversationStartStateEvent) =>
+      definition.onConversationStart!(e, config);
+  }
+  if (definition.onConversationThinking) {
+    userReactor.onConversationThinking = (e: ConversationThinkingStateEvent) =>
+      definition.onConversationThinking!(e, config);
+  }
+  if (definition.onConversationResponding) {
+    userReactor.onConversationResponding = (e: ConversationRespondingStateEvent) =>
+      definition.onConversationResponding!(e, config);
+  }
+  if (definition.onConversationEnd) {
+    userReactor.onConversationEnd = (e: ConversationEndStateEvent) =>
+      definition.onConversationEnd!(e, config);
+  }
+  if (definition.onToolPlanned) {
+    userReactor.onToolPlanned = (e: ToolPlannedStateEvent) => definition.onToolPlanned!(e, config);
+  }
+  if (definition.onToolExecuting) {
+    userReactor.onToolExecuting = (e: ToolExecutingStateEvent) => definition.onToolExecuting!(e, config);
+  }
+  if (definition.onToolCompleted) {
+    userReactor.onToolCompleted = (e: ToolCompletedStateEvent) => definition.onToolCompleted!(e, config);
+  }
+  if (definition.onToolFailed) {
+    userReactor.onToolFailed = (e: ToolFailedStateEvent) => definition.onToolFailed!(e, config);
+  }
+  if (definition.onStreamStart) {
+    userReactor.onStreamStart = (e: StreamStartStateEvent) => definition.onStreamStart!(e, config);
+  }
+  if (definition.onStreamComplete) {
+    userReactor.onStreamComplete = (e: StreamCompleteStateEvent) => definition.onStreamComplete!(e, config);
+  }
+  if (definition.onErrorOccurred) {
+    userReactor.onErrorOccurred = (e: ErrorOccurredStateEvent) => definition.onErrorOccurred!(e, config);
   }
 
-  /**
-   * Subscribe to all events that have handlers
-   */
-  private subscribeEvents(context: AgentReactorContext): void {
-    const def = this.definition;
-
-    // Stream layer
-    if (def.onMessageStart) {
-      context.consumer.consumeByType("message_start", (e: any) => def.onMessageStart!(e, this.config));
-    }
-    if (def.onMessageDelta) {
-      context.consumer.consumeByType("message_delta", (e: any) => def.onMessageDelta!(e, this.config));
-    }
-    if (def.onMessageStop) {
-      context.consumer.consumeByType("message_stop", (e: any) => def.onMessageStop!(e, this.config));
-    }
-    if (def.onTextContentBlockStart) {
-      context.consumer.consumeByType("text_content_block_start", (e: any) => def.onTextContentBlockStart!(e, this.config));
-    }
-    if (def.onTextDelta) {
-      context.consumer.consumeByType("text_delta", (e: any) => def.onTextDelta!(e, this.config));
-    }
-    if (def.onTextContentBlockStop) {
-      context.consumer.consumeByType("text_content_block_stop", (e: any) => def.onTextContentBlockStop!(e, this.config));
-    }
-    if (def.onToolUseContentBlockStart) {
-      context.consumer.consumeByType("tool_use_content_block_start", (e: any) => def.onToolUseContentBlockStart!(e, this.config));
-    }
-    if (def.onInputJsonDelta) {
-      context.consumer.consumeByType("input_json_delta", (e: any) => def.onInputJsonDelta!(e, this.config));
-    }
-    if (def.onToolUseContentBlockStop) {
-      context.consumer.consumeByType("tool_use_content_block_stop", (e: any) => def.onToolUseContentBlockStop!(e, this.config));
-    }
-    if (def.onToolCall) {
-      context.consumer.consumeByType("tool_call", (e: any) => def.onToolCall!(e, this.config));
-    }
-    if (def.onToolResult) {
-      context.consumer.consumeByType("tool_result", (e: any) => def.onToolResult!(e, this.config));
-    }
-
-    // State layer
-    if (def.onAgentReady) {
-      context.consumer.consumeByType("agent_ready", (e: any) => def.onAgentReady!(e, this.config));
-    }
-    if (def.onConversationStart) {
-      context.consumer.consumeByType("conversation_start", (e: any) => def.onConversationStart!(e, this.config));
-    }
-    if (def.onConversationThinking) {
-      context.consumer.consumeByType("conversation_thinking", (e: any) => def.onConversationThinking!(e, this.config));
-    }
-    if (def.onConversationResponding) {
-      context.consumer.consumeByType("conversation_responding", (e: any) => def.onConversationResponding!(e, this.config));
-    }
-    if (def.onConversationEnd) {
-      context.consumer.consumeByType("conversation_end", (e: any) => def.onConversationEnd!(e, this.config));
-    }
-    if (def.onToolPlanned) {
-      context.consumer.consumeByType("tool_planned", (e: any) => def.onToolPlanned!(e, this.config));
-    }
-    if (def.onToolExecuting) {
-      context.consumer.consumeByType("tool_executing", (e: any) => def.onToolExecuting!(e, this.config));
-    }
-    if (def.onToolCompleted) {
-      context.consumer.consumeByType("tool_completed", (e: any) => def.onToolCompleted!(e, this.config));
-    }
-    if (def.onToolFailed) {
-      context.consumer.consumeByType("tool_failed", (e: any) => def.onToolFailed!(e, this.config));
-    }
-    if (def.onStreamStart) {
-      context.consumer.consumeByType("stream_start", (e: any) => def.onStreamStart!(e, this.config));
-    }
-    if (def.onStreamComplete) {
-      context.consumer.consumeByType("stream_complete", (e: any) => def.onStreamComplete!(e, this.config));
-    }
-    if (def.onErrorOccurred) {
-      context.consumer.consumeByType("error_occurred", (e: any) => def.onErrorOccurred!(e, this.config));
-    }
-
-    // Message layer
-    if (def.onUserMessage) {
-      context.consumer.consumeByType("user_message", (e: any) => def.onUserMessage!(e, this.config));
-    }
-    if (def.onAssistantMessage) {
-      context.consumer.consumeByType("assistant_message", (e: any) => def.onAssistantMessage!(e, this.config));
-    }
-    if (def.onToolUseMessage) {
-      context.consumer.consumeByType("tool_use_message", (e: any) => def.onToolUseMessage!(e, this.config));
-    }
-    if (def.onErrorMessage) {
-      context.consumer.consumeByType("error_message", (e: any) => def.onErrorMessage!(e, this.config));
-    }
-
-    // Exchange layer
-    if (def.onExchangeRequest) {
-      context.consumer.consumeByType("exchange_request", (e: any) => def.onExchangeRequest!(e, this.config));
-    }
-    if (def.onExchangeResponse) {
-      context.consumer.consumeByType("exchange_response", (e: any) => def.onExchangeResponse!(e, this.config));
-    }
+  // ==================== Message Layer ====================
+  if (definition.onUserMessage) {
+    userReactor.onUserMessage = (e: UserMessageEvent) => definition.onUserMessage!(e, config);
   }
+  if (definition.onAssistantMessage) {
+    userReactor.onAssistantMessage = (e: AssistantMessageEvent) => definition.onAssistantMessage!(e, config);
+  }
+  if (definition.onToolUseMessage) {
+    userReactor.onToolUseMessage = (e: ToolUseMessageEvent) => definition.onToolUseMessage!(e, config);
+  }
+  if (definition.onErrorMessage) {
+    userReactor.onErrorMessage = (e: ErrorMessageEvent) => definition.onErrorMessage!(e, config);
+  }
+
+  // ==================== Exchange Layer ====================
+  if (definition.onExchangeRequest) {
+    userReactor.onExchangeRequest = (e: ExchangeRequestEvent) => definition.onExchangeRequest!(e, config);
+  }
+  if (definition.onExchangeResponse) {
+    userReactor.onExchangeResponse = (e: ExchangeResponseEvent) => definition.onExchangeResponse!(e, config);
+  }
+
+  return userReactor;
 }
 
 /**
  * Define a custom reactor with simplified API
+ *
+ * This creates a reactor definition that can be instantiated with config.
+ * Internally, it builds an object compatible with agentx-core's 4-layer reactor
+ * interfaces and wraps it using wrapUserReactor.
  *
  * @param definition - Reactor definition
  * @returns Defined reactor factory
@@ -285,12 +286,12 @@ class SimpleReactor implements AgentReactor {
  * ```typescript
  * const LoggerReactor = defineReactor({
  *   name: "Logger",
- *   onTextDelta: (event) => {
+ *   onTextDelta: (event, config) => {
  *     console.log(event.data.text);
  *   }
  * });
  *
- * const reactor = LoggerReactor.create();
+ * const reactor = LoggerReactor.create({ logLevel: "debug" });
  * ```
  */
 export function defineReactor<TConfig = any>(
@@ -300,7 +301,12 @@ export function defineReactor<TConfig = any>(
     name: definition.name,
 
     create: (config?: TConfig) => {
-      return new SimpleReactor(definition, config || {});
+      // Build user reactor object that implements 4-layer interfaces
+      const userReactor = buildUserReactor(definition, config || {});
+
+      // Use core's wrapUserReactor to convert to AgentReactor
+      // This automatically handles event subscription and lifecycle
+      return coreWrapUserReactor(userReactor);
     }
   };
 }

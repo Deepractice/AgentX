@@ -174,11 +174,6 @@ export {
  */
 export type { AgentDriver } from "@deepractice-ai/agentx-core";
 
-/**
- * EngineConfig - for configuring agent engine runtime
- */
-export type { EngineConfig } from "@deepractice-ai/agentx-core";
-
 // ==================== Framework Define API ====================
 // Simplified APIs for building custom drivers, reactors, and agents
 
@@ -258,6 +253,57 @@ export type {
   AgentDefinition,
   DefinedAgent,
 } from "./defineAgent";
+
+// ==================== Global Configuration ====================
+// Framework-level configuration
+
+/**
+ * configure - Configure AgentX framework globally
+ *
+ * This should be called once in your application entry point, before creating
+ * any agents. It configures logger implementation, error handlers, and other
+ * framework-level settings.
+ *
+ * @example Development configuration
+ * ```typescript
+ * import { configure, LogLevel } from "@deepractice-ai/agentx-framework";
+ *
+ * configure({
+ *   logger: {
+ *     defaultLevel: LogLevel.DEBUG,
+ *     consoleOptions: { colors: true, timestamps: true }
+ *   }
+ * });
+ * ```
+ *
+ * @example Production with custom logger
+ * ```typescript
+ * import { configure, LogLevel } from "@deepractice-ai/agentx-framework";
+ * import pino from "pino";
+ *
+ * configure({
+ *   logger: {
+ *     defaultLevel: LogLevel.INFO,
+ *     defaultImplementation: (name) => new PinoLoggerAdapter(name)
+ *   }
+ * });
+ * ```
+ */
+export { configure, type AgentXConfig } from "./configure";
+
+/**
+ * Logger types and utilities
+ *
+ * Re-exported from @deepractice-ai/agentx-logger for convenience.
+ * Users can configure custom logger implementations via configure().
+ */
+export {
+  LogLevel,
+  LoggerFactory,
+  type LoggerProvider,
+  type LogContext,
+  type LoggerFactoryConfig,
+} from "@deepractice-ai/agentx-logger";
 
 // ==================== Errors ====================
 // Framework-specific errors

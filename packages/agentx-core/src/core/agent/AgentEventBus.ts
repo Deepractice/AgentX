@@ -8,6 +8,9 @@
 import { Subject, type Observable, type Subscription } from "rxjs";
 import { filter } from "rxjs/operators";
 import type { EventBus, EventProducer, EventConsumer, Unsubscribe, AgentEventType } from "@deepractice-ai/agentx-event";
+import { createLogger } from "@deepractice-ai/agentx-logger";
+
+const logger = createLogger("core/agent/AgentEventBus");
 
 /**
  * RxJS-based EventBus implementation
@@ -18,15 +21,19 @@ export class AgentEventBus implements EventBus {
 
   createProducer(): EventProducer {
     if (this.closed) {
+      logger.error("Cannot create producer: bus is closed");
       throw new Error("[AgentEventBus] Cannot create producer: bus is closed");
     }
+    logger.debug("Producer created");
     return new RxJSEventProducer(this.events$, () => this.closed);
   }
 
   createConsumer(): EventConsumer {
     if (this.closed) {
+      logger.error("Cannot create consumer: bus is closed");
       throw new Error("[AgentEventBus] Cannot create consumer: bus is closed");
     }
+    logger.debug("Consumer created");
     return new RxJSEventConsumer(this.events$.asObservable(), () => this.closed);
   }
 
@@ -34,6 +41,7 @@ export class AgentEventBus implements EventBus {
     if (!this.closed) {
       this.closed = true;
       this.events$.complete();
+      logger.debug("EventBus closed");
     }
   }
 
@@ -53,7 +61,7 @@ class RxJSEventProducer implements EventProducer {
 
   produce(event: AgentEventType): void {
     if (this.isBusClosed()) {
-      console.warn("[EventProducer] Cannot produce event: bus is closed", event.type);
+      logger.warn("Cannot produce event: bus is closed", { eventType: event.type });
       return;
     }
     this.subject.next(event);
@@ -81,11 +89,16 @@ class RxJSEventConsumer implements EventConsumer {
         try {
           handler(event);
         } catch (error) {
-          console.error("[EventConsumer] Handler error:", error, "for event:", event.type);
+          logger.error("Handler error in consume", {
+            eventType: event.type,
+            error: error instanceof Error ? error.message : String(error),
+          });
           // Don't rethrow - keep the event stream alive
         }
       },
-      error: (error: Error) => console.error("[EventConsumer] Stream error:", error),
+      error: (error: Error) => {
+        logger.error("Stream error in consume", { error: error.message });
+      },
     });
 
     this.subscriptions.push(subscription);
@@ -106,11 +119,19 @@ class RxJSEventConsumer implements EventConsumer {
           try {
             handler(event);
           } catch (error) {
-            console.error("[EventConsumer] Handler error:", error, "for event:", event.type);
+            logger.error("Handler error in consumeByType", {
+              eventType: event.type,
+              error: error instanceof Error ? error.message : String(error),
+            });
             // Don't rethrow - keep the event stream alive
           }
         },
-        error: (error: Error) => console.error("[EventConsumer] Stream error:", error),
+        error: (error: Error) => {
+          logger.error("Stream error in consumeByType", {
+            eventType: type,
+            error: error.message,
+          });
+        },
       });
 
     this.subscriptions.push(subscription);
@@ -136,11 +157,19 @@ class RxJSEventConsumer implements EventConsumer {
           try {
             handler(event);
           } catch (error) {
-            console.error("[EventConsumer] Handler error:", error, "for event:", event.type);
+            logger.error("Handler error in consumeByTypes", {
+              eventType: event.type,
+              error: error instanceof Error ? error.message : String(error),
+            });
             // Don't rethrow - keep the event stream alive
           }
         },
-        error: (error: Error) => console.error("[EventConsumer] Stream error:", error),
+        error: (error: Error) => {
+          logger.error("Stream error in consumeByTypes", {
+            types,
+            error: error.message,
+          });
+        },
       });
 
     this.subscriptions.push(subscription);

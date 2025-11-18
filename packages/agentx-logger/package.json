@@ -1,0 +1,46 @@
+{
+  "name": "@deepractice-ai/agentx-logger",
+  "version": "0.1.0",
+  "description": "SLF4J-style logging facade for AgentX with decorator support",
+  "keywords": [
+    "logger",
+    "logging",
+    "slf4j",
+    "facade",
+    "decorator"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deepractice/Agent",
+    "directory": "packages/agentx-logger"
+  },
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "test:manual": "tsx tests/manual"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.1",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

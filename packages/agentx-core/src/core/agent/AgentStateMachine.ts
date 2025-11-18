@@ -52,6 +52,7 @@ import type {
   StreamStartStateEvent,
   StreamCompleteStateEvent,
 } from "@deepractice-ai/agentx-event";
+import { createLogger, type LoggerProvider } from "@deepractice-ai/agentx-logger";
 
 /**
  * Agent state types
@@ -75,6 +76,7 @@ export class AgentStateMachine implements AgentReactor {
   readonly name = "StateMachineReactor";
 
   private context: AgentReactorContext | null = null;
+  private logger: LoggerProvider;
 
   // State tracking
   private currentState: AgentState = "initializing";
@@ -82,14 +84,26 @@ export class AgentStateMachine implements AgentReactor {
   // Conversation tracking
   private conversationStartTime: number | null = null;
 
+  constructor() {
+    this.logger = createLogger("core/agent/AgentStateMachine");
+  }
+
   async initialize(context: AgentReactorContext): Promise<void> {
     this.context = context;
 
+    this.logger.info("Initializing StateMachine", {
+      agentId: context.agentId,
+      sessionId: context.sessionId,
+    });
+
     // Subscribe to Stream Layer events
     this.subscribeToStreamEvents();
+
+    this.logger.debug("StateMachine subscribed to stream events");
   }
 
   async destroy(): Promise<void> {
+    this.logger.debug("Destroying StateMachine");
     // No explicit unsubscribe needed - ReactorContext handles lifecycle
     this.context = null;
   }
@@ -274,7 +288,13 @@ export class AgentStateMachine implements AgentReactor {
    * Transition to new state
    */
   private transitionState(newState: AgentState): void {
+    const previousState = this.currentState;
     this.currentState = newState;
+
+    this.logger.debug("State transition", {
+      from: previousState,
+      to: newState,
+    });
   }
 
   /**
