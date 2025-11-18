@@ -68,9 +68,17 @@ export default function App() {
   }
 
   return (
-    <div className="container">
-      <div className="chatWrapper">
-        <Chat agent={agent} />
+    <div className="h-screen flex flex-col bg-gradient-to-br from-[#667eea] to-[#764ba2]">
+      {/* Header */}
+      <div className="h-14 flex items-center justify-center px-4 bg-white/10 backdrop-blur-sm border-b border-white/20">
+        <h1 className="font-semibold text-lg text-white">Deepractice Agent</h1>
+      </div>
+
+      {/* Chat area */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-7xl h-full bg-white rounded-xl shadow-2xl overflow-hidden">
+          <Chat agent={agent} />
+        </div>
       </div>
     </div>
   );

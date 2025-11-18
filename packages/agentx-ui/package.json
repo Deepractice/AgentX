@@ -12,7 +12,7 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./styles.css": "./dist/styles.css"
+    "./globals.css": "./dist/globals.css"
   },
   "sideEffects": [
     "*.css",

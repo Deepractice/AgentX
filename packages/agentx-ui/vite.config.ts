@@ -31,6 +31,13 @@ export default defineConfig({
           react: "React",
           "react-dom": "ReactDOM",
         },
+        assetFileNames: (assetInfo) => {
+          // All CSS files should be output as globals.css
+          if (assetInfo.name?.endsWith(".css")) {
+            return "globals.css";
+          }
+          return "assets/[name]-[hash][extname]";
+        },
       },
     },
     sourcemap: true,
