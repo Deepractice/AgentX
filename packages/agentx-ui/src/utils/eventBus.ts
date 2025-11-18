@@ -86,7 +86,9 @@ class EventBus {
    */
   enableDebug(): void {
     this.debugMode = true;
-    console.log("[EventBus] Debug mode enabled");
+    if (typeof console !== "undefined") {
+      console.log("[EventBus] Debug mode enabled");
+    }
   }
 
   /**
@@ -94,14 +96,22 @@ class EventBus {
    */
   disableDebug(): void {
     this.debugMode = false;
-    console.log("[EventBus] Debug mode disabled");
+    if (typeof console !== "undefined") {
+      console.log("[EventBus] Debug mode disabled");
+    }
   }
 }
 
 // Export singleton instance
 export const eventBus = new EventBus();
 
-// Enable debug in development
-if (typeof window !== "undefined" && import.meta.env.DEV) {
-  eventBus.enableDebug();
+// Enable debug in development (lazy initialization to avoid SSR issues)
+// Will be called when first used in browser environment
+if (typeof window !== "undefined") {
+  // Use setTimeout to defer execution until after module initialization
+  setTimeout(() => {
+    if (import.meta.env?.DEV) {
+      eventBus.enableDebug();
+    }
+  }, 0);
 }

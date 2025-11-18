@@ -1,0 +1,36 @@
+{
+  "name": "@deepractice-ai/agentx-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"pnpm dev:server\" \"pnpm dev:client\"",
+    "dev:server": "tsx --watch server/index.ts",
+    "dev:client": "vite",
+    "build": "tsc && vite build",
+    "start": "NODE_ENV=production tsx server/index.ts",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@deepractice-ai/agentx-framework": "workspace:*",
+    "@deepractice-ai/agentx-ui": "workspace:*",
+    "dotenv": "^16.6.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.9.2",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.22",
+    "concurrently": "^9.1.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.17",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3",
+    "vite": "^6.0.5"
+  }
+}
