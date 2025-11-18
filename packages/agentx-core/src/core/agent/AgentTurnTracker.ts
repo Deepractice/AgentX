@@ -1,23 +1,23 @@
 /**
- * ExchangeTrackerReactor
+ * TurnTrackerReactor
  *
- * Reactor that tracks request-response exchange pairs and generates Exchange Layer events.
+ * Reactor that tracks request-response turn pairs and generates Turn Layer events.
  *
  * Architecture:
  * ```
  * Message Events (from MessageAssemblerReactor)
  *     ↓ Subscribe & Track
- * ExchangeTrackerReactor (this class)
+ * TurnTrackerReactor (this class)
  *     ↓ Emit
- * Exchange Events (to EventBus)
+ * Turn Events (to EventBus)
  * ```
  *
  * Responsibilities:
  * 1. Subscribe to Message Layer events
  * 2. Track user requests and assistant responses
- * 3. Pair requests with responses to form exchanges
- * 4. Calculate exchange-level metrics (duration, cost, tokens)
- * 5. Emit Exchange Layer events
+ * 3. Pair requests with responses to form turns
+ * 4. Calculate turn-level metrics (duration, cost, tokens)
+ * 5. Emit Turn Layer events
  */
 
 import type { AgentReactor, AgentReactorContext } from "~/interfaces/AgentReactor";
@@ -27,54 +27,54 @@ import type {
   // Message Events (input)
   UserMessageEvent,
   AssistantMessageEvent,
-  // Exchange Events (output)
-  ExchangeRequestEvent,
-  ExchangeResponseEvent,
+  // Turn Events (output)
+  TurnRequestEvent,
+  TurnResponseEvent,
 } from "@deepractice-ai/agentx-event";
 import type { UserMessage, TokenUsage } from "@deepractice-ai/agentx-types";
 import { createLogger, type LoggerProvider } from "@deepractice-ai/agentx-logger";
 
 /**
- * Pending exchange tracking
+ * Pending turn tracking
  */
-interface PendingExchange {
-  exchangeId: string;
+interface PendingTurn {
+  turnId: string;
   userMessage: UserMessage;
   requestedAt: number;
-  lastStopReason?: string; // Track stop reason to determine exchange completion
+  lastStopReason?: string; // Track stop reason to determine turn completion
 }
 
 /**
- * ExchangeTrackerReactor
+ * TurnTrackerReactor
  *
- * Tracks request-response pairs and generates Exchange events.
+ * Tracks request-response pairs and generates Turn events.
  */
-export class AgentExchangeTracker implements AgentReactor {
-  readonly id = "exchange-tracker";
-  readonly name = "ExchangeTrackerReactor";
+export class AgentTurnTracker implements AgentReactor {
+  readonly id = "turn-tracker";
+  readonly name = "TurnTrackerReactor";
 
   private context: AgentReactorContext | null = null;
   private logger: LoggerProvider;
 
-  // Exchange tracking
-  private pendingExchange: PendingExchange | null = null;
+  // Turn tracking
+  private pendingTurn: PendingTurn | null = null;
 
   // Cost calculation (configurable)
   private costPerInputToken: number = 0.000003; // $3 per 1M tokens
   private costPerOutputToken: number = 0.000015; // $15 per 1M tokens
 
   constructor() {
-    this.logger = createLogger("core/agent/AgentExchangeTracker");
+    this.logger = createLogger("core/agent/AgentTurnTracker");
   }
 
   async initialize(context: AgentReactorContext): Promise<void> {
     this.context = context;
-    this.logger.debug("ExchangeTracker initialized");
+    this.logger.debug("TurnTracker initialized");
     this.subscribeToMessageEvents();
   }
 
   async destroy(): Promise<void> {
-    this.pendingExchange = null;
+    this.pendingTurn = null;
     this.context = null;
   }
 
@@ -94,7 +94,7 @@ export class AgentExchangeTracker implements AgentReactor {
 
     const { consumer } = this.context;
 
-    // User messages start new exchanges
+    // User messages start new turns
     consumer.consumeByType("user_message", (event: any) => {
       this.onUserMessage(event as UserMessageEvent);
     });
@@ -104,7 +104,7 @@ export class AgentExchangeTracker implements AgentReactor {
       this.onMessageDelta(event as MessageDeltaEvent);
     });
 
-    // Assistant messages may complete exchanges (depending on stop reason)
+    // Assistant messages may complete turns (depending on stop reason)
     consumer.consumeByType("assistant_message", (event: any) => {
       this.onAssistantMessage(event as AssistantMessageEvent);
     });
@@ -112,78 +112,96 @@ export class AgentExchangeTracker implements AgentReactor {
 
   /**
    * Handle UserMessageEvent
-   * Creates new exchange and emits ExchangeRequestEvent
+   * Creates new turn and emits TurnRequestEvent
    */
   private onUserMessage(event: UserMessageEvent): void {
-    const exchangeId = this.generateId();
+    const turnId = this.generateId();
 
-    // Store pending exchange
-    this.pendingExchange = {
-      exchangeId,
+    // Store pending turn
+    this.pendingTurn = {
+      turnId,
       userMessage: event.data,
       requestedAt: event.timestamp,
       lastStopReason: undefined,
     };
 
-    // Emit ExchangeRequestEvent
-    const requestEvent: ExchangeRequestEvent = {
-      type: "exchange_request",
+    // Emit TurnRequestEvent
+    const requestEvent: TurnRequestEvent = {
+      type: "turn_request",
       uuid: this.generateId(),
       agentId: this.context!.agentId,
       timestamp: Date.now(),
-      exchangeId,
+      turnId,
       data: {
         userMessage: event.data,
         requestedAt: event.timestamp,
       },
     };
 
-    this.emitExchangeEvent(requestEvent);
+    this.emitTurnEvent(requestEvent);
   }
 
   /**
    * Handle MessageDeltaEvent
-   * Captures stop reason and immediately completes exchange if stop_reason === "end_turn"
+   * Captures stop reason and immediately completes turn if stop_reason === "end_turn"
    */
   private onMessageDelta(event: MessageDeltaEvent): void {
-    if (!this.pendingExchange) {
+    if (!this.pendingTurn) {
+      this.logger.debug("MessageDelta received but no pending turn");
       return;
     }
 
     // Save stop reason from message delta
     if (event.data.delta.stopReason) {
-      this.pendingExchange.lastStopReason = event.data.delta.stopReason;
-      this.logger.debug("Captured stop reason", {
+      this.pendingTurn.lastStopReason = event.data.delta.stopReason;
+      this.logger.info("Captured stop reason", {
         stopReason: event.data.delta.stopReason,
+        turnId: this.pendingTurn.turnId,
       });
 
-      // If stop_reason is "end_turn", complete the exchange immediately
-      // (Don't wait for assistant_message which might be empty or delayed)
-      if (event.data.delta.stopReason === "end_turn") {
-        this.completeExchange(event.timestamp);
+      // Complete turn based on stop reason
+      // - "end_turn": Normal completion (no tool use)
+      // - "tool_use": Tool calling in progress, DON'T complete yet
+      // - "max_tokens": Hit token limit, complete turn
+      // - "stop_sequence": Hit stop sequence, complete turn
+      if (
+        event.data.delta.stopReason === "end_turn" ||
+        event.data.delta.stopReason === "max_tokens" ||
+        event.data.delta.stopReason === "stop_sequence"
+      ) {
+        this.logger.info("Completing turn due to stop reason", {
+          stopReason: event.data.delta.stopReason,
+        });
+        this.completeTurn(event.timestamp);
+      } else if (event.data.delta.stopReason === "tool_use") {
+        this.logger.info("Tool use detected, turn will continue", {
+          turnId: this.pendingTurn.turnId,
+        });
       }
+    } else {
+      this.logger.debug("MessageDelta without stop reason");
     }
   }
 
   /**
    * Handle AssistantMessageEvent
-   * (Exchange completion is now handled in onMessageDelta)
+   * (Turn completion is now handled in onMessageDelta)
    */
   private onAssistantMessage(_event: AssistantMessageEvent): void {
-    // Exchange completion is now handled in onMessageDelta when stopReason === "end_turn"
-    // This method is kept for backward compatibility but doesn't complete exchanges anymore
+    // Turn completion is now handled in onMessageDelta when stopReason === "end_turn"
+    // This method is kept for backward compatibility but doesn't complete turns anymore
   }
 
   /**
-   * Complete the exchange and emit ExchangeResponseEvent
+   * Complete the turn and emit TurnResponseEvent
    */
-  private completeExchange(completedAt: number): void {
-    if (!this.pendingExchange) {
+  private completeTurn(completedAt: number): void {
+    if (!this.pendingTurn) {
       return;
     }
 
-    const { exchangeId, requestedAt } = this.pendingExchange;
-    this.logger.debug("Completing exchange", { exchangeId });
+    const { turnId, requestedAt } = this.pendingTurn;
+    this.logger.debug("Completing turn", { turnId });
 
     const duration = completedAt - requestedAt;
 
@@ -191,13 +209,13 @@ export class AgentExchangeTracker implements AgentReactor {
     const usage = { input: 0, output: 0 };
     const cost = this.calculateCost(usage);
 
-    // Emit ExchangeResponseEvent
-    const responseEvent: ExchangeResponseEvent = {
-      type: "exchange_response",
+    // Emit TurnResponseEvent
+    const responseEvent: TurnResponseEvent = {
+      type: "turn_response",
       uuid: this.generateId(),
       agentId: this.context!.agentId,
       timestamp: Date.now(),
-      exchangeId,
+      turnId,
       data: {
         assistantMessage: {
           id: this.generateId(),
@@ -212,10 +230,10 @@ export class AgentExchangeTracker implements AgentReactor {
       },
     };
 
-    this.emitExchangeEvent(responseEvent);
+    this.emitTurnEvent(responseEvent);
 
-    // Clear pending exchange
-    this.pendingExchange = null;
+    // Clear pending turn
+    this.pendingTurn = null;
   }
 
   /**
@@ -228,14 +246,14 @@ export class AgentExchangeTracker implements AgentReactor {
   }
 
   /**
-   * Emit Exchange event to EventBus
+   * Emit Turn event to EventBus
    */
-  private emitExchangeEvent(event: ExchangeRequestEvent | ExchangeResponseEvent): void {
+  private emitTurnEvent(event: TurnRequestEvent | TurnResponseEvent): void {
     if (!this.context) return;
     this.context.producer.produce(event as any);
   }
 
   private generateId(): string {
-    return `exchange_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    return `turn_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   }
 }

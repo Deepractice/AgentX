@@ -7,7 +7,7 @@
 import type { StreamEventType } from "../stream";
 import type { StateEventType } from "../state";
 import type { MessageEventType } from "../message";
-import type { ExchangeEventType } from "../exchange";
+import type { TurnEventType } from "../turn";
 
 export type { AgentEvent } from "./AgentEvent";
 
@@ -18,4 +18,4 @@ export type AgentEventType =
   | StreamEventType
   | StateEventType
   | MessageEventType
-  | ExchangeEventType;
+  | TurnEventType;

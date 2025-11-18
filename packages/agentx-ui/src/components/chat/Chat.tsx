@@ -10,12 +10,15 @@ import type {
   ToolUseMessageEvent,
   ConversationStartStateEvent,
   ConversationEndStateEvent,
-  ExchangeResponseEvent,
+  TurnResponseEvent,
   ErrorMessage as ErrorMessageType,
 } from "@deepractice-ai/agentx-framework/browser";
 import { ChatMessageList } from "./ChatMessageList";
 import { ChatInput } from "./ChatInput";
 import { ErrorMessage } from "./ErrorMessage";
+import { LoggerFactory } from "../../utils/WebSocketLogger";
+
+const logger = LoggerFactory.getLogger("Chat");
 
 export interface ChatProps {
   /**
@@ -70,13 +73,13 @@ export function Chat({ agent, initialMessages = [], onMessageSend, className = "
   const [errors, setErrors] = useState<ErrorMessageType[]>([]);
 
   useEffect(() => {
-    console.log("[Chat] Setting up event listeners using agent.react()");
+    logger.info("Setting up event listeners using agent.react()");
 
     // Use agent.react() - the new Framework API
     const unsubscribe = agent.react({
       // Stream layer - handle text deltas for real-time streaming
       onTextDelta(event: TextDeltaEvent) {
-        console.log("[Chat] text_delta:", event.data.text);
+        logger.debug("text_delta", { text: event.data.text });
         setStreaming((prev) => prev + event.data.text);
       },
 
@@ -95,12 +98,12 @@ export function Chat({ agent, initialMessages = [], onMessageSend, className = "
       // },
 
       onAssistantMessage(event: AssistantMessageEvent) {
-        console.log("[Chat] assistant_message:", event.uuid);
+        logger.info("assistant_message", { uuid: event.uuid });
         const assistantMsg = event.data;
 
-        // Clear streaming but keep loading (exchange may continue with tool calls)
+        // Clear streaming but keep loading (turn may continue with tool calls)
         setStreaming("");
-        // DON'T set isLoading(false) here - wait for exchange_response
+        // DON'T set isLoading(false) here - wait for turn_response
         setMessages((prev) => {
           // Check if message already exists
           if (prev.some((m) => m.id === assistantMsg.id)) {
@@ -111,7 +114,7 @@ export function Chat({ agent, initialMessages = [], onMessageSend, className = "
       },
 
       onToolUseMessage(event: ToolUseMessageEvent) {
-        console.log("[Chat] tool_use_message:", event.uuid);
+        logger.info("tool_use_message", { uuid: event.uuid });
         const toolMsg = event.data;
 
         setMessages((prev) => {
@@ -125,7 +128,7 @@ export function Chat({ agent, initialMessages = [], onMessageSend, className = "
 
       // Stream layer - handle tool results
       onToolResult(event: ToolResultEvent) {
-        console.log("[Chat] tool_result:", event.data.toolId, event.data.content);
+        logger.info("tool_result", { toolId: event.data.toolId, content: event.data.content });
         const { toolId, content, isError } = event.data;
 
         setMessages((prev) => prev.map((msg) => {
@@ -148,25 +151,25 @@ export function Chat({ agent, initialMessages = [], onMessageSend, className = "
 
       // Message layer - handle error messages
       onErrorMessage(event: ErrorMessageEvent) {
-        console.error("[Chat] error_message:", event);
+        logger.error("error_message", { event });
         setErrors((prev) => [...prev, event.data]);
         setIsLoading(false);
       },
 
       // State layer - conversation lifecycle
       onConversationStart(_event: ConversationStartStateEvent) {
-        console.log("[Chat] conversation_start");
+        logger.info("conversation_start");
         setIsLoading(true);
       },
 
       onConversationEnd(_event: ConversationEndStateEvent) {
-        console.log("[Chat] conversation_end");
+        logger.info("conversation_end");
         setIsLoading(false);
       },
 
-      // Exchange layer - exchange completion (handles multi-turn agentic flows)
-      onExchangeResponse(_event: ExchangeResponseEvent) {
-        console.log("[Chat] exchange_response - exchange complete");
+      // Turn layer - turn completion (handles multi-turn agentic flows)
+      onTurnResponse(_event: TurnResponseEvent) {
+        logger.info("turn_response - turn complete");
         setIsLoading(false);
         setStreaming("");
       },
@@ -179,7 +182,7 @@ export function Chat({ agent, initialMessages = [], onMessageSend, className = "
   }, [agent]);
 
   const handleSend = async (text: string) => {
-    console.log("[Chat.handleSend] Called with text:", text);
+    logger.info("handleSend called", { text });
     // console.trace("[Chat.handleSend] Stack trace");
 
     setIsLoading(true);
@@ -197,9 +200,9 @@ export function Chat({ agent, initialMessages = [], onMessageSend, className = "
 
     try {
       await agent.send(text);
-      console.log("[Chat.handleSend] Send completed");
+      logger.info("Send completed");
     } catch (error) {
-      console.error("[Chat.handleSend] Send failed:", error);
+      logger.error("Send failed", { error });
     }
   };
 

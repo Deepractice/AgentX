@@ -16,7 +16,7 @@ export {
   StreamReactorAdapter,
   StateReactorAdapter,
   MessageReactorAdapter,
-  ExchangeReactorAdapter,
+  TurnReactorAdapter,
   wrapUserReactor,
   type UserReactor,
 } from "./ReactorAdapter";

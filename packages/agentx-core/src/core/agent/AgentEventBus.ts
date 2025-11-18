@@ -41,7 +41,12 @@ export class AgentEventBus implements EventBus {
     if (!this.closed) {
       this.closed = true;
       this.events$.complete();
-      logger.debug("EventBus closed");
+
+      // Log with stack trace to understand who is closing the bus
+      const stack = new Error().stack;
+      logger.warn("EventBus closed", {
+        stack: stack?.split("\n").slice(1, 6).join("\n"), // First 5 frames
+      });
     }
   }
 

@@ -12,7 +12,7 @@ import type { AgentReactor, AgentReactorContext } from "~/interfaces/AgentReacto
 import type { StreamReactor } from "~/interfaces/StreamReactor";
 import type { StateReactor } from "~/interfaces/StateReactor";
 import type { MessageReactor } from "~/interfaces/MessageReactor";
-import type { ExchangeReactor } from "~/interfaces/ExchangeReactor";
+import type { TurnReactor } from "~/interfaces/TurnReactor";
 
 /**
  * Generate unique ID for reactors
@@ -203,22 +203,22 @@ export class MessageReactorAdapter extends BaseReactorAdapter {
 }
 
 /**
- * Exchange layer reactor adapter
+ * Turn layer reactor adapter
  */
-export class ExchangeReactorAdapter extends BaseReactorAdapter {
-  constructor(userReactor: ExchangeReactor) {
-    super(userReactor, "Exchange");
+export class TurnReactorAdapter extends BaseReactorAdapter {
+  constructor(userReactor: TurnReactor) {
+    super(userReactor, "Turn");
   }
 
   protected subscribeEvents(context: AgentReactorContext): void {
-    const reactor = this.userReactor as ExchangeReactor;
+    const reactor = this.userReactor as TurnReactor;
 
-    if (reactor.onExchangeRequest) {
-      context.consumer.consumeByType("exchange_request", reactor.onExchangeRequest.bind(reactor));
+    if (reactor.onTurnRequest) {
+      context.consumer.consumeByType("turn_request", reactor.onTurnRequest.bind(reactor));
     }
 
-    if (reactor.onExchangeResponse) {
-      context.consumer.consumeByType("exchange_response", reactor.onExchangeResponse.bind(reactor));
+    if (reactor.onTurnResponse) {
+      context.consumer.consumeByType("turn_response", reactor.onTurnResponse.bind(reactor));
     }
   }
 }
@@ -226,17 +226,161 @@ export class ExchangeReactorAdapter extends BaseReactorAdapter {
 /**
  * Union type for all user-facing reactors
  */
-export type UserReactor = StreamReactor | StateReactor | MessageReactor | ExchangeReactor;
+export type UserReactor = StreamReactor | StateReactor | MessageReactor | TurnReactor;
+
+/**
+ * Composite adapter that supports multiple layers
+ *
+ * This adapter allows a single reactor to handle events from all 4 layers.
+ * Essential for reactors like WebSocketReactor that forward all event types.
+ */
+class CompositeReactorAdapter implements AgentReactor {
+  readonly id: string;
+  readonly name: string;
+
+  constructor(private userReactor: any) {
+    this.id = generateId();
+    this.name = `CompositeAdapter(${userReactor.constructor?.name || 'Anonymous'})`;
+  }
+
+  async initialize(context: AgentReactorContext): Promise<void> {
+    // Subscribe to all layers
+    this.subscribeStreamEvents(context);
+    this.subscribeStateEvents(context);
+    this.subscribeMessageEvents(context);
+    this.subscribeTurnEvents(context);
+
+    // Call user's lifecycle hook if defined
+    if (this.userReactor.onInitialize) {
+      await this.userReactor.onInitialize(context);
+    }
+  }
+
+  async destroy(): Promise<void> {
+    if (this.userReactor.onDestroy) {
+      await this.userReactor.onDestroy();
+    }
+  }
+
+  private subscribeStreamEvents(context: AgentReactorContext): void {
+    const reactor = this.userReactor;
+
+    if (reactor.onMessageStart) {
+      context.consumer.consumeByType("message_start", reactor.onMessageStart.bind(reactor));
+    }
+    if (reactor.onMessageDelta) {
+      context.consumer.consumeByType("message_delta", reactor.onMessageDelta.bind(reactor));
+    }
+    if (reactor.onMessageStop) {
+      context.consumer.consumeByType("message_stop", reactor.onMessageStop.bind(reactor));
+    }
+    if (reactor.onTextContentBlockStart) {
+      context.consumer.consumeByType("text_content_block_start", reactor.onTextContentBlockStart.bind(reactor));
+    }
+    if (reactor.onTextDelta) {
+      context.consumer.consumeByType("text_delta", reactor.onTextDelta.bind(reactor));
+    }
+    if (reactor.onTextContentBlockStop) {
+      context.consumer.consumeByType("text_content_block_stop", reactor.onTextContentBlockStop.bind(reactor));
+    }
+    if (reactor.onToolUseContentBlockStart) {
+      context.consumer.consumeByType("tool_use_content_block_start", reactor.onToolUseContentBlockStart.bind(reactor));
+    }
+    if (reactor.onInputJsonDelta) {
+      context.consumer.consumeByType("input_json_delta", reactor.onInputJsonDelta.bind(reactor));
+    }
+    if (reactor.onToolUseContentBlockStop) {
+      context.consumer.consumeByType("tool_use_content_block_stop", reactor.onToolUseContentBlockStop.bind(reactor));
+    }
+    if (reactor.onToolCall) {
+      context.consumer.consumeByType("tool_call", reactor.onToolCall.bind(reactor));
+    }
+    if (reactor.onToolResult) {
+      context.consumer.consumeByType("tool_result", reactor.onToolResult.bind(reactor));
+    }
+  }
+
+  private subscribeStateEvents(context: AgentReactorContext): void {
+    const reactor = this.userReactor;
+
+    if (reactor.onAgentReady) {
+      context.consumer.consumeByType("agent_ready_state", reactor.onAgentReady.bind(reactor));
+    }
+    if (reactor.onConversationStart) {
+      context.consumer.consumeByType("conversation_start_state", reactor.onConversationStart.bind(reactor));
+    }
+    if (reactor.onConversationThinking) {
+      context.consumer.consumeByType("conversation_thinking_state", reactor.onConversationThinking.bind(reactor));
+    }
+    if (reactor.onConversationResponding) {
+      context.consumer.consumeByType("conversation_responding_state", reactor.onConversationResponding.bind(reactor));
+    }
+    if (reactor.onConversationEnd) {
+      context.consumer.consumeByType("conversation_end_state", reactor.onConversationEnd.bind(reactor));
+    }
+    if (reactor.onToolPlanned) {
+      context.consumer.consumeByType("tool_planned_state", reactor.onToolPlanned.bind(reactor));
+    }
+    if (reactor.onToolExecuting) {
+      context.consumer.consumeByType("tool_executing_state", reactor.onToolExecuting.bind(reactor));
+    }
+    if (reactor.onToolCompleted) {
+      context.consumer.consumeByType("tool_completed_state", reactor.onToolCompleted.bind(reactor));
+    }
+    if (reactor.onToolFailed) {
+      context.consumer.consumeByType("tool_failed_state", reactor.onToolFailed.bind(reactor));
+    }
+    if (reactor.onStreamStart) {
+      context.consumer.consumeByType("stream_start_state", reactor.onStreamStart.bind(reactor));
+    }
+    if (reactor.onStreamComplete) {
+      context.consumer.consumeByType("stream_complete_state", reactor.onStreamComplete.bind(reactor));
+    }
+    if (reactor.onErrorOccurred) {
+      context.consumer.consumeByType("error_occurred_state", reactor.onErrorOccurred.bind(reactor));
+    }
+  }
+
+  private subscribeMessageEvents(context: AgentReactorContext): void {
+    const reactor = this.userReactor;
+
+    if (reactor.onUserMessage) {
+      context.consumer.consumeByType("user_message", reactor.onUserMessage.bind(reactor));
+    }
+    if (reactor.onAssistantMessage) {
+      context.consumer.consumeByType("assistant_message", reactor.onAssistantMessage.bind(reactor));
+    }
+    if (reactor.onToolUseMessage) {
+      context.consumer.consumeByType("tool_use_message", reactor.onToolUseMessage.bind(reactor));
+    }
+    if (reactor.onErrorMessage) {
+      context.consumer.consumeByType("error_message", reactor.onErrorMessage.bind(reactor));
+    }
+  }
+
+  private subscribeTurnEvents(context: AgentReactorContext): void {
+    const reactor = this.userReactor;
+
+    if (reactor.onTurnRequest) {
+      context.consumer.consumeByType("turn_request", reactor.onTurnRequest.bind(reactor));
+    }
+    if (reactor.onTurnResponse) {
+      context.consumer.consumeByType("turn_response", reactor.onTurnResponse.bind(reactor));
+    }
+  }
+}
 
 /**
  * Detect which type of reactor the user provided and wrap it
+ *
+ * If reactor has methods from multiple layers, uses CompositeReactorAdapter.
+ * Otherwise, uses a specific layer adapter for performance.
  */
 export function wrapUserReactor(userReactor: UserReactor): AgentReactor {
   // Check which interface methods are present to determine reactor type
-  // Priority: Exchange > Message > State > Stream
 
-  const hasExchangeMethods =
-    "onExchangeRequest" in userReactor || "onExchangeResponse" in userReactor;
+  const hasTurnMethods =
+    "onTurnRequest" in userReactor || "onTurnResponse" in userReactor;
 
   const hasMessageMethods =
     "onUserMessage" in userReactor ||
@@ -267,11 +411,22 @@ export function wrapUserReactor(userReactor: UserReactor): AgentReactor {
     "onTextContentBlockStop" in userReactor ||
     "onToolUseContentBlockStart" in userReactor ||
     "onInputJsonDelta" in userReactor ||
-    "onToolUseContentBlockStop" in userReactor;
+    "onToolUseContentBlockStop" in userReactor ||
+    "onToolCall" in userReactor ||
+    "onToolResult" in userReactor;
 
-  // Priority: Exchange > Message > State > Stream
-  if (hasExchangeMethods) {
-    return new ExchangeReactorAdapter(userReactor as ExchangeReactor);
+  // Count how many layers this reactor implements
+  const layerCount = [hasStreamMethods, hasStateMethods, hasMessageMethods, hasTurnMethods]
+    .filter(Boolean).length;
+
+  // If multi-layer reactor, use CompositeAdapter
+  if (layerCount > 1) {
+    return new CompositeReactorAdapter(userReactor);
+  }
+
+  // Single-layer reactors use specific adapters for performance
+  if (hasTurnMethods) {
+    return new TurnReactorAdapter(userReactor as TurnReactor);
   }
 
   if (hasMessageMethods) {
@@ -288,6 +443,6 @@ export function wrapUserReactor(userReactor: UserReactor): AgentReactor {
 
   throw new Error(
     `Invalid reactor: no recognized event handler methods found. ` +
-      `Reactor must implement at least one method from StreamReactor, StateReactor, MessageReactor, or ExchangeReactor.`
+      `Reactor must implement at least one method from StreamReactor, StateReactor, MessageReactor, or TurnReactor.`
   );
 }

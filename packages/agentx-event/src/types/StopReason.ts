@@ -13,7 +13,7 @@
 export type StopReason =
   /**
    * Natural conversation end - the model completed its response
-   * This indicates the exchange is complete (no more tool calls needed)
+   * This indicates the turn is complete (no more tool calls needed)
    */
   | "end_turn"
   /**

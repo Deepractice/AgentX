@@ -22,7 +22,7 @@ export interface MessageDeltaEvent extends StreamEvent {
       /**
        * Reason why the message stopped
        *
-       * - "end_turn": Natural conversation end (exchange complete)
+       * - "end_turn": Natural conversation end (turn complete)
        * - "tool_use": Model wants to use a tool (more messages coming)
        * - "max_tokens": Reached token limit
        * - "stop_sequence": Encountered custom stop sequence

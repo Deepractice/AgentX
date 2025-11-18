@@ -306,7 +306,12 @@ export class AgentServiceImpl implements AgentService {
    * Destroy agent and clean up all resources
    */
   async destroy(): Promise<void> {
-    this.logger.info("Destroying agent", { agentId: this.id });
+    // Log with stack trace to understand who is destroying the agent
+    const stack = new Error().stack;
+    this.logger.info("Destroying agent", {
+      agentId: this.id,
+      stack: stack?.split("\n").slice(1, 6).join("\n"), // First 5 frames
+    });
 
     // Clear message history
     this._messages = [];

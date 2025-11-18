@@ -131,8 +131,8 @@ function setupGlobalMessageHandler(ws: WebSocket) {
         "conversation_start",
         "conversation_responding",
         "conversation_end",
-        // Exchange Layer events (critical for multi-turn agentic flows)
-        "exchange_response", // Signals entire exchange is complete (including all tool calls)
+        // Turn Layer events (critical for multi-turn agentic flows)
+        "turn_response", // Signals entire turn is complete (including all tool calls)
         // Error messages (critical, must be forwarded)
         "error_message",
       ];
@@ -145,10 +145,10 @@ function setupGlobalMessageHandler(ws: WebSocket) {
       for (const [messageId, queue] of messageQueues.entries()) {
         queue.push(data as any); // Type cast for flexibility
 
-        // Mark as done ONLY on exchange_response (not message_stop!)
-        // In agentic mode, an exchange contains multiple messages (text → tool calls → results → final response)
-        // message_stop only marks the end of a single message, not the entire exchange
-        if (data.type === "exchange_response" || data.type === "error_message") {
+        // Mark as done ONLY on turn_response (not message_stop!)
+        // In agentic mode, a turn contains multiple messages (text → tool calls → results → final response)
+        // message_stop only marks the end of a single message, not the entire turn
+        if (data.type === "turn_response" || data.type === "error_message") {
           messageDoneFlags.set(messageId, true);
         }
       }

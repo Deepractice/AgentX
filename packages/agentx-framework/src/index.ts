@@ -129,11 +129,11 @@ export type {
   ErrorMessageEvent,
 } from "@deepractice-ai/agentx-event";
 
-// Exchange layer events (analytics & cost tracking)
+// Turn layer events (analytics & cost tracking)
 export type {
-  ExchangeEventType,
-  ExchangeRequestEvent,
-  ExchangeResponseEvent,
+  TurnEventType,
+  TurnRequestEvent,
+  TurnResponseEvent,
 } from "@deepractice-ai/agentx-event";
 
 // ==================== Reactors (Event Handlers) ====================
@@ -149,7 +149,7 @@ export type {
   StreamReactor,
   StateReactor,
   MessageReactor,
-  ExchangeReactor,
+  TurnReactor,
 } from "@deepractice-ai/agentx-core";
 
 // Reactor adapters (for advanced framework usage)
@@ -157,7 +157,7 @@ export {
   StreamReactorAdapter,
   StateReactorAdapter,
   MessageReactorAdapter,
-  ExchangeReactorAdapter,
+  TurnReactorAdapter,
   wrapUserReactor,
   type UserReactor,
 } from "@deepractice-ai/agentx-core";
@@ -331,7 +331,7 @@ export { WebSocketDriver, type WebSocketDriverConfig } from "./drivers";
 /**
  * WebSocketReactor - Server-side event forwarder
  * Converts Agent events → WebSocket messages
- * Implements all 4 reactor layers (Stream, State, Message, Exchange)
+ * Implements all 4 reactor layers (Stream, State, Message, Turn)
  */
 export { WebSocketReactor, type WebSocketLike, type WebSocketReactorConfig } from "./reactors";
 

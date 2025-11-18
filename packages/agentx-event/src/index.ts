@@ -2,7 +2,7 @@
  * @deepractice-ai/agentx-event
  *
  * Complete event system for AgentX.
- * Organized by layers: Stream → State → Message → Exchange
+ * Organized by layers: Stream → State → Message → Turn
  */
 
 // ===== Base Layer =====
@@ -62,10 +62,10 @@ export type {
   ErrorMessageEvent,
 } from "./message";
 
-// ===== Exchange Layer =====
+// ===== Turn Layer =====
 export type {
-  ExchangeEventType,
-  ExchangeRequestEvent,
-  ExchangeResponseEvent,
-} from "./exchange";
+  TurnEventType,
+  TurnRequestEvent,
+  TurnResponseEvent,
+} from "./turn";
 

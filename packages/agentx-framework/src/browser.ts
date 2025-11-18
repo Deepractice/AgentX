@@ -96,11 +96,11 @@ export type {
   ErrorMessageEvent,
 } from "@deepractice-ai/agentx-event";
 
-// Exchange layer events
+// Turn layer events
 export type {
-  ExchangeEventType,
-  ExchangeRequestEvent,
-  ExchangeResponseEvent,
+  TurnEventType,
+  TurnRequestEvent,
+  TurnResponseEvent,
 } from "@deepractice-ai/agentx-event";
 
 // ==================== Reactors ====================
@@ -115,7 +115,7 @@ export type {
   StreamReactor,
   StateReactor,
   MessageReactor,
-  ExchangeReactor,
+  TurnReactor,
 } from "@deepractice-ai/agentx-core";
 
 // ==================== Platform Abstraction ====================

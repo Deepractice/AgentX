@@ -65,9 +65,9 @@ import type {
   AssistantMessageEvent,
   ToolUseMessageEvent,
   ErrorMessageEvent,
-  // Exchange events
-  ExchangeRequestEvent,
-  ExchangeResponseEvent,
+  // Turn events
+  TurnRequestEvent,
+  TurnResponseEvent,
 } from "@deepractice-ai/agentx-event";
 
 /**
@@ -126,9 +126,9 @@ export interface ReactorDefinition<TConfig = any> {
   onToolUseMessage?: (event: ToolUseMessageEvent, config: TConfig) => void | Promise<void>;
   onErrorMessage?: (event: ErrorMessageEvent, config: TConfig) => void | Promise<void>;
 
-  // ==================== Exchange Layer ====================
-  onExchangeRequest?: (event: ExchangeRequestEvent, config: TConfig) => void | Promise<void>;
-  onExchangeResponse?: (event: ExchangeResponseEvent, config: TConfig) => void | Promise<void>;
+  // ==================== Turn Layer ====================
+  onTurnRequest?: (event: TurnRequestEvent, config: TConfig) => void | Promise<void>;
+  onTurnResponse?: (event: TurnResponseEvent, config: TConfig) => void | Promise<void>;
 }
 
 /**
@@ -261,12 +261,12 @@ function buildUserReactor(definition: ReactorDefinition, config: any): any {
     userReactor.onErrorMessage = (e: ErrorMessageEvent) => definition.onErrorMessage!(e, config);
   }
 
-  // ==================== Exchange Layer ====================
-  if (definition.onExchangeRequest) {
-    userReactor.onExchangeRequest = (e: ExchangeRequestEvent) => definition.onExchangeRequest!(e, config);
+  // ==================== Turn Layer ====================
+  if (definition.onTurnRequest) {
+    userReactor.onTurnRequest = (e: TurnRequestEvent) => definition.onTurnRequest!(e, config);
   }
-  if (definition.onExchangeResponse) {
-    userReactor.onExchangeResponse = (e: ExchangeResponseEvent) => definition.onExchangeResponse!(e, config);
+  if (definition.onTurnResponse) {
+    userReactor.onTurnResponse = (e: TurnResponseEvent) => definition.onTurnResponse!(e, config);
   }
 
   return userReactor;

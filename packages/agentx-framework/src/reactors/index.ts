@@ -10,14 +10,14 @@
 export type { StreamReactor } from "@deepractice-ai/agentx-core";
 export type { StateReactor } from "@deepractice-ai/agentx-core";
 export type { MessageReactor } from "@deepractice-ai/agentx-core";
-export type { ExchangeReactor } from "@deepractice-ai/agentx-core";
+export type { TurnReactor } from "@deepractice-ai/agentx-core";
 
 // Export adapters (from agentx-core, not internal/)
 export {
   StreamReactorAdapter,
   StateReactorAdapter,
   MessageReactorAdapter,
-  ExchangeReactorAdapter,
+  TurnReactorAdapter,
   wrapUserReactor,
   type UserReactor,
 } from "@deepractice-ai/agentx-core";

@@ -528,17 +528,13 @@ export const ClaudeSDKDriver = defineDriver<ClaudeSDKDriverConfig>({
       state.promptSubject.next(sdkUserMessage);
 
       // Subscribe to responseSubject (broadcast from background thread)
-      // Auto-complete subscription after receiving message_stop
+      // Auto-complete subscription after receiving result event (entire agentic flow done)
       const responseStream = (async function* () {
         for await (const sdkMsg of observableToAsyncIterable(state.responseSubject)) {
           yield sdkMsg;
 
-          // Stop after message_stop event
-          if (sdkMsg.type === "stream_event" && (sdkMsg as any).event?.type === "message_stop") {
-            console.log(`🏁 [ClaudeSDKDriver] Message completed, stopping this subscription`);
-            break;
-          }
-          // Or after result event
+          // Only stop after result event (entire exchange complete, including tool calls)
+          // Do NOT stop after message_stop - that's just one turn, tool calls need multiple turns
           if (sdkMsg.type === "result") {
             console.log(`🏁 [ClaudeSDKDriver] Result received, stopping this subscription`);
             break;

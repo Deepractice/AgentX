@@ -102,16 +102,11 @@ export class AgentDriverBridge implements AgentReactor {
       for await (const streamEvent of this.driver.sendMessage(event.data)) {
         eventCount++;
 
-        // Log important events at DEBUG level
-        if (streamEvent.type.includes('tool') ||
-            streamEvent.type.includes('json') ||
-            streamEvent.type === 'message_delta') {
-          this.logger.debug("Received stream event", {
-            eventNum: eventCount,
-            eventType: streamEvent.type,
-            event: streamEvent,
-          });
-        }
+        // Log ALL events to diagnose forwarding issue
+        this.logger.debug("Received stream event from driver", {
+          eventNum: eventCount,
+          eventType: streamEvent.type,
+        });
 
         // Check if aborted (null-safe check)
         if (this.abortController?.signal.aborted) {
@@ -120,7 +115,14 @@ export class AgentDriverBridge implements AgentReactor {
         }
 
         // Forward event to EventBus (no transformation needed)
+        this.logger.debug("Forwarding to EventBus", {
+          eventType: streamEvent.type,
+          producerActive: context.producer.isActive(),
+        });
         context.producer.produce(streamEvent);
+        this.logger.debug("Event forwarded successfully", {
+          eventType: streamEvent.type,
+        });
       }
 
       this.logger.debug("Stream processing completed", { totalEvents: eventCount });
@@ -128,6 +130,13 @@ export class AgentDriverBridge implements AgentReactor {
       this.logger.error("Error processing stream", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
+      });
+
+      // Check producer state before emitting error
+      const producerActive = context.producer.isActive();
+      this.logger.info("About to emit error event", {
+        producerActive,
+        contextExists: !!context,
       });
 
       // Create and emit ErrorMessageEvent
@@ -151,7 +160,14 @@ export class AgentDriverBridge implements AgentReactor {
         timestamp: Date.now(),
       };
 
-      context.producer.produce(errorEvent);
+      if (producerActive) {
+        context.producer.produce(errorEvent);
+        this.logger.info("Error event emitted successfully");
+      } else {
+        this.logger.error("Cannot emit error event: producer is not active (EventBus closed)", {
+          errorMessage: errorMessage.message,
+        });
+      }
     } finally {
       this.abortController = null;
     }

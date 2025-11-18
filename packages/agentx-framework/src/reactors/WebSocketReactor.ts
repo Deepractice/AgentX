@@ -36,10 +36,23 @@ function sendEvent(ws: WebSocketLike, event: any): void {
   try {
     // Only send if WebSocket is open (readyState === 1)
     if (ws.readyState === 1) {
+      // Log important events
+      if (event.type === "error_message" || event.type === "assistant_message") {
+        console.log(`[WebSocketReactor] ✅ Sending ${event.type} to client`);
+      }
       ws.send(JSON.stringify(event));
+    } else {
+      console.warn(`[WebSocketReactor] ❌ Cannot send event - WebSocket not open`, {
+        eventType: event.type,
+        readyState: ws.readyState,
+        stateText: ["CONNECTING", "OPEN", "CLOSING", "CLOSED"][ws.readyState] || "UNKNOWN",
+      });
     }
   } catch (error) {
-    console.error("[WebSocketReactor] Failed to send event:", error);
+    console.error("[WebSocketReactor] ❌ Failed to send event:", {
+      eventType: event.type,
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }
 
@@ -86,7 +99,7 @@ export const WebSocketReactor = defineReactor<WebSocketReactorConfig>({
   onToolUseMessage: (e, cfg) => sendEvent(cfg.ws, e),
   onErrorMessage: (e, cfg) => sendEvent(cfg.ws, e),
 
-  // ==================== Exchange Layer ====================
-  onExchangeRequest: (e, cfg) => sendEvent(cfg.ws, e),
-  onExchangeResponse: (e, cfg) => sendEvent(cfg.ws, e),
+  // ==================== Turn Layer ====================
+  onTurnRequest: (e, cfg) => sendEvent(cfg.ws, e),
+  onTurnResponse: (e, cfg) => sendEvent(cfg.ws, e),
 });

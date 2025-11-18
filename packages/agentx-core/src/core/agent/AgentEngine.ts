@@ -9,7 +9,7 @@
  *    - AgentDriverBridge → Stream Events
  *    - StateMachineReactor → State Events
  *    - MessageAssemblerReactor → Message Events
- *    - ExchangeTrackerReactor → Exchange Events
+ *    - TurnTrackerReactor → Turn Events
  *    - User-provided Reactors
  * 3. Lifecycle management (initialize, destroy)
  *
@@ -21,7 +21,7 @@
  *         ├── AgentDriverBridge
  *         ├── StateMachineReactor
  *         ├── MessageAssemblerReactor
- *         ├── ExchangeTrackerReactor
+ *         ├── TurnTrackerReactor
  *         └── User Reactors
  * ```
  *
@@ -45,7 +45,7 @@
 import { AgentEventBus } from "./AgentEventBus";
 import { AgentStateMachine } from "./AgentStateMachine";
 import { AgentMessageAssembler } from "./AgentMessageAssembler";
-import { AgentExchangeTracker } from "./AgentExchangeTracker";
+import { AgentTurnTracker } from "./AgentTurnTracker";
 import { AgentDriverBridge } from "./AgentDriverBridge";
 import { AgentReactorRegistry } from "./AgentReactorRegistry";
 import type { AgentDriver } from "~/interfaces/AgentDriver";
@@ -107,7 +107,7 @@ export class AgentEngine {
     this.registry.register(new AgentDriverBridge(driver));
     this.registry.register(new AgentStateMachine());
     this.registry.register(new AgentMessageAssembler());
-    this.registry.register(new AgentExchangeTracker());
+    this.registry.register(new AgentTurnTracker());
 
     // Register user-provided Reactors
     if (config?.reactors) {

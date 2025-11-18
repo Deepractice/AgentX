@@ -1,28 +1,28 @@
 /**
- * ExchangeReactor
+ * TurnReactor
  *
- * User-facing interface for handling Exchange layer events.
+ * User-facing interface for handling Turn layer events.
  * All methods are optional - users only implement what they need.
  */
 
 import type {
-  ExchangeRequestEvent,
-  ExchangeResponseEvent,
+  TurnRequestEvent,
+  TurnResponseEvent,
 } from "@deepractice-ai/agentx-event";
 import type { AgentReactorContext } from "./AgentReactor";
 
 /**
- * Exchange layer reactor
+ * Turn layer reactor
  *
  * Handles request-response pairs with analytics data.
  * Use this for cost tracking, performance monitoring, usage analytics, etc.
  *
  * @example
  * ```typescript
- * class CostTracker implements ExchangeReactor {
+ * class CostTracker implements TurnReactor {
  *   private totalCost = 0;
  *
- *   onExchangeResponse(event) {
+ *   onTurnResponse(event) {
  *     this.totalCost += event.data.costUsd;
  *     console.log(`Total cost: $${this.totalCost.toFixed(4)}`);
  *     console.log(`Duration: ${event.data.durationMs}ms`);
@@ -31,17 +31,17 @@ import type { AgentReactorContext } from "./AgentReactor";
  * }
  * ```
  */
-export interface ExchangeReactor {
+export interface TurnReactor {
   /**
    * Called when a user initiates a request
    */
-  onExchangeRequest?(event: ExchangeRequestEvent): void;
+  onTurnRequest?(event: TurnRequestEvent): void;
 
   /**
    * Called when assistant completes a response
    * Includes cost, duration, and token usage analytics
    */
-  onExchangeResponse?(event: ExchangeResponseEvent): void;
+  onTurnResponse?(event: TurnResponseEvent): void;
 
   /**
    * Optional lifecycle: Called when reactor is initialized

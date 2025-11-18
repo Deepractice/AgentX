@@ -29,4 +29,4 @@ export type { AgentReactor, AgentReactorContext } from "./AgentReactor";
 export type { StreamReactor } from "./StreamReactor";
 export type { StateReactor } from "./StateReactor";
 export type { MessageReactor } from "./MessageReactor";
-export type { ExchangeReactor } from "./ExchangeReactor";
+export type { TurnReactor } from "./TurnReactor";

@@ -154,7 +154,10 @@ class AgentSession {
   }
 
   async destroy(): Promise<void> {
+    // Log with stack trace to understand who is destroying the session
+    const stack = new Error().stack;
     console.log(`[AgentSession] Destroying session: ${this.sessionId}`);
+    console.log(`[AgentSession] Destroy stack trace:`, stack?.split("\n").slice(1, 6).join("\n"));
     await this.agent.destroy();
   }
 }
@@ -218,8 +221,9 @@ export class WebSocketServer {
       });
 
       // Handle disconnect
-      ws.on("close", async () => {
+      ws.on("close", async (code, reason) => {
         console.log(`[WebSocketServer] Connection closed (total: ${this.sessions.size - 1})`);
+        console.log(`[WebSocketServer] Close code: ${code}, reason: ${reason.toString()}`);
 
         const session = this.sessions.get(ws);
         if (session) {
