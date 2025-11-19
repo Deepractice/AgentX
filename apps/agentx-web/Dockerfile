@@ -10,14 +10,11 @@ USER root
 
 WORKDIR /app
 
-# Copy entire monorepo (pre-built on host)
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY packages ./packages
-COPY apps/agentx-web ./apps/agentx-web
-COPY node_modules ./node_modules
-
-# Set ownership for node user
-RUN chown -R node:node /app
+# Copy entire monorepo (pre-built on host) with correct ownership
+COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY --chown=node:node packages ./packages
+COPY --chown=node:node apps/agentx-web ./apps/agentx-web
+COPY --chown=node:node node_modules ./node_modules
 
 # Environment variables
 ENV NODE_ENV=production \
