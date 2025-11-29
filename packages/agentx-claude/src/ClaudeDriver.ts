@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /**
  * ClaudeDriver - ADK-based Claude AI Driver
  *
@@ -5,11 +6,7 @@
  */
 
 import { defineDriver } from "@deepractice-ai/agentx-adk";
-import type {
-  UserMessage,
-  StreamEventType,
-  InterruptedStreamEvent,
-} from "@deepractice-ai/agentx-types";
+import type { UserMessage, StreamEventType } from "@deepractice-ai/agentx-types";
 import {
   query,
   type SDKUserMessage,
@@ -163,7 +160,9 @@ export const ClaudeDriver = defineDriver({
           logger.debug("Sending message", {
             agentId,
             content:
-              typeof message.content === "string" ? message.content.substring(0, 80) : "[structured]",
+              typeof message.content === "string"
+                ? message.content.substring(0, 80)
+                : "[structured]",
           });
 
           promptSubject.next(sdkUserMessage);
@@ -175,25 +174,16 @@ export const ClaudeDriver = defineDriver({
             }
           })();
 
-          yield* transformSDKMessages(agentId, responseStream, (capturedSessionId) => {
-            sessionMap.set(agentId, capturedSessionId);
-          });
-
-          // If interrupted, yield InterruptedStreamEvent
-          // This ensures interrupt flows through the event pipeline
-          if (wasInterrupted) {
-            logger.debug("Yielding InterruptedStreamEvent", { agentId });
-            const interruptedEvent: InterruptedStreamEvent = {
-              type: "interrupted",
-              uuid: `interrupted_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-              agentId,
-              timestamp: Date.now(),
-              data: {
-                reason: "user_interrupt",
-              },
-            };
-            yield interruptedEvent;
-          }
+          yield* transformSDKMessages(
+            agentId,
+            responseStream,
+            (capturedSessionId) => {
+              sessionMap.set(agentId, capturedSessionId);
+            },
+            {
+              isInterrupted: () => wasInterrupted,
+            }
+          );
         } finally {
           // Cleanup
           currentAbortController = null;

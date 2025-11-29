@@ -4,7 +4,7 @@
  * Transforms Claude SDK messages to AgentX StreamEvent format.
  */
 
-import type { StreamEventType } from "@deepractice-ai/agentx-types";
+import type { StreamEventType, InterruptedStreamEvent } from "@deepractice-ai/agentx-types";
 import type { SDKMessage, SDKPartialAssistantMessage } from "@anthropic-ai/claude-agent-sdk";
 import { createLogger } from "@deepractice-ai/agentx-logger";
 import {
@@ -107,12 +107,24 @@ async function* processStreamEvent(
 }
 
 /**
+ * Options for transformSDKMessages
+ */
+export interface TransformOptions {
+  /**
+   * Check if current operation was interrupted by user.
+   * Used to distinguish SDK interrupt from other errors.
+   */
+  isInterrupted?: () => boolean;
+}
+
+/**
  * Transform Claude SDK messages to AgentX StreamEvents
  */
 export async function* transformSDKMessages(
   agentId: string,
   sdkMessages: AsyncIterable<SDKMessage>,
-  onSessionIdCaptured?: (sessionId: string) => void
+  onSessionIdCaptured?: (sessionId: string) => void,
+  options?: TransformOptions
 ): AsyncIterable<StreamEventType> {
   // Create context to track content block type across events
   const context: ContentBlockContext = {
@@ -166,7 +178,23 @@ export async function* transformSDKMessages(
         break;
 
       case "result":
-        if (sdkMsg.subtype !== "success") {
+        if (sdkMsg.subtype === "success") {
+          // Normal completion - do nothing
+        } else if (sdkMsg.subtype === "error_during_execution" && options?.isInterrupted?.()) {
+          // User interrupt - yield InterruptedStreamEvent instead of throwing
+          logger.debug("SDK interrupt detected, yielding InterruptedStreamEvent", { agentId });
+          const interruptedEvent: InterruptedStreamEvent = {
+            type: "interrupted",
+            uuid: `interrupted_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+            agentId,
+            timestamp: Date.now(),
+            data: {
+              reason: "user_interrupt",
+            },
+          };
+          yield interruptedEvent;
+        } else {
+          // Other errors - throw
           throw new Error(`Claude SDK error: ${sdkMsg.subtype}`);
         }
         break;
