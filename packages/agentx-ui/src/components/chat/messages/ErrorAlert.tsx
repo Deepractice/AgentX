@@ -4,12 +4,9 @@ import type { AgentError } from "@deepractice-ai/agentx-types";
 import { MessageAvatar } from "~/components/elements/MessageAvatar";
 import { AlertCircle, AlertTriangle, XCircle } from "lucide-react";
 
-export interface ErrorMessageProps {
+export interface ErrorAlertProps {
   /**
    * The AgentError to display
-   *
-   * Note: Now accepts AgentError directly (not ErrorMessage).
-   * ErrorEvent.data.error contains the AgentError.
    */
   error: AgentError;
 
@@ -21,7 +18,7 @@ export interface ErrorMessageProps {
 }
 
 /**
- * ErrorMessage - Display an agent error
+ * ErrorAlert - Display an agent error
  *
  * Features:
  * - Error severity visualization (fatal/error/warning)
@@ -29,12 +26,9 @@ export interface ErrorMessageProps {
  * - Error code and message
  * - Optional details expansion
  *
- * Note: This component now accepts AgentError directly (from ErrorEvent.data.error),
- * not the old ErrorMessage type which has been removed.
- *
  * @example
  * ```tsx
- * <ErrorMessage error={{
+ * <ErrorAlert error={{
  *   category: 'llm',
  *   code: 'RATE_LIMITED',
  *   message: 'Rate limit exceeded',
@@ -43,7 +37,7 @@ export interface ErrorMessageProps {
  * }} />
  * ```
  */
-export function ErrorMessage({ error, showDetails = false }: ErrorMessageProps) {
+export function ErrorAlert({ error, showDetails = false }: ErrorAlertProps) {
   // error is now AgentError directly, no nested .error property
   const severity = error?.severity || "error";
   const category = error?.category || "system";

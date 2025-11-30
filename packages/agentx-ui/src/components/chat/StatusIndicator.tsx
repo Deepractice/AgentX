@@ -1,34 +1,48 @@
 /**
- * AgentStatusIndicator - Agent state monitoring and display component
+ * StatusIndicator - Pure UI component for displaying agent status
  *
- * Monitors agent.state and displays appropriate status UI.
- * Handles loading states, status text, elapsed time, and abort functionality.
+ * Shows loading state with animations, elapsed time, and abort button.
+ * This is a presentational component - it receives status via props.
  *
  * @example
  * ```tsx
- * <AgentStatusIndicator agent={agent} />
+ * <StatusIndicator
+ *   status="responding"
+ *   isLoading={true}
+ *   onAbort={() => agent.interrupt()}
+ * />
  * ```
  */
 
 import { useState, useEffect } from "react";
-import type { Agent, AgentState } from "@deepractice-ai/agentx-types";
+import type { AgentState } from "@deepractice-ai/agentx-types";
 
-export interface AgentStatusIndicatorProps {
+export interface StatusIndicatorProps {
   /**
-   * Agent instance to monitor
+   * Current agent state
    */
-  agent: Agent;
+  status: AgentState;
 
   /**
-   * Custom className
+   * Whether the agent is currently processing
    */
-  className?: string;
+  isLoading: boolean;
+
+  /**
+   * Callback to abort/interrupt the current operation
+   */
+  onAbort?: () => void;
 
   /**
    * Whether to show the abort button
    * @default true
    */
   showAbortButton?: boolean;
+
+  /**
+   * Custom className
+   */
+  className?: string;
 }
 
 /**
@@ -56,39 +70,21 @@ function getStatusText(state: AgentState): string {
 }
 
 /**
- * Check if state is a loading state
+ * StatusIndicator - Displays status with animations
  */
-function isLoadingState(state: AgentState): boolean {
-  return state !== "idle" && state !== "ready" && state !== "initializing";
-}
-
-/**
- * AgentStatusIndicator - Displays agent status with animations
- */
-export function AgentStatusIndicator({
-  agent,
-  className = "",
+export function StatusIndicator({
+  status,
+  isLoading,
+  onAbort,
   showAbortButton = true,
-}: AgentStatusIndicatorProps) {
-  const [state, setState] = useState<AgentState>(agent.state);
+  className = "",
+}: StatusIndicatorProps) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [animationPhase, setAnimationPhase] = useState(0);
 
-  // Subscribe to agent state changes
-  useEffect(() => {
-    const unsubscribe = agent.onStateChange((change) => {
-      setState(change.current);
-    });
-
-    // Sync initial state
-    setState(agent.state);
-
-    return unsubscribe;
-  }, [agent]);
-
   // Elapsed time counter
   useEffect(() => {
-    if (!isLoadingState(state)) {
+    if (!isLoading) {
       setElapsedTime(0);
       return;
     }
@@ -100,26 +96,21 @@ export function AgentStatusIndicator({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [state]);
+  }, [isLoading]);
 
   // Spinner animation
   useEffect(() => {
-    if (!isLoadingState(state)) return;
+    if (!isLoading) return;
 
     const timer = setInterval(() => {
       setAnimationPhase((prev) => (prev + 1) % 4);
     }, 500);
 
     return () => clearInterval(timer);
-  }, [state]);
+  }, [isLoading]);
 
-  const isLoading = isLoadingState(state);
-  const statusText = getStatusText(state);
+  const statusText = getStatusText(status);
   const spinners = ["●", "●", "●", "○"];
-
-  const handleAbort = () => {
-    agent.interrupt();
-  };
 
   if (!isLoading) {
     return null;
@@ -156,9 +147,9 @@ export function AgentStatusIndicator({
           </div>
         </div>
 
-        {showAbortButton && (
+        {showAbortButton && onAbort && (
           <button
-            onClick={handleAbort}
+            onClick={onAbort}
             className="ml-3 text-xs bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md transition-colors flex items-center gap-1.5 flex-shrink-0"
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

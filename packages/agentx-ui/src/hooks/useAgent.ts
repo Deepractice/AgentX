@@ -134,6 +134,7 @@ export function useAgent(agent: Agent | null, options: UseAgentOptions = {}): Us
 
   // Derive isLoading from status
   const isLoading =
+    status === "queued" ||
     status === "responding" ||
     status === "thinking" ||
     status === "planning_tool" ||

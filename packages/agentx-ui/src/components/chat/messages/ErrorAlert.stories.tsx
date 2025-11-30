@@ -1,15 +1,15 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { ErrorMessage } from "./ErrorMessage";
+import { ErrorAlert } from "./ErrorAlert";
 import type { AgentError } from "@deepractice-ai/agentx-types";
 
 const meta = {
-  title: "Chat/ErrorMessage",
-  component: ErrorMessage,
+  title: "Chat/ErrorAlert",
+  component: ErrorAlert,
   parameters: {
     layout: "padded",
   },
   tags: ["autodocs"],
-} satisfies Meta<typeof ErrorMessage>;
+} satisfies Meta<typeof ErrorAlert>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

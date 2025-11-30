@@ -7,6 +7,9 @@ export type { ChatMessageListProps } from "./ChatMessageList";
 export { ChatInput } from "./ChatInput";
 export type { ChatInputProps } from "./ChatInput";
 
+export { StatusIndicator } from "./StatusIndicator";
+export type { StatusIndicatorProps } from "./StatusIndicator";
+
 // Re-export message components
 export {
   UserMessage,
@@ -14,7 +17,7 @@ export {
   ToolCallMessage,
   ToolResultMessage,
   SystemMessage,
-  ErrorMessage,
+  ErrorAlert,
 } from "./messages";
 
 export type {
@@ -23,7 +26,7 @@ export type {
   ToolCallMessageProps,
   ToolResultMessageProps,
   SystemMessageProps,
-  ErrorMessageProps,
+  ErrorAlertProps,
 } from "./messages";
 
 // Re-export Message type from agentx-types

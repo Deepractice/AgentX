@@ -1,10 +1,10 @@
 /**
- * Agent components - Agent state monitoring and UI integration
+ * Agent components - Agent integration
  *
  * Components for integrating Agent with React UI:
- * - AgentStatusIndicator: Displays agent status with animations
+ * - Agent: Integration component that binds Agent events to React state
  *
- * For data binding, use the useAgent hook from @deepractice-ai/agentx-ui/hooks
+ * For status display, use StatusIndicator from chat components with props from useAgent.
  */
 
-export { AgentStatusIndicator, type AgentStatusIndicatorProps } from "./AgentStatusIndicator";
+export { Agent, type AgentProps } from "./Agent";

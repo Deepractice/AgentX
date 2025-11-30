@@ -22,5 +22,5 @@ export type { ToolUseMessageProps } from "./ToolUseMessage";
 export { SystemMessage } from "./SystemMessage";
 export type { SystemMessageProps } from "./SystemMessage";
 
-export { ErrorMessage } from "./ErrorMessage";
-export type { ErrorMessageProps } from "./ErrorMessage";
+export { ErrorAlert } from "./ErrorAlert";
+export type { ErrorAlertProps } from "./ErrorAlert";

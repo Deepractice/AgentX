@@ -1,50 +1,83 @@
 /**
- * Chat - Complete chat interface with Agent integration
+ * Chat - Pure UI component for chat interface
  *
- * Features:
- * - Real-time streaming from AI API
- * - Message history
- * - Auto-scroll
- * - Agent status indicator
- * - Image attachment support
- * - Full event handling using new Agent API
+ * A presentational component that renders the complete chat UI including:
+ * - Message list with auto-scroll
+ * - Status indicator (when loading)
+ * - Error messages
+ * - Input area
  *
  * @example
  * ```tsx
- * import { Chat } from "@deepractice-ai/agentx-ui";
- * import { createRemoteAgent } from "@deepractice-ai/agentx/client";
+ * // Use with Agent component (recommended)
+ * import { Agent, Chat } from "@deepractice-ai/agentx-ui";
  *
- * const agent = createRemoteAgent({
- *   serverUrl: "http://localhost:5200/agentx",
- *   agentId: "my-agent",
- * });
+ * <Agent agent={agent}>
+ *   {({ messages, streaming, errors, status, isLoading, send, interrupt }) => (
+ *     <Chat
+ *       messages={messages}
+ *       streaming={streaming}
+ *       errors={errors}
+ *       status={status}
+ *       isLoading={isLoading}
+ *       onSend={send}
+ *       onAbort={interrupt}
+ *     />
+ *   )}
+ * </Agent>
  *
- * <Chat agent={agent} />
+ * // Or use standalone with your own state management
+ * <Chat
+ *   messages={messages}
+ *   streaming={streamingText}
+ *   status="idle"
+ *   isLoading={false}
+ *   onSend={(text) => handleSend(text)}
+ * />
  * ```
  */
 
-import type { Agent, Message } from "@deepractice-ai/agentx-types";
+import type { Message, AgentError, AgentState } from "@deepractice-ai/agentx-types";
 import { ChatMessageList } from "./ChatMessageList";
 import { ChatInput } from "./ChatInput";
-import { ErrorMessage } from "./messages/ErrorMessage";
-import { AgentStatusIndicator } from "../agent/AgentStatusIndicator";
-import { useAgent } from "../../hooks";
+import { StatusIndicator } from "./StatusIndicator";
+import { ErrorAlert } from "./messages/ErrorAlert";
 
 export interface ChatProps {
   /**
-   * Agent instance from agentx
+   * Messages to display
    */
-  agent: Agent;
+  messages: Message[];
 
   /**
-   * Initial messages to display
+   * Current streaming text (accumulates during response)
    */
-  initialMessages?: Message[];
+  streaming?: string;
 
   /**
-   * Callback when message is sent
+   * Errors to display
    */
-  onMessageSend?: (message: string) => void;
+  errors?: AgentError[];
+
+  /**
+   * Current agent state (for status indicator)
+   */
+  status?: AgentState;
+
+  /**
+   * Whether the agent is currently processing (disables input, shows status)
+   */
+  isLoading?: boolean;
+
+  /**
+   * Callback when user sends a message
+   */
+  onSend: (text: string) => void;
+
+  /**
+   * Callback to abort/interrupt the current operation
+   */
+  onAbort?: () => void;
 
   /**
    * Custom className
@@ -52,31 +85,31 @@ export interface ChatProps {
   className?: string;
 }
 
-export function Chat({ agent, initialMessages = [], onMessageSend, className = "" }: ChatProps) {
-  const { messages, streaming, errors, send, isLoading } = useAgent(agent, {
-    initialMessages,
-    onSend: onMessageSend,
-  });
-
-  const handleSend = (text: string) => {
-    send(text);
-  };
-
+export function Chat({
+  messages,
+  streaming = "",
+  errors = [],
+  status = "idle",
+  isLoading = false,
+  onSend,
+  onAbort,
+  className = "",
+}: ChatProps) {
   return (
     <div className={`h-full flex flex-col bg-background ${className}`}>
       {/* Messages area */}
       <ChatMessageList messages={messages} streamingText={streaming} />
 
-      {/* Agent status indicator (shows when agent is working) */}
+      {/* Status indicator (shows when loading) */}
       <div className="px-2 sm:px-4 md:px-4">
-        <AgentStatusIndicator agent={agent} />
+        <StatusIndicator status={status} isLoading={isLoading} onAbort={onAbort} />
       </div>
 
-      {/* Error messages (above input) */}
+      {/* Error alerts (above input) */}
       {errors.length > 0 && (
         <div className="px-2 sm:px-4 md:px-4 pb-2 max-w-4xl mx-auto w-full space-y-2">
           {errors.map((error, index) => (
-            <ErrorMessage key={`error-${index}`} error={error} showDetails={true} />
+            <ErrorAlert key={`error-${index}`} error={error} showDetails={true} />
           ))}
         </div>
       )}
@@ -84,7 +117,7 @@ export function Chat({ agent, initialMessages = [], onMessageSend, className = "
       {/* Input area */}
       <div className="p-2 sm:p-4 md:p-4 flex-shrink-0 pb-2 sm:pb-4 md:pb-6">
         <div className="max-w-4xl mx-auto">
-          <ChatInput onSend={handleSend} disabled={isLoading} />
+          <ChatInput onSend={onSend} disabled={isLoading} />
         </div>
       </div>
     </div>

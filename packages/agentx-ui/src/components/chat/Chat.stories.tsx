@@ -1,118 +1,133 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { useState, useEffect, type ReactNode } from "react";
+import { useState } from "react";
 import { Chat } from "./Chat";
-import { createRemoteAgent } from "@deepractice-ai/agentx/client";
-import type { Agent } from "@deepractice-ai/agentx-types";
-
-const SERVER_URL = "http://localhost:5200/agentx";
+import type { Message, AgentError, AgentState } from "@deepractice-ai/agentx-types";
 
 /**
- * Create an agent on the server
- * Returns { agentId }
+ * Demo component for LoadingStates story
  */
-async function createServerAgent(): Promise<{ agentId: string }> {
-  const response = await fetch(`${SERVER_URL}/agents`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ definition: "ClaudeAgent" }),
-  });
+function LoadingStatesDemo() {
+  const [status, setStatus] = useState<AgentState>("thinking");
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(`Failed to create agent: ${response.status} - ${JSON.stringify(error)}`);
-  }
+  const messages: Message[] = [
+    {
+      id: "1",
+      role: "user",
+      subtype: "user",
+      content: "Hello!",
+      timestamp: Date.now() - 5000,
+    },
+  ];
 
-  return response.json();
+  return (
+    <div className="h-screen flex flex-col">
+      <div className="p-4 border-b flex gap-2">
+        <button
+          onClick={() => setStatus("thinking")}
+          className={`px-3 py-1 rounded ${status === "thinking" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+        >
+          Thinking
+        </button>
+        <button
+          onClick={() => setStatus("responding")}
+          className={`px-3 py-1 rounded ${status === "responding" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+        >
+          Responding
+        </button>
+        <button
+          onClick={() => setStatus("planning_tool")}
+          className={`px-3 py-1 rounded ${status === "planning_tool" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+        >
+          Planning Tool
+        </button>
+        <button
+          onClick={() => setStatus("awaiting_tool_result")}
+          className={`px-3 py-1 rounded ${status === "awaiting_tool_result" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+        >
+          Awaiting Result
+        </button>
+      </div>
+      <div className="flex-1">
+        <Chat
+          messages={messages}
+          status={status}
+          isLoading={true}
+          onSend={(text) => console.log("Send:", text)}
+          onAbort={() => console.log("Abort!")}
+        />
+      </div>
+    </div>
+  );
 }
 
 /**
- * Wrapper component to handle agent creation and initialization
- *
- * Flow:
- * 1. POST /agents -> get agentId
- * 2. createRemoteAgent with agentId
- * 3. Ready for chat
+ * Demo component for Interactive story
  */
-function ChatStory({ children }: { children: (agent: Agent) => ReactNode }) {
-  const [agent, setAgent] = useState<Agent | null>(null);
-  const [error, setError] = useState<string | null>(null);
+function InteractiveDemo() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [streaming, setStreaming] = useState("");
+  const [status, setStatus] = useState<AgentState>("idle");
 
-  useEffect(() => {
-    let currentAgent: Agent | null = null;
-
-    async function setup() {
-      try {
-        // Step 1: Create agent on server
-        console.log("[Story] Creating agent...");
-        const { agentId } = await createServerAgent();
-        console.log("[Story] Agent created:", agentId);
-
-        // Step 2: Create remote agent
-        currentAgent = createRemoteAgent({
-          serverUrl: SERVER_URL,
-          agentId,
-        });
-
-        // Test all console methods
-        console.log("[Story] Testing console.log");
-        console.info("[Story] Testing console.info");
-        console.debug("[Story] Testing console.debug");
-        console.warn("[Story] Testing console.warn");
-
-        // Enable event debugging
-        currentAgent.on((event) => {
-          console.log("[Browser Agent Event]", {
-            type: event.type,
-            timestamp: new Date().toISOString(),
-            data: event.data,
-          });
-        });
-
-        console.log("[Story] Remote agent created successfully");
-        setAgent(currentAgent);
-      } catch (err) {
-        console.error("[Story] Setup failed:", err);
-        setError(err instanceof Error ? err.message : String(err));
-      }
-    }
-
-    setup();
-
-    return () => {
-      if (currentAgent) {
-        currentAgent.destroy().catch((err: Error) => {
-          console.error("[Story] Failed to destroy agent:", err);
-        });
-      }
+  const handleSend = (text: string) => {
+    const userMessage: Message = {
+      id: `msg_${Date.now()}`,
+      role: "user",
+      subtype: "user",
+      content: text,
+      timestamp: Date.now(),
     };
-  }, []);
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+    setStatus("thinking");
 
-  if (error) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-center text-red-500">
-          <div className="text-lg mb-2">Failed to connect</div>
-          <div className="text-sm">{error}</div>
-          <div className="text-xs mt-2 text-gray-500">
-            Make sure the server is running: pnpm dev:server
-          </div>
-        </div>
-      </div>
-    );
-  }
+    setTimeout(() => {
+      setStatus("responding");
 
-  if (!agent) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-lg mb-2">Initializing agent...</div>
-          <div className="text-sm text-gray-500">Connecting to {SERVER_URL}</div>
-        </div>
-      </div>
-    );
-  }
+      const response = `You said: "${text}". This is a mock response demonstrating the streaming effect.`;
+      let index = 0;
 
-  return <>{children(agent)}</>;
+      const interval = setInterval(() => {
+        if (index < response.length) {
+          setStreaming(response.slice(0, index + 1));
+          index++;
+        } else {
+          clearInterval(interval);
+          setStreaming("");
+          setIsLoading(false);
+          setStatus("idle");
+
+          const aiMessage: Message = {
+            id: `msg_${Date.now()}`,
+            role: "assistant",
+            subtype: "assistant",
+            content: response,
+            timestamp: Date.now(),
+          };
+          setMessages((prev) => [...prev, aiMessage]);
+        }
+      }, 20);
+    }, 1000);
+  };
+
+  const handleAbort = () => {
+    setIsLoading(false);
+    setStreaming("");
+    setStatus("idle");
+  };
+
+  return (
+    <div className="h-screen">
+      <Chat
+        messages={messages}
+        streaming={streaming}
+        status={status}
+        isLoading={isLoading}
+        onSend={handleSend}
+        onAbort={handleAbort}
+      />
+    </div>
+  );
 }
 
 const meta: Meta<typeof Chat> = {
@@ -123,8 +138,21 @@ const meta: Meta<typeof Chat> = {
     layout: "fullscreen",
     docs: {
       description: {
-        component:
-          "Complete chat interface with real Agent integration. Connects to server and streams responses from Claude API in real-time.",
+        component: `
+Pure UI chat component for displaying messages and handling user input.
+
+**This is a presentational component** - it does not handle Agent binding.
+For real-time AI interaction, use the \`Agent\` component wrapper.
+
+**Props:**
+- \`messages\` - Array of messages to display
+- \`streaming\` - Current streaming text
+- \`errors\` - Array of errors to display
+- \`status\` - Agent state (for status indicator)
+- \`isLoading\` - Disables input and shows status indicator
+- \`onSend\` - Callback when user sends a message
+- \`onAbort\` - Callback to abort/interrupt current operation
+        `,
       },
     },
   },
@@ -134,164 +162,181 @@ export default meta;
 type Story = StoryObj<typeof Chat>;
 
 /**
- * Live chat with real Agent
- *
- * Prerequisites:
- * 1. Start dev server: `pnpm dev:server`
- * 2. Server runs on http://localhost:5200
- * 3. Type a message and get real AI responses!
+ * Empty state - Welcome screen
  */
-export const LiveChat: Story = {
+export const Empty: Story = {
   render: () => (
-    <ChatStory>
-      {(agent) => (
-        <div className="h-screen">
-          <Chat agent={agent} />
-        </div>
-      )}
-    </ChatStory>
-  ),
-};
-
-/**
- * Live chat with logging enabled
- *
- * Check browser console to see:
- * - Connection events
- * - Message events
- * - Streaming events
- * - Error events
- */
-export const WithLogging: Story = {
-  render: () => (
-    <ChatStory>
-      {(agent) => (
-        <div className="h-screen">
-          <Chat agent={agent} />
-        </div>
-      )}
-    </ChatStory>
-  ),
-};
-
-/**
- * Chat with initial messages
- *
- * Start with some conversation history
- */
-export const WithInitialMessages: Story = {
-  render: () => (
-    <ChatStory>
-      {(agent) => (
-        <div className="h-screen">
-          <Chat
-            agent={agent}
-            initialMessages={[
-              {
-                id: "1",
-                role: "user",
-                subtype: "user",
-                content: "Hello! What can you help me with?",
-                timestamp: Date.now() - 60000,
-              },
-              {
-                id: "2",
-                role: "assistant",
-                subtype: "assistant",
-                content:
-                  "Hello! I can help you with a variety of tasks including coding, answering questions, and providing explanations. What would you like to know?",
-                timestamp: Date.now() - 30000,
-              },
-            ]}
-          />
-        </div>
-      )}
-    </ChatStory>
-  ),
-};
-
-/**
- * Chat with send callback
- *
- * Log messages when user sends them
- */
-export const WithSendCallback: Story = {
-  render: () => {
-    const handleMessageSend = (message: string) => {
-      console.log("User sent:", message);
-      console.log("Timestamp:", new Date().toISOString());
-    };
-
-    return (
-      <ChatStory>
-        {(agent) => (
-          <div className="h-screen">
-            <Chat agent={agent} onMessageSend={handleMessageSend} />
-          </div>
-        )}
-      </ChatStory>
-    );
-  },
-};
-
-/**
- * Compact chat (smaller viewport)
- */
-export const CompactView: Story = {
-  render: () => (
-    <ChatStory>
-      {(agent) => (
-        <div className="h-[600px] border rounded-lg">
-          <Chat agent={agent} />
-        </div>
-      )}
-    </ChatStory>
-  ),
-};
-
-/**
- * Side-by-side chats (multiple agents)
- */
-export const SideBySide: Story = {
-  render: () => (
-    <div className="h-screen flex gap-4 p-4">
-      <ChatStory>
-        {(agent) => (
-          <div className="flex-1 border rounded-lg overflow-hidden">
-            <Chat agent={agent} />
-          </div>
-        )}
-      </ChatStory>
-      <ChatStory>
-        {(agent) => (
-          <div className="flex-1 border rounded-lg overflow-hidden">
-            <Chat agent={agent} />
-          </div>
-        )}
-      </ChatStory>
+    <div className="h-screen">
+      <Chat messages={[]} onSend={(text) => console.log("Send:", text)} />
     </div>
   ),
 };
 
 /**
- * Embedded in layout
+ * Basic conversation
  */
-export const InLayout: Story = {
-  render: () => (
-    <ChatStory>
-      {(agent) => (
-        <div className="h-screen flex flex-col">
-          {/* Header */}
-          <div className="h-14 border-b flex items-center px-4 bg-white dark:bg-gray-800">
-            <h1 className="font-semibold text-lg">Deepractice Agent</h1>
-          </div>
+export const WithMessages: Story = {
+  render: () => {
+    const messages: Message[] = [
+      {
+        id: "1",
+        role: "user",
+        subtype: "user",
+        content: "Hello! What can you help me with?",
+        timestamp: Date.now() - 60000,
+      },
+      {
+        id: "2",
+        role: "assistant",
+        subtype: "assistant",
+        content:
+          "Hello! I can help you with a variety of tasks including coding, answering questions, and providing explanations. What would you like to know?",
+        timestamp: Date.now() - 30000,
+      },
+    ];
 
-          {/* Chat area */}
-          <div className="flex-1">
-            <Chat agent={agent} />
-          </div>
-        </div>
-      )}
-    </ChatStory>
-  ),
+    return (
+      <div className="h-screen">
+        <Chat messages={messages} onSend={(text) => console.log("Send:", text)} />
+      </div>
+    );
+  },
+};
+
+/**
+ * Streaming state - Shows partial response being generated
+ */
+export const Streaming: Story = {
+  render: () => {
+    const messages: Message[] = [
+      {
+        id: "1",
+        role: "user",
+        subtype: "user",
+        content: "Write a short poem about coding",
+        timestamp: Date.now() - 5000,
+      },
+    ];
+
+    return (
+      <div className="h-screen">
+        <Chat
+          messages={messages}
+          streaming="In the realm of ones and zeros bright,\nWhere logic flows from day to night,\nThe coder sits with coffee near..."
+          status="responding"
+          isLoading={true}
+          onSend={(text) => console.log("Send:", text)}
+          onAbort={() => console.log("Abort!")}
+        />
+      </div>
+    );
+  },
+};
+
+/**
+ * Loading states - Different status indicators
+ */
+export const LoadingStates: Story = {
+  render: () => <LoadingStatesDemo />,
+};
+
+/**
+ * With errors displayed
+ */
+export const WithErrors: Story = {
+  render: () => {
+    const messages: Message[] = [
+      {
+        id: "1",
+        role: "user",
+        subtype: "user",
+        content: "Do something that causes an error",
+        timestamp: Date.now() - 5000,
+      },
+    ];
+
+    const errors: AgentError[] = [
+      {
+        category: "llm",
+        code: "RATE_LIMITED",
+        message: "Rate limit exceeded. Please try again in a few seconds.",
+        severity: "error",
+        recoverable: true,
+      },
+    ];
+
+    return (
+      <div className="h-screen">
+        <Chat messages={messages} errors={errors} onSend={(text) => console.log("Send:", text)} />
+      </div>
+    );
+  },
+};
+
+/**
+ * Interactive demo - Mock responses with status
+ */
+export const Interactive: Story = {
+  render: () => <InteractiveDemo />,
+};
+
+/**
+ * Long conversation with scroll
+ */
+export const LongConversation: Story = {
+  render: () => {
+    const messages: Message[] = [];
+    for (let i = 0; i < 20; i++) {
+      messages.push({
+        id: `user_${i}`,
+        role: "user",
+        subtype: "user",
+        content: `This is user message ${i + 1}. What do you think about this topic?`,
+        timestamp: Date.now() - (20 - i) * 60000,
+      });
+      messages.push({
+        id: `assistant_${i}`,
+        role: "assistant",
+        subtype: "assistant",
+        content: `This is the assistant's response to message ${i + 1}. I think this is an interesting topic and here's my detailed thoughts on it. The response continues with more context and information.`,
+        timestamp: Date.now() - (20 - i) * 60000 + 30000,
+      });
+    }
+
+    return (
+      <div className="h-screen">
+        <Chat messages={messages} onSend={(text) => console.log("Send:", text)} />
+      </div>
+    );
+  },
+};
+
+/**
+ * Compact view (smaller container)
+ */
+export const CompactView: Story = {
+  render: () => {
+    const messages: Message[] = [
+      {
+        id: "1",
+        role: "user",
+        subtype: "user",
+        content: "Hello!",
+        timestamp: Date.now() - 60000,
+      },
+      {
+        id: "2",
+        role: "assistant",
+        subtype: "assistant",
+        content: "Hi there! How can I help you today?",
+        timestamp: Date.now() - 30000,
+      },
+    ];
+
+    return (
+      <div className="h-[400px] border rounded-lg">
+        <Chat messages={messages} onSend={(text) => console.log("Send:", text)} />
+      </div>
+    );
+  },
 };
