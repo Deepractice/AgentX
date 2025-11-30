@@ -14,9 +14,6 @@ This is a **pnpm monorepo** with Turborepo build orchestration:
 
 ```
 /AgentX
-├── apps/
-│   ├── agentx-web/       # Full-stack web application (Vite + React + Node.js server)
-│   └── agentx-cli/       # CLI tool (@deepractice-ai/agent npm package)
 └── packages/
     ├── agentx-types/     # Type definitions (140+ files, zero dependencies)
     ├── agentx-adk/       # Agent Development Kit (defineConfig, defineDriver, defineAgent)

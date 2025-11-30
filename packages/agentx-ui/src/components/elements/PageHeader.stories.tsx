@@ -91,38 +91,72 @@ export const WithActions: Story = {
   },
 };
 
+// Wrapper components for stories that need hooks
+const WithTabNavigationWrapper = () => {
+  const [activeTab, setActiveTab] = useState("chat");
+  return (
+    <PageHeader
+      title="Agent Workspace"
+      subtitle="deepractice-ai/project"
+      trailing={
+        <TabNavigation
+          tabs={[
+            { id: "chat", label: "Chat", icon: <MessageSquare className="w-4 h-4" /> },
+            { id: "shell", label: "Shell", icon: <Terminal className="w-4 h-4" /> },
+            { id: "files", label: "Files", icon: <Folder className="w-4 h-4" /> },
+          ]}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+      }
+    />
+  );
+};
+
 export const WithTabNavigation: Story = {
-  render: () => {
-    const [activeTab, setActiveTab] = useState("chat");
-    return (
-      <PageHeader
-        title="Agent Workspace"
-        subtitle="deepractice-ai/project"
-        trailing={
-          <TabNavigation
-            tabs={[
-              { id: "chat", label: "Chat", icon: <MessageSquare className="w-4 h-4" /> },
-              { id: "shell", label: "Shell", icon: <Terminal className="w-4 h-4" /> },
-              { id: "files", label: "Files", icon: <Folder className="w-4 h-4" /> },
-            ]}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-          />
-        }
-      />
-    );
-  },
+  render: () => <WithTabNavigationWrapper />,
+};
+
+const CompleteExampleWrapper = () => {
+  const [activeTab, setActiveTab] = useState("chat");
+  return (
+    <PageHeader
+      title="New Session"
+      subtitle="deepractice-ai/agent"
+      leading={
+        <Button variant="ghost" size="icon" className="h-9 w-9">
+          <Menu className="w-5 h-5" />
+        </Button>
+      }
+      trailing={
+        <TabNavigation
+          tabs={[
+            { id: "chat", label: "Chat", icon: <MessageSquare className="w-4 h-4" /> },
+            { id: "shell", label: "Shell", icon: <Terminal className="w-4 h-4" /> },
+            { id: "files", label: "Files", icon: <Folder className="w-4 h-4" /> },
+          ]}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          iconOnlyMobile
+        />
+      }
+    />
+  );
 };
 
 export const CompleteExample: Story = {
-  render: () => {
-    const [activeTab, setActiveTab] = useState("chat");
-    return (
+  render: () => <CompleteExampleWrapper />,
+};
+
+const MobileModeWrapper = () => {
+  const [activeTab, setActiveTab] = useState("chat");
+  return (
+    <div className="max-w-sm">
       <PageHeader
-        title="New Session"
-        subtitle="deepractice-ai/agent"
+        title="Agent Chat"
+        subtitle="deepractice-ai/project"
         leading={
-          <Button variant="ghost" size="icon" className="h-9 w-9">
+          <Button variant="ghost" size="icon" className="h-8 w-8">
             <Menu className="w-5 h-5" />
           </Button>
         }
@@ -138,21 +172,59 @@ export const CompleteExample: Story = {
             iconOnlyMobile
           />
         }
+        isMobile
       />
-    );
-  },
+    </div>
+  );
 };
 
 export const MobileMode: Story = {
-  render: () => {
-    const [activeTab, setActiveTab] = useState("chat");
-    return (
-      <div className="max-w-sm">
+  render: () => <MobileModeWrapper />,
+};
+
+export const NoBorder: Story = {
+  args: {
+    title: "Borderless Header",
+    subtitle: "No bottom border",
+    showBorder: false,
+  },
+};
+
+const AllVariantsWrapper = () => {
+  const [activeTab, setActiveTab] = useState("chat");
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <p className="text-sm font-medium mb-3 text-foreground">Basic Header</p>
+        <PageHeader title="Simple Title" />
+      </div>
+
+      <div>
+        <p className="text-sm font-medium mb-3 text-foreground">With Subtitle</p>
+        <PageHeader title="Main Title" subtitle="Additional context goes here" />
+      </div>
+
+      <div>
+        <p className="text-sm font-medium mb-3 text-foreground">With Menu Button</p>
         <PageHeader
-          title="Agent Chat"
-          subtitle="deepractice-ai/project"
+          title="Mobile Layout"
+          subtitle="With hamburger menu"
           leading={
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Menu className="w-5 h-5" />
+            </Button>
+          }
+        />
+      </div>
+
+      <div>
+        <p className="text-sm font-medium mb-3 text-foreground">With Tab Navigation</p>
+        <PageHeader
+          title="Full Featured Header"
+          subtitle="With all components"
+          leading={
+            <Button variant="ghost" size="icon" className="h-9 w-9">
               <Menu className="w-5 h-5" />
             </Button>
           }
@@ -165,149 +237,88 @@ export const MobileMode: Story = {
               ]}
               activeTab={activeTab}
               onTabChange={setActiveTab}
-              iconOnlyMobile
             />
           }
-          isMobile
         />
       </div>
-    );
-  },
-};
-
-export const NoBorder: Story = {
-  args: {
-    title: "Borderless Header",
-    subtitle: "No bottom border",
-    showBorder: false,
-  },
+    </div>
+  );
 };
 
 export const AllVariants: Story = {
-  render: () => {
-    const [activeTab, setActiveTab] = useState("chat");
+  render: () => <AllVariantsWrapper />,
+};
 
-    return (
-      <div className="space-y-6">
-        <div>
-          <p className="text-sm font-medium mb-3 text-foreground">Basic Header</p>
-          <PageHeader title="Simple Title" />
-        </div>
+const UseCasesWrapper = () => {
+  const [chatTab, setChatTab] = useState("chat");
 
-        <div>
-          <p className="text-sm font-medium mb-3 text-foreground">With Subtitle</p>
-          <PageHeader title="Main Title" subtitle="Additional context goes here" />
-        </div>
-
-        <div>
-          <p className="text-sm font-medium mb-3 text-foreground">With Menu Button</p>
-          <PageHeader
-            title="Mobile Layout"
-            subtitle="With hamburger menu"
-            leading={
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <Menu className="w-5 h-5" />
-              </Button>
-            }
-          />
-        </div>
-
-        <div>
-          <p className="text-sm font-medium mb-3 text-foreground">With Tab Navigation</p>
-          <PageHeader
-            title="Full Featured Header"
-            subtitle="With all components"
-            leading={
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <Menu className="w-5 h-5" />
-              </Button>
-            }
-            trailing={
-              <TabNavigation
-                tabs={[
-                  { id: "chat", label: "Chat", icon: <MessageSquare className="w-4 h-4" /> },
-                  { id: "shell", label: "Shell", icon: <Terminal className="w-4 h-4" /> },
-                  { id: "files", label: "Files", icon: <Folder className="w-4 h-4" /> },
-                ]}
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-              />
-            }
-          />
-        </div>
+  return (
+    <div className="space-y-8">
+      <div>
+        <p className="text-sm font-medium mb-3">Chat Application Header</p>
+        <p className="text-xs text-muted-foreground mb-3">
+          Typical header for a chat interface with session title and mode tabs
+        </p>
+        <PageHeader
+          title="New Session"
+          subtitle="Project: deepractice-ai/agent"
+          leading={
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Menu className="w-5 h-5" />
+            </Button>
+          }
+          trailing={
+            <TabNavigation
+              tabs={[
+                { id: "chat", label: "Chat", icon: <MessageSquare className="w-4 h-4" /> },
+                { id: "shell", label: "Shell", icon: <Terminal className="w-4 h-4" /> },
+                { id: "files", label: "Files", icon: <Folder className="w-4 h-4" /> },
+              ]}
+              activeTab={chatTab}
+              onTabChange={setChatTab}
+            />
+          }
+        />
       </div>
-    );
-  },
+
+      <div>
+        <p className="text-sm font-medium mb-3">Settings Page Header</p>
+        <p className="text-xs text-muted-foreground mb-3">
+          Simple header with back button for detail pages
+        </p>
+        <PageHeader
+          title="Account Settings"
+          subtitle="Manage your account preferences"
+          leading={
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          }
+        />
+      </div>
+
+      <div>
+        <p className="text-sm font-medium mb-3">Dashboard Header</p>
+        <p className="text-xs text-muted-foreground mb-3">Dashboard with action buttons</p>
+        <PageHeader
+          title="Analytics Dashboard"
+          subtitle="Last updated: 2 minutes ago"
+          trailing={
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">
+                Export
+              </Button>
+              <Button variant="default" size="sm">
+                Refresh
+              </Button>
+            </div>
+          }
+        />
+      </div>
+    </div>
+  );
 };
 
 export const UseCases: Story = {
-  render: () => {
-    const [chatTab, setChatTab] = useState("chat");
-
-    return (
-      <div className="space-y-8">
-        <div>
-          <p className="text-sm font-medium mb-3">Chat Application Header</p>
-          <p className="text-xs text-muted-foreground mb-3">
-            Typical header for a chat interface with session title and mode tabs
-          </p>
-          <PageHeader
-            title="New Session"
-            subtitle="Project: deepractice-ai/agent"
-            leading={
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <Menu className="w-5 h-5" />
-              </Button>
-            }
-            trailing={
-              <TabNavigation
-                tabs={[
-                  { id: "chat", label: "Chat", icon: <MessageSquare className="w-4 h-4" /> },
-                  { id: "shell", label: "Shell", icon: <Terminal className="w-4 h-4" /> },
-                  { id: "files", label: "Files", icon: <Folder className="w-4 h-4" /> },
-                ]}
-                activeTab={chatTab}
-                onTabChange={setChatTab}
-              />
-            }
-          />
-        </div>
-
-        <div>
-          <p className="text-sm font-medium mb-3">Settings Page Header</p>
-          <p className="text-xs text-muted-foreground mb-3">
-            Simple header with back button for detail pages
-          </p>
-          <PageHeader
-            title="Account Settings"
-            subtitle="Manage your account preferences"
-            leading={
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            }
-          />
-        </div>
-
-        <div>
-          <p className="text-sm font-medium mb-3">Dashboard Header</p>
-          <p className="text-xs text-muted-foreground mb-3">Dashboard with action buttons</p>
-          <PageHeader
-            title="Analytics Dashboard"
-            subtitle="Last updated: 2 minutes ago"
-            trailing={
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  Export
-                </Button>
-                <Button variant="default" size="sm">
-                  Refresh
-                </Button>
-              </div>
-            }
-          />
-        </div>
-      </div>
-    );
-  },
+  render: () => <UseCasesWrapper />,
 };

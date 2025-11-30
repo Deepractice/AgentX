@@ -67,12 +67,7 @@ export function ImageAttachment({
       setPreview(reader.result as string);
     };
     reader.readAsDataURL(file);
-
-    return () => {
-      if (preview) {
-        URL.revokeObjectURL(preview);
-      }
-    };
+    // Data URLs don't need cleanup (unlike Object URLs)
   }, [file]);
 
   return (

@@ -50,39 +50,42 @@ export const Default: Story = {
   ),
 };
 
+// Wrapper component for WithSearch
+const WithSearchWrapper = () => {
+  const [search, setSearch] = useState("");
+  return (
+    <Header
+      left={
+        <div className="flex items-center gap-2">
+          <AgentLogo className="w-5 h-5" />
+          <span className="font-semibold">Deepractice Agent</span>
+        </div>
+      }
+      center={
+        <div className="max-w-xl w-full">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search sessions, messages..."
+          />
+        </div>
+      }
+      right={
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm">
+            <Bell className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm">
+            <User className="w-4 h-4" />
+          </Button>
+        </div>
+      }
+    />
+  );
+};
+
 export const WithSearch: Story = {
-  render: () => {
-    const [search, setSearch] = useState("");
-    return (
-      <Header
-        left={
-          <div className="flex items-center gap-2">
-            <AgentLogo className="w-5 h-5" />
-            <span className="font-semibold">Deepractice Agent</span>
-          </div>
-        }
-        center={
-          <div className="max-w-xl w-full">
-            <SearchInput
-              value={search}
-              onChange={setSearch}
-              placeholder="Search sessions, messages..."
-            />
-          </div>
-        }
-        right={
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm">
-              <Bell className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="sm">
-              <User className="w-4 h-4" />
-            </Button>
-          </div>
-        }
-      />
-    );
-  },
+  render: () => <WithSearchWrapper />,
 };
 
 export const WithTabs: Story = {
@@ -201,44 +204,47 @@ export const CustomHeight: Story = {
   ),
 };
 
-export const InLayout: Story = {
-  render: () => {
-    const [search, setSearch] = useState("");
-    return (
-      <div className="h-screen flex flex-col">
-        <Header
-          left={
-            <div className="flex items-center gap-2">
-              <AgentLogo className="w-5 h-5" />
-              <span className="font-semibold">Deepractice Agent</span>
-            </div>
-          }
-          center={
-            <SearchInput
-              value={search}
-              onChange={setSearch}
-              placeholder="Search..."
-              className="max-w-md"
-            />
-          }
-          right={
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm">
-                <Bell className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="sm">
-                <User className="w-4 h-4" />
-              </Button>
-            </div>
-          }
-        />
-        <div className="flex-1 flex items-center justify-center bg-muted/20">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-2">Application Content</h2>
-            <p className="text-muted-foreground">Header is fixed at the top</p>
+// Wrapper component for InLayout
+const InLayoutWrapper = () => {
+  const [search, setSearch] = useState("");
+  return (
+    <div className="h-screen flex flex-col">
+      <Header
+        left={
+          <div className="flex items-center gap-2">
+            <AgentLogo className="w-5 h-5" />
+            <span className="font-semibold">Deepractice Agent</span>
           </div>
+        }
+        center={
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search..."
+            className="max-w-md"
+          />
+        }
+        right={
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm">
+              <Bell className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="sm">
+              <User className="w-4 h-4" />
+            </Button>
+          </div>
+        }
+      />
+      <div className="flex-1 flex items-center justify-center bg-muted/20">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Application Content</h2>
+          <p className="text-muted-foreground">Header is fixed at the top</p>
         </div>
       </div>
-    );
-  },
+    </div>
+  );
+};
+
+export const InLayout: Story = {
+  render: () => <InLayoutWrapper />,
 };

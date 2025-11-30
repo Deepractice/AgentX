@@ -484,29 +484,32 @@ export const UserList: Story = {
   },
 };
 
-export const InteractiveDemo: Story = {
-  render: () => {
-    const [selected, setSelected] = React.useState<number | null>(0);
+// Wrapper component for InteractiveDemo
+const InteractiveDemoWrapper = () => {
+  const [selected, setSelected] = React.useState<number | null>(0);
 
-    return (
-      <div className="max-w-md border rounded-lg p-2 space-y-1">
-        {[
-          { title: "First Item", subtitle: "Click to select" },
-          { title: "Second Item", subtitle: "Click to select" },
-          { title: "Third Item", subtitle: "Click to select" },
-        ].map((item, index) => (
-          <ListItem
-            key={index}
-            leading={<MessageSquare className="w-5 h-5" />}
-            title={item.title}
-            subtitle={<span className="text-xs text-muted-foreground">{item.subtitle}</span>}
-            selected={selected === index}
-            onClick={() => setSelected(index)}
-          />
-        ))}
-      </div>
-    );
-  },
+  return (
+    <div className="max-w-md border rounded-lg p-2 space-y-1">
+      {[
+        { title: "First Item", subtitle: "Click to select" },
+        { title: "Second Item", subtitle: "Click to select" },
+        { title: "Third Item", subtitle: "Click to select" },
+      ].map((item, index) => (
+        <ListItem
+          key={index}
+          leading={<MessageSquare className="w-5 h-5" />}
+          title={item.title}
+          subtitle={<span className="text-xs text-muted-foreground">{item.subtitle}</span>}
+          selected={selected === index}
+          onClick={() => setSelected(index)}
+        />
+      ))}
+    </div>
+  );
+};
+
+export const InteractiveDemo: Story = {
+  render: () => <InteractiveDemoWrapper />,
   parameters: {
     docs: {
       description: {

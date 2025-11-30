@@ -142,26 +142,29 @@ export const CustomStyling: Story = {
   },
 };
 
-export const WithCustomClearHandler: Story = {
-  render: () => {
-    const [value, setValue] = useState("example");
-    const [clearCount, setClearCount] = useState(0);
+// Wrapper for WithCustomClearHandler
+const WithCustomClearHandlerWrapper = () => {
+  const [value, setValue] = useState("example");
+  const [clearCount, setClearCount] = useState(0);
 
-    return (
-      <div className="space-y-2">
-        <SearchInput
-          value={value}
-          onChange={setValue}
-          onClear={() => {
-            setValue("");
-            setClearCount((c) => c + 1);
-          }}
-          placeholder="Search..."
-        />
-        <p className="text-xs text-muted-foreground">Clear button clicked: {clearCount} times</p>
-      </div>
-    );
-  },
+  return (
+    <div className="space-y-2">
+      <SearchInput
+        value={value}
+        onChange={setValue}
+        onClear={() => {
+          setValue("");
+          setClearCount((c) => c + 1);
+        }}
+        placeholder="Search..."
+      />
+      <p className="text-xs text-muted-foreground">Clear button clicked: {clearCount} times</p>
+    </div>
+  );
+};
+
+export const WithCustomClearHandler: Story = {
+  render: () => <WithCustomClearHandlerWrapper />,
   parameters: {
     docs: {
       description: {
@@ -171,24 +174,27 @@ export const WithCustomClearHandler: Story = {
   },
 };
 
-export const SessionSearchBarExample: Story = {
-  render: () => {
-    const [value, setValue] = useState("");
+// Wrapper for SessionSearchBarExample
+const SessionSearchBarExampleWrapper = () => {
+  const [value, setValue] = useState("");
 
-    return (
-      <div className="border rounded-lg p-4">
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold">Sessions</h3>
-          <SearchInput
-            value={value}
-            onChange={setValue}
-            placeholder="Search sessions..."
-            className="bg-muted/50 border-0 focus:bg-background focus:ring-1 focus:ring-primary/20"
-          />
-        </div>
+  return (
+    <div className="border rounded-lg p-4">
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold">Sessions</h3>
+        <SearchInput
+          value={value}
+          onChange={setValue}
+          placeholder="Search sessions..."
+          className="bg-muted/50 border-0 focus:bg-background focus:ring-1 focus:ring-primary/20"
+        />
       </div>
-    );
-  },
+    </div>
+  );
+};
+
+export const SessionSearchBarExample: Story = {
+  render: () => <SessionSearchBarExampleWrapper />,
   parameters: {
     docs: {
       description: {
@@ -198,39 +204,42 @@ export const SessionSearchBarExample: Story = {
   },
 };
 
-export const MultipleSearchInputs: Story = {
-  render: () => {
-    const [sessions, setSessions] = useState("");
-    const [users, setUsers] = useState("");
-    const [messages, setMessages] = useState("");
+// Wrapper for MultipleSearchInputs
+const MultipleSearchInputsWrapper = () => {
+  const [sessions, setSessions] = useState("");
+  const [users, setUsers] = useState("");
+  const [messages, setMessages] = useState("");
 
-    return (
-      <div className="space-y-4 max-w-md">
-        <div>
-          <label className="text-sm font-medium mb-2 block">Sessions</label>
-          <SearchInput value={sessions} onChange={setSessions} placeholder="Search sessions..." />
-        </div>
-        <div>
-          <label className="text-sm font-medium mb-2 block">Users</label>
-          <SearchInput
-            value={users}
-            onChange={setUsers}
-            placeholder="Search users..."
-            searchIcon={<User className="w-4 h-4" />}
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium mb-2 block">Messages</label>
-          <SearchInput
-            value={messages}
-            onChange={setMessages}
-            placeholder="Search messages..."
-            searchIcon={<Mail className="w-4 h-4" />}
-          />
-        </div>
+  return (
+    <div className="space-y-4 max-w-md">
+      <div>
+        <label className="text-sm font-medium mb-2 block">Sessions</label>
+        <SearchInput value={sessions} onChange={setSessions} placeholder="Search sessions..." />
       </div>
-    );
-  },
+      <div>
+        <label className="text-sm font-medium mb-2 block">Users</label>
+        <SearchInput
+          value={users}
+          onChange={setUsers}
+          placeholder="Search users..."
+          searchIcon={<User className="w-4 h-4" />}
+        />
+      </div>
+      <div>
+        <label className="text-sm font-medium mb-2 block">Messages</label>
+        <SearchInput
+          value={messages}
+          onChange={setMessages}
+          placeholder="Search messages..."
+          searchIcon={<Mail className="w-4 h-4" />}
+        />
+      </div>
+    </div>
+  );
+};
+
+export const MultipleSearchInputs: Story = {
+  render: () => <MultipleSearchInputsWrapper />,
   parameters: {
     docs: {
       description: {
@@ -278,44 +287,44 @@ export const DarkModeExample: Story = {
   },
 };
 
-export const InteractiveDemo: Story = {
-  render: () => {
-    const [value, setValue] = useState("");
-    const mockResults = [
-      "Project Planning Session",
-      "Code Review Meeting",
-      "Design Discussion",
-      "Bug Triage",
-      "Sprint Planning",
-    ];
-    const filteredResults = mockResults.filter((item) =>
-      item.toLowerCase().includes(value.toLowerCase())
-    );
+// Wrapper for InteractiveDemo
+const InteractiveDemoWrapper = () => {
+  const [value, setValue] = useState("");
+  const mockResults = [
+    "Project Planning Session",
+    "Code Review Meeting",
+    "Design Discussion",
+    "Bug Triage",
+    "Sprint Planning",
+  ];
+  const filteredResults = mockResults.filter((item) =>
+    item.toLowerCase().includes(value.toLowerCase())
+  );
 
-    return (
-      <div className="max-w-md">
-        <SearchInput
-          value={value}
-          onChange={setValue}
-          placeholder="Search sessions..."
-          className="bg-muted/50 border-0 focus:bg-background focus:ring-1 focus:ring-primary/20"
-        />
-        <div className="mt-4 space-y-2">
-          {value && filteredResults.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">No results found</p>
-          )}
-          {filteredResults.map((item, index) => (
-            <div
-              key={index}
-              className="p-2 rounded border bg-card hover:bg-accent transition-colors"
-            >
-              <p className="text-sm">{item}</p>
-            </div>
-          ))}
-        </div>
+  return (
+    <div className="max-w-md">
+      <SearchInput
+        value={value}
+        onChange={setValue}
+        placeholder="Search sessions..."
+        className="bg-muted/50 border-0 focus:bg-background focus:ring-1 focus:ring-primary/20"
+      />
+      <div className="mt-4 space-y-2">
+        {value && filteredResults.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-4">No results found</p>
+        )}
+        {filteredResults.map((item, index) => (
+          <div key={index} className="p-2 rounded border bg-card hover:bg-accent transition-colors">
+            <p className="text-sm">{item}</p>
+          </div>
+        ))}
       </div>
-    );
-  },
+    </div>
+  );
+};
+
+export const InteractiveDemo: Story = {
+  render: () => <InteractiveDemoWrapper />,
   parameters: {
     docs: {
       description: {

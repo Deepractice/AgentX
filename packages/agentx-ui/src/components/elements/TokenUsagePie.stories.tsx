@@ -108,36 +108,39 @@ export const AllStates: Story = {
   ),
 };
 
-export const ProgressSimulation: Story = {
-  render: () => {
-    const [used, setUsed] = React.useState(1000);
-    const total = 8000;
+// Wrapper component for ProgressSimulation
+const ProgressSimulationWrapper = () => {
+  const [used, setUsed] = React.useState(1000);
+  const total = 8000;
 
-    React.useEffect(() => {
-      const interval = setInterval(() => {
-        setUsed((prev) => {
-          if (prev >= total) return 1000;
-          return prev + 200;
-        });
-      }, 500);
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setUsed((prev) => {
+        if (prev >= total) return 1000;
+        return prev + 200;
+      });
+    }, 500);
 
-      return () => clearInterval(interval);
-    }, []);
+    return () => clearInterval(interval);
+  }, []);
 
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-4">
-          <TokenUsagePie used={used} total={total} />
-          <div className="text-sm">
-            <div className="font-medium">
-              {used.toLocaleString()} / {total.toLocaleString()} tokens
-            </div>
-            <div className="text-slate-500">Animated demo</div>
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-4">
+        <TokenUsagePie used={used} total={total} />
+        <div className="text-sm">
+          <div className="font-medium">
+            {used.toLocaleString()} / {total.toLocaleString()} tokens
           </div>
+          <div className="text-slate-500">Animated demo</div>
         </div>
       </div>
-    );
-  },
+    </div>
+  );
+};
+
+export const ProgressSimulation: Story = {
+  render: () => <ProgressSimulationWrapper />,
 };
 
 export const InMessageHeader: Story = {

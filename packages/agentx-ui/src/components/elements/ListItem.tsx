@@ -129,7 +129,7 @@ export const ListItem = React.forwardRef<HTMLDivElement, ListItemProps>(
     const isClickable = !!onClick;
 
     return (
-      <div ref={ref} className="group relative" {...props}>
+      <div ref={ref} className={cn("group relative", className)} {...props}>
         {/* Active indicator dot */}
         {showActiveIndicator && active && (
           <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10">

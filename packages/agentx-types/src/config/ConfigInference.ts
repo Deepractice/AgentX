@@ -24,9 +24,10 @@ type InferFieldType<F extends ConfigFieldDefinition> = F["type"] extends "string
 /**
  * Check if a scope array includes a specific scope
  */
-type HasScope<Scopes extends readonly ConfigScope[], Scope extends ConfigScope> = Scope extends Scopes[number]
-  ? true
-  : false;
+type HasScope<
+  Scopes extends readonly ConfigScope[],
+  Scope extends ConfigScope,
+> = Scope extends Scopes[number] ? true : false;
 
 /**
  * Pick fields by scope

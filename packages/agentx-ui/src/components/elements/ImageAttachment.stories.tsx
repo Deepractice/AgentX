@@ -155,43 +155,46 @@ export const MultipleAttachments: Story = {
   ),
 };
 
-export const InteractiveDemo: Story = {
-  render: () => {
-    const [images, setImages] = React.useState<
-      Array<{ file: File; progress?: number; error?: string }>
-    >([
-      { file: createMockFile("demo-1.jpg") },
-      { file: createMockFile("demo-2.jpg"), progress: 45 },
-      { file: createMockFile("demo-3.jpg"), error: "Upload failed" },
-    ]);
+// Wrapper component for InteractiveDemo
+const InteractiveDemoWrapper = () => {
+  const [images, setImages] = React.useState<
+    Array<{ file: File; progress?: number; error?: string }>
+  >([
+    { file: createMockFile("demo-1.jpg") },
+    { file: createMockFile("demo-2.jpg"), progress: 45 },
+    { file: createMockFile("demo-3.jpg"), error: "Upload failed" },
+  ]);
 
-    const handleRemove = (index: number) => {
-      setImages((prev) => prev.filter((_, i) => i !== index));
-    };
+  const handleRemove = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
 
-    return (
-      <div className="space-y-4">
-        <div className="text-sm text-slate-600">
-          Hover over images to see remove button. Click to remove.
-        </div>
-        <div className="flex flex-wrap gap-2 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg min-h-32">
-          {images.length > 0 ? (
-            images.map((img, index) => (
-              <ImageAttachment
-                key={index}
-                file={img.file}
-                uploadProgress={img.progress}
-                error={img.error}
-                onRemove={() => handleRemove(index)}
-              />
-            ))
-          ) : (
-            <div className="w-full flex items-center justify-center text-slate-400">
-              All images removed
-            </div>
-          )}
-        </div>
+  return (
+    <div className="space-y-4">
+      <div className="text-sm text-slate-600">
+        Hover over images to see remove button. Click to remove.
       </div>
-    );
-  },
+      <div className="flex flex-wrap gap-2 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg min-h-32">
+        {images.length > 0 ? (
+          images.map((img, index) => (
+            <ImageAttachment
+              key={index}
+              file={img.file}
+              uploadProgress={img.progress}
+              error={img.error}
+              onRemove={() => handleRemove(index)}
+            />
+          ))
+        ) : (
+          <div className="w-full flex items-center justify-center text-slate-400">
+            All images removed
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export const InteractiveDemo: Story = {
+  render: () => <InteractiveDemoWrapper />,
 };
