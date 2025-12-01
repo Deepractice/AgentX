@@ -1,45 +1,60 @@
 /**
- * AgentX Types
+ * AgentX Types - Industry-level type definitions for AI Agent ecosystem
  *
- * Industry-level type definitions for the AI Agent ecosystem.
  * 140+ TypeScript files, zero runtime dependencies.
  *
- * ## Design Principles
+ * ## ADR: Isomorphic Architecture
  *
- * 1. **Contract-First**: Types define the API, implementations follow
- * 2. **Zero Dependencies**: Pure TypeScript types (except type guards)
- * 3. **Cross-Platform**: Works in Node.js, Browser, and Edge runtimes
- * 4. **Discriminated Unions**: Type-safe narrowing with `type` or `subtype`
- * 5. **"Define Once, Run Anywhere"**: Unified agent definition across platforms
+ * AgentX uses an isomorphic architecture for "Define Once, Run Anywhere":
+ *
+ * ```
+ * ┌─────────────────────────────────────────────────────────────┐
+ * │                    Application Code                         │
+ * │                    (identical)                              │
+ * │   const agentx = createAgentX(runtime);                     │
+ * │   agentx.definitions.register(MyDef);                       │
+ * └────────────────────────┬────────────────────────────────────┘
+ *                          │
+ *          ┌───────────────┴───────────────┐
+ *          │                               │
+ *          ▼                               ▼
+ * ┌─────────────────────┐       ┌─────────────────────┐
+ * │   Server Runtime    │       │   Browser Runtime   │
+ * │   SQLiteRepository  │       │   RemoteRepository  │
+ * │   (direct DB write) │       │   (HTTP → Server)   │
+ * └─────────────────────┘       └─────────────────────┘
+ * ```
+ *
+ * **Key Insight**: Business logic (agentx/) and infrastructure (runtime/) are separated.
+ * Through Repository interface, same business code runs on Server or Browser.
  *
  * ## Module Structure
  *
- * | Module    | Files | Purpose                                    |
- * |-----------|-------|--------------------------------------------|
- * | agent/    | 14    | Core contracts (Agent, Driver, Presenter)  |
- * | event/    | 44    | 4-layer events (Stream→State→Message→Turn) |
- * | message/  | 13    | Message formats and content parts          |
- * | agentx/   | 13    | Platform API (defineAgent, createAgentX)   |
- * | runtime/  | 15+   | Runtime (Container, Sandbox, OS, LLM)      |
- * | llm/      | 7     | LLM configuration and responses            |
- * | mcp/      | 7     | Model Context Protocol types               |
- * | error/    | 7     | Error taxonomy (category + code)           |
- * | logger/   | 4     | Logging facade types                       |
- * | session/  | 2     | Session/conversation context               |
- * | guards/   | 3     | Runtime type guards                        |
+ * | Module      | Purpose                                      | Layer          |
+ * |-------------|----------------------------------------------|----------------|
+ * | agentx/     | Business API (defineAgent, createAgentX)     | Business Logic |
+ * | runtime/    | Infrastructure (Repository, Container)       | Infrastructure |
+ * | definition/ | AgentDefinition (like Dockerfile)            | Source Layer   |
+ * | image/      | AgentImage = MetaImage | DerivedImage        | Build Artifact |
+ * | session/    | Session (user conversation)                  | Runtime        |
+ * | agent/      | Agent core contracts                         | Core Layer     |
+ * | event/      | 4-layer events (Stream→State→Message→Turn)   | Event Layer    |
+ * | message/    | Message formats and content parts            | Message Layer  |
  *
- * ## Key Design Decisions
+ * ## Key ADR References
  *
- * See individual module index.ts files for detailed design decisions:
- * - `event/index.ts` - 4-layer architecture rationale
- * - `agent/index.ts` - Agent-as-Driver pattern
- * - `message/index.ts` - Role + Subtype discrimination
- * - `agentx/index.ts` - defineAgent and createAgentX
- * - `runtime/index.ts` - Container, Sandbox, Runtime architecture
- * - `error/index.ts` - Error taxonomy and serialization
+ * - `agentx/index.ts` - Business API layer design
+ * - `runtime/index.ts` - Infrastructure layer design
+ * - `runtime/repository/index.ts` - Repository isomorphic design
+ * - `issues/022-runtime-agentx-isomorphic-architecture.md` - Full architecture doc
  *
  * @packageDocumentation
  */
+
+// ============================================================================
+// Docker-style Layered Architecture
+// AgentFile/Code → Definition → MetaImage → Session → Agent
+// ============================================================================
 
 // Agent state
 export type { AgentState } from "./AgentState";
@@ -47,20 +62,40 @@ export type { AgentState } from "./AgentState";
 // User types
 export * from "./user";
 
-// Definition types (Docker-style: source template)
+// Definition types (Docker-style: source template, like Dockerfile)
 export * from "./definition";
 
-// Image types (Docker-style: built artifact)
+// Image types (Docker-style: built artifact, like Docker Image)
 export * from "./image";
 
-// Platform context (AgentX) - includes defineAgent
+// ============================================================================
+// Business Logic Layer (Platform API)
+// Platform-agnostic, isomorphic
+// ============================================================================
+
+// Platform context (AgentX) - includes defineAgent, createAgentX
+// This is the business logic entry point, isomorphic via Runtime
 export * from "./agentx";
 
-// Logger types
-export * from "./logger";
+// ============================================================================
+// Infrastructure Layer (Runtime)
+// Provides Repository, Container, Sandbox
+// ============================================================================
+
+// Runtime resource types (includes Repository for isomorphic storage)
+// Repository is key to isomorphism: SQLiteRepository vs RemoteRepository
+export * from "./runtime";
+
+// ============================================================================
+// Core Contracts
+// Agent, Driver, Presenter, etc.
+// ============================================================================
 
 // Agent contracts
 export * from "./agent";
+
+// Logger types
+export * from "./logger";
 
 // Error types
 export * from "./error";
@@ -68,20 +103,17 @@ export * from "./error";
 // Message types
 export * from "./message";
 
-// Event types
+// Event types (4-layer: Stream → State → Message → Turn)
 export * from "./event";
 
 // LLM types
 export * from "./llm";
 
-// MCP types
+// MCP types (Model Context Protocol)
 export * from "./mcp";
 
 // Session types
 export * from "./session";
-
-// Runtime resource types (includes storage)
-export * from "./runtime";
 
 // Type guards
 export * from "./guards";

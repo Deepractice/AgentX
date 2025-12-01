@@ -1,36 +1,89 @@
 /**
- * Storage Module - Persistence abstraction for AgentX
+ * Repository Module - Isomorphic Storage Abstraction
  *
- * Part of Docker-style layered architecture:
- * Definition → build → Image → run → Agent
- *                        ↓
- *                    Session (external wrapper)
+ * ## ADR: Key to Isomorphic Storage
  *
- * ## Architecture
+ * Repository is the core of AgentX isomorphic architecture. It defines a unified
+ * storage interface that enables business code to seamlessly switch between
+ * Server and Browser.
  *
  * ```
- * Repository (unified interface)
- * ├── Image methods (save, find, delete)
- * ├── Session methods (save, find, delete)
- * └── Message methods (deprecated, stored in Image)
- *
- * Implementations:
- * ├── SQLiteRepository (agentx-node) - SQLite
- * └── RemoteRepository (agentx) - HTTP API
+ * ┌─────────────────────────────────────────────────────────────┐
+ * │                   Repository Interface                      │
+ * │  ┌──────────────┐ ┌──────────────┐ ┌──────────────────────┐ │
+ * │  │  Definition  │ │    Image     │ │      Session         │ │
+ * │  │   methods    │ │   methods    │ │      methods         │ │
+ * │  │  (in-memory) │ │ (persisted)  │ │    (persisted)       │ │
+ * │  └──────────────┘ └──────────────┘ └──────────────────────┘ │
+ * └─────────────────────────────────────────────────────────────┘
+ *                              │
+ *          ┌───────────────────┴───────────────────┐
+ *          │                                       │
+ *          ▼                                       ▼
+ * ┌─────────────────────┐               ┌─────────────────────┐
+ * │  SQLiteRepository   │               │  RemoteRepository   │
+ * │  (agentx-node)      │               │  (agentx/client)    │
+ * │                     │               │                     │
+ * │  Definition: Map    │               │  Definition: HTTP   │
+ * │  Image: SQLite      │   ◄──HTTP──►  │  Image: HTTP        │
+ * │  Session: SQLite    │               │  Session: HTTP      │
+ * └─────────────────────┘               └─────────────────────┘
+ *        Server                                Browser
  * ```
  *
- * ## Record Types (Storage Schema)
+ * ## Why Definition Uses In-Memory?
  *
- * Pure data types used by both SQLite schema and HTTP API:
- * - ImageRecord: Image persistence data (frozen snapshot)
- * - SessionRecord: Session persistence data (external wrapper)
- * - MessageRecord: Message persistence data (deprecated)
+ * Definition is like Dockerfile, a source-level configuration:
+ * - Defined in code (`defineAgent({ name: "xxx" })`)
+ * - No need to persist to database
+ * - But Repository interface supports persistence (for future Definition marketplace)
  *
+ * ## Data Flow Example
+ *
+ * ### Server Side
+ * ```
+ * agentx.definitions.register(def)
+ *   → DefinitionManagerImpl.register()
+ *     → SQLiteRepository.saveDefinition()  // Map.set()
+ *     → SQLiteRepository.saveImage()       // INSERT INTO images
+ * ```
+ *
+ * ### Browser Side
+ * ```
+ * agentx.definitions.register(def)
+ *   → DefinitionManagerImpl.register()
+ *     → RemoteRepository.saveDefinition()  // PUT /definitions/:name
+ *       → Server Handler
+ *         → SQLiteRepository.saveDefinition()
+ * ```
+ *
+ * ## Docker-style Layering
+ *
+ * ```
+ * Definition (source, code-defined)
+ *     │
+ *     └──[register]──→ MetaImage (persisted, auto-created)
+ *                          │
+ *                          └──→ Session (persisted, user-created)
+ *                                   │
+ *                                   └──[commit]──→ DerivedImage (persisted)
+ * ```
+ *
+ * ## Record Types
+ *
+ * | Record           | Persisted | Description                         |
+ * |------------------|-----------|-------------------------------------|
+ * | DefinitionRecord | In-memory | Source layer, like Dockerfile       |
+ * | ImageRecord      | Database  | Build artifact, has type (meta/derived) |
+ * | SessionRecord    | Database  | User session, references imageId    |
+ *
+ * @see issues/022-runtime-agentx-isomorphic-architecture.md
  * @packageDocumentation
  */
 
-// Repository interface
+// Repository interface - unified storage abstraction
 export type { Repository } from "./Repository";
 
 // Record types (storage schema)
+// These types are used for both SQLite schema and HTTP API contract
 export * from "./record";
