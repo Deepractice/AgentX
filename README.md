@@ -10,9 +10,9 @@
   <hr/>
 
   <p>
-    <a href="https://github.com/Deepractice/Agent"><img src="https://img.shields.io/github/stars/Deepractice/Agent?style=social" alt="Stars"/></a>
+    <a href="https://github.com/Deepractice/AgentX"><img src="https://img.shields.io/github/stars/Deepractice/AgentX?style=social" alt="Stars"/></a>
     <img src="https://komarev.com/ghpvc/?username=Agent&label=views&color=0e75b6&style=flat&abbreviated=true" alt="Views"/>
-    <a href="LICENSE"><img src="https://img.shields.io/github/license/Deepractice/Agent?color=blue" alt="License"/></a>
+    <a href="LICENSE"><img src="https://img.shields.io/github/license/Deepractice/AgentX?color=blue" alt="License"/></a>
     <a href="https://www.npmjs.com/package/@deepractice-ai/agentx"><img src="https://img.shields.io/npm/v/@deepractice-ai/agentx?color=cb3837&logo=npm" alt="npm"/></a>
   </p>
 
@@ -328,7 +328,7 @@ Open http://localhost:5200 - full-featured AI Agent with visual interface.
 
 ```bash
 # Clone and install
-git clone https://github.com/Deepractice/Agent.git
+git clone https://github.com/Deepractice/AgentX.git
 cd Agent
 pnpm install
 
