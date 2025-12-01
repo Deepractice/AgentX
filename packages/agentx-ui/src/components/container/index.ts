@@ -1,10 +1,16 @@
-// Container Components - Business Panes
+/**
+ * Container Components - Pure UI Panes
+ *
+ * Part of UI-Backend API Consistency design (see index.ts ADR #5):
+ * - These are pure UI components (presentational)
+ * - For integration, use Workspace from ~/components/workspace
+ */
 
-// Main container (state management)
-export { Container } from "./Container";
-export type { ContainerProps } from "./Container";
+// ContainerView - Pure UI layout component
+export { ContainerView } from "./ContainerView";
+export type { ContainerViewProps, ContainerViewRenderProps } from "./ContainerView";
 
-// Business Panes
+// Pure UI Panes
 export { DefinitionPane } from "./DefinitionPane";
 export type { DefinitionPaneProps } from "./DefinitionPane";
 
@@ -23,14 +29,5 @@ export type { InputPaneProps } from "./InputPane";
 export { InputToolBar } from "./InputToolBar";
 export type { InputToolBarProps } from "./InputToolBar";
 
-// Hook (re-exported from hooks/)
-export { useContainer, type UseContainerOptions } from "~/hooks/useContainer";
-
 // Types
-export type {
-  SessionItem,
-  AgentDefinitionItem,
-  ContainerState,
-  ContainerActions,
-  UseContainerResult,
-} from "./types";
+export type { SessionItem, AgentDefinitionItem } from "./types";

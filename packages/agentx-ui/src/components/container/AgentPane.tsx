@@ -37,7 +37,7 @@
  */
 
 import type { AgentError, AgentState, Message } from "@deepractice-ai/agentx-types";
-import { MoreHorizontal, Pin, Bot, MessageSquarePlus } from "lucide-react";
+import { MoreHorizontal, Pin, Bot } from "lucide-react";
 import { MessagePane } from "./MessagePane";
 import type { AgentDefinitionItem, SessionItem } from "./types";
 
@@ -95,6 +95,10 @@ export interface AgentPaneProps {
 
 /**
  * AgentPane - Agent message display area (pure presentation)
+ *
+ * States:
+ * 1. isLoading + no messages → Connecting/Loading
+ * 2. Ready → Show MessagePane (may be empty)
  */
 export function AgentPane({
   definition,
@@ -105,53 +109,30 @@ export function AgentPane({
   status,
   isLoading = false,
   onAbort,
-  onCreateSession,
+  // onCreateSession - unused, kept for backward compatibility
   className = "",
 }: AgentPaneProps) {
-  // No definition selected
-  if (!definition) {
-    return (
-      <div className={`h-full flex items-center justify-center bg-background ${className}`}>
-        <EmptyState
-          icon={<Bot className="w-12 h-12" />}
-          title="Select an agent"
-          description="Choose an agent from the sidebar to start chatting"
-        />
-      </div>
-    );
-  }
-
-  // No session selected
-  if (!session) {
+  // Loading state (e.g., establishing SSE connection)
+  if (isLoading && messages.length === 0 && !streaming) {
     return (
       <div className={`h-full flex flex-col bg-background ${className}`}>
-        <AgentHeader definition={definition} session={null} />
+        {definition && <AgentHeader definition={definition} session={session} />}
         <div className="flex-1 flex items-center justify-center">
-          <EmptyState
-            icon={<MessageSquarePlus className="w-12 h-12" />}
-            title="Start a conversation"
-            description={`Create a new topic to start chatting with ${definition.name}`}
-            action={
-              onCreateSession && (
-                <button
-                  onClick={onCreateSession}
-                  className="mt-4 px-4 py-2 text-sm font-medium text-primary-foreground bg-primary
-                             rounded-md hover:bg-primary/90 transition-colors"
-                >
-                  New Topic
-                </button>
-              )
-            }
-          />
+          <div className="flex flex-col items-center text-center">
+            <div className="animate-pulse mb-4">
+              <Bot className="w-12 h-12 text-muted-foreground" />
+            </div>
+            <p className="text-sm text-muted-foreground">Connecting...</p>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Agent interface with messages only (no input)
+  // Ready state - show MessagePane (handles empty state internally)
   return (
     <div className={`h-full flex flex-col bg-background ${className}`}>
-      <AgentHeader definition={definition} session={session} />
+      {definition && <AgentHeader definition={definition} session={session} />}
 
       <div className="flex-1 min-h-0">
         <MessagePane
@@ -218,27 +199,6 @@ function AgentHeader({ definition, session }: AgentHeaderProps) {
           <MoreHorizontal className="w-4 h-4" />
         </button>
       </div>
-    </div>
-  );
-}
-
-/**
- * Empty state component
- */
-interface EmptyStateProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  action?: React.ReactNode;
-}
-
-function EmptyState({ icon, title, description, action }: EmptyStateProps) {
-  return (
-    <div className="flex flex-col items-center text-center px-4">
-      <div className="text-muted-foreground mb-4">{icon}</div>
-      <h3 className="text-lg font-semibold text-foreground mb-1">{title}</h3>
-      <p className="text-sm text-muted-foreground max-w-sm">{description}</p>
-      {action}
     </div>
   );
 }

@@ -4,8 +4,11 @@
 // React Hooks
 export * from "~/hooks";
 
-// Container Components (business panes)
+// Container Components (pure UI panes)
 export * from "~/components/container";
+
+// Workspace Components (integration layer)
+export * from "~/components/workspace";
 
 // Message Components (message display)
 export * from "~/components/message";

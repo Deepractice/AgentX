@@ -39,8 +39,10 @@ import type {
   AgentContext,
   AgentDefinition,
   Agent,
+  Repository,
 } from "@deepractice-ai/agentx-types";
 import { createSSEDriver } from "./SSEDriver";
+import { RemoteRepository } from "../repository";
 
 // ============================================================================
 // MemoryContainer - Simple in-memory container for browser
@@ -140,6 +142,7 @@ export interface SSERuntimeConfig {
 class SSERuntime implements Runtime {
   readonly name = "sse";
   readonly container: Container;
+  readonly repository: Repository;
 
   private readonly serverUrl: string;
   private readonly headers: Record<string, string>;
@@ -150,6 +153,7 @@ class SSERuntime implements Runtime {
     this.headers = config.headers ?? {};
     this.existingAgentId = config.agentId;
     this.container = new MemoryContainer();
+    this.repository = new RemoteRepository({ serverUrl: this.serverUrl });
   }
 
   createSandbox(_name: string): Sandbox {

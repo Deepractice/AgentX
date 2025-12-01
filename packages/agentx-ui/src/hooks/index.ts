@@ -1,23 +1,22 @@
 /**
  * React Hooks for AgentX integration
  *
+ * Hooks follow UI-Backend API Consistency principle (see index.ts ADR #5):
+ * - useSession maps to agentx.sessions
+ * - useAgent maps to agentx.agents
+ * - useAgentX provides AgentX context
+ *
  * @example
  * ```tsx
- * import { useAgent, useAgentX } from "@deepractice-ai/agentx-ui";
+ * import { useSession, useAgent, useAgentX } from "@deepractice-ai/agentx-ui";
  *
- * function ChatPage() {
+ * function ChatPage({ userId }) {
  *   const agentx = useAgentX();
- *   const [agent, setAgent] = useState(null);
  *
- *   // Create agent
- *   useEffect(() => {
- *     if (!agentx) return;
- *     const newAgent = agentx.agents.create(MyAgent, config);
- *     setAgent(newAgent);
- *     return () => newAgent.destroy();
- *   }, [agentx]);
+ *   // Session management (maps to agentx.sessions)
+ *   const { sessions, currentSession, selectSession, createSession } = useSession(agentx, userId);
  *
- *   // Use agent
+ *   // Agent state (maps to agentx.agents)
  *   const { messages, streaming, send, isLoading } = useAgent(agent);
  *
  *   return <Chat messages={messages} streaming={streaming} onSend={send} />;
@@ -27,4 +26,5 @@
 
 export { useAgent, type UseAgentResult, type UseAgentOptions } from "./useAgent";
 export { useAgentX } from "./useAgentX";
-export { useContainer, type UseContainerOptions } from "./useContainer";
+export { useSession, type UseSessionResult, type UseSessionOptions } from "./useSession";
+// Note: SessionItem is exported from ~/components/container to avoid duplicate exports

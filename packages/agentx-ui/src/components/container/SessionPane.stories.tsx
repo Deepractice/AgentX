@@ -27,11 +27,16 @@ const meta: Meta<typeof SessionPane> = {
 export default meta;
 type Story = StoryObj<typeof SessionPane>;
 
+// Mock constants
+const MOCK_USER_ID = "user_default";
+const MOCK_IMAGE_ID = "image_claude_abc123";
+
 // Mock data
 const mockSessions: SessionItem[] = [
   {
     sessionId: "session_1",
-    agentId: "Claude",
+    userId: MOCK_USER_ID,
+    imageId: MOCK_IMAGE_ID,
     title: "Code Refactoring",
     createdAt: Date.now() - 3600000,
     updatedAt: Date.now() - 1800000,
@@ -40,7 +45,8 @@ const mockSessions: SessionItem[] = [
   },
   {
     sessionId: "session_2",
-    agentId: "Claude",
+    userId: MOCK_USER_ID,
+    imageId: MOCK_IMAGE_ID,
     title: "API Design Discussion",
     createdAt: Date.now() - 86400000,
     updatedAt: Date.now() - 43200000,
@@ -48,7 +54,8 @@ const mockSessions: SessionItem[] = [
   },
   {
     sessionId: "session_3",
-    agentId: "Claude",
+    userId: MOCK_USER_ID,
+    imageId: MOCK_IMAGE_ID,
     title: "Weekly Report Summary",
     createdAt: Date.now() - 172800000,
     updatedAt: Date.now() - 86400000,
@@ -56,7 +63,8 @@ const mockSessions: SessionItem[] = [
   },
   {
     sessionId: "session_4",
-    agentId: "Claude",
+    userId: MOCK_USER_ID,
+    imageId: MOCK_IMAGE_ID,
     title: "Performance Optimization",
     createdAt: Date.now() - 259200000,
     updatedAt: Date.now() - 172800000,
@@ -64,7 +72,8 @@ const mockSessions: SessionItem[] = [
   },
   {
     sessionId: "session_5",
-    agentId: "Claude",
+    userId: MOCK_USER_ID,
+    imageId: MOCK_IMAGE_ID,
     title: "Old Discussion",
     createdAt: Date.now() - 604800000,
     updatedAt: Date.now() - 604800000,
@@ -134,7 +143,8 @@ export const WithoutAgentName: Story = {
 function ManySessionsComponent() {
   const manySessions: SessionItem[] = Array.from({ length: 20 }, (_, i) => ({
     sessionId: `session_${i}`,
-    agentId: "Claude",
+    userId: MOCK_USER_ID,
+    imageId: MOCK_IMAGE_ID,
     title: `Topic ${i + 1}: ${["Bug Fix", "Feature Request", "Code Review", "Discussion", "Analysis"][i % 5]}`,
     createdAt: Date.now() - i * 86400000,
     updatedAt: Date.now() - i * 43200000,

@@ -37,6 +37,10 @@ const meta: Meta = {
 export default meta;
 type Story = StoryObj;
 
+// Mock constants
+const MOCK_USER_ID = "user_default";
+const MOCK_IMAGE_ID = "image_claude_abc123";
+
 // Mock data
 const mockDefinition: AgentDefinitionItem = {
   name: "Claude",
@@ -48,7 +52,8 @@ const mockDefinition: AgentDefinitionItem = {
 
 const mockSession: SessionItem = {
   sessionId: "session_1",
-  agentId: "Claude",
+  userId: MOCK_USER_ID,
+  imageId: MOCK_IMAGE_ID,
   title: "Code Refactoring Discussion",
   createdAt: Date.now() - 3600000,
   updatedAt: Date.now(),

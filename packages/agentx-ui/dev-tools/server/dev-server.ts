@@ -136,6 +136,7 @@ async function startDevServer() {
     basePath: "/agentx",
     allowDynamicCreation: true,
     allowedDefinitions: ["ClaudeAgent"],
+    repository: runtime.repository,
   });
 
   // Register definition for dynamic creation
@@ -147,7 +148,7 @@ async function startDevServer() {
   const server = http.createServer(async (req, res) => {
     // Handle CORS
     res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, HEAD, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
     if (req.method === "OPTIONS") {
@@ -167,7 +168,7 @@ async function startDevServer() {
       }
 
       let body: string | undefined;
-      if (req.method === "POST") {
+      if (req.method === "POST" || req.method === "PUT") {
         body = await new Promise<string>((resolve) => {
           let data = "";
           req.on("data", (chunk) => (data += chunk));
@@ -226,14 +227,22 @@ async function startDevServer() {
   server.listen(PORT, "0.0.0.0", () => {
     console.log(`Server started on http://0.0.0.0:${PORT}`);
     console.log(`\nEndpoints:`);
-    console.log(`  GET  /agentx/info          - Platform info`);
-    console.log(`  GET  /agentx/health        - Health check`);
-    console.log(`  GET  /agentx/agents        - List agents`);
-    console.log(`  POST /agentx/agents        - Create agent`);
-    console.log(`  GET  /agentx/agents/:id    - Get agent`);
-    console.log(`  DEL  /agentx/agents/:id    - Delete agent`);
-    console.log(`  GET  /agentx/agents/:id/sse      - SSE stream`);
-    console.log(`  POST /agentx/agents/:id/messages - Send message`);
+    console.log(`  GET  /agentx/info               - Platform info`);
+    console.log(`  GET  /agentx/health             - Health check`);
+    console.log(`  --- Agents ---`);
+    console.log(`  GET  /agentx/agents             - List agents`);
+    console.log(`  POST /agentx/agents             - Create agent`);
+    console.log(`  GET  /agentx/agents/:id         - Get agent`);
+    console.log(`  DEL  /agentx/agents/:id         - Delete agent`);
+    console.log(`  GET  /agentx/agents/:id/sse     - SSE stream`);
+    console.log(`  POST /agentx/agents/:id/messages- Send message`);
+    console.log(`  --- Images ---`);
+    console.log(`  GET  /agentx/images             - List images`);
+    console.log(`  GET  /agentx/images/:id         - Get image`);
+    console.log(`  --- Sessions ---`);
+    console.log(`  GET  /agentx/sessions           - List sessions`);
+    console.log(`  GET  /agentx/sessions/:id       - Get session`);
+    console.log(`  GET  /agentx/users/:id/sessions - List user sessions`);
     console.log(`\nReady for Storybook development!`);
   });
 

@@ -19,7 +19,14 @@
  * ```
  */
 
-import type { AgentX, Agent, UserMessage } from "@deepractice-ai/agentx-types";
+import type {
+  AgentX,
+  Agent,
+  UserMessage,
+  ImageRecord,
+  SessionRecord,
+  MessageRecord,
+} from "@deepractice-ai/agentx-types";
 import type {
   AgentXHandler,
   AgentXHandlerOptions,
@@ -54,6 +61,7 @@ export function createAgentXHandler(
     basePath = "",
     allowDynamicCreation = false,
     allowedDefinitions = [],
+    repository,
     hooks = {},
   } = options;
 
@@ -133,6 +141,90 @@ export function createAgentXHandler(
 
       if (method === "POST" && subPath === "/interrupt") {
         return { type: "interrupt", agentId };
+      }
+    }
+
+    // Images routes: /images, /images/:imageId, /images/:imageId/sessions
+    if (method === "GET" && path === "/images") {
+      return { type: "list_images" };
+    }
+
+    const imageMatch = path.match(/^\/images\/([^/]+)(\/.*)?$/);
+    if (imageMatch) {
+      const imageId = imageMatch[1];
+      const subPath = imageMatch[2] || "";
+
+      if (method === "GET" && subPath === "") {
+        return { type: "get_image", imageId };
+      }
+      if (method === "PUT" && subPath === "") {
+        return { type: "save_image", imageId };
+      }
+      if (method === "DELETE" && subPath === "") {
+        return { type: "delete_image", imageId };
+      }
+      if (method === "HEAD" && subPath === "") {
+        return { type: "head_image", imageId };
+      }
+      if (method === "GET" && subPath === "/sessions") {
+        return { type: "list_image_sessions", imageId };
+      }
+      if (method === "DELETE" && subPath === "/sessions") {
+        return { type: "delete_image_sessions", imageId };
+      }
+    }
+
+    // Sessions routes: /sessions, /sessions/:sessionId, /sessions/:sessionId/messages
+    if (method === "GET" && path === "/sessions") {
+      return { type: "list_sessions" };
+    }
+
+    const sessionMatch = path.match(/^\/sessions\/([^/]+)(\/.*)?$/);
+    if (sessionMatch) {
+      const sessionId = sessionMatch[1];
+      const subPath = sessionMatch[2] || "";
+
+      if (method === "GET" && subPath === "") {
+        return { type: "get_session", sessionId };
+      }
+      if (method === "PUT" && subPath === "") {
+        return { type: "save_session", sessionId };
+      }
+      if (method === "DELETE" && subPath === "") {
+        return { type: "delete_session", sessionId };
+      }
+      if (method === "HEAD" && subPath === "") {
+        return { type: "head_session", sessionId };
+      }
+      if (method === "GET" && subPath === "/messages") {
+        return { type: "list_session_messages", sessionId };
+      }
+      if (method === "DELETE" && subPath === "/messages") {
+        return { type: "delete_session_messages", sessionId };
+      }
+      if (method === "GET" && subPath === "/messages/count") {
+        return { type: "count_session_messages", sessionId };
+      }
+    }
+
+    // Users routes: /users/:userId/sessions
+    const userMatch = path.match(/^\/users\/([^/]+)\/sessions$/);
+    if (userMatch && method === "GET") {
+      return { type: "list_user_sessions", userId: userMatch[1] };
+    }
+
+    // Messages routes: /messages/:messageId
+    const messageMatch = path.match(/^\/messages\/([^/]+)$/);
+    if (messageMatch) {
+      const messageId = messageMatch[1];
+      if (method === "GET") {
+        return { type: "get_message", messageId };
+      }
+      if (method === "PUT") {
+        return { type: "save_message", messageId };
+      }
+      if (method === "DELETE") {
+        return { type: "delete_message", messageId };
       }
     }
 
@@ -395,6 +487,168 @@ export function createAgentXHandler(
   }
 
   // ============================================================================
+  // Repository Handlers (Images, Sessions, Messages)
+  // ============================================================================
+
+  function getRepository(): import("@deepractice-ai/agentx-types").Repository {
+    if (!repository) {
+      throw new Error(
+        "Repository not configured. Pass 'repository' option to createAgentXHandler."
+      );
+    }
+    return repository;
+  }
+
+  // ----- Images -----
+
+  async function handleListImages(): Promise<Response> {
+    const repo = getRepository();
+    const images = await repo.findAllImages();
+    return jsonResponse(images);
+  }
+
+  async function handleGetImage(imageId: string): Promise<Response> {
+    const repo = getRepository();
+    const image = await repo.findImageById(imageId);
+    if (!image) {
+      return errorResponse("INVALID_REQUEST", `Image ${imageId} not found`, 404);
+    }
+    return jsonResponse(image);
+  }
+
+  async function handleSaveImage(imageId: string, request: Request): Promise<Response> {
+    const repo = getRepository();
+    let body: ImageRecord;
+    try {
+      body = (await request.json()) as ImageRecord;
+    } catch {
+      return errorResponse("INVALID_REQUEST", "Invalid JSON body", 400);
+    }
+    await repo.saveImage({ ...body, imageId });
+    return new Response(null, { status: 204 });
+  }
+
+  async function handleDeleteImage(imageId: string): Promise<Response> {
+    const repo = getRepository();
+    await repo.deleteImage(imageId);
+    return new Response(null, { status: 204 });
+  }
+
+  async function handleHeadImage(imageId: string): Promise<Response> {
+    const repo = getRepository();
+    const exists = await repo.imageExists(imageId);
+    return new Response(null, { status: exists ? 200 : 404 });
+  }
+
+  async function handleListImageSessions(imageId: string): Promise<Response> {
+    const repo = getRepository();
+    const sessions = await repo.findSessionsByImageId(imageId);
+    return jsonResponse(sessions);
+  }
+
+  async function handleDeleteImageSessions(imageId: string): Promise<Response> {
+    const repo = getRepository();
+    await repo.deleteSessionsByImageId(imageId);
+    return new Response(null, { status: 204 });
+  }
+
+  // ----- Sessions -----
+
+  async function handleListSessions(): Promise<Response> {
+    const repo = getRepository();
+    const sessions = await repo.findAllSessions();
+    return jsonResponse(sessions);
+  }
+
+  async function handleGetSession(sessionId: string): Promise<Response> {
+    const repo = getRepository();
+    const session = await repo.findSessionById(sessionId);
+    if (!session) {
+      return errorResponse("INVALID_REQUEST", `Session ${sessionId} not found`, 404);
+    }
+    return jsonResponse(session);
+  }
+
+  async function handleSaveSession(sessionId: string, request: Request): Promise<Response> {
+    const repo = getRepository();
+    let body: SessionRecord;
+    try {
+      body = (await request.json()) as SessionRecord;
+    } catch {
+      return errorResponse("INVALID_REQUEST", "Invalid JSON body", 400);
+    }
+    await repo.saveSession({ ...body, sessionId });
+    return new Response(null, { status: 204 });
+  }
+
+  async function handleDeleteSession(sessionId: string): Promise<Response> {
+    const repo = getRepository();
+    await repo.deleteSession(sessionId);
+    return new Response(null, { status: 204 });
+  }
+
+  async function handleHeadSession(sessionId: string): Promise<Response> {
+    const repo = getRepository();
+    const exists = await repo.sessionExists(sessionId);
+    return new Response(null, { status: exists ? 200 : 404 });
+  }
+
+  async function handleListSessionMessages(sessionId: string): Promise<Response> {
+    const repo = getRepository();
+    const messages = await repo.findMessagesBySessionId(sessionId);
+    return jsonResponse(messages);
+  }
+
+  async function handleDeleteSessionMessages(sessionId: string): Promise<Response> {
+    const repo = getRepository();
+    await repo.deleteMessagesBySessionId(sessionId);
+    return new Response(null, { status: 204 });
+  }
+
+  async function handleCountSessionMessages(sessionId: string): Promise<Response> {
+    const repo = getRepository();
+    const count = await repo.countMessagesBySessionId(sessionId);
+    return jsonResponse({ count });
+  }
+
+  // ----- Users -----
+
+  async function handleListUserSessions(userId: string): Promise<Response> {
+    const repo = getRepository();
+    const sessions = await repo.findSessionsByUserId(userId);
+    return jsonResponse(sessions);
+  }
+
+  // ----- Messages -----
+
+  async function handleGetMessage(messageId: string): Promise<Response> {
+    const repo = getRepository();
+    const message = await repo.findMessageById(messageId);
+    if (!message) {
+      return errorResponse("INVALID_REQUEST", `Message ${messageId} not found`, 404);
+    }
+    return jsonResponse(message);
+  }
+
+  async function handleSaveMessage(messageId: string, request: Request): Promise<Response> {
+    const repo = getRepository();
+    let body: MessageRecord;
+    try {
+      body = (await request.json()) as MessageRecord;
+    } catch {
+      return errorResponse("INVALID_REQUEST", "Invalid JSON body", 400);
+    }
+    await repo.saveMessage({ ...body, messageId });
+    return new Response(null, { status: 204 });
+  }
+
+  async function handleDeleteMessage(messageId: string): Promise<Response> {
+    const repo = getRepository();
+    await repo.deleteMessage(messageId);
+    return new Response(null, { status: 204 });
+  }
+
+  // ============================================================================
   // Main Handler
   // ============================================================================
 
@@ -403,32 +657,73 @@ export function createAgentXHandler(
       const parsed = parseRequest(request);
 
       switch (parsed.type) {
+        // Platform
         case "platform_info":
           return handlePlatformInfo();
-
         case "platform_health":
           return handleHealth();
 
+        // Agents
         case "list_agents":
           return handleListAgents();
-
         case "create_agent":
           return handleCreateAgent(request);
-
         case "get_agent":
           return handleGetAgent(parsed.agentId!);
-
         case "delete_agent":
           return handleDeleteAgent(parsed.agentId!);
-
         case "connect_sse":
           return handleConnectSSE(parsed.agentId!);
-
         case "send_message":
           return handleSendMessage(parsed.agentId!, request);
-
         case "interrupt":
           return handleInterrupt(parsed.agentId!);
+
+        // Images
+        case "list_images":
+          return handleListImages();
+        case "get_image":
+          return handleGetImage(parsed.imageId!);
+        case "save_image":
+          return handleSaveImage(parsed.imageId!, request);
+        case "delete_image":
+          return handleDeleteImage(parsed.imageId!);
+        case "head_image":
+          return handleHeadImage(parsed.imageId!);
+        case "list_image_sessions":
+          return handleListImageSessions(parsed.imageId!);
+        case "delete_image_sessions":
+          return handleDeleteImageSessions(parsed.imageId!);
+
+        // Sessions
+        case "list_sessions":
+          return handleListSessions();
+        case "get_session":
+          return handleGetSession(parsed.sessionId!);
+        case "save_session":
+          return handleSaveSession(parsed.sessionId!, request);
+        case "delete_session":
+          return handleDeleteSession(parsed.sessionId!);
+        case "head_session":
+          return handleHeadSession(parsed.sessionId!);
+        case "list_session_messages":
+          return handleListSessionMessages(parsed.sessionId!);
+        case "delete_session_messages":
+          return handleDeleteSessionMessages(parsed.sessionId!);
+        case "count_session_messages":
+          return handleCountSessionMessages(parsed.sessionId!);
+
+        // Users
+        case "list_user_sessions":
+          return handleListUserSessions(parsed.userId!);
+
+        // Messages
+        case "get_message":
+          return handleGetMessage(parsed.messageId!);
+        case "save_message":
+          return handleSaveMessage(parsed.messageId!, request);
+        case "delete_message":
+          return handleDeleteMessage(parsed.messageId!);
 
         case "not_found":
         default:

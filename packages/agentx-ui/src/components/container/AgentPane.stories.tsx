@@ -26,6 +26,10 @@ const meta: Meta<typeof AgentPane> = {
 export default meta;
 type Story = StoryObj<typeof AgentPane>;
 
+// Mock constants
+const MOCK_USER_ID = "user_default";
+const MOCK_IMAGE_ID = "image_claude_abc123";
+
 // Mock data
 const mockDefinition: AgentDefinitionItem = {
   name: "Claude",
@@ -37,7 +41,8 @@ const mockDefinition: AgentDefinitionItem = {
 
 const mockSession: SessionItem = {
   sessionId: "session_1",
-  agentId: "Claude",
+  userId: MOCK_USER_ID,
+  imageId: MOCK_IMAGE_ID,
   title: "Code Refactoring Discussion",
   createdAt: Date.now() - 3600000,
   updatedAt: Date.now() - 1800000,
@@ -103,7 +108,11 @@ export const DifferentColors: Story = {
       <div className="border border-border rounded-lg overflow-hidden">
         <AgentPane
           definition={{ name: "GPT-4", color: "bg-green-500", isOnline: true }}
-          session={{ ...mockSession, title: "Green Theme" }}
+          session={{
+            ...mockSession,
+            imageId: "image_gpt4_def456",
+            title: "Green Theme",
+          }}
           messages={[]}
           isLoading={false}
         />
@@ -111,7 +120,11 @@ export const DifferentColors: Story = {
       <div className="border border-border rounded-lg overflow-hidden">
         <AgentPane
           definition={{ name: "Gemini", color: "bg-purple-500", isOnline: true }}
-          session={{ ...mockSession, title: "Purple Theme" }}
+          session={{
+            ...mockSession,
+            imageId: "image_gemini_ghi789",
+            title: "Purple Theme",
+          }}
           messages={[]}
           isLoading={false}
         />

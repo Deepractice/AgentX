@@ -5,7 +5,7 @@
  * These are application-level types, not core domain types.
  */
 
-import type { UserMessage, StreamEventType } from "@deepractice-ai/agentx-types";
+import type { UserMessage, StreamEventType, Repository } from "@deepractice-ai/agentx-types";
 
 // ============================================================================
 // Transport Types
@@ -98,6 +98,13 @@ export interface AgentXHandlerOptions {
   allowedDefinitions?: string[];
 
   /**
+   * Repository for persistence (optional)
+   *
+   * If provided, enables /images/*, /sessions/*, /messages/* endpoints.
+   */
+  repository?: Repository;
+
+  /**
    * CORS configuration
    */
   cors?: CorsOptions;
@@ -177,6 +184,26 @@ export interface ParsedRequest {
   agentId?: string;
 
   /**
+   * Image ID (if applicable)
+   */
+  imageId?: string;
+
+  /**
+   * Session ID (if applicable)
+   */
+  sessionId?: string;
+
+  /**
+   * User ID (if applicable)
+   */
+  userId?: string;
+
+  /**
+   * Message ID (if applicable)
+   */
+  messageId?: string;
+
+  /**
    * Request body (if applicable)
    */
   body?: unknown;
@@ -186,8 +213,10 @@ export interface ParsedRequest {
  * Request types
  */
 export type RequestType =
+  // Platform
   | "platform_info" // GET /info
   | "platform_health" // GET /health
+  // Agents
   | "list_agents" // GET /agents
   | "create_agent" // POST /agents
   | "get_agent" // GET /agents/:agentId
@@ -195,6 +224,30 @@ export type RequestType =
   | "connect_sse" // GET /agents/:agentId/sse
   | "send_message" // POST /agents/:agentId/messages
   | "interrupt" // POST /agents/:agentId/interrupt
+  // Images
+  | "list_images" // GET /images
+  | "get_image" // GET /images/:imageId
+  | "save_image" // PUT /images/:imageId
+  | "delete_image" // DELETE /images/:imageId
+  | "head_image" // HEAD /images/:imageId
+  | "list_image_sessions" // GET /images/:imageId/sessions
+  | "delete_image_sessions" // DELETE /images/:imageId/sessions
+  // Sessions
+  | "list_sessions" // GET /sessions
+  | "get_session" // GET /sessions/:sessionId
+  | "save_session" // PUT /sessions/:sessionId
+  | "delete_session" // DELETE /sessions/:sessionId
+  | "head_session" // HEAD /sessions/:sessionId
+  | "list_session_messages" // GET /sessions/:sessionId/messages
+  | "delete_session_messages" // DELETE /sessions/:sessionId/messages
+  | "count_session_messages" // GET /sessions/:sessionId/messages/count
+  // Users
+  | "list_user_sessions" // GET /users/:userId/sessions
+  // Messages
+  | "get_message" // GET /messages/:messageId
+  | "save_message" // PUT /messages/:messageId
+  | "delete_message" // DELETE /messages/:messageId
+  // Not found
   | "not_found"; // Unknown route
 
 // ============================================================================
