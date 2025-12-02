@@ -48,7 +48,7 @@ import { AgentInstance } from "@deepractice-ai/agentx-agent";
 import { AgentEngine } from "@deepractice-ai/agentx-engine";
 import { setLoggerFactory } from "@deepractice-ai/agentx-common";
 import { createSSEDriver } from "./SSEDriver";
-import { RemoteRepository } from "../repository";
+import { RemoteRepository } from "./repository";
 import { BrowserLoggerFactory } from "./logger";
 
 /**
@@ -352,16 +352,22 @@ class SSERuntime implements Runtime {
  * @example
  * ```typescript
  * import { createAgentX } from "@deepractice-ai/agentx";
- * import { createSSERuntime } from "@deepractice-ai/agentx/client";
+ * import { sseRuntime } from "@deepractice-ai/agentx/runtime/sse";
  *
- * const runtime = createSSERuntime({ serverUrl: "http://localhost:5200/agentx" });
- * const agentx = createAgentX(runtime);
- * const agent = agentx.agents.create(MyAgent);
+ * createAgentX(sseRuntime({
+ *   serverUrl: "http://localhost:5200/agentx",
+ *   headers: { Authorization: "Bearer xxx" },
+ * }));
  * ```
  */
-export function createSSERuntime(config: SSERuntimeConfig): Runtime {
+export function sseRuntime(config: SSERuntimeConfig): Runtime {
   return new SSERuntime(config);
 }
+
+/**
+ * @deprecated Use `sseRuntime()` instead for consistency with `nodeRuntime()`
+ */
+export const createSSERuntime = sseRuntime;
 
 // Also export class for advanced use
 export { SSERuntime };

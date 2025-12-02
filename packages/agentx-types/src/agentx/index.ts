@@ -101,9 +101,6 @@ export { createAgentX } from "./createAgentX";
 export type { DefineAgentInput } from "./defineAgent";
 export { defineAgent } from "./defineAgent";
 
-// Configuration types
-export type { RemoteConfig } from "./AgentXConfig";
-
 // Base Endpoint type
 export type { Endpoint, HttpMethod } from "./Endpoint";
 

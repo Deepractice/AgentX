@@ -50,7 +50,6 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
-    "@deepractice-ai/agentx-runtime": "workspace:*",
     "@storybook/addon-a11y": "^8.4.7",
     "@storybook/addon-essentials": "^8.4.7",
     "@storybook/addon-interactions": "^8.4.7",

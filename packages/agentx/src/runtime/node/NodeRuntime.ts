@@ -27,14 +27,40 @@ import { AgentInstance } from "@deepractice-ai/agentx-agent";
 import { AgentEngine } from "@deepractice-ai/agentx-engine";
 import { createLogger, setLoggerFactory } from "@deepractice-ai/agentx-common";
 import { createClaudeDriver, type ClaudeDriverOptions } from "./driver/ClaudeDriver";
-import { SQLiteRepository } from "./repository";
-import { FileLoggerFactory } from "./logger";
-import { EnvLLMProvider, type LLMSupply } from "./llm";
-import { homedir } from "node:os";
-import { mkdirSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import type { LLMSupply } from "./llm";
+import { envLLM, sqlite, fileLogger } from "./providers";
+import type { EnvLLMConfig, SQLiteConfig, FileLoggerConfig } from "./providers";
 
 const logger = createLogger("node/NodeRuntime");
+
+// ============================================================================
+// NodeRuntimeConfig - Configuration for nodeRuntime factory
+// ============================================================================
+
+/**
+ * Node Runtime Configuration
+ *
+ * All fields are optional. Defaults are used if not provided.
+ */
+export interface NodeRuntimeConfig {
+  /**
+   * LLM provider configuration
+   * @default envLLM() - reads from environment variables
+   */
+  llm?: LLMProvider<LLMSupply> | EnvLLMConfig;
+
+  /**
+   * Repository configuration
+   * @default sqlite() - uses ~/.agentx/data/agentx.db
+   */
+  repository?: Repository | SQLiteConfig;
+
+  /**
+   * Logger factory configuration
+   * @default fileLogger() - writes to ~/.agentx/logs/
+   */
+  logger?: LoggerFactory | FileLoggerConfig;
+}
 
 // ============================================================================
 // NodeContainer - Node.js Container implementation
@@ -268,28 +294,24 @@ class NodeSandbox implements Sandbox {
 // ============================================================================
 
 /**
- * Default data directory for AgentX
+ * Helper to check if value is an instance (has methods) vs plain config object
  */
-const DEFAULT_DATA_DIR = join(homedir(), ".agentx", "data");
-
-/**
- * Ensure directory exists
- */
-function ensureDir(dir: string): void {
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
-  }
+function isInstance<T>(value: unknown, methodName: string): value is T {
+  return typeof value === "object" && value !== null && methodName in value;
 }
 
 /**
  * NodeRuntime - Runtime for Node.js with Claude driver
  *
- * RuntimeConfig is collected from environment via EnvLLMProvider:
+ * Supports dependency injection via config:
+ * - llm: LLM provider (default: envLLM - reads from environment)
+ * - repository: Data persistence (default: sqlite)
+ * - logger: Logging factory (default: fileLogger)
+ *
+ * Environment Variables (for default envLLM):
  * - LLM_PROVIDER_KEY (required) - API key for LLM provider
  * - LLM_PROVIDER_URL (optional) - Base URL for API endpoint
  * - LLM_PROVIDER_MODEL (optional) - Model name
- *
- * Data is stored in ~/.agentx/data/ by default.
  */
 class NodeRuntime implements Runtime {
   readonly name = "node";
@@ -299,29 +321,30 @@ class NodeRuntime implements Runtime {
   private readonly engine: AgentEngine;
   private readonly llmProvider: LLMProvider<LLMSupply>;
 
-  constructor(dataDir: string = DEFAULT_DATA_DIR) {
-    // Ensure data directory exists
-    ensureDir(dataDir);
-
-    // Create log directory
-    const logDir = join(dataDir, "..", "logs");
-    ensureDir(logDir);
-
-    // Create and configure FileLoggerFactory
-    this.loggerFactory = new FileLoggerFactory({
-      logDir,
-      consoleOutput: true,
-    });
+  constructor(config: NodeRuntimeConfig = {}) {
+    // Resolve logger (first, so we can log during initialization)
+    if (isInstance<LoggerFactory>(config.logger, "getLogger")) {
+      this.loggerFactory = config.logger;
+    } else {
+      this.loggerFactory = fileLogger(config.logger);
+    }
 
     // Set as global logger factory
     setLoggerFactory(this.loggerFactory);
 
-    // Create LLM provider (reads from environment)
-    this.llmProvider = new EnvLLMProvider();
+    // Resolve LLM provider
+    if (isInstance<LLMProvider<LLMSupply>>(config.llm, "provide")) {
+      this.llmProvider = config.llm;
+    } else {
+      this.llmProvider = envLLM(config.llm);
+    }
 
-    // Create SQLite repository
-    const dbPath = join(dataDir, "agentx.db");
-    this.repository = new SQLiteRepository(dbPath);
+    // Resolve repository
+    if (isInstance<Repository>(config.repository, "saveImage")) {
+      this.repository = config.repository;
+    } else {
+      this.repository = sqlite(config.repository);
+    }
 
     // Create shared engine
     this.engine = new AgentEngine();
@@ -329,7 +352,7 @@ class NodeRuntime implements Runtime {
     // Create container with runtime, engine, and repository
     this.container = new NodeContainer("node-container", this, this.engine, this.repository);
 
-    logger.info("NodeRuntime initialized", { dataDir, dbPath, logDir });
+    logger.info("NodeRuntime initialized");
   }
 
   createSandbox(name: string): Sandbox {
@@ -360,30 +383,55 @@ class NodeRuntime implements Runtime {
 }
 
 // ============================================================================
-// Export singleton runtime
+// Factory Function
 // ============================================================================
 
 /**
- * Node.js Runtime singleton
- *
- * Requires environment variables:
- * - LLM_PROVIDER_KEY (required) - API key for LLM provider
- * - LLM_PROVIDER_URL (optional) - Base URL for API endpoint
- * - LLM_PROVIDER_MODEL (optional) - Model name (default: claude-sonnet-4-20250514)
+ * Create a Node.js Runtime with optional configuration
  *
  * @example
  * ```typescript
- * import { runtime } from "@deepractice-ai/agentx-runtime";
  * import { createAgentX } from "@deepractice-ai/agentx";
- * import { defineAgent } from "@deepractice-ai/agentx";
+ * import { nodeRuntime, envLLM, sqlite } from "@deepractice-ai/agentx/runtime/node";
  *
- * const MyAgent = defineAgent({
- *   name: "Translator",
- *   systemPrompt: "You are a translator",
- * });
+ * // Use all defaults
+ * createAgentX(nodeRuntime());
  *
- * const agentx = createAgentX(runtime);
- * const agent = agentx.agents.create(MyAgent);  // No config needed!
+ * // Custom configuration
+ * createAgentX(nodeRuntime({
+ *   llm: envLLM({ model: "claude-sonnet-4" }),
+ *   repository: sqlite({ path: "/custom/db.sqlite" }),
+ * }));
+ *
+ * // Simple config (auto-wrapped with factory)
+ * createAgentX(nodeRuntime({
+ *   llm: { model: "claude-sonnet-4" },
+ *   repository: { path: "/custom/db.sqlite" },
+ * }));
+ * ```
+ */
+export function nodeRuntime(config?: NodeRuntimeConfig): Runtime {
+  return new NodeRuntime(config);
+}
+
+// ============================================================================
+// Legacy Export (for backward compatibility)
+// ============================================================================
+
+/**
+ * Node.js Runtime singleton (legacy)
+ *
+ * @deprecated Use `nodeRuntime()` factory instead
+ *
+ * @example
+ * ```typescript
+ * // Old way (deprecated)
+ * import { runtime } from "@deepractice-ai/agentx/runtime/node";
+ * createAgentX(runtime);
+ *
+ * // New way (recommended)
+ * import { nodeRuntime } from "@deepractice-ai/agentx/runtime/node";
+ * createAgentX(nodeRuntime());
  * ```
  */
 export const runtime: Runtime = new NodeRuntime();

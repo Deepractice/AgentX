@@ -93,7 +93,7 @@
  * @example
  * ```typescript
  * import { defineAgent, createAgentX } from "@deepractice-ai/agentx";
- * import { runtime } from "@deepractice-ai/agentx-runtime";
+ * import { runtime } from "@deepractice-ai/agentx/runtime/node";
  *
  * // 1. Define template
  * const TranslatorDef = defineAgent({

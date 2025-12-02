@@ -26,7 +26,6 @@
   },
   "dependencies": {
     "@deepractice-ai/agentx": "workspace:*",
-    "@deepractice-ai/agentx-runtime": "workspace:*",
     "@deepractice-ai/agentx-types": "workspace:*",
     "@deepractice-ai/agentx-ui": "workspace:*",
     "@hono/node-server": "^1.13.7",

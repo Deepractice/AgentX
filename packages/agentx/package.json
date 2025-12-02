@@ -12,6 +12,16 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./runtime/node": {
+      "types": "./dist/runtime/node/index.d.ts",
+      "import": "./dist/runtime/node/index.js",
+      "require": "./dist/runtime/node/index.cjs"
+    },
+    "./runtime/sse": {
+      "types": "./dist/runtime/sse/index.d.ts",
+      "import": "./dist/runtime/sse/index.js",
+      "require": "./dist/runtime/sse/index.cjs"
+    },
     "./server": {
       "types": "./dist/server/index.d.ts",
       "import": "./dist/server/index.js",
@@ -38,9 +48,9 @@
       "require": "./dist/server/adapters/next.cjs"
     },
     "./client": {
-      "types": "./dist/client/index.d.ts",
-      "import": "./dist/client/index.js",
-      "require": "./dist/client/index.cjs"
+      "types": "./dist/runtime/sse/index.d.ts",
+      "import": "./dist/runtime/sse/index.js",
+      "require": "./dist/runtime/sse/index.cjs"
     }
   },
   "files": [
@@ -60,10 +70,16 @@
     "@deepractice-ai/agentx-common": "workspace:*",
     "@deepractice-ai/agentx-engine": "workspace:*",
     "@deepractice-ai/agentx-types": "workspace:*",
-    "ky": "^1.14.0"
+    "ky": "^1.14.0",
+    "rxjs": "^7.8.2"
+  },
+  "optionalDependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.1.30",
+    "better-sqlite3": "^11.7.0"
   },
   "devDependencies": {
     "@deepracticex/vitest-cucumber": "^1.4.3",
+    "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^24.9.2",
     "@vitest/ui": "^3.2.4",
     "tsup": "^8.3.5",

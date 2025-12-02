@@ -1,83 +1,58 @@
 /**
- * ProviderKey - Type-safe provider key for dependency injection
+ * ProviderKey - Type-safe key for dependency injection
  *
- * Used with agentx.provide() and agentx.resolve() for
- * type-safe dependency injection.
+ * Used with agentx.provide() and agentx.resolve() for runtime DI.
  *
  * @example
  * ```typescript
- * // Provide implementation
- * agentx.provide(LoggerFactoryKey, myLoggerFactory);
+ * // Define a provider key
+ * const MyServiceKey = createProviderKey<MyService>("MyService");
  *
- * // Resolve (type-safe)
- * const factory = agentx.resolve(LoggerFactoryKey);
- * // ^? LoggerFactory | undefined
+ * // Register provider
+ * agentx.provide(MyServiceKey, new MyServiceImpl());
+ *
+ * // Resolve provider
+ * const service = agentx.resolve(MyServiceKey);
  * ```
  */
 
-import type { LoggerFactory } from "../common/logger";
+import type { LoggerFactory } from "~/common/logger";
 
 /**
- * ProviderKey interface
+ * Type-safe provider key
  *
- * A type-safe key for registering and resolving providers.
- * The generic type T represents the provider type.
+ * The generic type T represents the provider interface.
  */
 export interface ProviderKey<T> {
-  /**
-   * Unique symbol identifier
-   */
   readonly id: symbol;
-
-  /**
-   * Human-readable name (for debugging)
-   */
   readonly name: string;
-
-  /**
-   * Phantom property for type inference
-   * @internal
-   */
-  readonly __type?: T;
+  readonly __type?: T; // Phantom type for type inference
 }
 
 /**
- * Create a provider key
+ * Create a type-safe provider key
  *
- * @param name - Human-readable name for the provider
- * @returns ProviderKey with the specified type
- *
- * @example
- * ```typescript
- * const MyServiceKey = createProviderKey<MyService>("MyService");
- * ```
+ * @param name - Unique name for the provider
+ * @returns Provider key for use with provide/resolve
  */
 export function createProviderKey<T>(name: string): ProviderKey<T> {
   return {
-    id: Symbol(name),
+    id: Symbol.for(`agentx:provider:${name}`),
     name,
   };
 }
 
-// ============================================================================
-// Built-in Provider Keys
-// ============================================================================
-
 /**
- * LoggerFactory provider key
- *
- * Use this key to provide a custom LoggerFactory implementation.
+ * Built-in provider key for LoggerFactory
  *
  * @example
  * ```typescript
  * agentx.provide(LoggerFactoryKey, {
  *   getLogger(name) {
- *     return new PinoLogger(name);
+ *     return new CustomLogger(name);
  *   }
  * });
  * ```
  */
-export const LoggerFactoryKey: ProviderKey<LoggerFactory> = {
-  id: Symbol("LoggerFactory"),
-  name: "LoggerFactory",
-};
+export const LoggerFactoryKey: ProviderKey<LoggerFactory> =
+  createProviderKey<LoggerFactory>("LoggerFactory");

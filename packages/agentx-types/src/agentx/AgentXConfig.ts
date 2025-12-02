@@ -1,20 +1,19 @@
 /**
  * AgentX Configuration Types
  *
- * Configuration types for AgentX instance creation.
+ * @deprecated Configuration is now handled by runtime factories.
+ * Use `nodeRuntime()` or `sseRuntime()` instead.
+ *
+ * @example
+ * ```typescript
+ * // Old way (deprecated)
+ * createAgentX({ remote: { serverUrl: "..." } });
+ *
+ * // New way
+ * import { sseRuntime } from "@deepractice-ai/agentx/runtime/sse";
+ * createAgentX(sseRuntime({ serverUrl: "..." }));
+ * ```
  */
 
-/**
- * Remote mode configuration
- */
-export interface RemoteConfig {
-  /**
-   * Remote server URL (required)
-   */
-  serverUrl: string;
-
-  /**
-   * Request headers for authentication, etc.
-   */
-  headers?: Record<string, string>;
-}
+// This file is kept for backward compatibility.
+// New code should use runtime factory functions directly.

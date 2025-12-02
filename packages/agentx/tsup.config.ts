@@ -4,12 +4,13 @@ import path from "path";
 export default defineConfig({
   entry: {
     index: "src/index.ts",
+    "runtime/node/index": "src/runtime/node/index.ts",
+    "runtime/sse/index": "src/runtime/sse/index.ts",
     "server/index": "src/server/index.ts",
     "server/adapters/index": "src/server/adapters/index.ts",
     "server/adapters/express": "src/server/adapters/express.ts",
     "server/adapters/hono": "src/server/adapters/hono.ts",
     "server/adapters/next": "src/server/adapters/next.ts",
-    "client/index": "src/client/index.ts",
   },
   format: ["cjs", "esm"],
   dts: true,

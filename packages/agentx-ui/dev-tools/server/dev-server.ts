@@ -118,7 +118,7 @@ async function startDevServer() {
   const { createAgentX } = await import("@deepractice-ai/agentx");
   const { createAgentXHandler } = await import("@deepractice-ai/agentx/server");
   const { LoggerFactoryKey } = await import("@deepractice-ai/agentx-types");
-  const { runtime } = await import("@deepractice-ai/agentx-runtime");
+  const { runtime } = await import("@deepractice-ai/agentx/runtime/node");
 
   // Import agent definition
   const { ClaudeAgent } = await import("./agent.js");

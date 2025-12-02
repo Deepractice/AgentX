@@ -26,7 +26,7 @@ import { existsSync, readFileSync } from "fs";
 import { createAgentX } from "@deepractice-ai/agentx";
 import { createAgentXHandler } from "@deepractice-ai/agentx/server";
 import { toHonoHandler } from "@deepractice-ai/agentx/server/adapters/hono";
-import { runtime } from "@deepractice-ai/agentx-runtime";
+import { runtime } from "@deepractice-ai/agentx/runtime/node";
 import { defineAgent } from "@deepractice-ai/agentx";
 
 import { createAuthMiddleware, authRoutes, generatePassword } from "./auth";
