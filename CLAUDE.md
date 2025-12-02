@@ -13,17 +13,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is a **pnpm monorepo** with Turborepo build orchestration:
 
 ```
-/AgentX
+/Agent
 ├── apps/
 │   └── portagent/        # AgentX Portal - Web UI with auth (Hono + Vite + React)
 └── packages/
-    ├── agentx-types/     # Type definitions (140+ files, zero dependencies)
-    ├── agentx-common/    # Internal shared utilities (logger facade)
-    ├── agentx-engine/    # Mealy Machine event processor
-    ├── agentx-agent/     # Agent runtime
-    ├── agentx/           # Platform API (local/remote, server/client)
-    ├── agentx-runtime/      # Node.js runtime (Claude driver, SQLite, FileLogger)
-    └── agentx-ui/        # React UI components (Storybook, Tailwind v4)
+    ├── types/            # @agentxjs/types - Type definitions (140+ files, zero dependencies)
+    ├── common/           # @agentxjs/common - Internal shared utilities (logger facade)
+    ├── engine/           # @agentxjs/engine - Mealy Machine event processor
+    ├── agent/            # @agentxjs/agent - Agent runtime
+    ├── agentx/           # agentxjs - Platform API (local/remote, server/client)
+    ├── node-runtime/     # @agentxjs/node-runtime - Node.js runtime (Claude driver, SQLite, FileLogger)
+    └── ui/               # @agentxjs/ui - React UI components (Storybook, Tailwind v4)
 ```
 
 ## Common Commands
