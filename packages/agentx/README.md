@@ -46,6 +46,7 @@ pnpm add agentxjs
 │  ┌──────────────────────────────────────────────────────────────┐   │
 │  │                     AgentX Platform API                       │   │
 │  │                                                               │   │
+│  │   agentx.containers   - Container lifecycle management        │   │
 │  │   agentx.definitions  - Register agent templates              │   │
 │  │   agentx.images       - Build/manage agent snapshots          │   │
 │  │   agentx.agents       - Query running agents                  │   │

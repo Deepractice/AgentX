@@ -244,7 +244,7 @@ agentx-ui (React components)
 | **Common**   | `agentx-common`  | Internal shared utilities (logger facade)                    |
 | **Engine**   | `agentx-engine`  | Pure event processing (Mealy Machines)                       |
 | **Agent**    | `agentx-agent`   | Agent runtime, EventBus, lifecycle management                |
-| **Platform** | `agentx`         | Docker-style API (5 managers), SSE server/client, sseRuntime |
+| **Platform** | `agentx`         | Docker-style API (6 managers), SSE server/client, sseRuntime |
 | **Node**     | `agentx-runtime` | Node.js runtime (Claude driver, SQLite, FileLogger)          |
 | **UI**       | `agentx-ui`      | React components, Storybook, Tailwind v4                     |
 
@@ -395,10 +395,10 @@ type TurnEventType =
 
 - `sseRuntime()` - Browser runtime factory
 - `SSEDriver` - EventSource-based driver with persistent connection
-- `RemoteContainer` - Calls server to create/resume agents, caches locally
 - `RemoteRepository` - HTTP-based persistence (noop for saveMessage)
 - `BrowserLogger` - Styled console logging for browser
 - Full `AgentEngine` runs in browser (reassembles all events)
+- `ContainerManager` - Uses RemoteRepository to call server Container API
 
 #### SSE API Endpoints
 
@@ -406,6 +406,10 @@ type TurnEventType =
 | ------ | ------------------------------- | ---------------------- |
 | GET    | `/info`                         | Platform info          |
 | GET    | `/health`                       | Health check           |
+| GET    | `/containers`                   | List all containers    |
+| POST   | `/containers`                   | Create container       |
+| GET    | `/containers/:containerId`      | Get container by ID    |
+| DELETE | `/containers/:containerId`      | Delete container       |
 | GET    | `/definitions`                  | List all definitions   |
 | GET    | `/definitions/:name`            | Get definition by name |
 | POST   | `/definitions`                  | Register definition    |
@@ -459,7 +463,7 @@ const agentx = createAgentX(runtime);
 // 2. Register same definition (syncs with server)
 agentx.definitions.register(MyAgent);
 
-// 3. Run agent (RemoteContainer calls server, creates local agent with SSEDriver)
+// 3. Run agent (calls server API, creates local agent with SSEDriver)
 const metaImage = agentx.images.getMetaImage(MyAgent.name);
 const agent = await agentx.images.run(metaImage.id);
 
@@ -1198,15 +1202,16 @@ import { AgentInstance } from "@agentxjs/agent";
 **Key Components:**
 
 - `defineAgent()` - Agent definition factory
-- `createAgentX(runtime)` - Platform factory with five managers
+- `createAgentX(runtime)` - Platform factory with six managers
 - Server: `createAgentXHandler()`, `SSEConnection`, framework adapters
-- Client: `sseRuntime()`, `SSEDriver`, `RemoteContainer`, `RemoteRepository`
+- Client: `sseRuntime()`, `SSEDriver`, `RemoteRepository`
 
 **AgentX Interface:**
 
 ```typescript
 interface AgentX {
   readonly runtime: Runtime;
+  readonly containers: ContainerManager; // Container lifecycle management
   readonly definitions: DefinitionManager; // Register agent templates
   readonly images: ImageManager; // Build/manage snapshots
   readonly agents: AgentManager; // Query running agents
@@ -1311,7 +1316,7 @@ LLM_PROVIDER_KEY      # Claude API key
 **AgentX Architecture Principles:**
 
 1. **Docker-Style Lifecycle**: Definition → Image → Agent → Session
-2. **Five Manager Pattern**: definitions, images, agents, sessions, errors
+2. **Six Manager Pattern**: containers, definitions, images, agents, sessions, errors
 3. **Mealy Machines**: Pure event processing with "state is means, output is goal"
 4. **4-Layer Events**: Stream → State → Message → Turn
 5. **Agent-as-Driver**: Unlimited composition via shared interface
