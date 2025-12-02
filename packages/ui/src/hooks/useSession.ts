@@ -63,7 +63,13 @@ export interface UseSessionResult {
   selectSession: (session: SessionItem | null) => void;
 
   /**
-   * Create a new session
+   * Create a new session (does NOT auto-select)
+   *
+   * After creating, caller should explicitly handle agent creation
+   * and then call selectSession() when ready.
+   *
+   * @param imageId - Image to create session from
+   * @param title - Optional session title
    */
   createSession: (imageId: string, title?: string) => Promise<SessionItem>;
 
@@ -186,7 +192,7 @@ export function useSession(
     [onSessionChange]
   );
 
-  // Create session
+  // Create session (does NOT auto-select)
   const createSession = useCallback(
     async (imageId: string, title?: string): Promise<SessionItem> => {
       if (!agentx || !("sessions" in agentx)) {
@@ -204,9 +210,10 @@ export function useSession(
 
         const item = toSessionItem(session);
         setSessions((prev) => [item, ...prev]);
-        setCurrentSession(item);
-        onSessionChange?.(item);
         onSessionsChange?.([item, ...sessions]);
+
+        // NOTE: Does NOT auto-select. Caller must explicitly call selectSession()
+        // after handling agent creation (run for new, resume for existing).
 
         return item;
       } catch (err) {
@@ -217,7 +224,7 @@ export function useSession(
         setIsLoading(false);
       }
     },
-    [agentx, userId, sessions, onSessionChange, onSessionsChange]
+    [agentx, userId, sessions, onSessionsChange]
   );
 
   // Delete session

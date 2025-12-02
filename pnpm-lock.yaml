@@ -308,6 +308,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@agentxjs/common':
+        specifier: workspace:*
+        version: link:../common
       '@agentxjs/types':
         specifier: workspace:*
         version: link:../types

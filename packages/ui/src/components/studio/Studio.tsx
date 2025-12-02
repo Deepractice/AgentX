@@ -28,7 +28,8 @@
  * ```
  */
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { flushSync } from "react-dom";
 import { Allotment } from "allotment";
 import "allotment/dist/style.css";
 
@@ -42,6 +43,9 @@ import { InputPane } from "~/components/container/InputPane";
 import { Sidebar } from "~/components/layout/Sidebar";
 import { MainContent } from "~/components/layout/MainContent";
 import type { AgentDefinitionItem } from "~/components/container/types";
+import { createLogger } from "@agentxjs/common";
+
+const logger = createLogger("ui/Studio");
 
 /**
  * Props for Studio component
@@ -121,56 +125,20 @@ export function Studio({
   });
 
   // ===== Agent Instance Management =====
+  // Agent lifecycle is EXPLICITLY managed by handlers, NOT by useEffect watching state.
+  // This avoids race conditions between create and resume.
   const [agent, setAgent] = useState<Agent | null>(null);
   const [historyMessages, setHistoryMessages] = useState<Message[]>([]);
-  // Use ref to avoid triggering effect when clearing the flag
-  const justCreatedSessionIdRef = useRef<string | null>(null);
 
-  // Resume agent when session is selected (for existing sessions)
-  // New sessions are handled by handleCreateSession with run() instead
+  // Cleanup agent on unmount only
   useEffect(() => {
-    if (!currentSession) {
-      setAgent(null);
-      setHistoryMessages([]);
-      return;
-    }
-
-    // Skip if this session was just created (already has agent via run())
-    if (currentSession.sessionId === justCreatedSessionIdRef.current) {
-      justCreatedSessionIdRef.current = null;
-      return;
-    }
-
-    // Resume agent from session and load history
-    const resumeAgentFromSession = async () => {
-      try {
-        // Get the actual Session object and call resume()
-        if ("sessions" in agentx && agentx.sessions) {
-          const session = await agentx.sessions.get(currentSession.sessionId);
-          if (session) {
-            // Load history messages first
-            const history = await session.getMessages();
-            setHistoryMessages(history);
-
-            // Then resume agent using user's container (which auto-collects new messages)
-            const newAgent = await session.resume({ containerId });
-            setAgent(newAgent);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to resume agent from session:", error);
-      }
-    };
-
-    resumeAgentFromSession();
-
-    // Cleanup agent on unmount or session change
     return () => {
       if (agent) {
-        agent.destroy?.().catch(console.error);
+        logger.debug("Cleaning up agent on unmount", { agentId: agent.agentId });
+        agent.destroy?.().catch((err) => logger.error("Failed to destroy agent", { error: err }));
       }
     };
-  }, [currentSession?.sessionId, containerId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [agent]);
 
   // ===== Agent State (maps to agentx.agents) =====
   const {
@@ -188,72 +156,177 @@ export function Studio({
   const messages = [...historyMessages, ...liveMessages];
 
   // ===== Handlers =====
+  // All agent lifecycle operations are EXPLICIT - no auto-resume via useEffect.
 
+  /**
+   * Helper: Destroy current agent if exists
+   */
+  const destroyCurrentAgent = useCallback(async () => {
+    if (agent) {
+      logger.debug("Destroying current agent", { agentId: agent.agentId });
+      await agent.destroy?.();
+      setAgent(null);
+      setHistoryMessages([]);
+    }
+  }, [agent]);
+
+  /**
+   * Select a different definition - clears current session and agent
+   */
   const handleSelectDefinition = useCallback(
-    (definition: AgentDefinitionItem) => {
+    async (definition: AgentDefinitionItem) => {
+      logger.debug("Selecting definition", { name: definition.name });
+
+      // Clear agent first
+      await destroyCurrentAgent();
+
       setCurrentDefinition(definition);
       onDefinitionChange?.(definition);
-      // Clear current session when definition changes
       selectSession(null);
     },
-    [selectSession, onDefinitionChange]
+    [destroyCurrentAgent, selectSession, onDefinitionChange]
   );
 
+  /**
+   * Select an existing session - EXPLICITLY resumes agent
+   * This is the only place where resume() is called.
+   */
   const handleSelectSession = useCallback(
-    (session: SessionItem) => {
-      selectSession(session);
+    async (session: SessionItem) => {
+      logger.info("Selecting existing session", { sessionId: session.sessionId });
+
+      // Destroy current agent before resuming new one
+      await destroyCurrentAgent();
+
+      try {
+        // Get the actual Session object
+        const sessionObj = await agentx.sessions.get(session.sessionId);
+        if (!sessionObj) {
+          logger.error("Session not found", { sessionId: session.sessionId });
+          return;
+        }
+
+        // Load history messages
+        const history = await sessionObj.getMessages();
+        setHistoryMessages(history);
+
+        // Resume agent (this is the ONLY place we call resume)
+        const resumedAgent = await sessionObj.resume({ containerId });
+        setAgent(resumedAgent);
+
+        // Select session AFTER agent is ready
+        selectSession(session);
+
+        logger.info("Session selected and agent resumed", {
+          sessionId: session.sessionId,
+          agentId: resumedAgent.agentId,
+        });
+      } catch (error) {
+        logger.error("Failed to select session", { sessionId: session.sessionId, error });
+      }
     },
-    [selectSession]
+    [agentx, containerId, destroyCurrentAgent, selectSession]
   );
 
-  const handleCreateSession = useCallback(async (): Promise<Agent | null> => {
-    if (!currentDefinition) return null;
+  /**
+   * Create a new session - EXPLICITLY runs agent
+   * This is the only place where run() is called.
+   *
+   * @param initialMessage - Optional message to send after session is ready.
+   *                         Using flushSync ensures useAgent subscribes before sending.
+   */
+  const handleCreateSession = useCallback(
+    async (initialMessage?: string): Promise<Agent | null> => {
+      if (!currentDefinition) return null;
 
-    // Get MetaImage for the current definition
-    const metaImage = await agentx.images.getMetaImage(currentDefinition.name);
-    if (!metaImage) {
-      console.error("MetaImage not found for definition:", currentDefinition.name);
-      return null;
-    }
+      logger.info("Creating new session", { definition: currentDefinition.name });
 
-    // Create session first
-    const newSession = await createSession(metaImage.imageId, `New Chat ${sessions.length + 1}`);
-    if (!newSession) return null;
+      // Destroy current agent before creating new one
+      await destroyCurrentAgent();
 
-    // For new session, use run() instead of resume()
-    // run() creates a fresh agent from the image, using user's container
-    const newAgent = await agentx.images.run(metaImage.imageId, { containerId });
+      try {
+        // Get MetaImage for the current definition
+        const metaImage = await agentx.images.getMetaImage(currentDefinition.name);
+        if (!metaImage) {
+          logger.error("MetaImage not found", { definition: currentDefinition.name });
+          return null;
+        }
 
-    // Get session object and collect messages
-    const session = await agentx.sessions.get(newSession.sessionId);
-    if (session) {
-      session.collect(newAgent);
-    }
+        // Create session (does NOT auto-select)
+        const newSession = await createSession(
+          metaImage.imageId,
+          `New Chat ${sessions.length + 1}`
+        );
 
-    // Set agent directly and mark this session as just created (skip resume)
-    justCreatedSessionIdRef.current = newSession.sessionId;
-    setHistoryMessages([]); // New session has no history
-    setAgent(newAgent);
+        // Run agent (this is the ONLY place we call run)
+        const newAgent = await agentx.images.run(metaImage.imageId, { containerId });
 
-    return newAgent;
-  }, [agentx, currentDefinition, containerId, createSession, sessions.length]);
+        // Collect messages from agent to session
+        const sessionObj = await agentx.sessions.get(newSession.sessionId);
+        if (sessionObj) {
+          sessionObj.collect(newAgent);
+        }
 
+        // Use flushSync to force React to update synchronously
+        // This ensures useAgent hook subscribes to newAgent BEFORE we send any message
+        flushSync(() => {
+          setHistoryMessages([]); // New session has no history
+          setAgent(newAgent);
+        });
+
+        // Select session AFTER agent is ready
+        selectSession(newSession);
+
+        logger.info("Session created and agent started", {
+          sessionId: newSession.sessionId,
+          agentId: newAgent.agentId,
+        });
+
+        // If there's an initial message, send it now (useAgent is already subscribed)
+        if (initialMessage) {
+          newAgent.receive(initialMessage);
+        }
+
+        return newAgent;
+      } catch (error) {
+        logger.error("Failed to create session", { error });
+        return null;
+      }
+    },
+    [
+      agentx,
+      currentDefinition,
+      containerId,
+      createSession,
+      sessions.length,
+      destroyCurrentAgent,
+      selectSession,
+    ]
+  );
+
+  /**
+   * Delete a session - also clears agent if it's the current session
+   */
   const handleDeleteSession = useCallback(
     async (sessionId: string) => {
+      // If deleting current session, destroy agent first
+      if (currentSession?.sessionId === sessionId) {
+        await destroyCurrentAgent();
+      }
       await deleteSession(sessionId);
     },
-    [deleteSession]
+    [currentSession?.sessionId, destroyCurrentAgent, deleteSession]
   );
 
+  /**
+   * Send a message - auto-creates session if needed
+   */
   const handleSend = useCallback(
     async (text: string) => {
       if (!currentSession) {
-        // Auto-create session on first message
-        const newAgent = await handleCreateSession();
-        if (newAgent) {
-          // Use the newly created agent directly (don't rely on state update)
-          newAgent.receive(text);
-        }
+        // Auto-create session with initial message
+        // handleCreateSession uses flushSync to ensure useAgent subscribes before sending
+        await handleCreateSession(text);
       } else {
         send(text);
       }
