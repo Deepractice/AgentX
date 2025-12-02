@@ -15,12 +15,12 @@
   ],
   "scripts": {
     "dev": "concurrently \"pnpm dev:server\" \"pnpm dev:client\"",
-    "dev:server": "tsx --watch src/server/index.ts",
+    "dev:server": "tsx --watch src/server/main.ts",
     "dev:client": "vite",
     "build": "pnpm build:client && pnpm build:server",
     "build:client": "vite build",
     "build:server": "tsup",
-    "start": "node dist/server/index.js",
+    "start": "node dist/cli/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "preview": "vite preview"

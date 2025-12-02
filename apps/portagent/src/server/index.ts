@@ -7,15 +7,11 @@
  * - Static file serving (Vite build output)
  */
 
-import { config } from "dotenv";
-import { resolve, dirname } from "path";
+import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
-// Load .env.local before other imports
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-config({ path: resolve(__dirname, "../../.env.local") });
-config({ path: resolve(__dirname, "../../.env") });
 
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
@@ -200,6 +196,3 @@ async function startServer() {
 }
 
 export { createApp, startServer };
-
-// Start the server
-startServer();

@@ -1,11 +1,12 @@
 {
-  "name": "deepractice-ai-agent",
+  "name": "agentx",
   "version": "0.0.1",
-  "description": "Deepractice AI Agent - Monorepo",
+  "description": "AgentX - Define, Run, Scale AI Agents",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "turbo run dev --filter=@agentxjs/agent",
+    "dev": "turbo run dev --filter=@agentxjs/portagent",
+    "start": "node apps/portagent/bin/portagent.js",
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",

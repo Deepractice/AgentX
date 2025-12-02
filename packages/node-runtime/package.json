@@ -1,6 +1,6 @@
 {
   "name": "@agentxjs/node-runtime",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Node.js Runtime for AgentX - Claude SDK, SQLite, FileLogger",
   "type": "module",
   "main": "./dist/index.js",

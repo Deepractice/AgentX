@@ -1,6 +1,6 @@
 {
   "name": "@agentxjs/types",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Type definitions for Deepractice AgentX ecosystem",
   "type": "module",
   "main": "dist/index.js",
