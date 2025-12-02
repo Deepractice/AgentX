@@ -206,19 +206,19 @@ export function Studio({
     [selectSession]
   );
 
-  const handleCreateSession = useCallback(async () => {
-    if (!currentDefinition) return;
+  const handleCreateSession = useCallback(async (): Promise<Agent | null> => {
+    if (!currentDefinition) return null;
 
     // Get MetaImage for the current definition
     const metaImage = await agentx.images.getMetaImage(currentDefinition.name);
     if (!metaImage) {
       console.error("MetaImage not found for definition:", currentDefinition.name);
-      return;
+      return null;
     }
 
     // Create session first
     const newSession = await createSession(metaImage.imageId, `New Chat ${sessions.length + 1}`);
-    if (!newSession) return;
+    if (!newSession) return null;
 
     // For new session, use run() instead of resume()
     // run() creates a fresh agent from the image, using user's container
@@ -234,6 +234,8 @@ export function Studio({
     justCreatedSessionIdRef.current = newSession.sessionId;
     setHistoryMessages([]); // New session has no history
     setAgent(newAgent);
+
+    return newAgent;
   }, [agentx, currentDefinition, containerId, createSession, sessions.length]);
 
   const handleDeleteSession = useCallback(
@@ -244,12 +246,14 @@ export function Studio({
   );
 
   const handleSend = useCallback(
-    (text: string) => {
+    async (text: string) => {
       if (!currentSession) {
         // Auto-create session on first message
-        handleCreateSession().then(() => {
-          send(text);
-        });
+        const newAgent = await handleCreateSession();
+        if (newAgent) {
+          // Use the newly created agent directly (don't rely on state update)
+          newAgent.receive(text);
+        }
       } else {
         send(text);
       }
