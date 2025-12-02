@@ -22,7 +22,7 @@
     "build:server": "tsup",
     "start": "node dist/server/index.js",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {

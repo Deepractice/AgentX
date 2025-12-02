@@ -19,6 +19,7 @@
   "scripts": {
     "build": "tsup",
     "clean": "rm -rf dist",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "dev": "tsup --watch"
   },
