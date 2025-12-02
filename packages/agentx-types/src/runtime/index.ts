@@ -73,6 +73,3 @@ export * from "./sandbox";
 // Repository - Storage abstraction (key to isomorphism)
 // SQLiteRepository (Server) vs RemoteRepository (Browser)
 export * from "./repository";
-
-// Config - Configuration schema
-export * from "./config";
