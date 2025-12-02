@@ -80,6 +80,9 @@ importers:
       commander:
         specifier: ^12.1.0
         version: 12.1.0
+      dotenv:
+        specifier: ^16.6.1
+        version: 16.6.1
       hono:
         specifier: ^4.6.12
         version: 4.10.7
@@ -123,9 +126,6 @@ importers:
       concurrently:
         specifier: ^9.1.0
         version: 9.2.1
-      dotenv:
-        specifier: ^16.6.1
-        version: 16.6.1
       postcss:
         specifier: ^8.4.49
         version: 8.5.6
@@ -178,6 +178,9 @@ importers:
 
   packages/agentx:
     dependencies:
+      '@agentxjs/common':
+        specifier: workspace:*
+        version: link:../common
       '@agentxjs/types':
         specifier: workspace:*
         version: link:../types
@@ -191,9 +194,6 @@ importers:
       '@agentxjs/agent':
         specifier: workspace:*
         version: link:../agent
-      '@agentxjs/common':
-        specifier: workspace:*
-        version: link:../common
       '@agentxjs/engine':
         specifier: workspace:*
         version: link:../engine
@@ -262,6 +262,9 @@ importers:
 
   packages/node-runtime:
     dependencies:
+      '@agentxjs/common':
+        specifier: workspace:*
+        version: link:../common
       '@agentxjs/types':
         specifier: workspace:*
         version: link:../types
@@ -281,9 +284,6 @@ importers:
       '@agentxjs/agent':
         specifier: workspace:*
         version: link:../agent
-      '@agentxjs/common':
-        specifier: workspace:*
-        version: link:../common
       '@agentxjs/engine':
         specifier: workspace:*
         version: link:../engine
@@ -311,9 +311,6 @@ importers:
 
   packages/ui:
     dependencies:
-      '@agentxjs/common':
-        specifier: workspace:*
-        version: link:../common
       '@agentxjs/types':
         specifier: workspace:*
         version: link:../types
@@ -357,6 +354,9 @@ importers:
         specifier: ^5.0.2
         version: 5.0.8(@types/react@18.3.26)(react@18.3.1)
     devDependencies:
+      '@agentxjs/common':
+        specifier: workspace:*
+        version: link:../common
       '@agentxjs/node-runtime':
         specifier: workspace:*
         version: link:../node-runtime

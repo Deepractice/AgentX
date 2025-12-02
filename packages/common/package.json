@@ -1,8 +1,7 @@
 {
   "name": "@agentxjs/common",
-  "private": true,
-  "version": "0.1.2",
-  "description": "Internal common infrastructure for AgentX platform",
+  "version": "0.0.8",
+  "description": "Common utilities for AgentX platform - Logger facade and shared infrastructure",
   "keywords": [
     "agentx",
     "common",
@@ -44,5 +43,8 @@
     "@types/node": "^22.19.1",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

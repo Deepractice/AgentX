@@ -1,6 +1,6 @@
 {
   "name": "@agentxjs/node-runtime",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Node.js Runtime for AgentX - Claude SDK, SQLite, FileLogger",
   "license": "MIT",
   "repository": {
@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.1.30",
+    "@agentxjs/common": "workspace:*",
     "@agentxjs/types": "workspace:*",
     "agentxjs": "workspace:*",
     "better-sqlite3": "^11.7.0",
@@ -38,7 +39,6 @@
   },
   "devDependencies": {
     "@agentxjs/agent": "workspace:*",
-    "@agentxjs/common": "workspace:*",
     "@agentxjs/engine": "workspace:*",
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^24.9.2",

@@ -13,7 +13,7 @@ export default defineConfig({
   treeshake: true,
   target: "node20",
   external: ["better-sqlite3"],
-  noExternal: ["@agentxjs/agent", "@agentxjs/common", "@agentxjs/engine"],
+  noExternal: ["@agentxjs/agent", "@agentxjs/engine"],
   esbuildOptions(options) {
     options.alias = {
       "~": path.resolve(__dirname, "./src"),

@@ -1,5 +1,13 @@
 # @agentxjs/ui
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies
+  - agentxjs@0.0.6
+  - @agentxjs/types@0.0.6
+
 ## 0.0.5
 
 ### Patch Changes

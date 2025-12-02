@@ -1,5 +1,15 @@
 # @agentxjs/common
 
+## 0.1.0
+
+### Minor Changes
+
+- Publish @agentxjs/common as public package to fix logger singleton issue across packages
+
+### Patch Changes
+
+- @agentxjs/types@0.0.6
+
 ## 0.1.2
 
 ### Patch Changes

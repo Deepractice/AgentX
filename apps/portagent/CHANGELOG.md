@@ -1,5 +1,16 @@
 # @agentxjs/portagent
 
+## 0.0.8
+
+### Patch Changes
+
+- Publish @agentxjs/common as public package to fix logger singleton issue across packages
+- Updated dependencies
+  - agentxjs@0.0.6
+  - @agentxjs/node-runtime@0.0.6
+  - @agentxjs/ui@0.0.6
+  - @agentxjs/types@0.0.6
+
 ## 0.0.7
 
 ### Patch Changes

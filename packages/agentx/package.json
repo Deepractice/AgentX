@@ -1,6 +1,6 @@
 {
   "name": "agentxjs",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Define, Run, Scale AI Agents - The Open Source Agent Platform",
   "license": "MIT",
   "repository": {
@@ -63,13 +63,13 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
+    "@agentxjs/common": "workspace:*",
     "@agentxjs/types": "workspace:*",
     "ky": "^1.14.0",
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@agentxjs/agent": "workspace:*",
-    "@agentxjs/common": "workspace:*",
     "@agentxjs/engine": "workspace:*",
     "@deepracticex/vitest-cucumber": "^1.4.3",
     "@types/node": "^24.9.2",
