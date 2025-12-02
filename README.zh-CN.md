@@ -1,10 +1,10 @@
 <div align="center">
-  <h1>AgentX · Agent Runtime, Docker Style</h1>
+  <h1>AgentX · Docker 风格的 Agent 运行时</h1>
   <p>
-    <strong>Manage AI Agents like containers - commit, resume, fork your conversations</strong>
+    <strong>像管理容器一样管理 AI Agent - 支持对话的提交、恢复、分支</strong>
   </p>
   <p>
-    <strong>Key Features:</strong> Docker-style Lifecycle | 4-Layer Event System | Isomorphic Architecture
+    <strong>亮点：</strong>Docker 风格生命周期 | 4 层事件系统 | 同构架构
   </p>
 
   <hr/>
@@ -17,127 +17,127 @@
   </p>
 
   <p>
-    <a href="README.md"><strong>English</strong></a> |
-    <a href="README.zh-CN.md">简体中文</a>
+    <a href="README.md">English</a> |
+    <a href="README.zh-CN.md"><strong>简体中文</strong></a>
   </p>
 </div>
 
 ---
 
-## What is AgentX?
+## AgentX 是什么？
 
-AgentX is an **AI Agent runtime framework** that brings Docker-style lifecycle management to AI Agents.
+AgentX 是一个 **AI Agent 运行时框架**，将 Docker 风格的生命周期管理带入 AI Agent 领域。
 
 ```typescript
 import { defineAgent, createAgentX } from "@deepractice-ai/agentx";
 import { runtime } from "@deepractice-ai/agentx-node";
 
-// 1. Define your agent (like Dockerfile)
+// 1. 定义你的 Agent（类似 Dockerfile）
 const TranslatorAgent = defineAgent({
   name: "Translator",
-  systemPrompt: "You are a professional translator.",
+  systemPrompt: "你是一个专业翻译。",
 });
 
-// 2. Create platform with runtime
+// 2. 创建平台实例
 const agentx = createAgentX(runtime);
 
-// 3. Register and run
+// 3. 注册并运行
 agentx.definitions.register(TranslatorAgent);
 const image = await agentx.images.getMetaImage("Translator");
 const session = await agentx.sessions.create(image.imageId, "user-1");
 const agent = await session.resume();
 
-// 4. Subscribe to events and chat
+// 4. 订阅事件并对话
 agent.react({
   onTextDelta: (e) => process.stdout.write(e.data.text),
-  onAssistantMessage: (e) => console.log("\n[Done]"),
+  onAssistantMessage: (e) => console.log("\n[完成]"),
 });
 
-await agent.receive("Translate 'Hello' to Japanese");
+await agent.receive("把 'Hello' 翻译成日语");
 ```
 
 ---
 
-## Why AgentX?
+## 为什么选择 AgentX？
 
-| Challenge                      | AgentX Solution                                              |
-| ------------------------------ | ------------------------------------------------------------ |
-| Agent state is ephemeral       | **Docker-style Images** - commit, resume, fork conversations |
-| Server/Browser code differs    | **Isomorphic Architecture** - same API everywhere            |
-| Hard to track streaming events | **4-Layer Event System** - Stream, State, Message, Turn      |
-| Complex async state management | **Mealy Machine** - pure functional event processing         |
+| 挑战                      | AgentX 解决方案                                 |
+| ------------------------- | ----------------------------------------------- |
+| Agent 状态转瞬即逝        | **Docker 风格镜像** - 提交、恢复、分支对话      |
+| Server/Browser 代码不一致 | **同构架构** - 同一套 API 到处运行              |
+| 流式事件难以追踪          | **4 层事件系统** - Stream、State、Message、Turn |
+| 异步状态管理复杂          | **Mealy Machine** - 纯函数式事件处理            |
 
 ---
 
-## Core Concepts
+## 核心概念
 
-### Docker-Style Lifecycle
+### Docker 风格生命周期
 
-```
+```text
 AgentDefinition ──register──▶ MetaImage ──create──▶ Session + Agent
       │                           │                        │
-   (source)                   (genesis)               (running)
+   (源码)                      (创世镜像)                (运行中)
                                   │                        │
                                   │◀──────commit───────────┘
                                   │
                             DerivedImage ──fork──▶ New Session
-                              (snapshot)
+                              (快照)
 ```
 
-| Docker          | AgentX                       | Description                      |
-| --------------- | ---------------------------- | -------------------------------- |
-| Dockerfile      | `defineAgent()`              | Source template                  |
-| Image           | `MetaImage` / `DerivedImage` | Built artifact with frozen state |
-| Container       | `Session` + `Agent`          | Running instance                 |
-| `docker commit` | `session.commit()`           | Save current state               |
-| `docker run`    | `session.resume()`           | Start from image                 |
+| Docker          | AgentX                       | 说明               |
+| --------------- | ---------------------------- | ------------------ |
+| Dockerfile      | `defineAgent()`              | 源码模板           |
+| Image           | `MetaImage` / `DerivedImage` | 构建产物，冻结状态 |
+| Container       | `Session` + `Agent`          | 运行实例           |
+| `docker commit` | `session.commit()`           | 保存当前状态       |
+| `docker run`    | `session.resume()`           | 从镜像启动         |
 
-### 4-Layer Event Architecture
+### 4 层事件架构
 
-```
+```text
 Driver.receive()
        │ yields
        ▼
 ┌─────────────────────────────────────────────────────────┐
-│ L1: Stream Layer (real-time incremental)                │
+│ L1: Stream 层（实时增量）                                │
 │ message_start → text_delta* → tool_call → message_stop  │
 └────────────────────────┬────────────────────────────────┘
                          │ Mealy Machine
                          ▼
 ┌─────────────────────────────────────────────────────────┐
-│ L2: State Layer (state transitions)                     │
+│ L2: State 层（状态转换）                                 │
 │ thinking → responding → tool_executing → conversation_end│
 └────────────────────────┬────────────────────────────────┘
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────┐
-│ L3: Message Layer (complete messages)                   │
+│ L3: Message 层（完整消息）                               │
 │ user_message, assistant_message, tool_call_message      │
 └────────────────────────┬────────────────────────────────┘
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────┐
-│ L4: Turn Layer (analytics)                              │
+│ L4: Turn 层（分析统计）                                  │
 │ turn_request → turn_response { duration, tokens, cost } │
 └─────────────────────────────────────────────────────────┘
 ```
 
-Each layer serves different consumers:
+每层服务不同的消费者：
 
-| Layer   | Consumer      | Use Case                              |
-| ------- | ------------- | ------------------------------------- |
-| Stream  | UI            | Typewriter effect, real-time display  |
-| State   | State machine | Loading indicators, progress tracking |
-| Message | Chat history  | Persistence, conversation display     |
-| Turn    | Analytics     | Billing, usage metrics, performance   |
+| 层级    | 消费者   | 用途                 |
+| ------- | -------- | -------------------- |
+| Stream  | UI       | 打字机效果、实时显示 |
+| State   | 状态机   | 加载指示器、进度追踪 |
+| Message | 聊天历史 | 持久化、对话展示     |
+| Turn    | 分析系统 | 计费、用量统计、性能 |
 
-### Isomorphic Architecture
+### 同构架构
 
-Same business code runs on Server and Browser:
+同一套业务代码运行在 Server 和 Browser：
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
-│              Application Code (identical)                │
+│              应用代码（完全相同）                         │
 │   const agentx = createAgentX(runtime);                 │
 │   agentx.definitions.register(MyAgent);                 │
 └────────────────────────┬────────────────────────────────┘
@@ -154,24 +154,24 @@ Same business code runs on Server and Browser:
 
 ---
 
-## Installation
+## 安装
 
 ```bash
-# Core framework
+# 核心框架
 npm install @deepractice-ai/agentx
 
-# Node.js runtime (Server)
+# Node.js 运行时（Server）
 npm install @deepractice-ai/agentx-node
 
-# React UI components (optional)
+# React UI 组件（可选）
 npm install @deepractice-ai/agentx-ui
 ```
 
 ---
 
-## Quick Start
+## 快速开始
 
-### Basic Usage (Node.js)
+### 基础用法（Node.js）
 
 ```typescript
 import { defineAgent, createAgentX } from "@deepractice-ai/agentx";
@@ -179,78 +179,78 @@ import { runtime } from "@deepractice-ai/agentx-node";
 
 const agentx = createAgentX(runtime);
 
-// Define and register agent
+// 定义并注册 Agent
 const MyAgent = defineAgent({
   name: "Assistant",
-  systemPrompt: "You are a helpful assistant.",
+  systemPrompt: "你是一个有帮助的助手。",
 });
 agentx.definitions.register(MyAgent);
 
-// Create session and start chatting
+// 创建会话并开始对话
 const image = await agentx.images.getMetaImage("Assistant");
 const session = await agentx.sessions.create(image.imageId, "user-1");
 const agent = await session.resume();
 
-// React-style event subscription
+// React 风格事件订阅
 agent.react({
   onTextDelta: (e) => process.stdout.write(e.data.text),
-  onToolCall: (e) => console.log(`Tool: ${e.data.name}`),
+  onToolCall: (e) => console.log(`工具: ${e.data.name}`),
   onError: (e) => console.error(e.data.message),
 });
 
-await agent.receive("Hello!");
+await agent.receive("你好！");
 
-// Save conversation state
+// 保存对话状态
 await session.commit();
 ```
 
-### Event Subscription Patterns
+### 事件订阅模式
 
 ```typescript
-// Pattern 1: React-style (recommended)
+// 模式 1: React 风格（推荐）
 agent.react({
   onTextDelta: (e) => {},
   onAssistantMessage: (e) => {},
   onToolCall: (e) => {},
 });
 
-// Pattern 2: Type-safe single event
+// 模式 2: 类型安全的单事件订阅
 agent.on("text_delta", (e) => {
-  console.log(e.data.text); // TypeScript knows the type
+  console.log(e.data.text); // TypeScript 自动推断类型
 });
 
-// Pattern 3: Batch subscription
+// 模式 3: 批量订阅
 agent.on({
   text_delta: (e) => {},
   assistant_message: (e) => {},
   error: (e) => {},
 });
 
-// Pattern 4: All events
+// 模式 4: 所有事件
 agent.on((event) => {
   console.log(event.type, event.data);
 });
 ```
 
-### Session Management
+### 会话管理
 
 ```typescript
-// Resume from previous session
+// 从之前的会话恢复
 const session = await agentx.sessions.get(sessionId);
 const agent = await session.resume();
 
-// Fork conversation (branch)
+// 分支对话（fork）
 const forkedSession = await session.fork();
 const forkedAgent = await forkedSession.resume();
 
-// List user's sessions
+// 列出用户的会话
 const sessions = await agentx.sessions.list({ userId: "user-1" });
 ```
 
-### Browser Integration (SSE)
+### 浏览器集成（SSE）
 
 ```typescript
-// Browser client connects to AgentX server
+// 浏览器客户端连接到 AgentX 服务器
 import { createAgentX } from "@deepractice-ai/agentx";
 import { sseRuntime } from "@deepractice-ai/agentx/browser";
 
@@ -260,7 +260,7 @@ const agentx = createAgentX(
   })
 );
 
-// Same API as server!
+// 和服务端一样的 API！
 const session = await agentx.sessions.create(imageId, userId);
 const agent = await session.resume();
 
@@ -272,24 +272,24 @@ agent.react({
 
 ---
 
-## Packages
+## 包列表
 
-| Package                         | Description                                       |
-| ------------------------------- | ------------------------------------------------- |
-| `@deepractice-ai/agentx-types`  | Type definitions (140+ files, zero dependencies)  |
-| `@deepractice-ai/agentx-adk`    | Agent Development Kit (defineAgent, defineDriver) |
-| `@deepractice-ai/agentx-logger` | SLF4J-style logging facade                        |
-| `@deepractice-ai/agentx-engine` | Mealy Machine event processor                     |
-| `@deepractice-ai/agentx-agent`  | Agent runtime core                                |
-| `@deepractice-ai/agentx`        | Platform API (unified entry point)                |
-| `@deepractice-ai/agentx-node`   | Node.js runtime (Claude driver, SQLite)           |
-| `@deepractice-ai/agentx-ui`     | React UI components                               |
+| 包                              | 说明                                          |
+| ------------------------------- | --------------------------------------------- |
+| `@deepractice-ai/agentx-types`  | 类型定义（140+ 文件，零依赖）                 |
+| `@deepractice-ai/agentx-adk`    | Agent 开发工具包（defineAgent, defineDriver） |
+| `@deepractice-ai/agentx-logger` | SLF4J 风格日志门面                            |
+| `@deepractice-ai/agentx-engine` | Mealy Machine 事件处理器                      |
+| `@deepractice-ai/agentx-agent`  | Agent 运行时核心                              |
+| `@deepractice-ai/agentx`        | 平台 API（统一入口）                          |
+| `@deepractice-ai/agentx-node`   | Node.js 运行时（Claude 驱动, SQLite）         |
+| `@deepractice-ai/agentx-ui`     | React UI 组件                                 |
 
 ---
 
-## Try It Now (Docker)
+## 立即体验（Docker）
 
-Want to see AgentX in action? Run the demo:
+想看看 AgentX 的实际效果？运行演示：
 
 ```bash
 docker run -d \
@@ -299,64 +299,64 @@ docker run -d \
   deepracticexs/agent:latest
 ```
 
-Open http://localhost:5200 - full-featured AI Agent with visual interface.
+打开 <http://localhost:5200> - 完整功能的 AI Agent 可视化界面。
 
 ---
 
-## Documentation
+## 文档
 
-- **[Architecture Guide](./CLAUDE.md)** - Deep dive into system design
-- **[API Reference](./packages/agentx/README.md)** - Platform API documentation
-- **[Type System](./packages/agentx-types/README.md)** - Complete type definitions
-
----
-
-## Roadmap
-
-- [x] Docker-style lifecycle (Definition → Image → Session)
-- [x] 4-layer event system
-- [x] Server/Browser isomorphic architecture
-- [x] Claude driver
-- [ ] OpenAI driver
-- [ ] Local LLM support (Ollama)
-- [ ] Multi-agent orchestration
-- [ ] Plugin system
+- **[架构指南](./CLAUDE.md)** - 深入了解系统设计
+- **[API 参考](./packages/agentx/README.md)** - 平台 API 文档
+- **[类型系统](./packages/agentx-types/README.md)** - 完整类型定义
 
 ---
 
-## Contributing
+## 路线图
+
+- [x] Docker 风格生命周期（Definition → Image → Session）
+- [x] 4 层事件系统
+- [x] Server/Browser 同构架构
+- [x] Claude 驱动
+- [ ] OpenAI 驱动
+- [ ] 本地 LLM 支持（Ollama）
+- [ ] 多 Agent 编排
+- [ ] 插件系统
+
+---
+
+## 贡献
 
 ```bash
-# Clone and install
+# 克隆并安装
 git clone https://github.com/Deepractice/AgentX.git
 cd Agent
 pnpm install
 
-# Development
+# 开发
 pnpm dev
 
-# Build all packages
+# 构建所有包
 pnpm build
 
-# Type check
+# 类型检查
 pnpm typecheck
 ```
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+详见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
 
 ---
 
-## License
+## 许可证
 
-MIT - see [LICENSE](./LICENSE)
+MIT - 见 [LICENSE](./LICENSE)
 
 ---
 
 <div align="center">
   <p>
-    Built with care by <a href="https://github.com/Deepractice">Deepractice</a>
+    由 <a href="https://github.com/Deepractice">Deepractice</a> 用心构建
   </p>
   <p>
-    <strong>Making AI Agent Development Simple</strong>
+    <strong>让 AI Agent 开发变得简单</strong>
   </p>
 </div>
