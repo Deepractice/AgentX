@@ -62,13 +62,13 @@
 export type { Runtime } from "./Runtime";
 
 // RuntimeDriver - Driver + Sandbox combination
-export type { RuntimeDriver } from "./driver/RuntimeDriver";
+export type { RuntimeDriver } from "~/runtime/container/driver/RuntimeDriver";
 
 // Container - Agent lifecycle management
 export * from "./container";
 
 // Sandbox - Resource isolation (OS filesystem, process, env; LLM provider)
-export * from "./sandbox";
+export * from "./container/sandbox";
 
 // Repository - Storage abstraction (key to isomorphism)
 // SQLiteRepository (Server) vs RemoteRepository (Browser)

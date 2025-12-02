@@ -225,12 +225,10 @@ class RemoteContainer implements Container {
 
 const noopSandbox: Sandbox = {
   name: "browser-noop",
-  os: {
+  workspace: {
+    id: "noop",
     name: "noop",
-    fs: null as any,
-    process: null as any,
-    env: null as any,
-    disk: null as any,
+    path: "", // Browser has no local workspace
   },
   llm: {
     name: "noop",

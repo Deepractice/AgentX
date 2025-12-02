@@ -16,7 +16,7 @@ import type {
   AgentContext,
   AgentDefinition,
   Repository,
-  OS,
+  Workspace,
   LLMProvider,
   Agent,
   AgentImage,
@@ -29,6 +29,8 @@ import { createLogger, setLoggerFactory } from "@agentxjs/common";
 import { createClaudeDriver, type ClaudeDriverOptions } from "./driver/ClaudeDriver";
 import type { LLMSupply } from "./llm";
 import { envLLM, sqlite, fileLogger } from "./providers";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import type { EnvLLMConfig, SQLiteConfig, FileLoggerConfig } from "./providers";
 
 const logger = createLogger("node/NodeRuntime");
@@ -272,19 +274,12 @@ class NodeContainer implements Container {
 
 class NodeSandbox implements Sandbox {
   readonly name: string;
-  readonly os: OS;
+  readonly workspace: Workspace;
   readonly llm: LLMProvider<LLMSupply>;
 
-  constructor(name: string, llmProvider: LLMProvider<LLMSupply>) {
+  constructor(name: string, workspace: Workspace, llmProvider: LLMProvider<LLMSupply>) {
     this.name = name;
-    // OS resources - placeholder for now
-    this.os = {
-      name: "node",
-      fs: null as any,
-      process: null as any,
-      env: null as any,
-      disk: null as any,
-    };
+    this.workspace = workspace;
     this.llm = llmProvider;
   }
 }
@@ -320,8 +315,12 @@ class NodeRuntime implements Runtime {
   readonly loggerFactory: LoggerFactory;
   private readonly engine: AgentEngine;
   private readonly llmProvider: LLMProvider<LLMSupply>;
+  private readonly basePath: string;
 
   constructor(config: NodeRuntimeConfig = {}) {
+    // Set base path for all agentx data
+    this.basePath = join(homedir(), ".agentx");
+
     // Resolve logger (first, so we can log during initialization)
     if (isInstance<LoggerFactory>(config.logger, "getLogger")) {
       this.loggerFactory = config.logger;
@@ -357,7 +356,16 @@ class NodeRuntime implements Runtime {
 
   createSandbox(name: string): Sandbox {
     logger.debug("Creating sandbox", { name });
-    return new NodeSandbox(name, this.llmProvider);
+
+    // Create workspace with path under ~/.agentx/workspaces/
+    const workspaceId = name.replace("sandbox-", "ws-");
+    const workspace: Workspace = {
+      id: workspaceId,
+      name: workspaceId,
+      path: `${this.basePath}/workspaces/${workspaceId}`,
+    };
+
+    return new NodeSandbox(name, workspace, this.llmProvider);
   }
 
   createDriver(
