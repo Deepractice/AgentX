@@ -23,10 +23,10 @@
  * ```
  */
 
-import type { Agent } from "~/ecosystem/agent";
+import type { Agent } from "~/ecosystem/runtime/agent";
 import type { AgentImage } from "~/application/spec/image";
-import type { Session } from "~/ecosystem/session";
-import type { ContainerRecord, ContainerConfig } from "~/ecosystem/repository/record";
+import type { Session } from "~/ecosystem/runtime/session";
+import type { ContainerRecord, ContainerConfig } from "~/ecosystem/runtime/repository/record";
 
 /**
  * ContainerManager - Manages containers and agent runtime

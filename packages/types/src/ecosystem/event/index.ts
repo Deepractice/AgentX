@@ -1,5 +1,32 @@
+// ============================================================================
+// Environment Events - External information that the system cares about
+// ============================================================================
+
+export type {
+  // Stream events
+  TextChunkEvent,
+  ToolCallEvent as EnvToolCallEvent,
+  ToolResultEvent as EnvToolResultEvent,
+  // Flow control events
+  StreamStartEvent,
+  StreamEndEvent,
+  InterruptedEvent as EnvInterruptedEvent,
+  // Connection events
+  ConnectedEvent,
+  DisconnectedEvent,
+  // Error events
+  ErrorEvent as EnvErrorEvent,
+  // Union types
+  EnvironmentEvent,
+  EnvironmentEventType,
+} from "./environment";
+
+// ============================================================================
+// Runtime Events - System-level events with context (agentId, timestamp, etc.)
+// ============================================================================
+
 // Base runtime event type
-export type { RuntimeEvent, RuntimeEventType } from "./RuntimeEvent";
+export type { RuntimeEvent, RuntimeEventType } from "./runtime/RuntimeEvent";
 
 // Transport events
 export type {
@@ -7,7 +34,7 @@ export type {
   HeartbeatEventData,
   ConnectionEstablishedEvent,
   ConnectionEstablishedEventData,
-} from "./transport";
+} from "./runtime/transport";
 
 // Session events
 export type {
@@ -15,7 +42,7 @@ export type {
   SessionCreatedEventData,
   SessionResumedEvent,
   SessionResumedEventData,
-} from "./session";
+} from "./runtime/session";
 
 // Agent lifecycle events
 export type {
@@ -25,7 +52,7 @@ export type {
   AgentReadyEventData,
   AgentDestroyedEvent,
   AgentDestroyedEventData,
-} from "./agent";
+} from "./runtime/agent";
 
 // Conversation events
 export type {
@@ -41,7 +68,7 @@ export type {
   ConversationEndEventData,
   ConversationInterruptedEvent,
   ConversationInterruptedEventData,
-} from "./conversation";
+} from "./runtime/conversation";
 
 // Stream events
 export type {
@@ -57,7 +84,7 @@ export type {
   ToolResultEnvEventData,
   InterruptedEnvEvent,
   InterruptedEnvEventData,
-} from "./stream";
+} from "./runtime/stream";
 
 // Tool events
 export type {
@@ -69,15 +96,15 @@ export type {
   ToolCompletedEnvEventData,
   ToolFailedEnvEvent,
   ToolFailedEnvEventData,
-} from "./tool";
+} from "./runtime/tool";
 
 // Error events
-export type { ErrorEnvEvent, ErrorEnvEventData } from "./error";
+export type { ErrorEnvEvent, ErrorEnvEventData } from "./runtime/error";
 
 // Union type of all Runtime Events
-import type { HeartbeatEvent, ConnectionEstablishedEvent } from "./transport";
-import type { SessionCreatedEvent, SessionResumedEvent } from "./session";
-import type { AgentStartedEvent, AgentReadyEvent, AgentDestroyedEvent } from "./agent";
+import type { HeartbeatEvent, ConnectionEstablishedEvent } from "./runtime/transport";
+import type { SessionCreatedEvent, SessionResumedEvent } from "./runtime/session";
+import type { AgentStartedEvent, AgentReadyEvent, AgentDestroyedEvent } from "./runtime/agent";
 import type {
   ConversationQueuedEvent,
   ConversationStartEvent,
@@ -85,7 +112,7 @@ import type {
   ConversationRespondingEvent,
   ConversationEndEvent,
   ConversationInterruptedEvent,
-} from "./conversation";
+} from "./runtime/conversation";
 import type {
   MessageStartEnvEvent,
   MessageStopEnvEvent,
@@ -93,14 +120,14 @@ import type {
   ToolCallEnvEvent,
   ToolResultEnvEvent,
   InterruptedEnvEvent,
-} from "./stream";
+} from "./runtime/stream";
 import type {
   ToolPlannedEnvEvent,
   ToolExecutingEnvEvent,
   ToolCompletedEnvEvent,
   ToolFailedEnvEvent,
-} from "./tool";
-import type { ErrorEnvEvent } from "./error";
+} from "./runtime/tool";
+import type { ErrorEnvEvent } from "./runtime/error";
 
 /**
  * Union type of all possible Runtime Events.

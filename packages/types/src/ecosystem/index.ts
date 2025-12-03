@@ -54,29 +54,30 @@
 // ============================================================================
 
 export type { Ecosystem, EcosystemEventHandler } from "./Ecosystem";
-export type { EcosystemEvent } from "./EcosystemEvent";
+export type { EcosystemEvent } from "./event/EcosystemEvent";
 export type { Receptor } from "./Receptor";
 export type { Effector } from "./Effector";
+export type { SystemBus, BusEvent, BusEventHandler } from "./SystemBus";
 
 // ============================================================================
 // Runtime Layer
 // ============================================================================
 
 // Runtime interface
-export type { Runtime, AgentIdResolver } from "./Runtime";
+export type { Runtime, AgentIdResolver } from "./runtime/Runtime";
 
 // RuntimeDriver - Driver + Sandbox combination
-export type { RuntimeDriver } from "./container/driver/RuntimeDriver";
+export type { RuntimeDriver } from "~/ecosystem/runtime/container/driver/RuntimeDriver";
 
 // Container and Sandbox
-export * from "./container";
-export * from "./container/sandbox";
+export * from "./runtime/container";
+export * from "~/ecosystem/runtime/container/sandbox";
 
 // Session
-export * from "./session";
+export * from "./runtime/session";
 
 // Repository
-export * from "./repository";
+export * from "./runtime/repository";
 
 // Receptors
 export * from "./receptors";
@@ -88,6 +89,6 @@ export * from "./event";
 // Agent Layer
 // ============================================================================
 
-export * from "./agent";
-export * from "./agent/message";
-export * from "./agent/event";
+export * from "./runtime/agent";
+export * from "~/ecosystem/runtime/agent/message";
+export * from "~/ecosystem/runtime/agent/event";

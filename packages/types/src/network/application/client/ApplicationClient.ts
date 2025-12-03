@@ -28,7 +28,7 @@ import type {
   SessionRecord,
   MessageRecord,
   ContainerRecord,
-} from "~/ecosystem/repository";
+} from "~/ecosystem/runtime/repository";
 import type {
   PlatformInfoResponse,
   HealthResponse,

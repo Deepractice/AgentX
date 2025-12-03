@@ -27,7 +27,7 @@
  * ```
  */
 
-import type { Agent } from "~/ecosystem/agent/Agent";
+import type { Agent } from "~/ecosystem/runtime/agent/Agent";
 
 /**
  * Agent query and management interface (Runtime only)

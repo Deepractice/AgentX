@@ -1,10 +1,10 @@
-import type { ContentPart } from "~/ecosystem/agent/message/parts/ContentPart";
-import type { TextPart } from "~/ecosystem/agent/message/parts/TextPart";
-import type { ThinkingPart } from "~/ecosystem/agent/message/parts/ThinkingPart";
-import type { ImagePart } from "~/ecosystem/agent/message/parts/ImagePart";
-import type { FilePart } from "~/ecosystem/agent/message/parts/FilePart";
-import type { ToolCallPart } from "~/ecosystem/agent/message/parts/ToolCallPart";
-import type { ToolResultPart } from "~/ecosystem/agent/message/parts/ToolResultPart";
+import type { ContentPart } from "~/ecosystem/runtime/agent/message/parts/ContentPart";
+import type { TextPart } from "~/ecosystem/runtime/agent/message/parts/TextPart";
+import type { ThinkingPart } from "~/ecosystem/runtime/agent/message/parts/ThinkingPart";
+import type { ImagePart } from "~/ecosystem/runtime/agent/message/parts/ImagePart";
+import type { FilePart } from "~/ecosystem/runtime/agent/message/parts/FilePart";
+import type { ToolCallPart } from "~/ecosystem/runtime/agent/message/parts/ToolCallPart";
+import type { ToolResultPart } from "~/ecosystem/runtime/agent/message/parts/ToolResultPart";
 
 /**
  * Type guard for TextPart

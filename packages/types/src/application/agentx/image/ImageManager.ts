@@ -27,7 +27,7 @@
  * ```
  */
 
-import type { Agent } from "~/ecosystem/agent/Agent";
+import type { Agent } from "~/ecosystem/runtime/agent/Agent";
 import type { AgentImage, MetaImage } from "~/application/spec/image";
 
 /**

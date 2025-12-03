@@ -4,12 +4,12 @@
  * Runtime type guards for event classification.
  */
 
-import type { AgentOutput } from "~/ecosystem/agent/AgentOutput";
-import type { StateEventType } from "~/ecosystem/agent/event/state";
-import type { StreamEventType } from "~/ecosystem/agent/event/stream";
-import type { MessageEventType } from "~/ecosystem/agent/event/message";
-import type { TurnEventType } from "~/ecosystem/agent/event/turn";
-import type { ErrorEvent } from "~/ecosystem/agent/event/error";
+import type { AgentOutput } from "~/ecosystem/runtime/agent/AgentOutput";
+import type { StateEventType } from "~/ecosystem/runtime/agent/event/state";
+import type { StreamEventType } from "~/ecosystem/runtime/agent/event/stream";
+import type { MessageEventType } from "~/ecosystem/runtime/agent/event/message";
+import type { TurnEventType } from "~/ecosystem/runtime/agent/event/turn";
+import type { ErrorEvent } from "~/ecosystem/runtime/agent/event/error";
 
 /**
  * State event type names (single source of truth)

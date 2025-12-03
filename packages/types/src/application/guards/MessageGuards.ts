@@ -1,9 +1,9 @@
-import type { Message } from "~/ecosystem/agent/message/Message";
-import type { UserMessage } from "~/ecosystem/agent/message/UserMessage";
-import type { AssistantMessage } from "~/ecosystem/agent/message/AssistantMessage";
-import type { SystemMessage } from "~/ecosystem/agent/message/SystemMessage";
-import type { ToolCallMessage } from "~/ecosystem/agent/message/ToolCallMessage";
-import type { ToolResultMessage } from "~/ecosystem/agent/message/ToolResultMessage";
+import type { Message } from "~/ecosystem/runtime/agent/message/Message";
+import type { UserMessage } from "~/ecosystem/runtime/agent/message/UserMessage";
+import type { AssistantMessage } from "~/ecosystem/runtime/agent/message/AssistantMessage";
+import type { SystemMessage } from "~/ecosystem/runtime/agent/message/SystemMessage";
+import type { ToolCallMessage } from "~/ecosystem/runtime/agent/message/ToolCallMessage";
+import type { ToolResultMessage } from "~/ecosystem/runtime/agent/message/ToolResultMessage";
 
 /**
  * Type guard for UserMessage
