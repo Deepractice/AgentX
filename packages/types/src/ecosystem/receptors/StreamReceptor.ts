@@ -20,14 +20,14 @@ export type RuntimeStreamEvent =
   | InterruptedEnvEvent;
 
 /**
- * StreamReceptor - Senses stream events from agent output.
+ * StreamReceptor - Transforms stream EnvironmentEvents to RuntimeEvents.
  *
- * Responsible for detecting:
- * - message_start: New message stream started
- * - message_stop: Message stream ended
- * - text_delta: Incremental text output
- * - tool_call: Tool invocation requested
- * - tool_result: Tool execution result
- * - interrupted: Stream was interrupted
+ * Listens for:
+ * - text_chunk → TextDeltaEnvEvent (+ agentId, timestamp)
+ * - tool_call → ToolCallEnvEvent
+ * - tool_result → ToolResultEnvEvent
+ * - stream_start → MessageStartEnvEvent
+ * - stream_end → MessageStopEnvEvent
+ * - interrupted → InterruptedEnvEvent
  */
-export interface StreamReceptor extends Receptor<RuntimeStreamEvent> {}
+export interface StreamReceptor extends Receptor {}

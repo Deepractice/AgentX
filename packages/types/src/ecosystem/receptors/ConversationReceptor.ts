@@ -20,9 +20,9 @@ export type ConversationEvent =
   | ConversationInterruptedEvent;
 
 /**
- * ConversationReceptor - Senses conversation state events.
+ * ConversationReceptor - Emits conversation state RuntimeEvents.
  *
- * Responsible for detecting:
+ * Responsible for emitting:
  * - conversation_queued: Message queued for processing
  * - conversation_start: Conversation turn started
  * - conversation_thinking: Agent is thinking
@@ -30,4 +30,4 @@ export type ConversationEvent =
  * - conversation_end: Conversation turn ended
  * - conversation_interrupted: Conversation was interrupted
  */
-export interface ConversationReceptor extends Receptor<ConversationEvent> {}
+export interface ConversationReceptor extends Receptor {}

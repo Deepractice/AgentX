@@ -1,18 +1,26 @@
+// Base interface
+export type { EnvironmentEvent } from "./EnvironmentEvent";
+
+// Stream events (raw materials)
+export type { TextChunkEvent, TextChunkData } from "./EnvironmentEvent";
+
+// Flow control events
 export type {
-  // Stream events
-  TextChunkEvent,
-  ToolCallEvent,
-  ToolResultEvent,
-  // Flow control events
   StreamStartEvent,
+  StreamStartData,
   StreamEndEvent,
+  StreamEndData,
   InterruptedEvent,
-  // Connection events
-  ConnectedEvent,
-  DisconnectedEvent,
-  // Error events
-  ErrorEvent,
-  // Union types
-  EnvironmentEvent,
-  EnvironmentEventType,
+  InterruptedData,
 } from "./EnvironmentEvent";
+
+// Connection events
+export type {
+  ConnectedEvent,
+  ConnectedData,
+  DisconnectedEvent,
+  DisconnectedData,
+} from "./EnvironmentEvent";
+
+// Union types
+export type { EnvironmentEventType, AnyEnvironmentEvent } from "./EnvironmentEvent";

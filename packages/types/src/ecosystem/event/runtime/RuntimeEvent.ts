@@ -1,16 +1,24 @@
-import type { EcosystemEvent } from "~/ecosystem/event/EcosystemEvent";
+import type { EnvironmentEvent } from "../environment/EnvironmentEvent";
 
 /**
- * Runtime Event - Concrete ecosystem event with runtime context.
+ * Runtime Event - EnvironmentEvent enriched with runtime context.
  *
- * Extends the abstract EcosystemEvent with runtime-specific fields:
- * - agentId: Associated agent
- * - sessionId: Associated session
- * - containerId: Associated container
+ * Inheritance chain:
+ * ```
+ * EcosystemEvent (base: type, timestamp, data)
+ *     └── EnvironmentEvent (外部事件，我们关心的)
+ *         └── RuntimeEvent (+ agentId, sessionId, containerId)
+ * ```
+ *
+ * RuntimeEvent adds context fields that identify WHERE the event occurred:
+ * - agentId: Which agent
+ * - sessionId: Which session
+ * - containerId: Which container
  *
  * All concrete events in runtime/event/ extend this interface.
  */
-export interface RuntimeEvent<T extends string = string, D = unknown> extends EcosystemEvent<T, D> {
+export interface RuntimeEvent<T extends string = string, D = unknown>
+  extends EnvironmentEvent<T, D> {
   /** Associated agent ID (optional, some events are runtime-wide) */
   readonly agentId?: string;
 

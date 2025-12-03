@@ -55,6 +55,7 @@
 
 export type { Ecosystem, EcosystemEventHandler } from "./Ecosystem";
 export type { EcosystemEvent } from "./event/EcosystemEvent";
+export type { Environment } from "./Environment";
 export type { Receptor } from "./Receptor";
 export type { Effector } from "./Effector";
 export type { SystemBus, BusEvent, BusEventHandler } from "./SystemBus";

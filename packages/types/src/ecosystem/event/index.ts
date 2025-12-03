@@ -2,24 +2,7 @@
 // Environment Events - External information that the system cares about
 // ============================================================================
 
-export type {
-  // Stream events
-  TextChunkEvent,
-  ToolCallEvent as EnvToolCallEvent,
-  ToolResultEvent as EnvToolResultEvent,
-  // Flow control events
-  StreamStartEvent,
-  StreamEndEvent,
-  InterruptedEvent as EnvInterruptedEvent,
-  // Connection events
-  ConnectedEvent,
-  DisconnectedEvent,
-  // Error events
-  ErrorEvent as EnvErrorEvent,
-  // Union types
-  EnvironmentEvent,
-  EnvironmentEventType,
-} from "./environment";
+export * from "./environment";
 
 // ============================================================================
 // Runtime Events - System-level events with context (agentId, timestamp, etc.)

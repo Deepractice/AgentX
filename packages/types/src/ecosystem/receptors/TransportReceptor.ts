@@ -7,10 +7,13 @@ import type { HeartbeatEvent, ConnectionEstablishedEvent } from "../event";
 export type TransportEvent = HeartbeatEvent | ConnectionEstablishedEvent;
 
 /**
- * TransportReceptor - Senses transport layer events.
+ * TransportReceptor - Transforms connection EnvironmentEvents to RuntimeEvents.
  *
- * Responsible for detecting:
+ * Listens for:
+ * - connected → ConnectionEstablishedEvent
+ * - disconnected → (triggers cleanup)
+ *
+ * Also emits:
  * - heartbeat: SSE keepalive signal
- * - connection_established: SSE connection established
  */
-export interface TransportReceptor extends Receptor<TransportEvent> {}
+export interface TransportReceptor extends Receptor {}

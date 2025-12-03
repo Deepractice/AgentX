@@ -7,10 +7,10 @@ import type { SessionCreatedEvent, SessionResumedEvent } from "../event";
 export type SessionEvent = SessionCreatedEvent | SessionResumedEvent;
 
 /**
- * SessionReceptor - Senses session lifecycle events.
+ * SessionReceptor - Emits session lifecycle RuntimeEvents.
  *
- * Responsible for detecting:
+ * Responsible for emitting:
  * - session_created: New session created
  * - session_resumed: Existing session resumed
  */
-export interface SessionReceptor extends Receptor<SessionEvent> {}
+export interface SessionReceptor extends Receptor {}

@@ -7,11 +7,11 @@ import type { AgentStartedEvent, AgentReadyEvent, AgentDestroyedEvent } from "..
 export type AgentLifecycleEvent = AgentStartedEvent | AgentReadyEvent | AgentDestroyedEvent;
 
 /**
- * AgentReceptor - Senses agent lifecycle events.
+ * AgentReceptor - Emits agent lifecycle RuntimeEvents.
  *
- * Responsible for detecting:
+ * Responsible for emitting:
  * - agent_started: Agent entered the ecosystem
  * - agent_ready: Agent is ready to receive messages
  * - agent_destroyed: Agent left the ecosystem
  */
-export interface AgentReceptor extends Receptor<AgentLifecycleEvent> {}
+export interface AgentReceptor extends Receptor {}

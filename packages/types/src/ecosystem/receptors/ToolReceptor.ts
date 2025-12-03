@@ -16,12 +16,12 @@ export type ToolStateEvent =
   | ToolFailedEnvEvent;
 
 /**
- * ToolReceptor - Senses tool execution state events.
+ * ToolReceptor - Emits tool execution state RuntimeEvents.
  *
- * Responsible for detecting:
+ * Responsible for emitting:
  * - tool_planned: Tool execution planned
  * - tool_executing: Tool is being executed
  * - tool_completed: Tool execution completed successfully
  * - tool_failed: Tool execution failed
  */
-export interface ToolReceptor extends Receptor<ToolStateEvent> {}
+export interface ToolReceptor extends Receptor {}

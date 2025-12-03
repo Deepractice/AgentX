@@ -1,141 +1,142 @@
 /**
- * EnvironmentEvent - External information that the system cares about
+ * EnvironmentEvent - Raw external information that the system cares about
  *
- * This is NOT a filter of external events, but an "eventification" of external information.
- * External world may not be event-based, but we convert what we care about into events.
- *
- * Analogy: Reading a newspaper, you only read news you care about.
+ * Inheritance chain:
+ * ```
+ * EcosystemEvent (base: type, timestamp, data)
+ *     └── EnvironmentEvent (外部原始物料)
+ *         └── RuntimeEvent (+ agentId, sessionId, containerId)
+ * ```
  *
  * Design principles:
- * - Only define what the system NEEDS, not what external sources HAVE
- * - Keep it minimal (8-10 event types vs SDK's 20+)
- * - Abstract away implementation details (no content_block_start/stop)
- *
- * Event flow:
- * ```
- * External World  →  Environment  →  EnvironmentEvent  →  Receptor  →  RuntimeEvent
- * (any form)         (感知+转换)     (我们关心的)          (富化)       (系统使用)
- * ```
+ * - Only raw streaming materials from external world
+ * - Even if SDK assembles tool_call/tool_result, we don't use them
+ * - We have our own internal world (Mealy Machine) to assemble
  *
  * @see issues/028-reactor-pattern-systembus-architecture.md
  */
 
+import type { EcosystemEvent } from "../EcosystemEvent";
+
 // ============================================================================
-// Stream Events - LLM output streaming
+// Base EnvironmentEvent Interface
 // ============================================================================
 
 /**
- * Text chunk from LLM response
+ * Base interface for all EnvironmentEvents.
+ * Extends EcosystemEvent - no additional context fields.
  */
-export interface TextChunkEvent {
-  readonly type: "text_chunk";
+export interface EnvironmentEvent<T extends string = string, D = unknown>
+  extends EcosystemEvent<T, D> {}
+
+// ============================================================================
+// Stream Events - Raw LLM output streaming
+// ============================================================================
+
+/**
+ * Text chunk data - raw text fragment from LLM
+ */
+export interface TextChunkData {
   readonly text: string;
 }
 
 /**
- * Tool call completed (full input, not streaming JSON delta)
+ * Text chunk from LLM response
  */
-export interface ToolCallEvent {
-  readonly type: "tool_call";
-  readonly toolUseId: string;
-  readonly name: string;
-  readonly input: unknown;
-}
-
-/**
- * Tool execution result
- */
-export interface ToolResultEvent {
-  readonly type: "tool_result";
-  readonly toolUseId: string;
-  readonly result: unknown;
-  readonly isError: boolean;
-}
+export interface TextChunkEvent extends EnvironmentEvent<"text_chunk", TextChunkData> {}
 
 // ============================================================================
 // Flow Control Events - Stream lifecycle
 // ============================================================================
 
 /**
- * Stream started
+ * Stream start data
  */
-export interface StreamStartEvent {
-  readonly type: "stream_start";
+export interface StreamStartData {
   readonly messageId: string;
   readonly model?: string;
 }
 
 /**
+ * Stream started
+ */
+export interface StreamStartEvent extends EnvironmentEvent<"stream_start", StreamStartData> {}
+
+/**
+ * Stream end data
+ */
+export interface StreamEndData {
+  readonly stopReason: string;
+}
+
+/**
  * Stream ended normally
  */
-export interface StreamEndEvent {
-  readonly type: "stream_end";
-  readonly stopReason: string;
+export interface StreamEndEvent extends EnvironmentEvent<"stream_end", StreamEndData> {}
+
+/**
+ * Interrupted data
+ */
+export interface InterruptedData {
+  readonly reason: string;
 }
 
 /**
  * Stream interrupted by user
  */
-export interface InterruptedEvent {
-  readonly type: "interrupted";
-  readonly reason: string;
-}
+export interface InterruptedEvent extends EnvironmentEvent<"interrupted", InterruptedData> {}
 
 // ============================================================================
 // Connection Events - Remote environment only
 // ============================================================================
 
 /**
+ * Connected data (empty)
+ */
+export interface ConnectedData {}
+
+/**
  * Connection established
  */
-export interface ConnectedEvent {
-  readonly type: "connected";
+export interface ConnectedEvent extends EnvironmentEvent<"connected", ConnectedData> {}
+
+/**
+ * Disconnected data
+ */
+export interface DisconnectedData {
+  readonly reason?: string;
 }
 
 /**
  * Connection lost
  */
-export interface DisconnectedEvent {
-  readonly type: "disconnected";
-  readonly reason?: string;
-}
-
-// ============================================================================
-// Error Events
-// ============================================================================
-
-/**
- * Error occurred
- */
-export interface ErrorEvent {
-  readonly type: "error";
-  readonly error: Error;
-  readonly code?: string;
-}
+export interface DisconnectedEvent extends EnvironmentEvent<"disconnected", DisconnectedData> {}
 
 // ============================================================================
 // Union Type
 // ============================================================================
 
 /**
- * Union of all EnvironmentEvent types
+ * All EnvironmentEvent types as string union
  */
-export type EnvironmentEvent =
-  // Stream
+export type EnvironmentEventType =
+  | "text_chunk"
+  | "stream_start"
+  | "stream_end"
+  | "interrupted"
+  | "connected"
+  | "disconnected";
+
+/**
+ * Union of all concrete EnvironmentEvent types
+ */
+export type AnyEnvironmentEvent =
+  // Stream (raw materials)
   | TextChunkEvent
-  | ToolCallEvent
-  | ToolResultEvent
   // Flow control
   | StreamStartEvent
   | StreamEndEvent
   | InterruptedEvent
   // Connection
   | ConnectedEvent
-  | DisconnectedEvent
-  // Error
-  | ErrorEvent;
-
-/**
- * Extract event type string union
- */
-export type EnvironmentEventType = EnvironmentEvent["type"];
+  | DisconnectedEvent;

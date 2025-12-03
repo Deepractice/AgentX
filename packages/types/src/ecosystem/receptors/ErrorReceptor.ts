@@ -2,9 +2,9 @@ import type { Receptor } from "~/ecosystem/Receptor";
 import type { ErrorEnvEvent } from "../event";
 
 /**
- * ErrorReceptor - Senses error events.
+ * ErrorReceptor - Transforms error EnvironmentEvents to RuntimeEvents.
  *
- * Responsible for detecting:
- * - error: Error occurred in the ecosystem
+ * Listens for:
+ * - error (EnvironmentEvent) → ErrorEnvEvent (RuntimeEvent)
  */
-export interface ErrorReceptor extends Receptor<ErrorEnvEvent> {}
+export interface ErrorReceptor extends Receptor {}

@@ -22,6 +22,6 @@ export interface ToolCallEvent extends StreamEvent {
     /**
      * Tool input (parsed from JSON)
      */
-    input: any;
+    input: unknown;
   };
 }
