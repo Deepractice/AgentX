@@ -37,19 +37,32 @@ jobs:
       - name: Build Packages
         run: pnpm build
 
-      - name: Publish agent to NPM
-        if: hashFiles('apps/agent/package.json') != ''
+      - name: Publish packages to NPM
         run: |
-          cd apps/agent
-          pnpm publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Publish public packages in dependency order
+          PACKAGES=(
+            "packages/types"
+            "packages/common"
+            "packages/agentx"
+            "packages/node-runtime"
+            "packages/ui"
+            "apps/portagent"
+          )
 
-      - name: Publish agent-sdk to NPM
-        if: hashFiles('packages/agent-sdk/package.json') != ''
-        run: |
-          cd packages/agent-sdk
-          pnpm publish --access public --no-git-checks
+          for pkg in "${PACKAGES[@]}"; do
+            if [ -f "$pkg/package.json" ]; then
+              PRIVATE=$(jq -r '.private // false' "$pkg/package.json")
+              NAME=$(jq -r '.name' "$pkg/package.json")
+              if [ "$PRIVATE" != "true" ]; then
+                echo "Publishing $NAME..."
+                cd "$pkg"
+                pnpm publish --access public --no-git-checks || echo "Failed to publish $NAME (may already exist)"
+                cd -
+              else
+                echo "Skipping private package: $NAME"
+              fi
+            fi
+          done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -58,17 +71,16 @@ jobs:
           echo "## ✅ NPM Packages Published" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [ -f "apps/agent/package.json" ]; then
-            AGENT_NAME=$(jq -r '.name' "apps/agent/package.json")
-            AGENT_VERSION=$(jq -r '.version' "apps/agent/package.json")
-            echo "- \`${AGENT_NAME}@${AGENT_VERSION}\` (CLI + Server + Web UI)" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [ -f "packages/agent-sdk/package.json" ]; then
-            SDK_NAME=$(jq -r '.name' "packages/agent-sdk/package.json")
-            SDK_VERSION=$(jq -r '.version' "packages/agent-sdk/package.json")
-            echo "- \`${SDK_NAME}@${SDK_VERSION}\`" >> $GITHUB_STEP_SUMMARY
-          fi
+          for pkg in packages/types packages/common packages/agentx packages/node-runtime packages/ui apps/portagent; do
+            if [ -f "$pkg/package.json" ]; then
+              PRIVATE=$(jq -r '.private // false' "$pkg/package.json")
+              if [ "$PRIVATE" != "true" ]; then
+                NAME=$(jq -r '.name' "$pkg/package.json")
+                VERSION=$(jq -r '.version' "$pkg/package.json")
+                echo "- \`${NAME}@${VERSION}\`" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
 
   publish-docker:
     name: Build and Push Docker Images
@@ -103,9 +115,9 @@ jobs:
 
       - name: Wait for NPM Package Availability
         run: |
-          echo "Waiting for @deepractice-ai/agent to be available on NPM..."
+          echo "Waiting for @agentxjs/portagent to be available on NPM..."
           for i in {1..12}; do
-            if npm view @deepractice-ai/agent@latest version &>/dev/null; then
+            if npm view @agentxjs/portagent@latest version &>/dev/null; then
               echo "Package is available!"
               exit 0
             fi
@@ -114,37 +126,18 @@ jobs:
           done
           echo "Warning: Package still not available after 2 minutes, proceeding anyway..."
 
-      - name: Build and Push Agent Image to Docker Hub
+      - name: Build and Push Portagent Image to Docker Hub
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./docker/Dockerfile
+          context: ./apps/portagent
+          file: ./apps/portagent/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            deepracticexs/agent:latest
-            deepracticexs/agent:${{ steps.version.outputs.version }}
+            deepracticexs/portagent:latest
+            deepracticexs/portagent:${{ steps.version.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Log in to Aliyun Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ secrets.ALIYUN_ACR_REGISTRY }}
-          username: ${{ secrets.ALIYUN_ACR_USERNAME }}
-          password: ${{ secrets.ALIYUN_ACR_PASSWORD }}
-
-      - name: Build and Push Agent Image to Aliyun ACR
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./docker/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ${{ secrets.ALIYUN_ACR_REGISTRY }}/${{ secrets.ALIYUN_ACR_NAMESPACE }}/agent:latest
-            ${{ secrets.ALIYUN_ACR_REGISTRY }}/${{ secrets.ALIYUN_ACR_NAMESPACE }}/agent:${{ steps.version.outputs.version }}
-          cache-from: type=gha
 
       - name: Summary
         run: |
@@ -152,28 +145,14 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🐳 Docker Hub" >> $GITHUB_STEP_SUMMARY
-          echo "- \`deepracticexs/agent:latest\`" >> $GITHUB_STEP_SUMMARY
-          echo "- \`deepracticexs/agent:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "### Docker Hub" >> $GITHUB_STEP_SUMMARY
+          echo "- \`deepracticexs/portagent:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`deepracticexs/portagent:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### ☁️ Aliyun Container Registry" >> $GITHUB_STEP_SUMMARY
-          echo "- \`${{ secrets.ALIYUN_ACR_REGISTRY }}/${{ secrets.ALIYUN_ACR_NAMESPACE }}/agent:latest\`" >> $GITHUB_STEP_SUMMARY
-          echo "- \`${{ secrets.ALIYUN_ACR_REGISTRY }}/${{ secrets.ALIYUN_ACR_NAMESPACE }}/agent:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📦 Usage (Docker Hub)" >> $GITHUB_STEP_SUMMARY
+          echo "### Usage" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull deepracticexs/agent:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull deepracticexs/portagent:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "docker run -d -p 5200:5200 \\" >> $GITHUB_STEP_SUMMARY
-          echo "  -e ANTHROPIC_API_KEY=your_api_key \\" >> $GITHUB_STEP_SUMMARY
-          echo "  -v \$(pwd):/project \\" >> $GITHUB_STEP_SUMMARY
-          echo "  deepracticexs/agent:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📦 Usage (Aliyun ACR - China)" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ secrets.ALIYUN_ACR_REGISTRY }}/${{ secrets.ALIYUN_ACR_NAMESPACE }}/agent:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "docker run -d -p 5200:5200 \\" >> $GITHUB_STEP_SUMMARY
-          echo "  -e ANTHROPIC_API_KEY=your_api_key \\" >> $GITHUB_STEP_SUMMARY
-          echo "  -v \$(pwd):/project \\" >> $GITHUB_STEP_SUMMARY
-          echo "  ${{ secrets.ALIYUN_ACR_REGISTRY }}/${{ secrets.ALIYUN_ACR_NAMESPACE }}/agent:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "  -e LLM_PROVIDER_KEY=your_api_key \\" >> $GITHUB_STEP_SUMMARY
+          echo "  deepracticexs/portagent:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

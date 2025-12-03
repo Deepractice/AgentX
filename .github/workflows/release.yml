@@ -39,25 +39,23 @@ jobs:
       - name: Extract Version Info
         id: extract_version
         run: |
-          # Use apps/agent version as the main release version
-          AGENT_VERSION=$(jq -r '.version' "apps/agent/package.json")
-          TAG="v${AGENT_VERSION}"
+          # Use apps/portagent version as the main release version
+          PORTAGENT_VERSION=$(jq -r '.version' "apps/portagent/package.json")
+          TAG="v${PORTAGENT_VERSION}"
 
-          # Collect all package versions
+          # Collect all public package versions
           VERSIONS=""
 
-          # Add apps/agent version (merged: web + server + CLI)
-          if [ -f "apps/agent/package.json" ]; then
-            AGENT_NAME=$(jq -r '.name' "apps/agent/package.json")
-            VERSIONS="${VERSIONS}${AGENT_NAME}@${AGENT_VERSION}\n"
-          fi
-
-          # Add agent-sdk version
-          if [ -f "packages/agent-sdk/package.json" ]; then
-            SDK_NAME=$(jq -r '.name' "packages/agent-sdk/package.json")
-            SDK_VERSION=$(jq -r '.version' "packages/agent-sdk/package.json")
-            VERSIONS="${VERSIONS}${SDK_NAME}@${SDK_VERSION}\n"
-          fi
+          for pkg in apps/portagent packages/types packages/common packages/agentx packages/node-runtime packages/ui; do
+            if [ -f "$pkg/package.json" ]; then
+              PRIVATE=$(jq -r '.private // false' "$pkg/package.json")
+              if [ "$PRIVATE" != "true" ]; then
+                NAME=$(jq -r '.name' "$pkg/package.json")
+                VERSION=$(jq -r '.version' "$pkg/package.json")
+                VERSIONS="${VERSIONS}${NAME}@${VERSION}\n"
+              fi
+            fi
+          done
 
           echo "version<<EOF" >> $GITHUB_OUTPUT
           echo -e "$VERSIONS" >> $GITHUB_OUTPUT
@@ -86,20 +84,20 @@ jobs:
 
           NOTES_EOF
 
-          # Extract CHANGELOG from apps/agent (merged: web + server + CLI)
-          if [ -f "apps/agent/CHANGELOG.md" ]; then
+          # Extract CHANGELOG from apps/portagent
+          if [ -f "apps/portagent/CHANGELOG.md" ]; then
             echo "" >> release-notes.md
-            echo "### @deepractice-ai/agent" >> release-notes.md
+            echo "### @agentxjs/portagent" >> release-notes.md
             echo "" >> release-notes.md
-            awk '/^## /{if(++count==2)exit;if(count==1)next}count==1' "apps/agent/CHANGELOG.md" >> release-notes.md
+            awk '/^## /{if(++count==2)exit;if(count==1)next}count==1' "apps/portagent/CHANGELOG.md" >> release-notes.md
           fi
 
-          # Extract CHANGELOG from packages/agent-sdk
-          if [ -f "packages/agent-sdk/CHANGELOG.md" ]; then
+          # Extract CHANGELOG from packages/agentx
+          if [ -f "packages/agentx/CHANGELOG.md" ]; then
             echo "" >> release-notes.md
-            echo "### @deepractice-ai/agent-sdk" >> release-notes.md
+            echo "### agentxjs" >> release-notes.md
             echo "" >> release-notes.md
-            awk '/^## /{if(++count==2)exit;if(count==1)next}count==1' "packages/agent-sdk/CHANGELOG.md" >> release-notes.md
+            awk '/^## /{if(++count==2)exit;if(count==1)next}count==1' "packages/agentx/CHANGELOG.md" >> release-notes.md
           fi
 
           # Write to GitHub output using file content

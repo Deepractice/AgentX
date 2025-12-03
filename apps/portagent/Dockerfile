@@ -1,4 +1,5 @@
 # Portagent Dockerfile
+# Image: deepracticexs/portagent
 # Dogfooding: Install directly from npm registry
 
 FROM node:20-alpine
@@ -12,11 +13,10 @@ RUN npm install -g @agentxjs/portagent
 ENV NODE_ENV=production
 ENV PORT=5200
 ENV LOG_LEVEL=info
-ENV LLM_PROVIDER_MODEL=claude-sonnet-4-20250514
 
 # Environment - Required (must be provided at runtime)
 # LLM_PROVIDER_KEY=sk-ant-xxxxx    # Anthropic API key
-#
+# LLM_PROVIDER_MODEL=claude-haiku-4-5-20251001
 # Environment - Optional (can be overridden at runtime)
 # LLM_PROVIDER_URL=https://api.anthropic.com
 # JWT_SECRET=your-jwt-secret       # Auto-generated if not set
