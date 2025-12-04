@@ -28,9 +28,9 @@ import type {
   ReactHandlerMap,
   AgentMiddleware,
   AgentInterceptor,
-  EventConsumer,
   AgentDriver,
   Sandbox,
+  SystemBus,
   // Stream Layer Events
   MessageStartEvent,
   MessageDeltaEvent,
@@ -61,7 +61,6 @@ import { isStateEvent } from "@agentxjs/types";
 import type { AgentEngine } from "@agentxjs/engine";
 import { createLogger } from "@agentxjs/common";
 import { AgentStateMachine } from "./AgentStateMachine";
-import { AgentEventBus } from "./AgentEventBus";
 import { AgentErrorClassifier } from "./AgentErrorClassifier";
 import { MiddlewareChain } from "./MiddlewareChain";
 import { InterceptorChain } from "./InterceptorChain";
@@ -93,9 +92,9 @@ export class AgentInstance implements Agent {
   private readonly stateMachine = new AgentStateMachine();
 
   /**
-   * Event bus - centralized event pub/sub
+   * System bus - centralized event pub/sub (injected from ecosystem)
    */
-  private readonly eventBus = new AgentEventBus();
+  private readonly bus: SystemBus;
 
   /**
    * Error classifier - classifies and creates error events
@@ -127,7 +126,8 @@ export class AgentInstance implements Agent {
     context: AgentContext,
     engine: AgentEngine,
     driver: AgentDriver,
-    sandbox: Sandbox
+    sandbox: Sandbox,
+    bus: SystemBus
   ) {
     this.agentId = context.agentId;
     this.definition = definition;
@@ -135,6 +135,7 @@ export class AgentInstance implements Agent {
     this.engine = engine;
     this.createdAt = context.createdAt;
     this.sandbox = sandbox;
+    this.bus = bus;
 
     // Driver is provided by Runtime (not created from definition)
     this.driver = driver;
@@ -396,7 +397,7 @@ export class AgentInstance implements Agent {
   ): Unsubscribe {
     // Overload 1: on(handler) - global subscription (function as first arg)
     if (typeof typeOrHandlerOrMap === "function") {
-      return this.eventBus.onAny(typeOrHandlerOrMap as AgentEventHandler);
+      return this.bus.onAny(typeOrHandlerOrMap as unknown as (event: any) => void);
     }
 
     // Overload 2: on(handlers) - batch subscription (object with event handlers)
@@ -405,7 +406,9 @@ export class AgentInstance implements Agent {
 
       for (const [eventType, eventHandler] of Object.entries(typeOrHandlerOrMap)) {
         if (eventHandler) {
-          unsubscribes.push(this.eventBus.on(eventType, eventHandler as AgentEventHandler));
+          unsubscribes.push(
+            this.bus.on(eventType, eventHandler as unknown as (event: any) => void)
+          );
         }
       }
 
@@ -419,9 +422,9 @@ export class AgentInstance implements Agent {
 
     // Overload 3 & 4: on(type, handler) or on(types, handler)
     const types = Array.isArray(typeOrHandlerOrMap) ? typeOrHandlerOrMap : [typeOrHandlerOrMap];
-    const h = handler! as AgentEventHandler;
+    const h = handler! as unknown as (event: any) => void;
 
-    return this.eventBus.on(types, h);
+    return this.bus.on(types, h);
   }
 
   /**
@@ -554,7 +557,7 @@ export class AgentInstance implements Agent {
 
     this._lifecycle = "destroyed";
     this.stateMachine.reset();
-    this.eventBus.destroy();
+    // Note: Don't destroy bus - it's shared by the ecosystem
     this.readyHandlers.clear();
     this.destroyHandlers.clear();
     this.middlewareChain.clear();
@@ -588,18 +591,9 @@ export class AgentInstance implements Agent {
   }
 
   /**
-   * Execute interceptor chain and then emit to EventBus
+   * Execute interceptor chain and then emit to SystemBus
    */
   private executeInterceptorChain(event: AgentOutput): void {
-    this.interceptorChain.execute(event, (e) => this.eventBus.emit(e));
-  }
-
-  /**
-   * Get the event consumer for external subscriptions
-   *
-   * Use this to expose event subscription without emit capability.
-   */
-  getEventConsumer(): EventConsumer {
-    return this.eventBus.asConsumer();
+    this.interceptorChain.execute(event, (e) => this.bus.emit(e));
   }
 }

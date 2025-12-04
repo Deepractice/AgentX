@@ -33,7 +33,7 @@
  * ```
  */
 
-import type { StreamEventType } from "~/ecosystem/runtime/agent/event";
+import type { StreamEventType } from "~/ecosystem/event/agent";
 import type { UserMessage } from "~/ecosystem/runtime/agent/message";
 
 /**

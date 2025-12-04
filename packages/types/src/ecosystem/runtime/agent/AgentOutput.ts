@@ -14,8 +14,8 @@ import type {
   StateEventType,
   MessageEventType,
   TurnEventType,
-} from "~/ecosystem/runtime/agent/event";
-import type { ErrorEvent } from "~/ecosystem/runtime/agent/event/error";
+} from "~/ecosystem/event/agent";
+import type { ErrorEvent } from "~/ecosystem/event/agent/error";
 
 /**
  * All possible output types from Agent

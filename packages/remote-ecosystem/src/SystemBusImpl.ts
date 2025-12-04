@@ -1,17 +1,8 @@
 /**
- * SystemBusImpl - Central event bus implementation
+ * SystemBusImpl - Browser-friendly event bus implementation
  *
- * Pub/Sub event bus for ecosystem communication.
- * All components (Environment, Agent, Session, etc.) communicate through this bus.
- *
- * Features:
- * - Type-safe event subscription
- * - Custom filters
- * - Priority-based execution order
- * - One-time subscriptions
- * - Batch emission
- *
- * @see packages/types/src/ecosystem/SystemBus.ts
+ * Lightweight implementation without heavy dependencies.
+ * Same interface as node-ecosystem's SystemBusImpl.
  */
 
 import type {
@@ -21,7 +12,6 @@ import type {
   SubscribeOptions,
   Unsubscribe,
 } from "@agentxjs/types";
-import { Subject } from "rxjs";
 import { createLogger } from "@agentxjs/common";
 
 const logger = createLogger("ecosystem/SystemBusImpl");
@@ -39,21 +29,15 @@ interface Subscription {
 }
 
 /**
- * SystemBus implementation using RxJS Subject with priority and filter support
+ * Browser-friendly SystemBus implementation
  */
 export class SystemBusImpl implements SystemBus {
-  private readonly subject = new Subject<BusEvent>();
   private subscriptions: Subscription[] = [];
   private nextId = 0;
   private isDestroyed = false;
 
   constructor() {
     logger.debug("SystemBus created");
-
-    // Main subscription that dispatches to all registered handlers
-    this.subject.subscribe((event) => {
-      this.dispatch(event);
-    });
   }
 
   /**
@@ -66,7 +50,7 @@ export class SystemBusImpl implements SystemBus {
     }
 
     logger.debug("Event emitted", { type: event.type });
-    this.subject.next(event);
+    this.dispatch(event);
   }
 
   /**
@@ -146,7 +130,6 @@ export class SystemBusImpl implements SystemBus {
 
     this.isDestroyed = true;
     this.subscriptions = [];
-    this.subject.complete();
     logger.debug("SystemBus destroyed");
   }
 

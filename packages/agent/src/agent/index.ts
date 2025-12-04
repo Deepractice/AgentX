@@ -20,11 +20,8 @@ export type {
   Unsubscribe,
   StateChange,
   StateChangeHandler,
-  // Event Bus types
-  AgentEventBus as IAgentEventBus,
-  EventProducer,
-  EventConsumer,
-  EventHandler,
+  // SystemBus (replaces AgentEventBus)
+  SystemBus,
   SubscribeOptions,
 } from "@agentxjs/types";
 
@@ -34,9 +31,6 @@ export { AgentInstance } from "./AgentInstance";
 // State Machine
 export { AgentStateMachine } from "./AgentStateMachine";
 export type { StateChangeHandler as StateMachineHandler } from "./AgentStateMachine";
-
-// Event Bus implementation
-export { AgentEventBus } from "./AgentEventBus";
 
 // Container implementation
 export { MemoryContainer } from "./MemoryContainer";

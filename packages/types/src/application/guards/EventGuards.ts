@@ -5,11 +5,11 @@
  */
 
 import type { AgentOutput } from "~/ecosystem/runtime/agent/AgentOutput";
-import type { StateEventType } from "~/ecosystem/runtime/agent/event/state";
-import type { StreamEventType } from "~/ecosystem/runtime/agent/event/stream";
-import type { MessageEventType } from "~/ecosystem/runtime/agent/event/message";
-import type { TurnEventType } from "~/ecosystem/runtime/agent/event/turn";
-import type { ErrorEvent } from "~/ecosystem/runtime/agent/event/error";
+import type { StateEventType } from "~/ecosystem/event/agent/state";
+import type { StreamEventType } from "~/ecosystem/event/agent/stream";
+import type { MessageEventType } from "~/ecosystem/event/agent/message";
+import type { TurnEventType } from "~/ecosystem/event/agent/turn";
+import type { ErrorEvent } from "~/ecosystem/event/agent/error";
 
 /**
  * State event type names (single source of truth)

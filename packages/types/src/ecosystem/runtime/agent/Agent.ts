@@ -40,7 +40,7 @@ import type {
   ToolUseContentBlockStopEvent,
   ToolCallEvent,
   ToolResultEvent,
-} from "~/ecosystem/runtime/agent/event/stream";
+} from "~/ecosystem/event/agent/stream";
 
 // Message Layer Events
 import type {
@@ -48,13 +48,13 @@ import type {
   AssistantMessageEvent,
   ToolCallMessageEvent,
   ToolResultMessageEvent,
-} from "~/ecosystem/runtime/agent/event/message";
+} from "~/ecosystem/event/agent/message";
 
 // Error Layer Events (independent, transportable via SSE)
-import type { ErrorEvent } from "~/ecosystem/runtime/agent/event/error";
+import type { ErrorEvent } from "~/ecosystem/event/agent/error";
 
 // Turn Layer Events
-import type { TurnRequestEvent, TurnResponseEvent } from "~/ecosystem/runtime/agent/event/turn";
+import type { TurnRequestEvent, TurnResponseEvent } from "~/ecosystem/event/agent/turn";
 
 /**
  * State change event payload

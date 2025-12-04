@@ -20,9 +20,17 @@
 
 export type { Ecosystem, EcosystemEventHandler } from "./Ecosystem";
 export type { Environment } from "./Environment";
-export type { Receptor } from "./Receptor";
 export type { Effector } from "./Effector";
-export type { SystemBus, BusEvent, BusEventHandler, Unsubscribe } from "./SystemBus";
+export type {
+  SystemBus,
+  BusEvent,
+  BusEventHandler,
+  SubscribeOptions,
+  Unsubscribe,
+} from "./SystemBus";
+
+// Receptor (external world perception)
+export type { Receptor } from "./Receptor";
 
 // ============================================================================
 // Environment Events
@@ -56,4 +64,3 @@ export * from "./runtime/repository";
 
 export * from "./runtime/agent";
 export * from "~/ecosystem/runtime/agent/message";
-export * from "~/ecosystem/runtime/agent/event";

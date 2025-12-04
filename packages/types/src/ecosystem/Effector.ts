@@ -1,25 +1,37 @@
 /**
- * Effector - Acts upon the environment based on ecosystem events.
+ * Effector - Listens to SystemBus and acts upon external world
  *
  * From systems theory:
  * - An effector is a component that produces an effect on the environment
  * - It transforms internal signals into external actions
  *
- * This is a pure abstraction. Concrete effectors (SSEEffector, WebSocketEffector)
- * are defined in runtime/.
+ * In our architecture:
+ * - Effector subscribes to SystemBus
+ * - Sends commands/events to external world (LLM API, Network, other systems)
  *
- * Effectors are the output boundary of the ecosystem.
+ * ```
+ *    SystemBus
+ *        │
+ *        │ subscribe
+ *        ▼
+ *    Effector
+ *        │
+ *        │ send
+ *        ▼
+ *   External World
+ * ```
+ *
+ * @see issues/030-ecosystem-architecture.md
  */
-export interface Effector<E = unknown> {
-  /**
-   * Send an event to the external environment.
-   *
-   * @param event - The ecosystem event to transmit
-   */
-  send(event: E): void;
 
+import type { SystemBus } from "./SystemBus";
+
+/**
+ * Effector - Subscribes to SystemBus and acts upon external world
+ */
+export interface Effector {
   /**
-   * Clean up resources.
+   * Subscribe to SystemBus
    */
-  dispose(): void;
+  subscribe(bus: SystemBus): void;
 }

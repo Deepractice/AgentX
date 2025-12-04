@@ -1,14 +1,17 @@
 /**
- * Ecosystem Events
+ * Ecosystem Events - Unified event definitions
  *
- * Two types of events:
- * 1. EnvironmentEvent - External raw materials (text_chunk, stream_start, etc.)
- * 2. AgentEvent - Agent internal events (assembled by Mealy Machine)
+ * All events that flow on SystemBus:
+ * - EnvironmentEvent - External world events (connected, disconnected, text_chunk, etc.)
+ * - AgentEvent - Agent events (state, stream, message, turn, error)
+ * - SessionEvent - Session events (TODO)
+ * - ContainerEvent - Container events (TODO)
  *
- * EnvironmentEvent + context flows on SystemBus directly.
- * No need for separate RuntimeEvent definition.
- *
- * @see issues/029-simplified-event-architecture.md
+ * @see issues/030-ecosystem-architecture.md
  */
 
+// Environment Events (external world)
 export * from "./EnvironmentEvent";
+
+// Agent Events
+export * from "./agent";
