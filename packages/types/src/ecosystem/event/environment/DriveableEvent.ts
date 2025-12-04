@@ -2,8 +2,8 @@
  * DriveableEvent - Events that can drive Agent through Mealy Machine
  *
  * These events are:
- * 1. Output by Receptor (with requestId)
- * 2. Filtered by Driver (using requestId)
+ * 1. Output by Receptor (with turnId)
+ * 2. Filtered by Driver (using turnId)
  * 3. Transformed by Driver into AgentStreamEvent (adding agentId)
  * 4. Processed by Engine
  *
@@ -11,7 +11,7 @@
  *
  * Type Hierarchy:
  * ```
- * EnvironmentEvent (has requestId)
+ * EnvironmentEvent (has turnId)
  * ├── DriveableEvent ← Receptor outputs this
  * │   ├── MessageStartEvent
  * │   ├── TextDeltaEvent
@@ -21,13 +21,13 @@
  * ```
  *
  * Key Design:
- * - All DriveableEvents have requestId for routing
+ * - All DriveableEvents have turnId for correlation
  * - Receptor is stateless, outputs events to SystemBus
- * - Driver filters events by requestId and adds agentId
+ * - Driver filters events by turnId and adds agentId
  */
 
 import type { BaseEnvironmentEvent } from "./EnvironmentEvent";
-import type { StopReason } from "~/ecosystem/runtime/container/sandbox/llm/StopReason";
+import type { StopReason } from "~/ecosystem/runtime/container/llm/StopReason";
 
 // ============================================================================
 // Message Lifecycle Events

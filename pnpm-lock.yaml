@@ -56,9 +56,9 @@ importers:
 
   apps/portagent:
     dependencies:
-      '@agentxjs/node-runtime':
+      '@agentxjs/node-ecosystem':
         specifier: workspace:*
-        version: link:../../packages/node-runtime
+        version: link:../../packages/node-ecosystem
       '@agentxjs/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -260,6 +260,34 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.9.2)(@vitest/ui@3.2.4)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
 
+  packages/mirror:
+    dependencies:
+      '@agentxjs/common':
+        specifier: workspace:*
+        version: link:../common
+      '@agentxjs/network':
+        specifier: workspace:*
+        version: link:../network
+      '@agentxjs/types':
+        specifier: workspace:*
+        version: link:../types
+      rxjs:
+        specifier: ^7.8.2
+        version: 7.8.2
+    devDependencies:
+      '@types/node':
+        specifier: ^24.9.2
+        version: 24.9.2
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(@microsoft/api-extractor@7.55.0(@types/node@24.9.2))(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@24.9.2)(@vitest/ui@3.2.4)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.1)
+
   packages/network:
     dependencies:
       '@agentxjs/common':
@@ -316,49 +344,6 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  packages/node-runtime:
-    dependencies:
-      '@agentxjs/common':
-        specifier: workspace:*
-        version: link:../common
-      '@agentxjs/types':
-        specifier: workspace:*
-        version: link:../types
-      '@anthropic-ai/claude-agent-sdk':
-        specifier: ^0.1.30
-        version: 0.1.30(zod@4.1.12)
-      agentxjs:
-        specifier: workspace:*
-        version: link:../agentx
-      better-sqlite3:
-        specifier: ^11.7.0
-        version: 11.10.0
-      rxjs:
-        specifier: ^7.8.2
-        version: 7.8.2
-    devDependencies:
-      '@agentxjs/agent':
-        specifier: workspace:*
-        version: link:../agent
-      '@agentxjs/engine':
-        specifier: workspace:*
-        version: link:../engine
-      '@types/better-sqlite3':
-        specifier: ^7.6.12
-        version: 7.6.13
-      '@types/node':
-        specifier: ^24.9.2
-        version: 24.9.2
-      '@types/ws':
-        specifier: ^8.18.1
-        version: 8.18.1
-      tsup:
-        specifier: ^8.3.5
-        version: 8.5.1(@microsoft/api-extractor@7.55.0(@types/node@24.9.2))(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
-
   packages/remote-ecosystem:
     dependencies:
       '@agentxjs/common':
@@ -370,31 +355,6 @@ importers:
       '@agentxjs/types':
         specifier: workspace:*
         version: link:../types
-    devDependencies:
-      '@types/node':
-        specifier: ^24.9.2
-        version: 24.9.2
-      tsup:
-        specifier: ^8.3.5
-        version: 8.5.1(@microsoft/api-extractor@7.55.0(@types/node@24.9.2))(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
-
-  packages/remote-runtime:
-    dependencies:
-      '@agentxjs/common':
-        specifier: workspace:*
-        version: link:../common
-      '@agentxjs/types':
-        specifier: workspace:*
-        version: link:../types
-      ky:
-        specifier: ^1.7.4
-        version: 1.14.0
-      rxjs:
-        specifier: ^7.8.2
-        version: 7.8.2
     devDependencies:
       '@types/node':
         specifier: ^24.9.2
@@ -463,9 +423,9 @@ importers:
       '@agentxjs/common':
         specifier: workspace:*
         version: link:../common
-      '@agentxjs/node-runtime':
+      '@agentxjs/node-ecosystem':
         specifier: workspace:*
-        version: link:../node-runtime
+        version: link:../node-ecosystem
       '@storybook/addon-a11y':
         specifier: ^8.4.7
         version: 8.6.14(storybook@8.6.14(prettier@3.6.2))

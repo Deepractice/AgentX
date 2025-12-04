@@ -5,7 +5,7 @@
  * They do NOT drive the Agent (not processed by AgentEngine).
  *
  * Used by RemoteEcosystem to track WebSocket/SSE connection state.
- * All ConnectionEvents have requestId for routing.
+ * All ConnectionEvents have turnId for routing.
  */
 
 import type { BaseEnvironmentEvent } from "./EnvironmentEvent";

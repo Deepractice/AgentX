@@ -6,18 +6,18 @@
  *
  * Flow:
  * ```
- * Receptor → DriveableEvent { requestId }
+ * Receptor → DriveableEvent { turnId }
  *                ↓
- * Driver (filter by requestId, add agentId)
+ * Driver (filter by turnId, add agentId)
  *                ↓
- * AgentStreamEvent { context: { agentId, requestId } }
+ * AgentStreamEvent { context: { agentId, turnId } }
  *                ↓
  * Engine.process()
  * ```
  *
  * Key Design:
- * - DriveableEvent has requestId (from Receptor)
- * - Driver filters events by requestId
+ * - DriveableEvent has turnId (from Receptor)
+ * - Driver filters events by turnId
  * - Driver transforms to AgentStreamEvent, adding agentId
  * - Engine processes AgentStreamEvent
  */
@@ -35,9 +35,9 @@ export interface StreamEventContext {
   agentId: string;
 
   /**
-   * Request ID (preserved from DriveableEvent)
+   * Turn ID (preserved from DriveableEvent)
    */
-  requestId: string;
+  turnId: string;
 }
 
 /**
@@ -53,7 +53,7 @@ export interface AgentStreamEvent<T extends string = string, D = unknown>
   intent: "notification";
 
   /**
-   * Stream event context (agentId + requestId)
+   * Stream event context (agentId + turnId)
    */
   context: StreamEventContext;
 
@@ -81,7 +81,7 @@ export function toAgentStreamEvent(
     intent: "notification",
     context: {
       agentId,
-      requestId: driveableEvent.requestId,
+      turnId: driveableEvent.turnId,
     },
     index: "index" in driveableEvent ? driveableEvent.index : undefined,
   } as AgentStreamEvent;

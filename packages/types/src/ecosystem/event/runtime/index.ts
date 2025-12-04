@@ -17,8 +17,5 @@ export * from "./agent";
 // Session Events
 export * from "./session";
 
-// Container Events
+// Container Events (includes Sandbox)
 export * from "./container";
-
-// Sandbox Events
-export * from "./sandbox";

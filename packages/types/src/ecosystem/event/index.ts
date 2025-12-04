@@ -28,7 +28,6 @@
  *     │   └── lifecycle (created, destroyed, agent registration)
  *     │
  *     └── SandboxEvent
- *         ├── llm (API calls, streaming, responses)
  *         ├── workspace (file operations)
  *         └── mcp (tool operations)
  * ```

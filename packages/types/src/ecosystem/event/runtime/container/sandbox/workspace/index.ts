@@ -4,7 +4,7 @@
  * Events for file system operations in the agent's workspace.
  */
 
-import type { RuntimeEvent } from "../../RuntimeEvent";
+import type { RuntimeEvent } from "~/ecosystem/event/runtime/RuntimeEvent";
 
 /**
  * Base WorkspaceEvent

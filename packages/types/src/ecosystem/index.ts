@@ -48,9 +48,10 @@ export type { Runtime, AgentIdResolver } from "./runtime/Runtime";
 // RuntimeDriver - Driver + Sandbox combination
 export type { RuntimeDriver } from "~/ecosystem/runtime/container/driver/RuntimeDriver";
 
-// Container and Sandbox
+// Container, Sandbox, and LLM
 export * from "./runtime/container";
 export * from "~/ecosystem/runtime/container/sandbox";
+export * from "~/ecosystem/runtime/container/llm";
 
 // Session
 export * from "./runtime/session";

@@ -6,7 +6,7 @@
  */
 
 import type { RuntimeEvent } from "../../RuntimeEvent";
-import type { TokenUsage } from "~/ecosystem/runtime/container/sandbox/llm/TokenUsage";
+import type { TokenUsage } from "~/ecosystem/runtime/container/llm/TokenUsage";
 
 /**
  * Base TurnEvent

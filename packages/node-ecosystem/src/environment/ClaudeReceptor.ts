@@ -64,7 +64,7 @@ export class ClaudeReceptor implements Receptor {
     this.emitToBus({
       type: "interrupted",
       timestamp: Date.now(),
-      requestId: "", // TODO: Need to track requestId
+      turnId: "", // TODO: Need to track turnId
       data: { reason },
     } as InterruptedEvent);
   }
@@ -72,19 +72,19 @@ export class ClaudeReceptor implements Receptor {
   /**
    * Process stream_event from SDK and emit corresponding DriveableEvent
    *
-   * TODO: requestId should be passed from Effector when the request is made.
+   * TODO: turnId should be passed from Effector when the request is made.
    * Currently using placeholder empty string.
    */
   private processStreamEvent(sdkMsg: SDKPartialAssistantMessage): void {
     const event = sdkMsg.event;
-    const requestId = ""; // TODO: Implement requestId tracking
+    const turnId = ""; // TODO: Implement turnId tracking
 
     switch (event.type) {
       case "message_start":
         this.emitToBus({
           type: "message_start",
           timestamp: Date.now(),
-          requestId,
+          turnId,
           data: {
             message: {
               id: event.message.id,
@@ -99,7 +99,7 @@ export class ClaudeReceptor implements Receptor {
           this.emitToBus({
             type: "text_delta",
             timestamp: Date.now(),
-            requestId,
+            turnId,
             data: { text: event.delta.text },
           } as TextDeltaEvent);
         }
@@ -109,7 +109,7 @@ export class ClaudeReceptor implements Receptor {
         this.emitToBus({
           type: "message_stop",
           timestamp: Date.now(),
-          requestId,
+          turnId,
           data: { stopReason: "end_turn" },
         } as MessageStopEvent);
         break;

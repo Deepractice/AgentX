@@ -2,38 +2,33 @@
  * Sandbox
  *
  * Pure resource isolation layer for an Agent.
- * Isolates two types of resources: Workspace and LLM.
+ * Isolates external tool resources: Workspace and MCP.
  *
  * Architecture:
  * ```
- * ┌─────────────────────────────────────────────────────┐
- * │                  Container                           │
- * │  ┌───────────────────────────────────────────────┐  │
- * │  │  Agent 1 ──────→ Sandbox 1 (Workspace + LLM)  │  │
- * │  │  Agent 2 ──────→ Sandbox 2 (Workspace + LLM)  │  │
- * │  │  Agent 3 ──────→ Sandbox 3 (Workspace + LLM)  │  │
- * │  └───────────────────────────────────────────────┘  │
- * └─────────────────────────────────────────────────────┘
+ * ┌─────────────────────────────────────────────────────────┐
+ * │                  Container                              │
+ * │  ┌───────────────────────────────────────────────────┐  │
+ * │  │  Agent ──→ Sandbox (Workspace + MCP)              │  │
+ * │  │        ──→ LLM (separate from Sandbox)            │  │
+ * │  └───────────────────────────────────────────────────┘  │
+ * └─────────────────────────────────────────────────────────┘
  * ```
  *
- * Flow:
- * 1. Create Sandbox (allocate Workspace + LLM resources)
- * 2. Create Agent with Sandbox reference
- * 3. Agent.sandbox provides resources to Driver
- * 4. Container registers Agent
+ * Note: LLM is at the same level as Sandbox, not inside it.
+ * Sandbox focuses on external tool isolation (workspace, MCP tools).
  */
 
 import type { Workspace } from "./workspace";
-import type { LLMProvider } from "./llm";
 
 /**
- * Sandbox - Pure resource isolation
+ * Sandbox - External tool resource isolation
  *
- * Isolates resources for an Agent:
+ * Isolates external tool resources for an Agent:
  * - Workspace: Isolated working directory
- * - LLM: Large Language Model provider
+ * - MCP: Model Context Protocol tools (future)
  *
- * Note: Agent holds Sandbox, not vice versa (avoids circular dependency)
+ * Note: LLM is NOT part of Sandbox - it's at container level.
  */
 export interface Sandbox {
   /** Sandbox identifier */
@@ -41,7 +36,4 @@ export interface Sandbox {
 
   /** Isolated workspace for file operations */
   readonly workspace: Workspace;
-
-  /** LLM provider resource */
-  readonly llm: LLMProvider;
 }

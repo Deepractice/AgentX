@@ -13,5 +13,5 @@ export { isStopReason } from "./StopReason";
 export type { StreamChunk, TextChunk, ThinkingChunk, ToolUseChunk } from "./StreamChunk";
 export type { TokenUsage } from "./TokenUsage";
 
-// LLM Provider interface for Sandbox
+// LLM Provider interface (at container level, parallel to Sandbox)
 export type { LLMProvider } from "./LLMProvider";

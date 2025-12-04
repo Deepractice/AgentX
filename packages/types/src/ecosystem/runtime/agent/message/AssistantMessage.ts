@@ -2,7 +2,7 @@ import type { TextPart } from "./parts/TextPart";
 import type { ThinkingPart } from "./parts/ThinkingPart";
 import type { ToolCallPart } from "./parts/ToolCallPart";
 import type { FilePart } from "./parts/FilePart";
-import type { TokenUsage } from "~/ecosystem/runtime/container/sandbox/llm/TokenUsage";
+import type { TokenUsage } from "~/ecosystem/runtime/container/llm/TokenUsage";
 
 /**
  * Assistant Message
