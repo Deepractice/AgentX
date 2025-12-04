@@ -2,13 +2,24 @@
  * AgentDriver - Message Processing Interface
  *
  * AgentDriver is a pure message processor.
- * It receives user messages and yields stream events.
+ * It receives user messages and yields DriveableEvents.
  *
  * Key Design:
  * - One Agent = One Driver instance
  * - Driver only handles message processing
  * - Lifecycle management is Container's responsibility
  * - Resume/history is Container's responsibility
+ *
+ * Type Relationship:
+ * ```
+ * EnvironmentEvent (all external perceptions)
+ * │
+ * ├── DriveableEvent (can drive Agent) ← Driver outputs this
+ * │   └── MessageStartEvent, TextDeltaEvent, ToolCallEvent...
+ * │
+ * └── ConnectionEvent (network status only)
+ *     └── ConnectedEvent, DisconnectedEvent
+ * ```
  *
  * @example
  * ```typescript
@@ -22,7 +33,7 @@
  *     });
  *
  *     for await (const chunk of stream) {
- *       yield transformToStreamEvent(chunk);
+ *       yield transformToDriveableEvent(chunk);
  *     }
  *   }
  *
@@ -33,13 +44,13 @@
  * ```
  */
 
-import type { StreamEventType } from "~/ecosystem/event/agent";
+import type { DriveableEvent } from "~/ecosystem/event/environment/DriveableEvent";
 import type { UserMessage } from "~/ecosystem/runtime/agent/message";
 
 /**
  * AgentDriver interface
  *
- * A message processor that receives user messages and yields stream events.
+ * A message processor that receives user messages and yields DriveableEvents.
  * Lifecycle (creation, resume, destruction) is managed by Container.
  */
 export interface AgentDriver {
@@ -54,12 +65,12 @@ export interface AgentDriver {
   readonly description?: string;
 
   /**
-   * Receive a user message and yield stream events
+   * Receive a user message and yield driveable events
    *
    * @param message - User message to process
-   * @returns AsyncIterable of stream events
+   * @returns AsyncIterable of DriveableEvent (events that can drive Agent)
    */
-  receive(message: UserMessage): AsyncIterable<StreamEventType>;
+  receive(message: UserMessage): AsyncIterable<DriveableEvent>;
 
   /**
    * Interrupt the current operation

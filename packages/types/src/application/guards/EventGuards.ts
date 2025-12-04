@@ -5,11 +5,11 @@
  */
 
 import type { AgentOutput } from "~/ecosystem/runtime/agent/AgentOutput";
-import type { StateEventType } from "~/ecosystem/event/agent/state";
-import type { StreamEventType } from "~/ecosystem/event/agent/stream";
-import type { MessageEventType } from "~/ecosystem/event/agent/message";
-import type { TurnEventType } from "~/ecosystem/event/agent/turn";
-import type { ErrorEvent } from "~/ecosystem/event/agent/error";
+import type { AgentStateEvent } from "~/ecosystem/event/runtime/agent/state";
+import type { DriveableEvent } from "~/ecosystem/event/environment/DriveableEvent";
+import type { AgentMessageEvent } from "~/ecosystem/event/runtime/agent/message";
+import type { AgentTurnEvent } from "~/ecosystem/event/runtime/agent/turn";
+import type { AllAgentErrorEvent } from "~/ecosystem/event/runtime/agent/error";
 
 /**
  * State event type names (single source of truth)
@@ -83,34 +83,34 @@ const STREAM_EVENT_TYPES = new Set<string>(STREAM_EVENT_TYPE_NAMES);
 /**
  * Check if event is a StateEvent
  */
-export function isStateEvent(event: AgentOutput): event is StateEventType {
+export function isStateEvent(event: AgentOutput): event is AgentStateEvent {
   return "type" in event && STATE_EVENT_TYPES.has(event.type);
 }
 
 /**
  * Check if event is a MessageEvent
  */
-export function isMessageEvent(event: AgentOutput): event is MessageEventType {
+export function isMessageEvent(event: AgentOutput): event is AgentMessageEvent {
   return "type" in event && MESSAGE_EVENT_TYPES.has(event.type);
 }
 
 /**
  * Check if event is a TurnEvent
  */
-export function isTurnEvent(event: AgentOutput): event is TurnEventType {
+export function isTurnEvent(event: AgentOutput): event is AgentTurnEvent {
   return "type" in event && TURN_EVENT_TYPES.has(event.type);
 }
 
 /**
- * Check if event is a StreamEvent
+ * Check if event is a StreamEvent (DriveableEvent)
  */
-export function isStreamEvent(event: AgentOutput): event is StreamEventType {
+export function isStreamEvent(event: AgentOutput): event is DriveableEvent {
   return "type" in event && STREAM_EVENT_TYPES.has(event.type);
 }
 
 /**
  * Check if event is an ErrorEvent
  */
-export function isErrorEvent(event: AgentOutput): event is ErrorEvent {
+export function isErrorEvent(event: AgentOutput): event is AllAgentErrorEvent {
   return "type" in event && ERROR_EVENT_TYPES.has(event.type);
 }

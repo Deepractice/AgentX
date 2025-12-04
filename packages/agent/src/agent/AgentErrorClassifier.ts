@@ -5,7 +5,7 @@
  * Classifies unknown errors into structured AgentError categories.
  */
 
-import type { AgentError, ErrorEvent } from "@agentxjs/types";
+import type { AgentError, AgentErrorOccurredEvent } from "@agentxjs/types";
 
 /**
  * AgentErrorClassifier - Error classification and event creation
@@ -79,18 +79,27 @@ export class AgentErrorClassifier {
   }
 
   /**
-   * Create an ErrorEvent from an AgentError
+   * Create an AgentErrorOccurredEvent from an AgentError
    *
-   * ErrorEvent is independent from Message layer and transportable via SSE.
+   * This event is independent from Message layer and transportable via SSE.
    */
-  createEvent(error: AgentError): ErrorEvent {
+  createEvent(error: AgentError): AgentErrorOccurredEvent {
     return {
-      type: "error",
-      uuid: `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-      agentId: this.agentId,
+      type: "agent_error",
       timestamp: Date.now(),
+      source: "agent",
+      category: "error",
+      intent: "notification",
+      context: {
+        agentId: this.agentId,
+      },
       data: {
-        error,
+        code: error.code as AgentErrorOccurredEvent["data"]["code"],
+        message: error.message,
+        severity: error.severity,
+        recoverable: error.recoverable,
+        details: error.cause ? { cause: error.cause.message } : undefined,
+        stack: error.cause?.stack,
       },
     };
   }

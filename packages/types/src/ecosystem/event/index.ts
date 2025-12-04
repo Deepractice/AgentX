@@ -1,17 +1,63 @@
 /**
- * Ecosystem Events - Unified event definitions
+ * Event System - Unified event definitions for AgentX
  *
- * All events that flow on SystemBus:
- * - EnvironmentEvent - External world events (connected, disconnected, text_chunk, etc.)
- * - AgentEvent - Agent events (state, stream, message, turn, error)
- * - SessionEvent - Session events (TODO)
- * - ContainerEvent - Container events (TODO)
+ * Event Hierarchy:
+ * ```
+ * SystemEvent (base)
+ * │
+ * ├── EnvironmentEvent (external world perception)
+ * │   ├── DriveableEvent (can drive Agent)
+ * │   │   └── message_start, text_delta, tool_call...
+ * │   └── ConnectionEvent (network status)
+ * │       └── connected, disconnected, reconnecting
+ * │
+ * └── RuntimeEvent (Container internal)
+ *     ├── AgentEvent
+ *     │   ├── stream (real-time output)
+ *     │   ├── state (transitions)
+ *     │   ├── message (complete messages)
+ *     │   ├── turn (conversation turns)
+ *     │   └── error (agent errors)
+ *     │
+ *     ├── SessionEvent
+ *     │   ├── lifecycle (created, destroyed)
+ *     │   ├── persist (save, message persistence)
+ *     │   └── action (resume, fork, title update)
+ *     │
+ *     ├── ContainerEvent
+ *     │   └── lifecycle (created, destroyed, agent registration)
+ *     │
+ *     └── SandboxEvent
+ *         ├── llm (API calls, streaming, responses)
+ *         ├── workspace (file operations)
+ *         └── mcp (tool operations)
+ * ```
  *
- * @see issues/030-ecosystem-architecture.md
+ * Design Principles:
+ * - Type-as-Documentation: Types are self-explanatory
+ * - Isomorphic: Same events work in Node and Browser
+ * - Request/Result: Request events can be forwarded or executed
  */
 
-// Environment Events (external world)
-export * from "./EnvironmentEvent";
+// ============================================================================
+// Base Types
+// ============================================================================
 
-// Agent Events
-export * from "./agent";
+export type {
+  SystemEvent,
+  EventSource,
+  EventIntent,
+  EventCategory,
+} from "./base";
+
+// ============================================================================
+// Environment Events (External World)
+// ============================================================================
+
+export * from "./environment";
+
+// ============================================================================
+// Runtime Events (Container Internal)
+// ============================================================================
+
+export * from "./runtime";

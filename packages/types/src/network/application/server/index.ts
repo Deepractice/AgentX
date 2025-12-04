@@ -32,5 +32,5 @@ export type {
   InterruptResponse,
   // Error
   ErrorResponse,
-  ErrorCode,
+  ApiErrorCode,
 } from "./ResponseTypes";

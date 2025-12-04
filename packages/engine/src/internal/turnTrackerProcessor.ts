@@ -15,14 +15,16 @@
 
 import type { Processor, ProcessorDefinition } from "~/mealy";
 import type {
-  StreamEventType,
+  // Input: combined stream and message events
+  AgentStreamEvent,
+  AgentMessageEvent,
   MessageStopEvent,
   UserMessageEvent,
+  // Output: Turn events
   TurnRequestEvent,
   TurnResponseEvent,
-  MessageEventType,
+  // Data types
   TokenUsage,
-  UserMessage,
 } from "@agentxjs/types";
 
 // ===== State Types =====
@@ -32,7 +34,8 @@ import type {
  */
 export interface PendingTurn {
   turnId: string;
-  userMessage: UserMessage;
+  messageId: string;
+  content: string;
   requestedAt: number;
 }
 
@@ -87,20 +90,8 @@ export type TurnTrackerOutput = TurnRequestEvent | TurnResponseEvent;
  * Input event types for TurnTracker
  * Accepts both Stream and Message layer events
  */
-export type TurnTrackerInput = StreamEventType | MessageEventType;
+export type TurnTrackerInput = AgentStreamEvent | AgentMessageEvent;
 
-/**
- * Calculate cost from token usage
- */
-function calculateCost(
-  usage: TokenUsage,
-  costPerInputToken: number,
-  costPerOutputToken: number
-): number {
-  const inputCost = usage.input * costPerInputToken;
-  const outputCost = usage.output * costPerOutputToken;
-  return inputCost + outputCost;
-}
 
 /**
  * turnTrackerProcessor
@@ -115,10 +106,10 @@ export const turnTrackerProcessor: Processor<
 > = (state, input): [TurnTrackerState, TurnTrackerOutput[]] => {
   switch (input.type) {
     case "user_message":
-      return handleUserMessage(state, input);
+      return handleUserMessage(state, input as AgentMessageEvent);
 
     case "message_stop":
-      return handleMessageStop(state, input);
+      return handleMessageStop(state, input as AgentStreamEvent);
 
     case "assistant_message":
       // Turn completion is handled in message_stop
@@ -135,25 +126,32 @@ export const turnTrackerProcessor: Processor<
  */
 function handleUserMessage(
   state: Readonly<TurnTrackerState>,
-  event: UserMessageEvent
+  event: AgentMessageEvent
 ): [TurnTrackerState, TurnTrackerOutput[]] {
+  const data = event.data as UserMessageEvent["data"];
   const turnId = generateId();
 
   const pendingTurn: PendingTurn = {
     turnId,
-    userMessage: event.data,
+    messageId: data.messageId,
+    content: data.content,
     requestedAt: event.timestamp,
   };
 
   const turnRequestEvent: TurnRequestEvent = {
     type: "turn_request",
-    uuid: generateId(),
-    agentId: event.agentId,
     timestamp: Date.now(),
-    turnId,
+    source: "agent",
+    category: "turn",
+    intent: "notification",
+    context: {
+      agentId: event.context?.agentId,
+    },
     data: {
-      userMessage: event.data,
-      requestedAt: event.timestamp,
+      turnId,
+      messageId: data.messageId,
+      content: data.content,
+      timestamp: event.timestamp,
     },
   };
 
@@ -171,13 +169,14 @@ function handleUserMessage(
  */
 function handleMessageStop(
   state: Readonly<TurnTrackerState>,
-  event: MessageStopEvent
+  event: AgentStreamEvent
 ): [TurnTrackerState, TurnTrackerOutput[]] {
   if (!state.pendingTurn) {
     return [state, []];
   }
 
-  const stopReason = event.data.stopReason;
+  const data = event.data as MessageStopEvent["data"];
+  const stopReason = data.stopReason;
 
   // Complete turn based on stop reason
   // - "end_turn": Normal completion (no tool use)
@@ -185,7 +184,7 @@ function handleMessageStop(
   // - "max_tokens": Hit token limit, complete turn
   // - "stop_sequence": Hit stop sequence, complete turn
   if (stopReason === "end_turn" || stopReason === "max_tokens" || stopReason === "stop_sequence") {
-    return completeTurn(state, event.agentId, event.timestamp);
+    return completeTurn(state, event.context.agentId, event.timestamp);
   }
 
   // For tool_use, don't complete turn yet
@@ -204,30 +203,26 @@ function completeTurn(
     return [state, []];
   }
 
-  const { turnId, requestedAt } = state.pendingTurn;
+  const { turnId, messageId, requestedAt } = state.pendingTurn;
   const duration = completedAt - requestedAt;
 
-  const usage = { input: 0, output: 0 };
-  const cost = calculateCost(usage, state.costPerInputToken, state.costPerOutputToken);
+  const usage: TokenUsage = { input: 0, output: 0 };
 
   const turnResponseEvent: TurnResponseEvent = {
     type: "turn_response",
-    uuid: generateId(),
-    agentId,
     timestamp: Date.now(),
-    turnId,
+    source: "agent",
+    category: "turn",
+    intent: "notification",
+    context: {
+      agentId,
+    },
     data: {
-      assistantMessage: {
-        id: generateId(),
-        role: "assistant",
-        subtype: "assistant",
-        content: "",
-        timestamp: completedAt,
-      },
-      respondedAt: completedAt,
-      durationMs: duration,
+      turnId,
+      messageId,
+      duration,
       usage,
-      costUsd: cost,
+      timestamp: completedAt,
     },
   };
 

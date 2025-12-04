@@ -31,7 +31,7 @@ import type {
   AgentDriver,
   Sandbox,
   SystemBus,
-  // Stream Layer Events
+  // Stream Layer Events (from Environment - DriveableEvent)
   MessageStartEvent,
   MessageDeltaEvent,
   MessageStopEvent,
@@ -43,18 +43,18 @@ import type {
   ToolUseContentBlockStopEvent,
   ToolCallEvent,
   ToolResultEvent,
-  // Message Layer Events
+  // Message Layer Events (from Runtime - AgentMessageEvent)
   UserMessageEvent,
   AssistantMessageEvent,
   ToolCallMessageEvent,
   ToolResultMessageEvent,
-  // Turn Layer Events
+  // Turn Layer Events (from Runtime - AgentTurnEvent)
   TurnRequestEvent,
   TurnResponseEvent,
-  // Error Layer Events
-  ErrorEvent,
-  // State Layer Events
-  ConversationQueuedStateEvent,
+  // Error Layer Events (from Runtime - AgentErrorEvent)
+  AgentErrorOccurredEvent,
+  // State Layer Events (from Runtime - AgentStateEvent)
+  ConversationQueuedEvent,
 } from "@agentxjs/types";
 import type { UserMessage, AgentState } from "@agentxjs/types";
 import { isStateEvent } from "@agentxjs/types";
@@ -224,11 +224,19 @@ export class AgentInstance implements Agent {
 
     // Emit user_message event for presenters and handlers
     const userMessageEvent: UserMessageEvent = {
-      uuid: `evt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       type: "user_message",
-      agentId: this.agentId,
       timestamp: Date.now(),
-      data: userMessage,
+      source: "agent",
+      category: "message",
+      intent: "notification",
+      context: {
+        agentId: this.agentId,
+      },
+      data: {
+        messageId: userMessage.id,
+        content: typeof userMessage.content === "string" ? userMessage.content : JSON.stringify(userMessage.content),
+        timestamp: userMessage.timestamp,
+      },
     };
     this.presentOutput(userMessageEvent);
     this.notifyHandlers(userMessageEvent);
@@ -285,13 +293,17 @@ export class AgentInstance implements Agent {
       });
 
       // 0. Emit queued state event - message received, processing about to start
-      const queuedEvent: ConversationQueuedStateEvent = {
+      const queuedEvent: ConversationQueuedEvent = {
         type: "conversation_queued",
-        uuid: `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-        agentId: this.agentId,
         timestamp: Date.now(),
+        source: "agent",
+        category: "state",
+        intent: "notification",
+        context: {
+          agentId: this.agentId,
+        },
         data: {
-          userMessage,
+          messageId: userMessage.id,
         },
       };
       this.notifyHandlers(queuedEvent);
@@ -381,7 +393,7 @@ export class AgentInstance implements Agent {
   on(type: "tool_result_message", handler: (event: ToolResultMessageEvent) => void): Unsubscribe;
 
   // Type-safe overloads for Error Layer Events
-  on(type: "error", handler: (event: ErrorEvent) => void): Unsubscribe;
+  on(type: "agent_error", handler: (event: AgentErrorOccurredEvent) => void): Unsubscribe;
 
   // Type-safe overloads for Turn Layer Events
   on(type: "turn_request", handler: (event: TurnRequestEvent) => void): Unsubscribe;

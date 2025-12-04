@@ -78,17 +78,17 @@ export const agentProcessor = combineProcessors<
   AgentProcessorInput,
   AgentProcessorOutput
 >({
-  messageAssembler: messageAssemblerProcessor as Processor<
+  messageAssembler: messageAssemblerProcessor as unknown as Processor<
     AgentEngineState["messageAssembler"],
     AgentProcessorInput,
     AgentProcessorOutput
   >,
-  stateEventProcessor: stateEventProcessor as Processor<
+  stateEventProcessor: stateEventProcessor as unknown as Processor<
     AgentEngineState["stateEventProcessor"],
     AgentProcessorInput,
     AgentProcessorOutput
   >,
-  turnTracker: turnTrackerProcessor as Processor<
+  turnTracker: turnTrackerProcessor as unknown as Processor<
     AgentEngineState["turnTracker"],
     AgentProcessorInput,
     AgentProcessorOutput

@@ -28,7 +28,7 @@ import type { Logger } from "~/application/common/logger";
 import type { AgentDefinition } from "~/ecosystem/runtime/agent/AgentDefinition";
 import type { AgentContext } from "~/ecosystem/runtime/agent/AgentContext";
 import type { Ecosystem } from "~/ecosystem/Ecosystem";
-import type { AnyEnvironmentEvent } from "../event";
+import type { EnvironmentEvent } from "../event";
 
 /**
  * Runtime - Technical infrastructure layer (extends Ecosystem)
@@ -41,7 +41,7 @@ import type { AnyEnvironmentEvent } from "../event";
  *
  * This is a pure infrastructure interface - no business concepts (tenant, etc.).
  */
-export interface Runtime extends Ecosystem<AnyEnvironmentEvent> {
+export interface Runtime extends Ecosystem<EnvironmentEvent> {
   /** Runtime identifier (e.g., "node", "sse") */
   readonly name: string;
 

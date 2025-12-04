@@ -2,7 +2,7 @@
  * Shared utilities for handlers
  */
 
-import type { ErrorCode, ErrorResponse } from "@agentxjs/types";
+import type { ApiErrorCode, ErrorResponse } from "@agentxjs/types";
 
 /**
  * Create JSON response
@@ -19,7 +19,7 @@ export function jsonResponse(data: unknown, status = 200): Response {
 /**
  * Create error response
  */
-export function errorResponse(code: ErrorCode, message: string, status: number): Response {
+export function errorResponse(code: ApiErrorCode, message: string, status: number): Response {
   const body: ErrorResponse = {
     error: { code, message },
   };

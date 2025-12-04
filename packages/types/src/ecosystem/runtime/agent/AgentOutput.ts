@@ -2,27 +2,25 @@
  * AgentOutput - Union of all possible agent output events
  *
  * Includes all event layers:
- * - Stream: Raw streaming events
+ * - Stream: DriveableEvent (pass-through from Environment)
  * - State: State machine transitions
  * - Message: Assembled messages
  * - Turn: Turn analytics
- * - Error: Independent error events (transportable via SSE)
+ * - Error: Agent error events
  */
 
-import type {
-  StreamEventType,
-  StateEventType,
-  MessageEventType,
-  TurnEventType,
-} from "~/ecosystem/event/agent";
-import type { ErrorEvent } from "~/ecosystem/event/agent/error";
+import type { DriveableEvent } from "~/ecosystem/event/environment/DriveableEvent";
+import type { AgentStateEvent } from "~/ecosystem/event/runtime/agent/state";
+import type { AgentMessageEvent } from "~/ecosystem/event/runtime/agent/message";
+import type { AgentTurnEvent } from "~/ecosystem/event/runtime/agent/turn";
+import type { AllAgentErrorEvent } from "~/ecosystem/event/runtime/agent/error";
 
 /**
  * All possible output types from Agent
  */
 export type AgentOutput =
-  | StreamEventType
-  | StateEventType
-  | MessageEventType
-  | TurnEventType
-  | ErrorEvent;
+  | DriveableEvent
+  | AgentStateEvent
+  | AgentMessageEvent
+  | AgentTurnEvent
+  | AllAgentErrorEvent;

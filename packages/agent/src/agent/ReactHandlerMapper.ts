@@ -29,7 +29,7 @@ const REACT_TO_EVENT_MAP: Record<keyof ReactHandlerMap, keyof EventHandlerMap> =
   onToolCallMessage: "tool_call_message",
   onToolResultMessage: "tool_result_message",
   // Error Layer Events (independent, transportable via SSE)
-  onError: "error",
+  onAgentError: "agent_error",
   // Turn Layer Events
   onTurnRequest: "turn_request",
   onTurnResponse: "turn_response",

@@ -114,16 +114,16 @@ export interface InterruptResponse {
  */
 export interface ErrorResponse {
   error: {
-    code: ErrorCode;
+    code: ApiErrorCode;
     message: string;
     details?: unknown;
   };
 }
 
 /**
- * Error codes
+ * API error codes for HTTP responses
  */
-export type ErrorCode =
+export type ApiErrorCode =
   | "AGENT_NOT_FOUND"
   | "AGENT_BUSY"
   | "AGENT_DESTROYED"

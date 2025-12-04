@@ -25,7 +25,7 @@
  * ```
  */
 
-import type { AnyEnvironmentEvent } from "~/ecosystem/event";
+import type { EnvironmentEvent } from "~/ecosystem/event";
 
 /**
  * Channel state
@@ -35,7 +35,7 @@ export type ChannelState = "disconnected" | "connecting" | "connected" | "reconn
 /**
  * Channel event handler
  */
-export type ChannelEventHandler = (event: AnyEnvironmentEvent) => void;
+export type ChannelEventHandler = (event: EnvironmentEvent) => void;
 
 /**
  * Channel state change handler
@@ -79,7 +79,7 @@ export interface Channel {
    * @param event - Event to send
    * @throws Error if not connected
    */
-  send(event: AnyEnvironmentEvent): void;
+  send(event: EnvironmentEvent): void;
 
   /**
    * Subscribe to events from remote Ecosystem

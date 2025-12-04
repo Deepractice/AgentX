@@ -17,7 +17,7 @@ import type {
   ErrorManager as IErrorManager,
   ErrorHandler,
   AgentError,
-  ErrorEvent,
+  AgentErrorOccurredEvent,
   Unsubscribe,
 } from "@agentxjs/types";
 import { createLogger } from "@agentxjs/common";
@@ -37,7 +37,7 @@ export class ErrorManager implements IErrorManager {
    * 1. Default logging (always)
    * 2. Custom handlers (user-registered)
    */
-  handle(agentId: string, error: AgentError, event: ErrorEvent): void {
+  handle(agentId: string, error: AgentError, event: AgentErrorOccurredEvent): void {
     // 1. Default logging (always happens)
     this.logError(agentId, error);
 

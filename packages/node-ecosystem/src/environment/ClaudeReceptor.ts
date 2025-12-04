@@ -1,16 +1,25 @@
 /**
  * ClaudeReceptor - Perceives Claude SDK responses and emits to SystemBus
  *
- * Converts Claude SDK stream events to EnvironmentEvents.
- * Only emits raw streaming materials: text_chunk, stream_start, stream_end, etc.
+ * Converts Claude SDK stream events to DriveableEvents.
+ * DriveableEvents are the subset of EnvironmentEvents that can drive Agent.
+ *
+ * Type Relationship:
+ * ```
+ * EnvironmentEvent
+ * ├── DriveableEvent ← ClaudeReceptor outputs this
+ * │   └── message_start, text_delta, message_stop, interrupted...
+ * └── ConnectionEvent
+ * ```
  */
 
 import type {
   Receptor,
   SystemBus,
-  TextChunkEvent,
-  StreamStartEvent,
-  StreamEndEvent,
+  DriveableEvent,
+  MessageStartEvent,
+  TextDeltaEvent,
+  MessageStopEvent,
   InterruptedEvent,
 } from "@agentxjs/types";
 import type { SDKPartialAssistantMessage } from "@anthropic-ai/claude-agent-sdk";
@@ -20,7 +29,7 @@ import { createLogger } from "@agentxjs/common";
 const logger = createLogger("ecosystem/ClaudeReceptor");
 
 /**
- * ClaudeReceptor - Perceives Claude SDK and emits EnvironmentEvents to SystemBus
+ * ClaudeReceptor - Perceives Claude SDK and emits DriveableEvents to SystemBus
  */
 export class ClaudeReceptor implements Receptor {
   private bus: SystemBus | null = null;
@@ -51,53 +60,63 @@ export class ClaudeReceptor implements Receptor {
   /**
    * Emit interrupted event
    */
-  emitInterrupted(reason: string): void {
+  emitInterrupted(reason: "user_interrupt" | "timeout" | "error" | "system"): void {
     this.emitToBus({
       type: "interrupted",
       timestamp: Date.now(),
+      requestId: "", // TODO: Need to track requestId
       data: { reason },
     } as InterruptedEvent);
   }
 
   /**
-   * Process stream_event from SDK and emit corresponding EnvironmentEvent
+   * Process stream_event from SDK and emit corresponding DriveableEvent
+   *
+   * TODO: requestId should be passed from Effector when the request is made.
+   * Currently using placeholder empty string.
    */
   private processStreamEvent(sdkMsg: SDKPartialAssistantMessage): void {
     const event = sdkMsg.event;
+    const requestId = ""; // TODO: Implement requestId tracking
 
     switch (event.type) {
       case "message_start":
         this.emitToBus({
-          type: "stream_start",
+          type: "message_start",
           timestamp: Date.now(),
+          requestId,
           data: {
-            messageId: event.message.id,
-            model: event.message.model,
+            message: {
+              id: event.message.id,
+              model: event.message.model,
+            },
           },
-        } as StreamStartEvent);
+        } as MessageStartEvent);
         break;
 
       case "content_block_delta":
         if (event.delta.type === "text_delta") {
           this.emitToBus({
-            type: "text_chunk",
+            type: "text_delta",
             timestamp: Date.now(),
+            requestId,
             data: { text: event.delta.text },
-          } as TextChunkEvent);
+          } as TextDeltaEvent);
         }
         break;
 
       case "message_stop":
         this.emitToBus({
-          type: "stream_end",
+          type: "message_stop",
           timestamp: Date.now(),
+          requestId,
           data: { stopReason: "end_turn" },
-        } as StreamEndEvent);
+        } as MessageStopEvent);
         break;
     }
   }
 
-  private emitToBus(event: TextChunkEvent | StreamStartEvent | StreamEndEvent | InterruptedEvent): void {
+  private emitToBus(event: DriveableEvent): void {
     if (this.bus) {
       this.bus.emit(event);
     }

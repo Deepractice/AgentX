@@ -29,7 +29,7 @@ import type {
   ChannelEventHandler,
   ChannelStateHandler,
   ChannelUnsubscribe,
-  AnyEnvironmentEvent,
+  EnvironmentEvent,
 } from "@agentxjs/types";
 import { createLogger } from "@agentxjs/common";
 
@@ -70,7 +70,7 @@ class ServerWebSocketChannel implements Channel {
   private setupHandlers(): void {
     this.ws.on("message", (data) => {
       try {
-        const event = JSON.parse(data.toString()) as AnyEnvironmentEvent;
+        const event = JSON.parse(data.toString()) as EnvironmentEvent;
         logger.debug("Received event", { type: event.type });
 
         for (const handler of this.eventHandlers) {
@@ -123,7 +123,7 @@ class ServerWebSocketChannel implements Channel {
     this.setState("disconnected");
   }
 
-  send(event: AnyEnvironmentEvent): void {
+  send(event: EnvironmentEvent): void {
     if (this._state !== "connected" || this.ws.readyState !== WebSocket.OPEN) {
       throw new Error(`Cannot send event: channel is ${this._state}`);
     }

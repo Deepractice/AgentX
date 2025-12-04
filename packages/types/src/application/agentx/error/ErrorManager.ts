@@ -25,7 +25,7 @@
  */
 
 import type { AgentError } from "~/application/error";
-import type { ErrorEvent } from "~/ecosystem/event/agent/error";
+import type { AgentErrorOccurredEvent } from "~/ecosystem/event/runtime/agent/error";
 import type { Unsubscribe } from "~/ecosystem/runtime/agent/AgentEventHandler";
 
 /**
@@ -39,7 +39,7 @@ export interface ErrorHandler {
    * @param error - The classified error
    * @param event - The full error event
    */
-  handle(agentId: string, error: AgentError, event: ErrorEvent): void;
+  handle(agentId: string, error: AgentError, event: AgentErrorOccurredEvent): void;
 }
 
 /**

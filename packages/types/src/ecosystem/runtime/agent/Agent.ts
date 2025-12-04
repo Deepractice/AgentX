@@ -27,7 +27,7 @@ import type { AgentEventHandler, Unsubscribe } from "./AgentEventHandler";
 import type { AgentMiddleware } from "./AgentMiddleware";
 import type { AgentInterceptor } from "./AgentInterceptor";
 
-// Stream Layer Events
+// Stream Layer Events (DriveableEvent from Environment)
 import type {
   MessageStartEvent,
   MessageDeltaEvent,
@@ -40,7 +40,7 @@ import type {
   ToolUseContentBlockStopEvent,
   ToolCallEvent,
   ToolResultEvent,
-} from "~/ecosystem/event/agent/stream";
+} from "~/ecosystem/event/environment/DriveableEvent";
 
 // Message Layer Events
 import type {
@@ -48,13 +48,13 @@ import type {
   AssistantMessageEvent,
   ToolCallMessageEvent,
   ToolResultMessageEvent,
-} from "~/ecosystem/event/agent/message";
+} from "~/ecosystem/event/runtime/agent/message";
 
-// Error Layer Events (independent, transportable via SSE)
-import type { ErrorEvent } from "~/ecosystem/event/agent/error";
+// Error Layer Events
+import type { AgentErrorOccurredEvent } from "~/ecosystem/event/runtime/agent/error";
 
 // Turn Layer Events
-import type { TurnRequestEvent, TurnResponseEvent } from "~/ecosystem/event/agent/turn";
+import type { TurnRequestEvent, TurnResponseEvent } from "~/ecosystem/event/runtime/agent/turn";
 
 /**
  * State change event payload
@@ -101,8 +101,8 @@ export interface EventHandlerMap {
   tool_call_message?: (event: ToolCallMessageEvent) => void;
   tool_result_message?: (event: ToolResultMessageEvent) => void;
 
-  // Error Layer Events (independent, transportable via SSE)
-  error?: (event: ErrorEvent) => void;
+  // Error Layer Events
+  agent_error?: (event: AgentErrorOccurredEvent) => void;
 
   // Turn Layer Events
   turn_request?: (event: TurnRequestEvent) => void;
@@ -141,8 +141,8 @@ export interface ReactHandlerMap {
   onToolCallMessage?: (event: ToolCallMessageEvent) => void;
   onToolResultMessage?: (event: ToolResultMessageEvent) => void;
 
-  // Error Layer Events (independent, transportable via SSE)
-  onError?: (event: ErrorEvent) => void;
+  // Error Layer Events
+  onAgentError?: (event: AgentErrorOccurredEvent) => void;
 
   // Turn Layer Events
   onTurnRequest?: (event: TurnRequestEvent) => void;
@@ -256,7 +256,7 @@ export interface Agent {
   on(type: "tool_result_message", handler: (event: ToolResultMessageEvent) => void): Unsubscribe;
 
   // ===== Type-safe overloads for Error Layer Events =====
-  on(type: "error", handler: (event: ErrorEvent) => void): Unsubscribe;
+  on(type: "agent_error", handler: (event: AgentErrorOccurredEvent) => void): Unsubscribe;
 
   // ===== Type-safe overloads for Turn Layer Events =====
   on(type: "turn_request", handler: (event: TurnRequestEvent) => void): Unsubscribe;

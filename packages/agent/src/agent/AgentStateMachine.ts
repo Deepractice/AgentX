@@ -13,7 +13,7 @@
  * - Notify state change subscribers
  */
 
-import type { AgentState, StateEventType, Unsubscribe } from "@agentxjs/types";
+import type { AgentState, AgentStateEvent, Unsubscribe } from "@agentxjs/types";
 import { createLogger } from "@agentxjs/common";
 
 const logger = createLogger("core/AgentStateMachine");
@@ -50,7 +50,7 @@ export class AgentStateMachine {
    *
    * @param event - StateEvent from Engine layer
    */
-  process(event: StateEventType): void {
+  process(event: AgentStateEvent): void {
     const prev = this._state;
     const next = this.mapEventToState(event);
 
@@ -98,7 +98,7 @@ export class AgentStateMachine {
    * @param event - StateEvent from Engine
    * @returns New AgentState or null if no transition needed
    */
-  private mapEventToState(event: StateEventType): AgentState | null {
+  private mapEventToState(event: AgentStateEvent): AgentState | null {
     switch (event.type) {
       // Agent lifecycle
       case "agent_initializing":

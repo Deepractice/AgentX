@@ -22,21 +22,20 @@
 
 import type { Processor, ProcessorDefinition } from "~/mealy";
 import type {
-  StreamEventType,
+  // Input: AgentStreamEvent (from Driver)
+  AgentStreamEvent,
+  // DriveableEvent types (for data structure)
   MessageStartEvent,
-  MessageDeltaEvent,
   MessageStopEvent,
-  TextContentBlockStartEvent,
   ToolUseContentBlockStartEvent,
-  ToolUseContentBlockStopEvent,
-  ToolCallEvent,
-  InterruptedStreamEvent,
-  ConversationStartStateEvent,
-  ConversationRespondingStateEvent,
-  ConversationEndStateEvent,
-  ConversationInterruptedStateEvent,
-  ToolPlannedStateEvent,
-  ToolExecutingStateEvent,
+  InterruptedEvent,
+  // Output: State events
+  ConversationStartEvent,
+  ConversationRespondingEvent,
+  ConversationEndEvent,
+  ConversationInterruptedEvent,
+  ToolPlannedEvent,
+  ToolExecutingEvent,
 } from "@agentxjs/types";
 import { createLogger } from "@agentxjs/common";
 
@@ -66,27 +65,22 @@ export function createInitialStateEventProcessorContext(): StateEventProcessorCo
 // ===== Processor Implementation =====
 
 /**
- * Generate a unique ID
- */
-function generateId(): string {
-  return `state_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-}
-
-/**
  * Output event types from StateEventProcessor
  */
 export type StateEventProcessorOutput =
-  | ConversationStartStateEvent
-  | ConversationRespondingStateEvent
-  | ConversationEndStateEvent
-  | ConversationInterruptedStateEvent
-  | ToolPlannedStateEvent
-  | ToolExecutingStateEvent;
+  | ConversationStartEvent
+  | ConversationRespondingEvent
+  | ConversationEndEvent
+  | ConversationInterruptedEvent
+  | ToolPlannedEvent
+  | ToolExecutingEvent;
 
 /**
  * Input event types for StateEventProcessor
+ *
+ * Engine receives AgentStreamEvent (DriveableEvent + context from Driver)
  */
-export type StateEventProcessorInput = StreamEventType;
+export type StateEventProcessorInput = AgentStreamEvent;
 
 // Removed transitionTo helper - Processor no longer tracks state
 
@@ -152,19 +146,21 @@ export const stateEventProcessor: Processor<
  */
 function handleMessageStart(
   context: Readonly<StateEventProcessorContext>,
-  event: MessageStartEvent
+  event: AgentStreamEvent
 ): [StateEventProcessorContext, StateEventProcessorOutput[]] {
-  const conversationStartEvent: ConversationStartStateEvent = {
+  const data = event.data as MessageStartEvent["data"];
+
+  const conversationStartEvent: ConversationStartEvent = {
     type: "conversation_start",
-    uuid: generateId(),
-    agentId: event.agentId,
-    timestamp: event.timestamp,
-    transition: {
-      reason: "conversation_started",
-      trigger: "message_start",
+    timestamp: Date.now(),
+    source: "agent",
+    category: "state",
+    intent: "notification",
+    context: {
+      agentId: event.context.agentId,
     },
     data: {
-      userMessage: {} as any, // Will be populated by higher-level component
+      messageId: data.message.id,
     },
   };
 
@@ -179,7 +175,7 @@ function handleMessageStart(
  */
 function handleMessageDelta(
   context: Readonly<StateEventProcessorContext>,
-  _event: MessageDeltaEvent
+  _event: AgentStreamEvent
 ): [StateEventProcessorContext, StateEventProcessorOutput[]] {
   // No-op: stopReason now comes from message_stop
   return [context, []];
@@ -196,9 +192,10 @@ function handleMessageDelta(
  */
 function handleMessageStop(
   context: Readonly<StateEventProcessorContext>,
-  event: MessageStopEvent
+  event: AgentStreamEvent
 ): [StateEventProcessorContext, StateEventProcessorOutput[]] {
-  const stopReason = event.data.stopReason;
+  const data = event.data as MessageStopEvent["data"];
+  const stopReason = data.stopReason;
 
   logger.debug("message_stop received", { stopReason });
 
@@ -210,26 +207,17 @@ function handleMessageStop(
   }
 
   // For all other cases (end_turn, max_tokens, etc.), emit conversation_end
-  const conversationEndEvent: ConversationEndStateEvent = {
+  const conversationEndEvent: ConversationEndEvent = {
     type: "conversation_end",
-    uuid: generateId(),
-    agentId: event.agentId,
-    timestamp: event.timestamp,
-    transition: {
-      reason: "conversation_completed",
-      trigger: "message_stop",
+    timestamp: Date.now(),
+    source: "agent",
+    category: "state",
+    intent: "notification",
+    context: {
+      agentId: event.context.agentId,
     },
     data: {
-      assistantMessage: {} as any, // Will be populated by higher-level component
-      durationMs: 0, // Will be calculated by StateMachine or TurnTracker
-      durationApiMs: 0,
-      numTurns: 0,
-      result: "completed",
-      totalCostUsd: 0,
-      usage: {
-        input: 0,
-        output: 0,
-      },
+      reason: "completed",
     },
   };
 
@@ -243,16 +231,16 @@ function handleMessageStop(
  */
 function handleTextContentBlockStart(
   context: Readonly<StateEventProcessorContext>,
-  event: TextContentBlockStartEvent
+  event: AgentStreamEvent
 ): [StateEventProcessorContext, StateEventProcessorOutput[]] {
-  const respondingEvent: ConversationRespondingStateEvent = {
+  const respondingEvent: ConversationRespondingEvent = {
     type: "conversation_responding",
-    uuid: generateId(),
-    agentId: event.agentId,
     timestamp: Date.now(),
-    transition: {
-      reason: "assistant_responding",
-      trigger: "text_content_block_start",
+    source: "agent",
+    category: "state",
+    intent: "notification",
+    context: {
+      agentId: event.context.agentId,
     },
     data: {},
   };
@@ -267,35 +255,43 @@ function handleTextContentBlockStart(
  */
 function handleToolUseContentBlockStart(
   context: Readonly<StateEventProcessorContext>,
-  event: ToolUseContentBlockStartEvent
+  event: AgentStreamEvent
 ): [StateEventProcessorContext, StateEventProcessorOutput[]] {
+  const data = event.data as ToolUseContentBlockStartEvent["data"];
   const outputs: StateEventProcessorOutput[] = [];
 
-  // Emit ToolPlannedStateEvent
-  const toolPlannedEvent: ToolPlannedStateEvent = {
+  // Emit ToolPlannedEvent
+  const toolPlannedEvent: ToolPlannedEvent = {
     type: "tool_planned",
-    uuid: generateId(),
-    agentId: event.agentId,
-    timestamp: event.timestamp,
+    timestamp: Date.now(),
+    source: "agent",
+    category: "state",
+    intent: "notification",
+    context: {
+      agentId: event.context.agentId,
+    },
     data: {
-      id: event.data.id,
-      name: event.data.name,
-      input: {},
+      toolId: data.id,
+      toolName: data.name,
     },
   };
   outputs.push(toolPlannedEvent);
 
-  // Emit ToolExecutingStateEvent
-  const toolExecutingEvent: ToolExecutingStateEvent = {
+  // Emit ToolExecutingEvent
+  const toolExecutingEvent: ToolExecutingEvent = {
     type: "tool_executing",
-    uuid: generateId(),
-    agentId: event.agentId,
-    timestamp: event.timestamp,
-    transition: {
-      reason: "tool_planning_started",
-      trigger: "tool_use_content_block_start",
+    timestamp: Date.now(),
+    source: "agent",
+    category: "state",
+    intent: "notification",
+    context: {
+      agentId: event.context.agentId,
     },
-    data: {},
+    data: {
+      toolId: data.id,
+      toolName: data.name,
+      input: {},
+    },
   };
   outputs.push(toolExecutingEvent);
 
@@ -310,7 +306,7 @@ function handleToolUseContentBlockStart(
  */
 function handleToolUseContentBlockStop(
   context: Readonly<StateEventProcessorContext>,
-  _event: ToolUseContentBlockStopEvent
+  _event: AgentStreamEvent
 ): [StateEventProcessorContext, StateEventProcessorOutput[]] {
   // Pass through - no State Event
   return [context, []];
@@ -324,7 +320,7 @@ function handleToolUseContentBlockStop(
  */
 function handleToolCall(
   context: Readonly<StateEventProcessorContext>,
-  _event: ToolCallEvent
+  _event: AgentStreamEvent
 ): [StateEventProcessorContext, StateEventProcessorOutput[]] {
   // Pass through - no State Event
   return [context, []];
@@ -340,21 +336,22 @@ function handleToolCall(
  */
 function handleInterrupted(
   context: Readonly<StateEventProcessorContext>,
-  event: InterruptedStreamEvent
+  event: AgentStreamEvent
 ): [StateEventProcessorContext, StateEventProcessorOutput[]] {
-  logger.debug("interrupted event received", { reason: event.data.reason });
+  const data = event.data as InterruptedEvent["data"];
+  logger.debug("interrupted event received", { reason: data.reason });
 
-  const conversationInterruptedEvent: ConversationInterruptedStateEvent = {
+  const conversationInterruptedEvent: ConversationInterruptedEvent = {
     type: "conversation_interrupted",
-    uuid: generateId(),
-    agentId: event.agentId,
-    timestamp: event.timestamp,
-    transition: {
-      reason: event.data.reason,
-      trigger: "interrupted",
+    timestamp: Date.now(),
+    source: "agent",
+    category: "state",
+    intent: "notification",
+    context: {
+      agentId: event.context.agentId,
     },
     data: {
-      reason: event.data.reason,
+      reason: data.reason,
     },
   };
 

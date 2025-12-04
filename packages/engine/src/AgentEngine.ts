@@ -1,7 +1,7 @@
 /**
  * AgentEngine - Pure Mealy Machine Event Processor
  *
- * AgentEngine is a stateless event processor that transforms stream events
+ * AgentEngine is a stateless event processor that transforms DriveableEvents
  * into higher-level events (state, message, turn events).
  *
  * Key Design:
@@ -9,6 +9,16 @@
  * - Engine does NOT hold driver or presenters (those belong to Agent layer)
  * - Engine manages intermediate processing state per agentId
  * - Multiple agents can share the same Engine instance
+ *
+ * Type Relationship:
+ * ```
+ * EnvironmentEvent (all external perceptions)
+ * │
+ * ├── DriveableEvent (can drive Agent) ← Engine processes this
+ * │   └── MessageStartEvent, TextDeltaEvent, ToolCallEvent...
+ * │
+ * └── ConnectionEvent (network status only, NOT processed by Engine)
+ * ```
  *
  * State Management:
  * - Processing state (pendingContents, etc.) is managed internally per agentId
@@ -19,12 +29,12 @@
  * const engine = new AgentEngine();
  *
  * // Agent layer coordinates:
- * // 1. Driver produces stream events
+ * // 1. Driver produces DriveableEvents
  * // 2. Engine processes events
  * // 3. Presenters handle outputs
  *
- * for await (const streamEvent of driver.receive(message, context)) {
- *   const outputs = engine.process(agentId, streamEvent);
+ * for await (const driveableEvent of driver.receive(message)) {
+ *   const outputs = engine.process(agentId, driveableEvent);
  *   for (const output of outputs) {
  *     presenters.forEach(p => p.present(agentId, output));
  *   }
@@ -38,7 +48,7 @@ import {
   type AgentEngineState,
 } from "./AgentProcessor";
 import { MemoryStore } from "~/mealy";
-import type { AgentOutput, StreamEventType } from "@agentxjs/types";
+import type { AgentOutput, DriveableEvent } from "@agentxjs/types";
 import { createLogger } from "@agentxjs/common";
 
 const logger = createLogger("engine/AgentEngine");
@@ -46,7 +56,7 @@ const logger = createLogger("engine/AgentEngine");
 /**
  * AgentEngine - Pure Mealy Machine for event processing
  *
- * - Input: StreamEventType (from Driver)
+ * - Input: DriveableEvent (from Driver, subset of EnvironmentEvent)
  * - Output: AgentOutput[] (state, message, turn events)
  * - State: Managed internally per agentId
  */
@@ -59,16 +69,16 @@ export class AgentEngine {
   }
 
   /**
-   * Process a single stream event and return output events
+   * Process a single driveable event and return output events
    *
    * This is the core Mealy Machine operation:
    * process(agentId, event) → outputs[]
    *
    * @param agentId - The agent identifier (for state isolation)
-   * @param event - Stream event to process
+   * @param event - DriveableEvent to process (subset of EnvironmentEvent that can drive Agent)
    * @returns Array of output events (state, message, turn events)
    */
-  process(agentId: string, event: StreamEventType): AgentOutput[] {
+  process(agentId: string, event: DriveableEvent): AgentOutput[] {
     const eventType = (event as any).type || "unknown";
     logger.debug("Processing event", { agentId, eventType });
 
