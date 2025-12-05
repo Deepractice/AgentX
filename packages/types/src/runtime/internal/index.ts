@@ -58,7 +58,6 @@ export type { Session } from "./session/Session";
 
 export type {
   SystemBus,
-  BusEvent,
   BusEventHandler,
   SubscribeOptions,
   Unsubscribe,

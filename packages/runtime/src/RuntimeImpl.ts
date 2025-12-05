@@ -15,7 +15,7 @@ import type {
   LLMProvider,
 } from "@agentxjs/types/runtime";
 import type { Agent, AgentConfig } from "@agentxjs/types/runtime";
-import type { Environment } from "@agentxjs/types/runtime/internal";
+import type { Environment, SystemBus } from "@agentxjs/types/runtime/internal";
 import type { RuntimeConfig } from "./createRuntime";
 import { SystemBusImpl, RuntimeAgent, RuntimeSession, RuntimeSandbox } from "./internal";
 import { ClaudeEnvironment } from "./environment";
@@ -112,6 +112,22 @@ export class RuntimeImpl implements Runtime {
         // Initialize container agents set
         this.containerAgents.set(containerId, new Set());
 
+        // Emit container_created event
+        this.bus.emit({
+          type: "container_created",
+          timestamp: now,
+          source: "container",
+          category: "lifecycle",
+          intent: "notification",
+          data: {
+            containerId,
+            createdAt: now,
+          },
+          context: {
+            containerId,
+          },
+        });
+
         return this.toContainerInfo(record);
       },
 
@@ -127,11 +143,29 @@ export class RuntimeImpl implements Runtime {
       },
 
       dispose: async (containerId: string): Promise<void> => {
+        const agentCount = this.containerAgents.get(containerId)?.size ?? 0;
+
         // Destroy all agents in container
         await this.agents.destroyAll(containerId);
 
         // Remove from memory
         this.containerAgents.delete(containerId);
+
+        // Emit container_destroyed event
+        this.bus.emit({
+          type: "container_destroyed",
+          timestamp: Date.now(),
+          source: "container",
+          category: "lifecycle",
+          intent: "notification",
+          data: {
+            containerId,
+            agentCount,
+          },
+          context: {
+            containerId,
+          },
+        });
 
         // Note: Container record stays in persistence (dispose != delete)
       },
@@ -176,6 +210,7 @@ export class RuntimeImpl implements Runtime {
           agentId,
           containerId,
           repository: this.persistence.sessions,
+          bus: this.bus,
         });
         await session.initialize();
 
@@ -200,6 +235,25 @@ export class RuntimeImpl implements Runtime {
         }
         agentIds.add(agentId);
 
+        // Emit agent_registered event
+        this.bus.emit({
+          type: "agent_registered",
+          timestamp: Date.now(),
+          source: "container",
+          category: "lifecycle",
+          intent: "notification",
+          data: {
+            containerId,
+            agentId,
+            definitionName: config.name,
+            registeredAt: Date.now(),
+          },
+          context: {
+            containerId,
+            agentId,
+          },
+        });
+
         return agent;
       },
 
@@ -223,6 +277,15 @@ export class RuntimeImpl implements Runtime {
         const agent = this.agentRegistry.get(agentId);
         if (!agent) return false;
 
+        // Find containerId before removal
+        let containerId: string | undefined;
+        for (const [cId, agentIds] of this.containerAgents.entries()) {
+          if (agentIds.has(agentId)) {
+            containerId = cId;
+            break;
+          }
+        }
+
         // Call agent's destroy
         await agent.destroy();
 
@@ -233,6 +296,23 @@ export class RuntimeImpl implements Runtime {
         for (const agentIds of this.containerAgents.values()) {
           agentIds.delete(agentId);
         }
+
+        // Emit agent_unregistered event
+        this.bus.emit({
+          type: "agent_unregistered",
+          timestamp: Date.now(),
+          source: "container",
+          category: "lifecycle",
+          intent: "notification",
+          data: {
+            containerId: containerId ?? "",
+            agentId,
+          },
+          context: {
+            containerId,
+            agentId,
+          },
+        });
 
         return true;
       },

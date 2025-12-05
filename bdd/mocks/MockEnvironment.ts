@@ -85,12 +85,14 @@ class MockEffector implements Effector {
 
   private createTextResponseEvents(text: string): DriveableEvent[] {
     const timestamp = Date.now();
-    const turnId = "";
 
+    // New event structure with source/category/intent
     const messageStart: MessageStartEvent = {
       type: "message_start",
       timestamp,
-      turnId,
+      source: "environment",
+      category: "stream",
+      intent: "notification",
       data: {
         message: {
           id: `msg_mock_${timestamp}`,
@@ -102,7 +104,9 @@ class MockEffector implements Effector {
     const textDelta: TextDeltaEvent = {
       type: "text_delta",
       timestamp: timestamp + 1,
-      turnId,
+      source: "environment",
+      category: "stream",
+      intent: "notification",
       data: {
         text,
       },
@@ -111,7 +115,9 @@ class MockEffector implements Effector {
     const messageStop: MessageStopEvent = {
       type: "message_stop",
       timestamp: timestamp + 2,
-      turnId,
+      source: "environment",
+      category: "stream",
+      intent: "notification",
       data: {
         stopReason: "end_turn",
       },

@@ -6,11 +6,11 @@
 
 import type {
   SystemBus,
-  BusEvent,
   BusEventHandler,
   SubscribeOptions,
   Unsubscribe,
 } from "@agentxjs/types/runtime/internal";
+import type { SystemEvent } from "@agentxjs/types/runtime";
 import { Subject } from "rxjs";
 
 /**
@@ -20,7 +20,7 @@ interface Subscription {
   id: number;
   type: string | string[] | "*";
   handler: BusEventHandler;
-  filter?: (event: BusEvent) => boolean;
+  filter?: (event: SystemEvent) => boolean;
   priority: number;
   once: boolean;
 }
@@ -29,7 +29,7 @@ interface Subscription {
  * SystemBus implementation using RxJS Subject
  */
 export class SystemBusImpl implements SystemBus {
-  private readonly subject = new Subject<BusEvent>();
+  private readonly subject = new Subject<SystemEvent>();
   private subscriptions: Subscription[] = [];
   private nextId = 0;
   private isDestroyed = false;
@@ -40,12 +40,12 @@ export class SystemBusImpl implements SystemBus {
     });
   }
 
-  emit(event: BusEvent): void {
+  emit(event: SystemEvent): void {
     if (this.isDestroyed) return;
     this.subject.next(event);
   }
 
-  emitBatch(events: BusEvent[]): void {
+  emitBatch(events: SystemEvent[]): void {
     for (const event of events) {
       this.emit(event);
     }
@@ -53,8 +53,8 @@ export class SystemBusImpl implements SystemBus {
 
   on<T extends string>(
     typeOrTypes: T | string[],
-    handler: BusEventHandler<BusEvent & { type: T }>,
-    options?: SubscribeOptions<BusEvent & { type: T }>
+    handler: BusEventHandler<SystemEvent & { type: T }>,
+    options?: SubscribeOptions<SystemEvent & { type: T }>
   ): Unsubscribe {
     if (this.isDestroyed) return () => {};
 
@@ -62,7 +62,7 @@ export class SystemBusImpl implements SystemBus {
       id: this.nextId++,
       type: typeOrTypes,
       handler: handler as BusEventHandler,
-      filter: options?.filter as ((event: BusEvent) => boolean) | undefined,
+      filter: options?.filter as ((event: SystemEvent) => boolean) | undefined,
       priority: options?.priority ?? 0,
       once: options?.once ?? false,
     };
@@ -80,7 +80,7 @@ export class SystemBusImpl implements SystemBus {
       id: this.nextId++,
       type: "*",
       handler,
-      filter: options?.filter as ((event: BusEvent) => boolean) | undefined,
+      filter: options?.filter as ((event: SystemEvent) => boolean) | undefined,
       priority: options?.priority ?? 0,
       once: options?.once ?? false,
     };
@@ -93,7 +93,7 @@ export class SystemBusImpl implements SystemBus {
 
   once<T extends string>(
     type: T,
-    handler: BusEventHandler<BusEvent & { type: T }>
+    handler: BusEventHandler<SystemEvent & { type: T }>
   ): Unsubscribe {
     return this.on(type, handler, { once: true });
   }
@@ -105,7 +105,7 @@ export class SystemBusImpl implements SystemBus {
     this.subject.complete();
   }
 
-  private dispatch(event: BusEvent): void {
+  private dispatch(event: SystemEvent): void {
     const toRemove: number[] = [];
 
     for (const sub of this.subscriptions) {

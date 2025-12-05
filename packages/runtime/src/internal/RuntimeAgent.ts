@@ -117,6 +117,24 @@ export class RuntimeAgent implements RuntimeAgentInterface {
 
   interrupt(): void {
     this.engine.interrupt();
+
+    // Emit interrupted event
+    this.bus.emit({
+      type: "interrupted",
+      timestamp: Date.now(),
+      source: "agent",
+      category: "lifecycle",
+      intent: "notification",
+      data: {
+        agentId: this.agentId,
+        containerId: this.containerId,
+      },
+      context: {
+        containerId: this.containerId,
+        agentId: this.agentId,
+        sessionId: this.session.sessionId,
+      },
+    });
   }
 
   async stop(): Promise<void> {
@@ -131,12 +149,50 @@ export class RuntimeAgent implements RuntimeAgentInterface {
       throw new Error("Cannot resume destroyed agent");
     }
     this._lifecycle = "running";
+
+    // Emit session_resumed event
+    this.bus.emit({
+      type: "session_resumed",
+      timestamp: Date.now(),
+      source: "session",
+      category: "lifecycle",
+      intent: "notification",
+      data: {
+        sessionId: this.session.sessionId,
+        agentId: this.agentId,
+        containerId: this.containerId,
+      },
+      context: {
+        containerId: this.containerId,
+        agentId: this.agentId,
+        sessionId: this.session.sessionId,
+      },
+    });
   }
 
   async destroy(): Promise<void> {
     if (this._lifecycle !== "destroyed") {
       await this.engine.destroy();
       this._lifecycle = "destroyed";
+
+      // Emit session_destroyed event
+      this.bus.emit({
+        type: "session_destroyed",
+        timestamp: Date.now(),
+        source: "session",
+        category: "lifecycle",
+        intent: "notification",
+        data: {
+          sessionId: this.session.sessionId,
+          agentId: this.agentId,
+          containerId: this.containerId,
+        },
+        context: {
+          containerId: this.containerId,
+          agentId: this.agentId,
+          sessionId: this.session.sessionId,
+        },
+      });
     }
   }
 }

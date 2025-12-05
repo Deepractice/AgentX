@@ -38,28 +38,22 @@
  * ```
  */
 
+import type { SystemEvent } from "./base";
+
 /**
  * Unsubscribe function type.
  */
 export type Unsubscribe = () => void;
 
 /**
- * Base event interface for SystemBus.
- * All events on the bus must have a type field.
- */
-export interface BusEvent {
-  readonly type: string;
-}
-
-/**
  * Event handler function type.
  */
-export type BusEventHandler<E extends BusEvent = BusEvent> = (event: E) => void;
+export type BusEventHandler<E extends SystemEvent = SystemEvent> = (event: E) => void;
 
 /**
  * Subscription options for advanced event handling.
  */
-export interface SubscribeOptions<E extends BusEvent = BusEvent> {
+export interface SubscribeOptions<E extends SystemEvent = SystemEvent> {
   /**
    * Event filter - only events returning true will trigger the handler.
    * Useful for filtering by agentId, sessionId, etc.
@@ -89,14 +83,14 @@ export interface SystemBus {
    *
    * @param event - The event to emit
    */
-  emit(event: BusEvent): void;
+  emit(event: SystemEvent): void;
 
   /**
    * Emit multiple events (batch operation).
    *
    * @param events - Array of events to emit
    */
-  emitBatch(events: BusEvent[]): void;
+  emitBatch(events: SystemEvent[]): void;
 
   /**
    * Subscribe to a specific event type.
@@ -108,8 +102,8 @@ export interface SystemBus {
    */
   on<T extends string>(
     type: T,
-    handler: BusEventHandler<BusEvent & { type: T }>,
-    options?: SubscribeOptions<BusEvent & { type: T }>
+    handler: BusEventHandler<SystemEvent & { type: T }>,
+    options?: SubscribeOptions<SystemEvent & { type: T }>
   ): Unsubscribe;
 
   /**
@@ -144,7 +138,7 @@ export interface SystemBus {
    */
   once<T extends string>(
     type: T,
-    handler: BusEventHandler<BusEvent & { type: T }>
+    handler: BusEventHandler<SystemEvent & { type: T }>
   ): Unsubscribe;
 
   /**
