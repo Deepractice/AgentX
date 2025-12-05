@@ -77,6 +77,7 @@ export class SQLiteRepository implements Repository {
         definitionName TEXT NOT NULL,
         parentImageId TEXT,
         definition TEXT NOT NULL,
+        config TEXT NOT NULL DEFAULT '{}',
         messages TEXT NOT NULL,
         createdAt TEXT NOT NULL
       );
@@ -193,13 +194,14 @@ export class SQLiteRepository implements Repository {
 
   async saveImage(record: ImageRecord): Promise<void> {
     const stmt = this.db.prepare(`
-      INSERT INTO images (imageId, type, definitionName, parentImageId, definition, messages, createdAt)
-      VALUES (@imageId, @type, @definitionName, @parentImageId, @definition, @messages, @createdAt)
+      INSERT INTO images (imageId, type, definitionName, parentImageId, definition, config, messages, createdAt)
+      VALUES (@imageId, @type, @definitionName, @parentImageId, @definition, @config, @messages, @createdAt)
       ON CONFLICT(imageId) DO UPDATE SET
         type = @type,
         definitionName = @definitionName,
         parentImageId = @parentImageId,
         definition = @definition,
+        config = @config,
         messages = @messages
     `);
 
@@ -209,6 +211,7 @@ export class SQLiteRepository implements Repository {
       definitionName: record.definitionName,
       parentImageId: record.parentImageId,
       definition: JSON.stringify(record.definition),
+      config: JSON.stringify(record.config),
       messages: JSON.stringify(record.messages),
       createdAt: toISOString(record.createdAt),
     });
@@ -226,6 +229,15 @@ export class SQLiteRepository implements Repository {
   async findAllImages(): Promise<ImageRecord[]> {
     const stmt = this.db.prepare("SELECT * FROM images ORDER BY createdAt DESC");
     const rows = stmt.all() as ImageRow[];
+
+    return rows.map((row) => this.toImageRecord(row));
+  }
+
+  async findImagesByDefinitionName(definitionName: string): Promise<ImageRecord[]> {
+    const stmt = this.db.prepare(
+      "SELECT * FROM images WHERE definitionName = ? ORDER BY createdAt DESC"
+    );
+    const rows = stmt.all(definitionName) as ImageRow[];
 
     return rows.map((row) => this.toImageRecord(row));
   }
@@ -431,6 +443,7 @@ export class SQLiteRepository implements Repository {
       definitionName: row.definitionName,
       parentImageId: row.parentImageId,
       definition: JSON.parse(row.definition),
+      config: JSON.parse(row.config),
       messages: JSON.parse(row.messages),
       createdAt: new Date(row.createdAt).getTime(),
     };
@@ -489,6 +502,7 @@ interface ImageRow {
   definitionName: string;
   parentImageId: string | null;
   definition: string;
+  config: string;
   messages: string;
   createdAt: string;
 }

@@ -1,21 +1,26 @@
 /**
- * @agentxjs/runtime - Complete runtime for AI Agents
+ * @agentxjs/runtime - Open source Runtime for AI Agents
  *
- * Provides everything needed to run AI Agents:
- * - AgentRuntime: Main entry point with createAgent()
+ * Provides Runtime implementation for Node.js platform:
+ * - OpenRuntime: Creates and manages Containers
+ * - Container: Manages Agents (run, destroy)
  * - SystemBus: Central event bus
- * - Environment: Claude SDK integration (Receptor + Effector)
- * - AgentEngine: Mealy Machine event processor
- * - Container: Agent instance management
- * - Repository: SQLite persistence
+ * - Environment: Claude SDK integration
+ *
+ * Architecture:
+ * ```
+ * OpenRuntime
+ *   └── Container (manages Agents)
+ *         └── Agent (with Sandbox)
+ * ```
  *
  * @example
  * ```typescript
- * import { createRuntime } from "@agentxjs/runtime";
+ * import { openRuntime } from "@agentxjs/runtime";
  *
- * const runtime = createRuntime();
- *
- * const agent = runtime.createAgent({
+ * const runtime = openRuntime();
+ * const container = runtime.createContainer("my-container");
+ * const agent = container.run({
  *   name: "Assistant",
  *   systemPrompt: "You are helpful",
  * });
@@ -27,8 +32,11 @@
  * ```
  */
 
-// AgentRuntime (main entry point)
-export { AgentRuntime, createRuntime, type AgentRuntimeConfig } from "./AgentRuntime";
+// OpenRuntime (main entry point)
+export { OpenRuntime, openRuntime, type OpenRuntimeConfig } from "./OpenRuntime";
+
+// Container
+export { ContainerImpl, type ContainerImplConfig } from "./container";
 
 // SystemBus
 export { SystemBusImpl } from "./SystemBusImpl";
@@ -44,3 +52,6 @@ export * from "./runtime";
 
 // Utils
 export * from "./utils";
+
+// Legacy exports (deprecated)
+export { AgentRuntime, createRuntime, type AgentRuntimeConfig } from "./AgentRuntime";

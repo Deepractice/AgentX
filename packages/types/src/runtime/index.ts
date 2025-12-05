@@ -18,18 +18,18 @@
 // ============================================================================
 
 export type { Runtime, RuntimeEventHandler } from "./Runtime";
-export type { Environment } from "./Environment";
-export type { Effector } from "./Effector";
+export type { Environment } from "./environment/Environment";
+export type { Effector } from "./environment/Effector";
 export type {
   SystemBus,
   BusEvent,
   BusEventHandler,
   SubscribeOptions,
   Unsubscribe,
-} from "./SystemBus";
+} from "./event/SystemBus";
 
 // Receptor (external world perception)
-export type { Receptor } from "./Receptor";
+export type { Receptor } from "./environment/Receptor";
 
 // ============================================================================
 // Environment Events
@@ -50,8 +50,14 @@ export * from "./container/llm";
 export * from "./session";
 
 // ============================================================================
-// Agent Layer
+// Agent Runtime Config
 // ============================================================================
 
-export * from "./agent";
-export * from "./agent/message";
+export type { AgentConfig } from "./AgentConfig";
+export type { AgentContext } from "./AgentContext";
+
+// ============================================================================
+// Facades
+// ============================================================================
+
+export * from "./facade";

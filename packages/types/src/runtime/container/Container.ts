@@ -2,79 +2,113 @@
  * Container - Runtime environment for Agent instances
  *
  * Container is a runtime isolation boundary where Agents live and work.
- * Like an organization or workspace that can host multiple Agents.
+ * Each Container manages multiple Agents, each with its own Sandbox.
  *
- * In the Agent-as-System model:
- * - Agent = Individual (a system with internal neural events)
- * - Container = Organization/Space (environment where Agents operate)
- * - Session = Memory/Experience (belongs to Agent, persisted in environment)
+ * Architecture:
+ * ```
+ * Container
+ *   └── Agent 1 ─── Sandbox 1
+ *   └── Agent 2 ─── Sandbox 2
+ *   └── Agent 3 ─── Sandbox 3
+ * ```
  *
  * Container provides:
- * - Agent instance management (register, get, unregister)
- * - Runtime isolation between different containers
- * - Foundation for future multi-agent collaboration
+ * - Agent lifecycle management (run, destroy)
+ * - Sandbox creation per Agent (encapsulated)
+ * - Runtime isolation between Containers
+ * - Foundation for multi-agent collaboration
  *
  * @example
  * ```typescript
- * // Create a container
- * const container = new MemoryContainer();
+ * // Create container via Runtime
+ * const container = runtime.createContainer("container-1");
  *
- * // Register an agent
- * container.register(agent);
+ * // Run an agent from definition
+ * const agent = container.run(definition);
  *
- * // Get agent by ID
- * const agent = container.get(agentId);
+ * // Use the agent
+ * agent.on("text_delta", (e) => console.log(e.data.text));
+ * await agent.receive("Hello!");
  *
- * // List all agents
- * const allAgents = container.list();
+ * // Destroy agent when done
+ * await container.destroyAgent(agent.agentId);
+ *
+ * // Dispose container
+ * await container.dispose();
  * ```
  */
 
-import type { Agent } from "~/runtime/agent/Agent";
+import type { Agent } from "~/agent/Agent";
+import type { AgentConfig } from "../AgentConfig";
 
 /**
  * Container interface for managing Agent instances at runtime
  */
 export interface Container {
   /**
-   * Register an agent instance in this container
+   * Unique container identifier
    */
-  register(agent: Agent): void;
+  readonly containerId: string;
+
+  // ==================== Agent Lifecycle ====================
 
   /**
-   * Get an agent by ID
-   */
-  get(agentId: string): Agent | undefined;
-
-  /**
-   * Check if an agent exists in this container
-   */
-  has(agentId: string): boolean;
-
-  /**
-   * Unregister an agent from this container
+   * Run an Agent from a config.
    *
-   * @returns true if agent was found and removed, false otherwise
+   * Internally creates:
+   * - Sandbox (isolated per Agent)
+   * - Driver (message processor)
+   * - AgentInstance
+   *
+   * @param config - Agent config (name, systemPrompt, etc.)
+   * @returns Running Agent instance
    */
-  unregister(agentId: string): boolean;
+  run(config: AgentConfig): Promise<Agent>;
 
   /**
-   * List all agents in this container
+   * Get an Agent by ID
    */
-  list(): Agent[];
+  getAgent(agentId: string): Agent | undefined;
 
   /**
-   * Get all agent IDs in this container
+   * Check if an Agent exists in this container
    */
-  listIds(): string[];
+  hasAgent(agentId: string): boolean;
 
   /**
-   * Get the number of agents in this container
+   * List all Agents in this container
    */
-  count(): number;
+  listAgents(): Agent[];
 
   /**
-   * Clear all agents from this container
+   * Get all Agent IDs in this container
    */
-  clear(): void;
+  listAgentIds(): string[];
+
+  /**
+   * Get the number of Agents in this container
+   */
+  agentCount(): number;
+
+  /**
+   * Destroy an Agent by ID
+   *
+   * Cleans up Agent resources and removes from container.
+   *
+   * @param agentId - Agent to destroy
+   * @returns true if agent was found and destroyed
+   */
+  destroyAgent(agentId: string): Promise<boolean>;
+
+  /**
+   * Destroy all Agents in this container
+   */
+  destroyAllAgents(): Promise<void>;
+
+  // ==================== Container Lifecycle ====================
+
+  /**
+   * Dispose the container and all its Agents
+   */
+  dispose(): Promise<void>;
 }

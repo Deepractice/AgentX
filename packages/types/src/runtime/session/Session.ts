@@ -34,8 +34,8 @@
  * ```
  */
 
-import type { Agent } from "~/runtime/agent/Agent";
-import type { Message } from "~/runtime/agent/message/Message";
+import type { Agent } from "~/agent/Agent";
+import type { Message } from "~/agent/message/Message";
 
 /**
  * Session represents a conversation context

@@ -66,11 +66,11 @@
     "@agentxjs/common": "workspace:*",
     "@agentxjs/types": "workspace:*",
     "ky": "^1.14.0",
+    "nanoid": "^5.1.6",
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@agentxjs/agent": "workspace:*",
-    "@agentxjs/engine": "workspace:*",
     "@agentxjs/mirror": "workspace:*",
     "@deepracticex/vitest-cucumber": "^1.4.3",
     "@types/node": "^24.9.2",

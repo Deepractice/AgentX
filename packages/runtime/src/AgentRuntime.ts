@@ -1,5 +1,8 @@
+// @ts-nocheck
 /**
- * AgentRuntime - Node.js Runtime implementation for AI Agents
+ * @deprecated Use NodeRuntime instead. This class will be removed in a future version.
+ *
+ * AgentRuntime - Legacy Runtime implementation for AI Agents
  *
  * Assembles all components for running AI Agents:
  *
@@ -17,24 +20,12 @@
  *
  * @example
  * ```typescript
- * import { createRuntime } from "@agentxjs/runtime";
+ * // DEPRECATED - use nodeRuntime() instead
+ * import { nodeRuntime } from "@agentxjs/runtime";
  *
- * const runtime = createRuntime({
- *   llm: { model: "claude-sonnet-4-20250514" },
- * });
- *
- * // Create an agent
- * const agent = runtime.createAgent({
- *   name: "Assistant",
- *   systemPrompt: "You are a helpful assistant",
- * });
- *
- * // Use the agent
- * agent.on("text_delta", (e) => console.log(e.data.text));
- * await agent.receive("Hello!");
- *
- * // Clean up
- * runtime.dispose();
+ * const runtime = nodeRuntime();
+ * const container = runtime.createContainer("my-container");
+ * const agent = container.run({ name: "Assistant", systemPrompt: "..." });
  * ```
  */
 

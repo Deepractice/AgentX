@@ -12,6 +12,10 @@
  * @packageDocumentation
  */
 
+// Data types
 export * from "./definition";
 export * from "./image";
 export * from "./user";
+
+// Facades
+export * from "./facade";

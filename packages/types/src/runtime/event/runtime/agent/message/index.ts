@@ -6,7 +6,7 @@
  */
 
 import type { RuntimeEvent } from "../../RuntimeEvent";
-import type { ContentPart, ToolCallPart, ToolResultPart } from "~/runtime/agent/message/parts";
+import type { ContentPart, ToolCallPart, ToolResultPart } from "~/agent/message/parts";
 
 /**
  * Base MessageEvent

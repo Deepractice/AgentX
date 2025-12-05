@@ -25,7 +25,7 @@
  */
 
 import type { Repository } from "~/persistence";
-import type { UserMessage } from "~/runtime/agent/message";
+import type { UserMessage } from "~/agent/message";
 
 /**
  * ApplicationHandler - Framework-agnostic HTTP request handler

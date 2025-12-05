@@ -47,7 +47,6 @@
   "homepage": "https://github.com/Deepractice/Agent#readme",
   "dependencies": {
     "@agentxjs/common": "workspace:*",
-    "@agentxjs/engine": "workspace:*",
     "@agentxjs/types": "workspace:*",
     "rxjs": "^7.8.2"
   },

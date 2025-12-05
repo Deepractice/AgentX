@@ -5,7 +5,7 @@
  * Contains serialized definition and config for resume capability.
  */
 
-import type { AgentLifecycle } from "~/runtime/agent/AgentLifecycle";
+import type { AgentLifecycle } from "~/agent/AgentLifecycle";
 
 /**
  * Agent storage record

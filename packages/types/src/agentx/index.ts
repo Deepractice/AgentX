@@ -7,14 +7,16 @@
  *
  * ```text
  * agentx
- * ├── .definitions.*   Definition registry (Application API)
- * ├── .images.*        Image management (Application API)
- * └── .runtime.*       Runtime operations + events (Runtime API)
- *     ├── .on()              Global event subscription
- *     ├── .createContainer() Container lifecycle
- *     ├── .createSession()   Session lifecycle
- *     └── .getAgent()        Agent query
+ * ├── .definitions.*   DefinitionAPI
+ * ├── .images.*        ImageAPI
+ * ├── .containers.*    ContainerAPI
+ * ├── .sessions.*      SessionAPI (includes run)
+ * ├── .agents.*        AgentAPI
+ * ├── .events.*        EventsAPI
+ * └── .dispose()       Cleanup
  * ```
+ *
+ * Hierarchy: Container → Session → Agent
  *
  * @packageDocumentation
  */

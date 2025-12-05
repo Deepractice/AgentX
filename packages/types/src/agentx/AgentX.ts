@@ -7,28 +7,29 @@
  * @example
  * ```typescript
  * import { createAgentX } from "agentxjs";
- * import { createRuntime } from "@agentxjs/runtime";
+ * import { createRuntime, createPersistence } from "@agentxjs/runtime";
  *
- * const runtime = createRuntime();
- * const agentx = createAgentX(runtime);
+ * const agentx = createAgentX(createRuntime(), createPersistence());
  *
  * // Application API - static resources
  * await agentx.definitions.register(TranslatorDef);
  * const image = await agentx.images.getMetaImage("Translator");
  *
- * // Runtime API - dynamic instances + events
- * agentx.runtime.on("text_delta", (e) => console.log(e));
+ * // Event subscription
+ * agentx.events.on("text_delta", (e) => console.log(e));
  *
- * const session = await agentx.runtime.createSession(image.imageId);
- * const agent = await session.resume();
+ * // Create container → session → run agent
+ * const container = await agentx.containers.create("workspace");
+ * const session = await agentx.sessions.create(container.containerId, image.imageId);
+ * const agent = await agentx.sessions.run(session.sessionId);
  *
- * agent.on("text_delta", (e) => process.stdout.write(e.text));
+ * agent.on("text_delta", (e) => process.stdout.write(e.data.text));
  * await agent.receive("Hello!");
  * ```
  */
 
 import type { DefinitionAPI, ImageAPI } from "./application";
-import type { RuntimeAPI } from "./runtime";
+import type { ContainerAPI, SessionAPI, AgentAPI, EventsAPI } from "./runtime";
 
 /**
  * AgentX - Unified API interface
@@ -51,9 +52,26 @@ export interface AgentX {
   // ==================== Runtime API ====================
 
   /**
-   * Runtime operations and event bus (dynamic instances)
+   * Container management
    */
-  readonly runtime: RuntimeAPI;
+  readonly containers: ContainerAPI;
+
+  /**
+   * Session management
+   */
+  readonly sessions: SessionAPI;
+
+  /**
+   * Running agent management
+   */
+  readonly agents: AgentAPI;
+
+  // ==================== Events ====================
+
+  /**
+   * Event subscription
+   */
+  readonly events: EventsAPI;
 
   // ==================== Lifecycle ====================
 

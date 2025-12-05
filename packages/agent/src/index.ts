@@ -1,81 +1,28 @@
 /**
- * AgentX Agent
+ * @agentxjs/agent
  *
- * Agent runtime - the stateful layer of AgentX.
- * Builds on top of the stateless Engine to provide lifecycle management.
+ * Agent runtime package - combines stateful core and stateless engine.
+ *
+ * ## Structure
+ *
+ * - `core/` - Stateful: Agent instance, lifecycle, middleware
+ * - `engine/` - Stateless: Pure Mealy Machine event processors
  *
  * ## Design Principles
  *
  * 1. **"Define Once, Run Anywhere"**: AgentDefinition is business config only
  * 2. **Runtime-Injected Driver**: Driver created by Runtime, not AgentDefinition
  * 3. **Sandbox Isolation**: Each Agent has isolated OS + LLM resources
- * 4. **Event-Driven**: All communication via RxJS-based EventBus
- *
- * ## Key Design Decisions
- *
- * ### 1. Why Separate Agent from Engine?
- *
- * **Problem**: Where should agent state live?
- *
- * **Decision**: Engine is pure (stateless Mealy Machines), Agent is stateful.
- *
- * **Rationale**:
- * - Engine can be tested in isolation (pure functions)
- * - Agent handles lifecycle concerns (create, destroy, interrupts)
- * - Clear separation: "event processing" vs "instance management"
- *
- * ### 2. Why Runtime-Injected Driver?
- *
- * **Problem**: AgentDefinition used to contain driver reference. But this
- * couples business config to infrastructure details.
- *
- * **Decision**: AgentDefinition only has business config (name, systemPrompt).
- * Runtime creates Driver from AgentDefinition + RuntimeConfig.
- *
- * **Benefits**:
- * - Same AgentDefinition works on Server and Browser
- * - Infrastructure config (apiKey) collected from environment
- * - Clear separation: "what agent does" vs "how to run it"
- *
- * ### 3. Why Sandbox per Agent?
- *
- * **Problem**: Multiple agents may need isolated resources.
- *
- * **Decision**: Each Agent holds a Sandbox reference (OS + LLM).
- *
- * **Benefits**:
- * - Resource isolation between agents
- * - Different agents can have different cwd, env
- * - Prepares for cloud deployment (directory isolation)
- *
- * ### 4. Why RxJS for EventBus?
- *
- * **Problem**: Need flexible event subscription with filtering, priority, etc.
- *
- * **Decision**: Use RxJS Subject internally with custom API wrapper.
- *
- * **Benefits**:
- * - Powerful operators (filter, take, debounce)
- * - Type-safe subscriptions
- * - Automatic cleanup on destroy
- * - Producer/Consumer role separation
- *
- * ### 5. Why Middleware + Interceptor Pattern?
- *
- * **Problem**: Need to intercept both input (messages) and output (events).
- *
- * **Decision**: Two separate chains:
- * - Middleware: Intercepts incoming messages (before driver)
- * - Interceptor: Intercepts outgoing events (after engine)
- *
- * **Use Cases**:
- * - Middleware: rate limiting, auth, message transformation
- * - Interceptor: logging, metrics, event filtering
+ * 4. **Event-Driven**: All communication via EventBus
+ * 5. **Pure Engine**: Engine is stateless Mealy Machines, Core is stateful
  *
  * @packageDocumentation
  */
 
-// ===== Agent Implementations =====
+// ============================================================================
+// Core (Stateful)
+// ============================================================================
+
 export {
   // Types (re-exported from @agentxjs/types)
   type Agent,
@@ -95,4 +42,69 @@ export {
   // Functions
   generateAgentId,
   createAgentContext,
-} from "./agent";
+} from "./core";
+
+// ============================================================================
+// Engine (Stateless)
+// ============================================================================
+
+// AgentEngine
+export { AgentEngine, createAgentEngine } from "./engine/AgentEngine";
+
+// AgentProcessor (for advanced use cases)
+export {
+  agentProcessor,
+  createInitialAgentEngineState,
+  type AgentEngineState,
+  type AgentProcessorInput,
+  type AgentProcessorOutput,
+} from "./engine/AgentProcessor";
+
+// Internal Processors (for advanced use cases)
+export {
+  // MessageAssembler
+  messageAssemblerProcessor,
+  messageAssemblerProcessorDef,
+  type MessageAssemblerInput,
+  type MessageAssemblerOutput,
+  type MessageAssemblerState,
+  type PendingContent,
+  createInitialMessageAssemblerState,
+  // StateEventProcessor
+  stateEventProcessor,
+  stateEventProcessorDef,
+  type StateEventProcessorInput,
+  type StateEventProcessorOutput,
+  type StateEventProcessorContext,
+  createInitialStateEventProcessorContext,
+  // TurnTracker
+  turnTrackerProcessor,
+  turnTrackerProcessorDef,
+  type TurnTrackerInput,
+  type TurnTrackerOutput,
+  type TurnTrackerState,
+  type PendingTurn,
+  createInitialTurnTrackerState,
+} from "./engine/internal";
+
+// Mealy Machine Core (for building custom processors)
+export {
+  // Core types
+  type Source,
+  type SourceDefinition,
+  type Processor,
+  type ProcessorResult,
+  type ProcessorDefinition,
+  type Sink,
+  type SinkDefinition,
+  type Store,
+  MemoryStore,
+  // Combinators
+  combineProcessors,
+  combineInitialStates,
+  chainProcessors,
+  filterProcessor,
+  mapOutput,
+  withLogging,
+  identityProcessor,
+} from "./engine/mealy";
