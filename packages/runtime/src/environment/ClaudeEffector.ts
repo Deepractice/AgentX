@@ -20,6 +20,9 @@ import type { ClaudeReceptor } from "./ClaudeReceptor";
 
 const logger = createLogger("ecosystem/ClaudeEffector");
 
+/** Default timeout in milliseconds (30 seconds) */
+const DEFAULT_TIMEOUT = 30_000;
+
 /**
  * ClaudeEffector configuration
  */
@@ -32,6 +35,8 @@ export interface ClaudeEffectorConfig {
   sessionId?: string;
   resumeSessionId?: string;
   onSessionIdCaptured?: (sessionId: string) => void;
+  /** Request timeout in milliseconds (default: 30000) */
+  timeout?: number;
 }
 
 /**
@@ -77,6 +82,12 @@ export class ClaudeEffector implements Effector {
     this.wasInterrupted = false;
     this.currentAbortController = new AbortController();
 
+    const timeout = this.config.timeout ?? DEFAULT_TIMEOUT;
+    const timeoutId = setTimeout(() => {
+      logger.warn("Request timeout", { timeout });
+      this.currentAbortController?.abort(new Error(`Request timeout after ${timeout}ms`));
+    }, timeout);
+
     try {
       await this.initialize(this.currentAbortController);
 
@@ -88,6 +99,7 @@ export class ClaudeEffector implements Effector {
           typeof message.content === "string"
             ? message.content.substring(0, 80)
             : "[structured]",
+        timeout,
       });
 
       this.promptSubject.next(sdkUserMessage);
@@ -95,6 +107,7 @@ export class ClaudeEffector implements Effector {
       // Process SDK responses
       await this.processResponses();
     } finally {
+      clearTimeout(timeoutId);
       this.currentAbortController = null;
       this.wasInterrupted = false;
     }
@@ -208,5 +221,23 @@ export class ClaudeEffector implements Effector {
     this.isInitialized = false;
     this.claudeQuery = null;
     this.promptSubject = new Subject<SDKUserMessage>();
+  }
+
+  /**
+   * Dispose and cleanup resources
+   */
+  dispose(): void {
+    logger.debug("Disposing ClaudeEffector");
+
+    // Abort any ongoing request
+    if (this.currentAbortController) {
+      this.currentAbortController.abort();
+    }
+
+    // Complete the prompt subject
+    this.promptSubject.complete();
+
+    // Reset state
+    this.resetState();
   }
 }

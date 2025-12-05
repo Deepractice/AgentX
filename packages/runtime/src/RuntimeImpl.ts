@@ -19,8 +19,11 @@ import type { Environment } from "@agentxjs/types/runtime/internal";
 import type { RuntimeConfig } from "./createRuntime";
 import { SystemBusImpl, RuntimeAgent, RuntimeSession, RuntimeSandbox } from "./internal";
 import { ClaudeEnvironment } from "./environment";
+import { createLogger } from "@agentxjs/common";
 import { homedir } from "node:os";
 import { join } from "node:path";
+
+const logger = createLogger("runtime/RuntimeImpl");
 
 /**
  * RuntimeImpl - Implementation of Runtime interface
@@ -47,11 +50,13 @@ export class RuntimeImpl implements Runtime {
   private readonly allEventHandlers = new Set<RuntimeEventHandler>();
 
   constructor(config: RuntimeConfig) {
+    logger.info("RuntimeImpl constructor start");
     this.persistence = config.persistence;
     this.llmProvider = config.llmProvider;
     this.basePath = join(homedir(), ".agentx");
 
     // Create SystemBus
+    logger.info("Creating SystemBus");
     this.bus = new SystemBusImpl();
 
     // Subscribe bus events to runtime events
@@ -59,20 +64,29 @@ export class RuntimeImpl implements Runtime {
       this.emit(event as { type: string });
     });
 
-    // Create Environment from LLMProvider and connect to bus
-    const llmConfig = this.llmProvider.provide();
-    this.environment = new ClaudeEnvironment({
-      apiKey: llmConfig.apiKey,
-      baseUrl: llmConfig.baseUrl,
-      model: llmConfig.model,
-    });
+    // Use custom environment or create ClaudeEnvironment from LLMProvider
+    if (config.environment) {
+      logger.info("Using custom Environment");
+      this.environment = config.environment;
+    } else {
+      logger.info("Creating ClaudeEnvironment");
+      const llmConfig = this.llmProvider.provide();
+      this.environment = new ClaudeEnvironment({
+        apiKey: llmConfig.apiKey,
+        baseUrl: llmConfig.baseUrl,
+        model: llmConfig.model,
+      });
+    }
+    logger.info("Connecting Environment to bus");
     this.environment.receptor.emit(this.bus);
     this.environment.effector.subscribe(this.bus);
 
     // Initialize APIs
+    logger.info("Creating APIs");
     this.containers = this.createContainersAPI();
     this.agents = this.createAgentsAPI();
     this.events = this.createEventsAPI();
+    logger.info("RuntimeImpl constructor done");
   }
 
   // ==================== Containers API ====================
@@ -281,9 +295,16 @@ export class RuntimeImpl implements Runtime {
   // ==================== Lifecycle ====================
 
   async dispose(): Promise<void> {
+    logger.info("Disposing RuntimeImpl");
+
     // Destroy all agents in all containers
     for (const containerId of this.containerAgents.keys()) {
       await this.agents.destroyAll(containerId);
+    }
+
+    // Dispose environment (if it has a dispose method)
+    if ("dispose" in this.environment && typeof this.environment.dispose === "function") {
+      (this.environment as { dispose: () => void }).dispose();
     }
 
     // Destroy bus
@@ -294,6 +315,8 @@ export class RuntimeImpl implements Runtime {
     this.containerAgents.clear();
     this.eventHandlers.clear();
     this.allEventHandlers.clear();
+
+    logger.info("RuntimeImpl disposed");
   }
 
   // ==================== Private Helpers ====================

@@ -6,6 +6,7 @@
 
 import type { Storage } from "unstorage";
 import type { SessionRepository, SessionRecord } from "@agentxjs/types";
+import type { Message } from "@agentxjs/types/agent";
 import { createLogger } from "@agentxjs/common";
 
 const logger = createLogger("persistence/SessionRepository");
@@ -13,8 +14,11 @@ const logger = createLogger("persistence/SessionRepository");
 /** Key prefix for sessions */
 const PREFIX = "sessions";
 
-/** Index prefix for image lookup */
-const INDEX_BY_IMAGE = "idx:sessions:image";
+/** Key prefix for messages */
+const MESSAGES_PREFIX = "messages";
+
+/** Index prefix for agent lookup */
+const INDEX_BY_AGENT = "idx:sessions:agent";
 
 /** Index prefix for container lookup */
 const INDEX_BY_CONTAINER = "idx:sessions:container";
@@ -29,8 +33,12 @@ export class StorageSessionRepository implements SessionRepository {
     return `${PREFIX}:${sessionId}`;
   }
 
-  private imageIndexKey(imageId: string, sessionId: string): string {
-    return `${INDEX_BY_IMAGE}:${imageId}:${sessionId}`;
+  private messagesKey(sessionId: string): string {
+    return `${MESSAGES_PREFIX}:${sessionId}`;
+  }
+
+  private agentIndexKey(agentId: string, sessionId: string): string {
+    return `${INDEX_BY_AGENT}:${agentId}:${sessionId}`;
   }
 
   private containerIndexKey(containerId: string, sessionId: string): string {
@@ -41,19 +49,17 @@ export class StorageSessionRepository implements SessionRepository {
     // Save main record
     await this.storage.setItem(this.key(record.sessionId), record);
 
-    // Save index for image lookup
+    // Save index for agent lookup
     await this.storage.setItem(
-      this.imageIndexKey(record.imageId, record.sessionId),
+      this.agentIndexKey(record.agentId, record.sessionId),
       record.sessionId
     );
 
     // Save index for container lookup
-    if (record.containerId) {
-      await this.storage.setItem(
-        this.containerIndexKey(record.containerId, record.sessionId),
-        record.sessionId
-      );
-    }
+    await this.storage.setItem(
+      this.containerIndexKey(record.containerId, record.sessionId),
+      record.sessionId
+    );
 
     logger.debug("Session saved", { sessionId: record.sessionId });
   }
@@ -63,22 +69,17 @@ export class StorageSessionRepository implements SessionRepository {
     return record ?? null;
   }
 
-  async findSessionsByImageId(imageId: string): Promise<SessionRecord[]> {
-    const indexPrefix = `${INDEX_BY_IMAGE}:${imageId}`;
+  async findSessionByAgentId(agentId: string): Promise<SessionRecord | null> {
+    const indexPrefix = `${INDEX_BY_AGENT}:${agentId}`;
     const keys = await this.storage.getKeys(indexPrefix);
-    const records: SessionRecord[] = [];
 
-    for (const key of keys) {
-      const sessionId = await this.storage.getItem<string>(key);
-      if (sessionId) {
-        const record = await this.findSessionById(sessionId);
-        if (record) {
-          records.push(record);
-        }
-      }
-    }
+    if (keys.length === 0) return null;
 
-    return records.sort((a, b) => b.createdAt - a.createdAt);
+    // Return the first (most recent) session for this agent
+    const sessionId = await this.storage.getItem<string>(keys[0]);
+    if (!sessionId) return null;
+
+    return this.findSessionById(sessionId);
   }
 
   async findSessionsByContainerId(containerId: string): Promise<SessionRecord[]> {
@@ -123,30 +124,42 @@ export class StorageSessionRepository implements SessionRepository {
     // Delete main record
     await this.storage.removeItem(this.key(sessionId));
 
+    // Delete messages
+    await this.storage.removeItem(this.messagesKey(sessionId));
+
     // Delete indexes
     if (record) {
       await this.storage.removeItem(
-        this.imageIndexKey(record.imageId, sessionId)
+        this.agentIndexKey(record.agentId, sessionId)
       );
-      if (record.containerId) {
-        await this.storage.removeItem(
-          this.containerIndexKey(record.containerId, sessionId)
-        );
-      }
+      await this.storage.removeItem(
+        this.containerIndexKey(record.containerId, sessionId)
+      );
     }
 
     logger.debug("Session deleted", { sessionId });
   }
 
-  async deleteSessionsByImageId(imageId: string): Promise<void> {
-    const sessions = await this.findSessionsByImageId(imageId);
-    for (const session of sessions) {
-      await this.deleteSession(session.sessionId);
-    }
-    logger.debug("Sessions deleted by imageId", { imageId, count: sessions.length });
-  }
-
   async sessionExists(sessionId: string): Promise<boolean> {
     return await this.storage.hasItem(this.key(sessionId));
+  }
+
+  // ==================== Message Operations ====================
+
+  async addMessage(sessionId: string, message: Message): Promise<void> {
+    const messages = await this.getMessages(sessionId);
+    messages.push(message);
+    await this.storage.setItem(this.messagesKey(sessionId), messages);
+    logger.debug("Message added to session", { sessionId, subtype: message.subtype });
+  }
+
+  async getMessages(sessionId: string): Promise<Message[]> {
+    const messages = await this.storage.getItem<Message[]>(this.messagesKey(sessionId));
+    return messages ?? [];
+  }
+
+  async clearMessages(sessionId: string): Promise<void> {
+    await this.storage.removeItem(this.messagesKey(sessionId));
+    logger.debug("Messages cleared for session", { sessionId });
   }
 }

@@ -4,6 +4,7 @@
 
 import type { Persistence } from "@agentxjs/types";
 import type { Runtime, LLMProvider, ClaudeLLMConfig } from "@agentxjs/types/runtime";
+import type { Environment } from "@agentxjs/types/runtime/internal";
 import { RuntimeImpl } from "./RuntimeImpl";
 
 /**
@@ -19,6 +20,12 @@ export interface RuntimeConfig {
    * LLM provider for AI model access
    */
   llmProvider: LLMProvider<ClaudeLLMConfig>;
+
+  /**
+   * Optional custom environment (for testing)
+   * If not provided, ClaudeEnvironment will be created from llmProvider
+   */
+  environment?: Environment;
 }
 
 /**

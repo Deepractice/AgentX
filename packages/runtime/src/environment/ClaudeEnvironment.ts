@@ -25,11 +25,21 @@ export class ClaudeEnvironment implements Environment {
   readonly receptor: Receptor;
   readonly effector: Effector;
 
+  private readonly claudeEffector: ClaudeEffector;
+
   constructor(config: ClaudeEnvironmentConfig) {
     const claudeReceptor = new ClaudeReceptor();
     const claudeEffector = new ClaudeEffector(config, claudeReceptor);
 
     this.receptor = claudeReceptor;
     this.effector = claudeEffector;
+    this.claudeEffector = claudeEffector;
+  }
+
+  /**
+   * Dispose environment resources
+   */
+  dispose(): void {
+    this.claudeEffector.dispose();
   }
 }

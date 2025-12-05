@@ -40,6 +40,11 @@ export interface Agent {
   readonly agentId: string;
 
   /**
+   * Agent name (from config or default)
+   */
+  readonly name: string;
+
+  /**
    * Parent container ID
    */
   readonly containerId: string;

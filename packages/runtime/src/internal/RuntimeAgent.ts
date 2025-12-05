@@ -66,6 +66,7 @@ class BusPresenter implements AgentPresenter {
  */
 export class RuntimeAgent implements RuntimeAgentInterface {
   readonly agentId: string;
+  readonly name: string;
   readonly containerId: string;
   readonly createdAt: number;
 
@@ -78,6 +79,7 @@ export class RuntimeAgent implements RuntimeAgentInterface {
 
   constructor(config: RuntimeAgentConfig) {
     this.agentId = config.agentId;
+    this.name = config.config.name ?? `agent-${config.agentId}`;
     this.containerId = config.containerId;
     this.createdAt = Date.now();
     this.bus = config.bus;

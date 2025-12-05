@@ -5,15 +5,18 @@
   "description": "BDD tests for AgentX ecosystem",
   "type": "module",
   "scripts": {
-    "test": "cucumber-js",
-    "test:agent": "cucumber-js features/agent"
+    "test": "NODE_OPTIONS='--import tsx' cucumber-js",
+    "test:agent": "NODE_OPTIONS='--import tsx' cucumber-js --profile agent features/agent",
+    "test:runtime": "NODE_OPTIONS='--import tsx' cucumber-js --profile runtime features/runtime"
   },
   "devDependencies": {
     "@agentxjs/agent": "workspace:*",
+    "@agentxjs/runtime": "workspace:*",
     "@agentxjs/types": "workspace:*",
     "@cucumber/cucumber": "^11.2.0",
     "@types/node": "^24.9.2",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
 }

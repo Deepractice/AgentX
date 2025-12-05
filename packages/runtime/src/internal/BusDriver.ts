@@ -15,6 +15,12 @@
 import type { AgentDriver, UserMessage } from "@agentxjs/types/agent";
 import type { SystemBus } from "@agentxjs/types/runtime/internal";
 import type { DriveableEvent } from "@agentxjs/types/runtime";
+import { createLogger } from "@agentxjs/common";
+
+const logger = createLogger("runtime/BusDriver");
+
+/** Default timeout in milliseconds (30 seconds) */
+const DEFAULT_TIMEOUT = 30_000;
 
 /**
  * BusDriver configuration
@@ -22,6 +28,8 @@ import type { DriveableEvent } from "@agentxjs/types/runtime";
 export interface BusDriverConfig {
   agentId: string;
   generateTurnId?: () => string;
+  /** Request timeout in milliseconds (default: 30000) */
+  timeout?: number;
 }
 
 /**
@@ -48,9 +56,23 @@ export class BusDriver implements AgentDriver {
     const events: DriveableEvent[] = [];
     let resolveNext: ((value: IteratorResult<DriveableEvent>) => void) | null = null;
     let done = false;
+    let timedOut = false;
+
+    const timeout = this.config.timeout ?? DEFAULT_TIMEOUT;
+    const timeoutId = setTimeout(() => {
+      logger.warn("Request timeout", { timeout, agentId: this.config.agentId });
+      timedOut = true;
+      done = true;
+      if (resolveNext) {
+        resolveNext({ done: true, value: undefined as never });
+      }
+    }, timeout);
 
     const unsubscribe = this.bus.onAny((event) => {
       if (!this.isDriveableEvent(event)) return;
+
+      // Clear timeout on first event received
+      clearTimeout(timeoutId);
 
       if (this.aborted) {
         done = true;
@@ -99,7 +121,12 @@ export class BusDriver implements AgentDriver {
           });
         }
       }
+
+      if (timedOut) {
+        throw new Error(`Request timeout after ${timeout}ms`);
+      }
     } finally {
+      clearTimeout(timeoutId);
       unsubscribe();
       this.currentTurnId = null;
     }
