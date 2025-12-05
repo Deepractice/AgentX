@@ -69,8 +69,16 @@ Given("an agent is created", function (this: AgentWorld) {
   this.agent = createAgent({ driver: this.driver, presenter: this.presenter });
 });
 
+Given("the agent state is {string}", function (this: AgentWorld, state: string) {
+  assert.strictEqual(this.agent.state, state);
+});
+
 When("I call destroy on the agent", async function (this: AgentWorld) {
   await this.agent.destroy();
+});
+
+Then("the driver interrupt should be called", function (this: AgentWorld) {
+  assert.strictEqual(this.driver.interruptCalled, true);
 });
 
 // ==================== Lifecycle Events ====================
