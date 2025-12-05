@@ -31,7 +31,7 @@ Feature: Runtime Events
       And subscriber "B" should receive the event
 
   # ============================================================================
-  # Environment Events (External World)
+  # Environment Events (LLM Stream)
   # ============================================================================
 
   Rule: Driveable Events from LLM
@@ -59,21 +59,6 @@ Feature: Runtime Events
       When the LLM completes a message for agent "agent-1"
       Then I should receive event with type "message_stop"
 
-    Scenario: Receive tool_call event
-      Given a container "container-1" exists
-      And an agent "agent-1" is running in container "container-1"
-      And I am subscribed to runtime events
-      When the LLM requests tool "read_file" for agent "agent-1"
-      Then I should receive event with type "tool_call"
-      And the event data should contain tool name "read_file"
-
-    Scenario: Receive tool_result event
-      Given a container "container-1" exists
-      And an agent "agent-1" is running in container "container-1"
-      And I am subscribed to runtime events
-      When the tool "read_file" returns result for agent "agent-1"
-      Then I should receive event with type "tool_result"
-
     Scenario: Receive interrupted event
       Given a container "container-1" exists
       And an agent "agent-1" is running in container "container-1"
@@ -81,22 +66,8 @@ Feature: Runtime Events
       When agent "agent-1" is interrupted
       Then I should receive event with type "interrupted"
 
-  Rule: Connection Events
-
-    Scenario: Receive connected event
-      Given I am subscribed to runtime events
-      When the runtime connects to external service
-      Then I should receive event with type "connected"
-
-    Scenario: Receive disconnected event
-      Given I am subscribed to runtime events
-      When the runtime disconnects from external service
-      Then I should receive event with type "disconnected"
-
-    Scenario: Receive reconnecting event
-      Given I am subscribed to runtime events
-      When the runtime is reconnecting to external service
-      Then I should receive event with type "reconnecting"
+  # Note: Connection events (connected, disconnected, reconnecting) are Mirror events,
+  # not Runtime events. They should be tested in Mirror tests.
 
   # ============================================================================
   # Container Events
@@ -132,54 +103,9 @@ Feature: Runtime Events
       Then I should receive event with type "agent_unregistered"
       And the event context should have agentId "agent-1"
 
-  Rule: Sandbox Workdir Events
-
-    Scenario: Receive file_read_request event
-      Given a container "container-1" exists
-      And an agent "agent-1" is running in container "container-1"
-      And I am subscribed to runtime events
-      When agent "agent-1" requests to read file "/path/to/file"
-      Then I should receive event with type "file_read_request"
-      And the event should have source "sandbox"
-      And the event should have category "workdir"
-
-    Scenario: Receive file_read_result event
-      Given a container "container-1" exists
-      And an agent "agent-1" is running in container "container-1"
-      And I am subscribed to runtime events
-      When file read completes for agent "agent-1"
-      Then I should receive event with type "file_read_result"
-
-    Scenario: Receive file_written event
-      Given a container "container-1" exists
-      And an agent "agent-1" is running in container "container-1"
-      And I am subscribed to runtime events
-      When agent "agent-1" writes file "/path/to/file"
-      Then I should receive event with type "file_written"
-
-  Rule: Sandbox MCP Events
-
-    Scenario: Receive tool_execute_request event
-      Given a container "container-1" exists
-      And an agent "agent-1" is running in container "container-1"
-      And I am subscribed to runtime events
-      When agent "agent-1" requests to execute MCP tool "search"
-      Then I should receive event with type "tool_execute_request"
-      And the event should have source "sandbox"
-      And the event should have category "mcp"
-
-    Scenario: Receive tool_executed event
-      Given a container "container-1" exists
-      And an agent "agent-1" is running in container "container-1"
-      And I am subscribed to runtime events
-      When MCP tool execution completes for agent "agent-1"
-      Then I should receive event with type "tool_executed"
-
-    Scenario: Receive mcp_server_connected event
-      Given a container "container-1" exists
-      And I am subscribed to runtime events
-      When MCP server "filesystem" connects
-      Then I should receive event with type "mcp_server_connected"
+  # Note: Sandbox events (file_read_request, tool_execute_request) are request events
+  # from Mirror. Runtime emits result events (file_read_result, tool_executed).
+  # Request events should be tested in Mirror tests.
 
   # ============================================================================
   # Session Events
@@ -200,31 +126,6 @@ Feature: Runtime Events
       When I destroy the agent "agent-1"
       Then I should receive event with type "session_destroyed"
 
-  Rule: Session Persist Events
-
-    Scenario: Receive session_save_request event
-      Given a container "container-1" exists
-      And an agent "agent-1" is running in container "container-1"
-      And I am subscribed to runtime events
-      When session save is requested for agent "agent-1"
-      Then I should receive event with type "session_save_request"
-      And the event should have intent "request"
-
-    Scenario: Receive session_saved event
-      Given a container "container-1" exists
-      And an agent "agent-1" is running in container "container-1"
-      And I am subscribed to runtime events
-      When session is saved for agent "agent-1"
-      Then I should receive event with type "session_saved"
-      And the event should have intent "result"
-
-    Scenario: Receive message_persisted event
-      Given a container "container-1" exists
-      And an agent "agent-1" is running in container "container-1"
-      And I am subscribed to runtime events
-      When a message is persisted for agent "agent-1"
-      Then I should receive event with type "message_persisted"
-
   Rule: Session Action Events
 
     Scenario: Receive session_resumed event
@@ -234,19 +135,8 @@ Feature: Runtime Events
       When I resume the agent "agent-1"
       Then I should receive event with type "session_resumed"
 
-    Scenario: Receive session_forked event
-      Given a container "container-1" exists
-      And an agent "agent-1" is running in container "container-1"
-      And I am subscribed to runtime events
-      When session is forked for agent "agent-1"
-      Then I should receive event with type "session_forked"
-
-    Scenario: Receive session_title_updated event
-      Given a container "container-1" exists
-      And an agent "agent-1" is running in container "container-1"
-      And I am subscribed to runtime events
-      When session title is updated to "New Title" for agent "agent-1"
-      Then I should receive event with type "session_title_updated"
+  # Note: session_save_request is a Mirror request event.
+  # Runtime emits session_saved as result.
 
   # ============================================================================
   # Event Context
@@ -268,21 +158,6 @@ Feature: Runtime Events
       Then the event context should have agentId "agent-1"
       And the event context should have containerId "container-1"
 
-    Scenario: Events include sessionId in context
-      Given a container "container-1" exists
-      And an agent "agent-1" is running in container "container-1"
-      And I am subscribed to runtime events
-      When a session event is emitted for agent "agent-1"
-      Then the event context should have sessionId
-
-    Scenario: Request-response events share correlationId
-      Given a container "container-1" exists
-      And an agent "agent-1" is running in container "container-1"
-      And I am subscribed to runtime events
-      When a request event is emitted
-      And the corresponding result event is emitted
-      Then both events should have the same correlationId
-
   # ============================================================================
   # Event Classification
   # ============================================================================
@@ -295,16 +170,6 @@ Feature: Runtime Events
       Then the event should have property "source"
       And the event should have property "category"
       And the event should have property "intent"
-
-    Scenario: Request events have intent "request"
-      Given I am subscribed to runtime events
-      When a session_save_request event is emitted
-      Then the event should have intent "request"
-
-    Scenario: Result events have intent "result"
-      Given I am subscribed to runtime events
-      When a session_saved event is emitted
-      Then the event should have intent "result"
 
     Scenario: Notification events have intent "notification"
       Given I am subscribed to runtime events

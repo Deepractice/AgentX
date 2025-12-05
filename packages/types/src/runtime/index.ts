@@ -38,7 +38,7 @@ export type { AgentConfig } from "./AgentConfig";
 export type { AgentLifecycle } from "./AgentLifecycle";
 
 // ============================================================================
-// Events (Public)
+// Events (Re-exported from @agentxjs/types/event)
 // ============================================================================
 
 export type {
@@ -46,7 +46,7 @@ export type {
   EventSource,
   EventIntent,
   EventCategory,
-} from "./event/base/SystemEvent";
+} from "~/event/base/SystemEvent";
 
 export type {
   DriveableEvent,
@@ -63,4 +63,4 @@ export type {
   ToolCallEvent,
   ToolResultEvent,
   InterruptedEvent,
-} from "./event/environment";
+} from "~/event/environment";

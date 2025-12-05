@@ -38,6 +38,11 @@
       "import": "./dist/runtime-internal.js",
       "require": "./dist/runtime-internal.cjs"
     },
+    "./event": {
+      "types": "./dist/event.d.ts",
+      "import": "./dist/event.js",
+      "require": "./dist/event.cjs"
+    },
     "./application": {
       "types": "./dist/application.d.ts",
       "import": "./dist/application.js",
@@ -70,6 +75,7 @@
       "agent/internal": ["./dist/agent-internal.d.ts"],
       "runtime": ["./dist/runtime.d.ts"],
       "runtime/internal": ["./dist/runtime-internal.d.ts"],
+      "event": ["./dist/event.d.ts"],
       "application": ["./dist/application.d.ts"],
       "network": ["./dist/network.d.ts"],
       "persistence": ["./dist/persistence.d.ts"],

@@ -53,7 +53,7 @@ export type { Effector } from "./environment/Effector";
 export type { Session } from "./session/Session";
 
 // ============================================================================
-// Event Bus
+// Event Bus (Runtime internal)
 // ============================================================================
 
 export type {
@@ -61,4 +61,4 @@ export type {
   BusEventHandler,
   SubscribeOptions,
   Unsubscribe,
-} from "../event/SystemBus";
+} from "./event/SystemBus";

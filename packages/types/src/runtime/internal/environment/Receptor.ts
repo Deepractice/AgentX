@@ -24,7 +24,7 @@
  * @see issues/030-ecosystem-architecture.md
  */
 
-import type { SystemBus } from "../../event/SystemBus";
+import type { SystemBus } from "../event/SystemBus";
 
 /**
  * Receptor - Perceives external world and emits events to SystemBus

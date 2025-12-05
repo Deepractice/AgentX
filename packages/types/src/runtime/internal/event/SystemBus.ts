@@ -38,7 +38,7 @@
  * ```
  */
 
-import type { SystemEvent } from "./base";
+import type { SystemEvent } from "~/event/base";
 
 /**
  * Unsubscribe function type.

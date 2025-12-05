@@ -18,7 +18,7 @@
  * ```
  */
 
-import type { SystemEvent } from "~/runtime/event/base";
+import type { SystemEvent } from "~/event/base";
 import type { Unsubscribe } from "~/agent";
 
 /**

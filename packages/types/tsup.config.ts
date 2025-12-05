@@ -7,6 +7,7 @@ export default defineConfig({
     "agent-internal": "src/agent/internal/index.ts",
     runtime: "src/runtime/index.ts",
     "runtime-internal": "src/runtime/internal/index.ts",
+    event: "src/event/index.ts",
     application: "src/application/index.ts",
     network: "src/network/index.ts",
     persistence: "src/persistence/index.ts",

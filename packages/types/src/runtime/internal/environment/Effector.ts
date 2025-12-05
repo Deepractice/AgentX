@@ -24,7 +24,7 @@
  * @see issues/030-ecosystem-architecture.md
  */
 
-import type { SystemBus } from "../../event/SystemBus";
+import type { SystemBus } from "../event/SystemBus";
 
 /**
  * Effector - Subscribes to SystemBus and acts upon external world

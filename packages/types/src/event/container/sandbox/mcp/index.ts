@@ -9,7 +9,7 @@
  * - intent: "request" | "result" | "notification"
  */
 
-import type { SystemEvent } from "~/runtime/event/base";
+import type { SystemEvent } from "~/event/base";
 
 // ============================================================================
 // Base Types
