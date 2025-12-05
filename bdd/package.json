@@ -1,0 +1,19 @@
+{
+  "name": "@agentxjs/bdd",
+  "private": true,
+  "version": "0.1.0",
+  "description": "BDD tests for AgentX ecosystem",
+  "type": "module",
+  "scripts": {
+    "test": "cucumber-js",
+    "test:agent": "cucumber-js features/agent"
+  },
+  "devDependencies": {
+    "@agentxjs/agent": "workspace:*",
+    "@agentxjs/types": "workspace:*",
+    "@cucumber/cucumber": "^11.2.0",
+    "@types/node": "^24.9.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

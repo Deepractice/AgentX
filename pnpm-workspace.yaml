@@ -2,6 +2,7 @@ packages:
   - apps/*
   - packages/*
   - services/*
+  - bdd
 
 ignoredBuiltDependencies:
   - bcrypt

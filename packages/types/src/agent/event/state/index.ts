@@ -157,8 +157,14 @@ export interface ErrorOccurredEvent extends StateEvent<"error_occurred"> {
     code: string;
     message: string;
     recoverable: boolean;
+    category?: string;
   };
 }
+
+/**
+ * Alias for ErrorOccurredEvent (legacy compatibility)
+ */
+export type AgentErrorOccurredEvent = ErrorOccurredEvent;
 
 // ============================================================================
 // Union Type

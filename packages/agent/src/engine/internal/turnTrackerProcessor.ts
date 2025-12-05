@@ -16,7 +16,7 @@
 import type { Processor, ProcessorDefinition } from "~/engine/mealy";
 import type {
   // Input: combined stream and message events
-  AgentStreamEvent,
+  StreamEvent,
   AgentMessageEvent,
   MessageStopEvent,
   UserMessageEvent,
@@ -25,7 +25,7 @@ import type {
   TurnResponseEvent,
   // Data types
   TokenUsage,
-} from "@agentxjs/types";
+} from "@agentxjs/types/agent";
 
 // ===== State Types =====
 
@@ -90,7 +90,7 @@ export type TurnTrackerOutput = TurnRequestEvent | TurnResponseEvent;
  * Input event types for TurnTracker
  * Accepts both Stream and Message layer events
  */
-export type TurnTrackerInput = AgentStreamEvent | AgentMessageEvent;
+export type TurnTrackerInput = StreamEvent | AgentMessageEvent;
 
 
 /**
@@ -109,7 +109,7 @@ export const turnTrackerProcessor: Processor<
       return handleUserMessage(state, input as AgentMessageEvent);
 
     case "message_stop":
-      return handleMessageStop(state, input as AgentStreamEvent);
+      return handleMessageStop(state, input as StreamEvent);
 
     case "assistant_message":
       // Turn completion is handled in message_stop
@@ -141,12 +141,6 @@ function handleUserMessage(
   const turnRequestEvent: TurnRequestEvent = {
     type: "turn_request",
     timestamp: Date.now(),
-    source: "agent",
-    category: "turn",
-    intent: "notification",
-    context: {
-      agentId: event.context?.agentId,
-    },
     data: {
       turnId,
       messageId: data.messageId,
@@ -169,7 +163,7 @@ function handleUserMessage(
  */
 function handleMessageStop(
   state: Readonly<TurnTrackerState>,
-  event: AgentStreamEvent
+  event: StreamEvent
 ): [TurnTrackerState, TurnTrackerOutput[]] {
   if (!state.pendingTurn) {
     return [state, []];
@@ -184,7 +178,7 @@ function handleMessageStop(
   // - "max_tokens": Hit token limit, complete turn
   // - "stop_sequence": Hit stop sequence, complete turn
   if (stopReason === "end_turn" || stopReason === "max_tokens" || stopReason === "stop_sequence") {
-    return completeTurn(state, event.context.agentId, event.timestamp);
+    return completeTurn(state, event.timestamp);
   }
 
   // For tool_use, don't complete turn yet
@@ -196,7 +190,6 @@ function handleMessageStop(
  */
 function completeTurn(
   state: Readonly<TurnTrackerState>,
-  agentId: string,
   completedAt: number
 ): [TurnTrackerState, TurnTrackerOutput[]] {
   if (!state.pendingTurn) {
@@ -206,17 +199,11 @@ function completeTurn(
   const { turnId, messageId, requestedAt } = state.pendingTurn;
   const duration = completedAt - requestedAt;
 
-  const usage: TokenUsage = { input: 0, output: 0 };
+  const usage: TokenUsage = { inputTokens: 0, outputTokens: 0 };
 
   const turnResponseEvent: TurnResponseEvent = {
     type: "turn_response",
     timestamp: Date.now(),
-    source: "agent",
-    category: "turn",
-    intent: "notification",
-    context: {
-      agentId,
-    },
     data: {
       turnId,
       messageId,

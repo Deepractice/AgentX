@@ -1,48 +1,56 @@
 /**
  * @agentxjs/agent
  *
- * Agent runtime package - combines stateful core and stateless engine.
+ * Agent package - Event Processing Unit for AI conversations.
  *
- * ## Structure
+ * ## Core API
  *
- * - `core/` - Stateful: Agent instance, lifecycle, middleware
- * - `engine/` - Stateless: Pure Mealy Machine event processors
+ * ```typescript
+ * import { createAgent } from "@agentxjs/agent";
  *
- * ## Design Principles
+ * const agent = createAgent({
+ *   driver: myDriver,
+ *   presenter: myPresenter,
+ * });
  *
- * 1. **"Define Once, Run Anywhere"**: AgentDefinition is business config only
- * 2. **Runtime-Injected Driver**: Driver created by Runtime, not AgentDefinition
- * 3. **Sandbox Isolation**: Each Agent has isolated OS + LLM resources
- * 4. **Event-Driven**: All communication via EventBus
- * 5. **Pure Engine**: Engine is stateless Mealy Machines, Core is stateful
+ * agent.on("text_delta", (e) => console.log(e.data.text));
+ * await agent.receive("Hello!");
+ * ```
+ *
+ * ## Architecture
+ *
+ * - Driver: Produces StreamEvents from LLM
+ * - Agent: Processes events, manages state and queue
+ * - Presenter: Consumes AgentOutput events
  *
  * @packageDocumentation
  */
 
 // ============================================================================
-// Core (Stateful)
+// Core API
 // ============================================================================
 
-export {
-  // Types (re-exported from @agentxjs/types)
-  type Agent,
-  type AgentContext,
-  type AgentDriver,
-  type AgentPresenter,
-  type AgentDefinition,
-  type AgentLifecycle,
-  type AgentEventHandler,
-  type AgentEventType,
-  type Unsubscribe,
-  type Container,
-  type AgentOutput,
-  // Classes (implementations)
-  AgentInstance,
-  MemoryContainer,
-  // Functions
-  generateAgentId,
-  createAgentContext,
-} from "./core";
+export { createAgent } from "./createAgent";
+
+// Re-export types from @agentxjs/types/agent
+export type {
+  Agent,
+  CreateAgentOptions,
+  AgentDriver,
+  AgentPresenter,
+  AgentLifecycle,
+  AgentState,
+  AgentOutput,
+  AgentEventHandler,
+  Unsubscribe,
+  AgentMiddleware,
+  AgentInterceptor,
+  MessageQueue,
+  StateChange,
+  StateChangeHandler,
+  EventHandlerMap,
+  ReactHandlerMap,
+} from "@agentxjs/types/agent";
 
 // ============================================================================
 // Engine (Stateless)
@@ -108,3 +116,4 @@ export {
   withLogging,
   identityProcessor,
 } from "./engine/mealy";
+

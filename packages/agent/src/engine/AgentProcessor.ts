@@ -22,7 +22,7 @@ import {
   type StateEventProcessorOutput,
   type TurnTrackerOutput,
 } from "./internal";
-import type { AgentOutput } from "@agentxjs/types";
+import type { AgentOutput } from "@agentxjs/types/agent";
 
 /**
  * Combined state type for the full agent engine

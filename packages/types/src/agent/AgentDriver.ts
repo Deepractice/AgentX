@@ -2,24 +2,13 @@
  * AgentDriver - Message Processing Interface
  *
  * AgentDriver is a pure message processor.
- * It receives user messages and yields DriveableEvents.
+ * It receives user messages and yields StreamEvents.
  *
  * Key Design:
  * - One Agent = One Driver instance
  * - Driver only handles message processing
  * - Lifecycle management is Container's responsibility
  * - Resume/history is Container's responsibility
- *
- * Type Relationship:
- * ```
- * EnvironmentEvent (all external perceptions)
- * │
- * ├── DriveableEvent (can drive Agent) ← Driver outputs this
- * │   └── MessageStartEvent, TextDeltaEvent, ToolCallEvent...
- * │
- * └── ConnectionEvent (network status only)
- *     └── ConnectedEvent, DisconnectedEvent
- * ```
  *
  * @example
  * ```typescript
@@ -33,7 +22,7 @@
  *     });
  *
  *     for await (const chunk of stream) {
- *       yield transformToDriveableEvent(chunk);
+ *       yield transformToStreamEvent(chunk);
  *     }
  *   }
  *
@@ -44,13 +33,13 @@
  * ```
  */
 
-import type { DriveableEvent } from "./event/environment/DriveableEvent";
+import type { StreamEvent } from "./event/stream";
 import type { UserMessage } from "./message";
 
 /**
  * AgentDriver interface
  *
- * A message processor that receives user messages and yields DriveableEvents.
+ * A message processor that receives user messages and yields StreamEvents.
  * Lifecycle (creation, resume, destruction) is managed by Container.
  */
 export interface AgentDriver {
@@ -65,12 +54,12 @@ export interface AgentDriver {
   readonly description?: string;
 
   /**
-   * Receive a user message and yield driveable events
+   * Receive a user message and yield stream events
    *
    * @param message - User message to process
-   * @returns AsyncIterable of DriveableEvent (events that can drive Agent)
+   * @returns AsyncIterable of StreamEvent
    */
-  receive(message: UserMessage): AsyncIterable<DriveableEvent>;
+  receive(message: UserMessage): AsyncIterable<StreamEvent>;
 
   /**
    * Interrupt the current operation

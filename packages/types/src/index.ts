@@ -1,74 +1,44 @@
 /**
  * @agentxjs/types - Type definitions for AgentX AI Agent platform
  *
- * ## Six-Layer Architecture
+ * ## Submodule Imports (Recommended)
  *
- * | Layer       | Serves         | Content                          |
- * |-------------|----------------|----------------------------------|
- * | common      | Platform devs  | Logger, Utils (internal tools)   |
- * | agentx      | API consumers  | Unified API entry point          |
- * | application | App developers | Static resources (Definition, Image) |
- * | persistence | Storage        | Repository interfaces, Records   |
- * | network     | Communication  | Server, Client, Channel          |
- * | runtime     | Agents         | Container, Session, Agent, Events |
- *
- * ```
- * ┌─────────────────────────────────────────────────────────────┐
- * │                    Common Layer                             │
- * │   Internal tools for platform developers                    │
- * ├─────────────────────────────────────────────────────────────┤
- * │                    AgentX Layer                             │
- * │   Unified API - AgentX, APIs                                │
- * ├─────────────────────────────────────────────────────────────┤
- * │                    Application Layer                        │
- * │   Static resources - Definition, Image, User                │
- * ├─────────────────────────────────────────────────────────────┤
- * │                    Persistence Layer                        │
- * │   Storage abstraction - Repository, Records                 │
- * ├─────────────────────────────────────────────────────────────┤
- * │                    Network Layer                            │
- * │   Communication infrastructure                              │
- * ├─────────────────────────────────────────────────────────────┤
- * │                    Runtime Layer                            │
- * │   Dynamic instances - Container, Session, Agent             │
- * └─────────────────────────────────────────────────────────────┘
+ * ```typescript
+ * import { Agent, createAgent } from "@agentxjs/types/agent";
+ * import { Runtime } from "@agentxjs/types/runtime";
  * ```
  *
  * @packageDocumentation
  */
 
 // ============================================================================
-// Common Layer (Internal Platform Tools)
+// Common Layer
 // ============================================================================
 
 export * from "./common";
 
 // ============================================================================
-// AgentX Layer (Unified API)
-// ============================================================================
-
-export * from "./agentx";
-
-// ============================================================================
-// Application Layer (Static Resources)
+// Application Layer
 // ============================================================================
 
 export * from "./application";
 
 // ============================================================================
-// Persistence Layer (Storage Abstraction)
+// Persistence Layer
 // ============================================================================
 
 export * from "./persistence";
 
 // ============================================================================
-// Network Layer (Communication)
+// Network Layer
 // ============================================================================
 
 export * from "./network";
 
 // ============================================================================
-// Runtime Layer (Dynamic Instances)
+// Submodule Entry Points (use import from subpath)
 // ============================================================================
 
-export * from "./runtime";
+// Agent: import from "@agentxjs/types/agent"
+// Runtime: import from "@agentxjs/types/runtime"
+// AgentX: import from "@agentxjs/types/agentx"

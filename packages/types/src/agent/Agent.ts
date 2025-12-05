@@ -40,6 +40,7 @@ import type { AgentInterceptor } from "./AgentInterceptor";
 import type { AgentOutput } from "./AgentOutput";
 import type { AgentDriver } from "./AgentDriver";
 import type { AgentPresenter } from "./AgentPresenter";
+import type { MessageQueue } from "./MessageQueue";
 
 /**
  * State change event payload
@@ -115,6 +116,11 @@ export interface Agent {
    * Current conversation state
    */
   readonly state: AgentState;
+
+  /**
+   * Message queue for pending messages
+   */
+  readonly messageQueue: MessageQueue;
 
   /**
    * Receive a message from user

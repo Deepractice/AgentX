@@ -17,6 +17,52 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./agent": {
+      "types": "./dist/agent.d.ts",
+      "import": "./dist/agent.js",
+      "require": "./dist/agent.cjs"
+    },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "import": "./dist/runtime.js",
+      "require": "./dist/runtime.cjs"
+    },
+    "./application": {
+      "types": "./dist/application.d.ts",
+      "import": "./dist/application.js",
+      "require": "./dist/application.cjs"
+    },
+    "./network": {
+      "types": "./dist/network.d.ts",
+      "import": "./dist/network.js",
+      "require": "./dist/network.cjs"
+    },
+    "./persistence": {
+      "types": "./dist/persistence.d.ts",
+      "import": "./dist/persistence.js",
+      "require": "./dist/persistence.cjs"
+    },
+    "./agentx": {
+      "types": "./dist/agentx.d.ts",
+      "import": "./dist/agentx.js",
+      "require": "./dist/agentx.cjs"
+    },
+    "./common": {
+      "types": "./dist/common.d.ts",
+      "import": "./dist/common.js",
+      "require": "./dist/common.cjs"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "agent": ["./dist/agent.d.ts"],
+      "runtime": ["./dist/runtime.d.ts"],
+      "application": ["./dist/application.d.ts"],
+      "network": ["./dist/network.d.ts"],
+      "persistence": ["./dist/persistence.d.ts"],
+      "agentx": ["./dist/agentx.d.ts"],
+      "common": ["./dist/common.d.ts"]
     }
   },
   "files": [

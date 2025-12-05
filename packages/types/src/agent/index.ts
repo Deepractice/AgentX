@@ -60,6 +60,12 @@ export type { AgentOutput } from "./AgentOutput";
 export type { AgentLifecycle } from "./AgentLifecycle";
 export type { AgentState } from "./AgentState";
 
+// Error types
+export type { AgentError, AgentErrorCategory } from "./AgentError";
+
+// Message Queue
+export type { MessageQueue } from "./MessageQueue";
+
 // Event handling
 export type { AgentEventHandler, Unsubscribe } from "./AgentEventHandler";
 
