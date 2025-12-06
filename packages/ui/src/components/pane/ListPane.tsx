@@ -1,0 +1,292 @@
+/**
+ * ListPane - Generic list panel component
+ *
+ * A pure UI component for displaying lists with:
+ * - Header with title and action button
+ * - Optional search input
+ * - Scrollable list of items
+ * - Empty state handling
+ * - Loading state
+ *
+ * This component knows nothing about business concepts like
+ * "Agent", "Image", "Session", etc. It only deals with generic
+ * "items" that have id, title, subtitle, etc.
+ *
+ * @example
+ * ```tsx
+ * <ListPane
+ *   title="Conversations"
+ *   items={items}
+ *   selectedId={selectedId}
+ *   onSelect={(id) => setSelectedId(id)}
+ *   onDelete={(id) => handleDelete(id)}
+ *   onNew={() => handleNew()}
+ *   searchable
+ * />
+ * ```
+ */
+
+import * as React from "react";
+import { Plus, Trash2 } from "lucide-react";
+import { cn } from "~/utils/utils";
+import { ListItem } from "~/components/element/ListItem";
+import { SearchInput } from "~/components/element/SearchInput";
+import { EmptyState } from "~/components/element/EmptyState";
+import { Sidebar } from "~/components/layout/Sidebar";
+
+/**
+ * Item data for ListPane
+ */
+export interface ListPaneItem {
+  /**
+   * Unique identifier
+   */
+  id: string;
+  /**
+   * Main title
+   */
+  title: string;
+  /**
+   * Optional subtitle or description
+   */
+  subtitle?: React.ReactNode;
+  /**
+   * Optional leading content (icon, avatar, etc.)
+   */
+  leading?: React.ReactNode;
+  /**
+   * Optional trailing content (badge, status, etc.)
+   */
+  trailing?: React.ReactNode;
+  /**
+   * Whether this item is currently active
+   */
+  active?: boolean;
+  /**
+   * Timestamp for display
+   */
+  timestamp?: number;
+}
+
+export interface ListPaneProps {
+  /**
+   * Panel title displayed in header
+   */
+  title?: string;
+  /**
+   * List of items to display
+   */
+  items: ListPaneItem[];
+  /**
+   * Currently selected item ID
+   */
+  selectedId?: string | null;
+  /**
+   * Whether the list is loading
+   */
+  isLoading?: boolean;
+  /**
+   * Enable search functionality
+   */
+  searchable?: boolean;
+  /**
+   * Placeholder for search input
+   */
+  searchPlaceholder?: string;
+  /**
+   * Show new item button in header
+   */
+  showNewButton?: boolean;
+  /**
+   * Label for new button (tooltip)
+   */
+  newButtonLabel?: string;
+  /**
+   * Empty state configuration
+   */
+  emptyState?: {
+    icon?: React.ReactNode;
+    title: string;
+    description?: string;
+    actionLabel?: string;
+  };
+  /**
+   * Callback when an item is selected
+   */
+  onSelect?: (id: string) => void;
+  /**
+   * Callback when delete is clicked on an item
+   */
+  onDelete?: (id: string) => void;
+  /**
+   * Callback when new button is clicked
+   */
+  onNew?: () => void;
+  /**
+   * Custom render function for item actions
+   */
+  renderItemActions?: (item: ListPaneItem) => React.ReactNode;
+  /**
+   * Additional class name
+   */
+  className?: string;
+}
+
+/**
+ * Format timestamp to relative time string
+ */
+function formatRelativeTime(timestamp: number): string {
+  const now = Date.now();
+  const diff = now - timestamp;
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `${days}d ago`;
+  if (hours > 0) return `${hours}h ago`;
+  if (minutes > 0) return `${minutes}m ago`;
+  return "Just now";
+}
+
+/**
+ * ListPane component
+ */
+export const ListPane = React.forwardRef<HTMLDivElement, ListPaneProps>(
+  (
+    {
+      title = "Items",
+      items,
+      selectedId,
+      isLoading = false,
+      searchable = false,
+      searchPlaceholder = "Search...",
+      showNewButton = true,
+      newButtonLabel = "New item",
+      emptyState = {
+        title: "No items",
+        description: "Get started by creating a new item",
+        actionLabel: "Create new",
+      },
+      onSelect,
+      onDelete,
+      onNew,
+      renderItemActions,
+      className,
+    },
+    ref
+  ) => {
+    const [searchQuery, setSearchQuery] = React.useState("");
+
+    // Filter items by search query
+    const filteredItems = React.useMemo(() => {
+      if (!searchQuery.trim()) return items;
+      const query = searchQuery.toLowerCase();
+      return items.filter(
+        (item) =>
+          item.title.toLowerCase().includes(query) ||
+          (typeof item.subtitle === "string" &&
+            item.subtitle.toLowerCase().includes(query))
+      );
+    }, [items, searchQuery]);
+
+    // Default delete action renderer
+    const defaultRenderActions = (item: ListPaneItem) => {
+      if (!onDelete) return null;
+      return (
+        <button
+          className="w-6 h-6 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 rounded flex items-center justify-center transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(item.id);
+          }}
+          title="Delete"
+        >
+          <Trash2 className="w-3 h-3 text-red-600 dark:text-red-400" />
+        </button>
+      );
+    };
+
+    const actionsRenderer = renderItemActions || defaultRenderActions;
+
+    return (
+      <Sidebar ref={ref} className={cn("flex flex-col", className)}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+          {showNewButton && onNew && (
+            <button
+              className="p-1 rounded hover:bg-accent transition-colors"
+              onClick={onNew}
+              title={newButtonLabel}
+            >
+              <Plus className="w-5 h-5 text-muted-foreground" />
+            </button>
+          )}
+        </div>
+
+        {/* Search */}
+        {searchable && (
+          <div className="px-3 py-2 border-b border-border">
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={searchPlaceholder}
+            />
+          </div>
+        )}
+
+        {/* List content */}
+        <div className="flex-1 overflow-y-auto p-2">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <EmptyState
+              icon={emptyState.icon}
+              title={emptyState.title}
+              description={emptyState.description}
+              action={
+                emptyState.actionLabel && onNew ? (
+                  <button
+                    className="text-sm text-primary hover:text-primary/80 transition-colors"
+                    onClick={onNew}
+                  >
+                    {emptyState.actionLabel}
+                  </button>
+                ) : undefined
+              }
+              spacing="sm"
+            />
+          ) : (
+            <div className="space-y-1">
+              {filteredItems.map((item) => (
+                <ListItem
+                  key={item.id}
+                  leading={item.leading}
+                  title={item.title}
+                  subtitle={
+                    item.subtitle || (item.timestamp ? (
+                      <span className="text-xs text-muted-foreground">
+                        {formatRelativeTime(item.timestamp)}
+                      </span>
+                    ) : undefined)
+                  }
+                  trailing={item.trailing}
+                  actions={actionsRenderer(item)}
+                  selected={selectedId === item.id}
+                  active={item.active}
+                  showActiveIndicator={item.active}
+                  onClick={() => onSelect?.(item.id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </Sidebar>
+    );
+  }
+);
+
+ListPane.displayName = "ListPane";

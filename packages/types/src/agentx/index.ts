@@ -68,10 +68,9 @@ import type {
  */
 export interface LLMConfig {
   /**
-   * API key
-   * @default process.env.ANTHROPIC_API_KEY
+   * Anthropic API key (required)
    */
-  apiKey?: string;
+  apiKey: string;
 
   /**
    * API base URL

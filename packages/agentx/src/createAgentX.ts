@@ -49,7 +49,7 @@ async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
     llmProvider: {
       name: "claude",
       provide: () => ({
-        apiKey: config.llm?.apiKey ?? process.env.ANTHROPIC_API_KEY ?? "",
+        apiKey: config.llm?.apiKey ?? "",
         baseUrl: config.llm?.baseUrl,
         model: config.llm?.model,
       }),

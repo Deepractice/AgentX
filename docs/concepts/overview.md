@@ -1,52 +1,57 @@
 # Architecture Overview
 
-AgentX is an event-driven AI Agent framework built on a clean separation between the **Engine domain** (pure logic) and **Runtime domain** (infrastructure).
+AgentX is an event-driven AI Agent framework built on clean separation between the **Agent domain** (pure logic) and **Runtime domain** (infrastructure).
 
 ## Two-Domain Architecture
 
-```mermaid
-graph TB
-    subgraph "Engine Domain (Pure Logic)"
-        DR[AgentDriver]
-        EG[AgentEngine]
-        MM[MealyMachine]
-        PR[Presenter]
-
-        DR -->|"StreamEvent"| EG
-        EG --> MM
-        EG --> PR
-    end
-
-    subgraph "Runtime Domain (Infrastructure)"
-        RT[Runtime]
-        CT[Container]
-        AG[Agent]
-        SS[Session]
-        SB[Sandbox]
-        BUS[SystemBus]
-
-        RT --> BUS
-        RT --> CT
-        CT --> AG
-        AG --> SS
-        AG --> SB
-    end
-
-    subgraph "External"
-        LLM[Claude API]
-        MCP[MCP Tools]
-        DB[(Storage)]
-    end
-
-    AG --> EG
-    DR --> LLM
-    SB --> MCP
-    SS --> DB
+```
+┌────────────────────────────────────────────────────────────────┐
+│                    Agent Domain (Pure Logic)                    │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │                      AgentEngine                          │  │
+│  │                                                            │  │
+│  │  Driver (event producer)                                  │  │
+│  │      │                                                     │  │
+│  │      │ yields StreamEvent                                 │  │
+│  │      ▼                                                     │  │
+│  │  MealyMachine (pure state machine)                        │  │
+│  │      │                                                     │  │
+│  │      │ emits AgentOutput                                  │  │
+│  │      ▼                                                     │  │
+│  │  Presenter (event consumer)                               │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│  Independent & Testable - No I/O dependencies                  │
+└────────────────────────────────────────────────────────────────┘
+                              │
+                              │ used by
+                              ▼
+┌────────────────────────────────────────────────────────────────┐
+│              Runtime Domain (Infrastructure)                    │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │                       Runtime                             │  │
+│  │                          │                                │  │
+│  │      ┌───────────────────┼───────────────────┐            │  │
+│  │      │                   │                   │            │  │
+│  │      ▼                   ▼                   ▼            │  │
+│  │  SystemBus          Container          Environment       │  │
+│  │      │                   │                   │            │  │
+│  │      │                   ▼                   │            │  │
+│  │      │               Agent                   │            │  │
+│  │      │                   │                   │            │  │
+│  │      │         ┌─────────┼─────────┐         │            │  │
+│  │      │         │         │         │         │            │  │
+│  │      ▼         ▼         ▼         ▼         ▼            │  │
+│  │   Events   Session  Sandbox  AgentEngine  Claude SDK     │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│  Complete Lifecycle - Container, Session, Bus, Environment     │
+└────────────────────────────────────────────────────────────────┘
 ```
 
-### Engine Domain
+### Agent Domain
 
-The Engine domain is **independent and testable without I/O**. It can be tested with mock drivers.
+The Agent domain is **independent and testable without I/O**. It can be tested with mock drivers.
 
 | Component | Responsibility |
 |-----------|---------------|
@@ -55,7 +60,9 @@ The Engine domain is **independent and testable without I/O**. It can be tested 
 | **MealyMachine** | Pure state machine for event assembly |
 | **Presenter** | Event consumer interface (side effects) |
 
-**Key characteristic**: Engine uses **lightweight events** with only `{ type, timestamp, data }`.
+**Key characteristic**: Uses **lightweight events** with only `{ type, timestamp, data }`.
+
+**Package**: `@agentxjs/agent`
 
 ### Runtime Domain
 
@@ -63,75 +70,101 @@ The Runtime domain manages the **complete system lifecycle** with persistence, i
 
 | Component | Responsibility |
 |-----------|---------------|
-| **Runtime** | Top-level API, SystemBus owner |
-| **SystemBus** | Event routing and subscription |
+| **Runtime** | Top-level API, owns SystemBus and Environment |
+| **SystemBus** | Event routing, subscription, request/response |
 | **Container** | Isolation boundary, agent registry |
-| **Agent** | Complete runtime entity (Engine + Session + Sandbox) |
-| **Session** | Conversation history, persistence |
+| **Agent** | Complete runtime entity (AgentEngine + Session + Sandbox) |
+| **Session** | Conversation history, message persistence |
 | **Sandbox** | Isolated environment (filesystem, MCP tools) |
+| **Environment** | External world interface (Receptor + Effector) |
 
-**Key characteristic**: Runtime uses **full events** with `{ type, timestamp, data, source, category, intent, context }`.
+**Key characteristic**: Uses **full events** with `{ type, timestamp, data, source, category, intent, context }`.
+
+**Package**: `@agentxjs/runtime`
 
 ## Two Event Structures
 
 AgentX has two event structures for different purposes:
 
-```mermaid
-graph LR
-    subgraph "EngineEvent (Lightweight)"
-        E1["{ type, timestamp, data }"]
-    end
-
-    subgraph "SystemEvent (Full)"
-        E2["{ type, timestamp, data,<br/>source, category, intent, context }"]
-    end
-
-    E1 -->|"Presenter enriches"| E2
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  EngineEvent (Lightweight)                   │
+│                                                              │
+│  {                                                           │
+│    type: "text_delta",                                       │
+│    timestamp: 1234567890,                                    │
+│    data: { text: "Hello" }                                   │
+│  }                                                           │
+│                                                              │
+│  Used in: AgentEngine (Agent domain)                         │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          │ Presenter enriches
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   SystemEvent (Full)                         │
+│                                                              │
+│  {                                                           │
+│    type: "text_delta",                                       │
+│    timestamp: 1234567890,                                    │
+│    data: { text: "Hello" },                                  │
+│    source: "agent",                                          │
+│    category: "stream",                                       │
+│    intent: "notification",                                   │
+│    context: {                                                │
+│      containerId: "container_123",                           │
+│      agentId: "agent_456",                                   │
+│      sessionId: "session_789"                                │
+│    }                                                         │
+│  }                                                           │
+│                                                              │
+│  Used in: Runtime (Runtime domain)                           │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-| Field | EngineEvent | SystemEvent |
-|-------|-------------|-------------|
-| type | Event identifier | Event identifier |
-| timestamp | When it happened | When it happened |
-| data | Event payload | Event payload |
-| source | - | Where it came from |
-| category | - | Classification |
-| intent | - | notification/request/result |
-| context | - | Scope (containerId, agentId, sessionId) |
-
 **Why two structures?**
-- Engine needs minimal overhead for pure event processing
-- Runtime needs rich metadata for routing, filtering, and debugging
+- **Agent domain** needs minimal overhead for pure event processing
+- **Runtime domain** needs rich metadata for routing, filtering, and debugging
 
 ## Event Sources and Categories
 
 SystemEvent uses `source` and `category` for classification:
 
-```mermaid
-graph TD
-    SE[SystemEvent]
-
-    SE --> ENV["source: environment"]
-    SE --> AGT["source: agent"]
-    SE --> CMD["source: command"]
-    SE --> SSN["source: session"]
-    SE --> CTN["source: container"]
-    SE --> SBX["source: sandbox"]
-
-    AGT --> STR["category: stream"]
-    AGT --> STA["category: state"]
-    AGT --> MSG["category: message"]
-    AGT --> TRN["category: turn"]
-
-    CMD --> REQ["category: request"]
-    CMD --> RES["category: response"]
+```
+SystemEvent
+│
+├── source: "environment"
+│   ├── category: "stream"      → Streaming from Claude API
+│   └── category: "connection"  → Connection status
+│
+├── source: "agent"
+│   ├── category: "stream"      → Real-time incremental (text_delta, tool_call)
+│   ├── category: "state"       → State transitions (thinking, responding)
+│   ├── category: "message"     → Complete messages (user, assistant, tool)
+│   └── category: "turn"        → Analytics (cost, duration, tokens)
+│
+├── source: "command"
+│   ├── category: "request"     → API operations (create, run, send)
+│   └── category: "response"    → Operation results
+│
+├── source: "session"
+│   ├── category: "lifecycle"   → Session created, destroyed
+│   ├── category: "persist"     → Message persisted
+│   └── category: "action"      → Session resumed, forked
+│
+├── source: "container"
+│   └── category: "lifecycle"   → Container created, destroyed
+│
+└── source: "sandbox"
+    ├── category: "workdir"     → File operations
+    └── category: "mcp"         → MCP tool operations
 ```
 
 | Source | Categories | Description |
 |--------|-----------|-------------|
 | `agent` | stream, state, message, turn | Agent internal events (4-layer) |
-| `command` | request, response | API operations |
-| `environment` | stream, connection | External world (Claude API) |
+| `command` | request, response | API operations (request/response pattern) |
+| `environment` | stream, connection | External world (Claude SDK) |
 | `session` | lifecycle, persist, action | Session operations |
 | `container` | lifecycle | Container operations |
 | `sandbox` | workdir, mcp | Sandbox resources |
@@ -140,41 +173,54 @@ graph TD
 
 Agent events follow a 4-layer hierarchy, each serving different consumers:
 
-```mermaid
-graph TB
-    subgraph "L1: Stream Layer"
-        S1[message_start]
-        S2[text_delta]
-        S3[tool_use_start]
-        S4[tool_use_stop]
-        S5[tool_result]
-        S6[message_stop]
-    end
-
-    subgraph "L2: State Layer"
-        ST1[conversation_start]
-        ST2[conversation_thinking]
-        ST3[conversation_responding]
-        ST4[tool_executing]
-        ST5[tool_completed]
-        ST6[conversation_end]
-    end
-
-    subgraph "L3: Message Layer"
-        M1[user_message]
-        M2[assistant_message]
-        M3[tool_call_message]
-        M4[tool_result_message]
-    end
-
-    subgraph "L4: Turn Layer"
-        T1[turn_request]
-        T2[turn_response]
-    end
-
-    S2 -->|"MealyMachine<br/>assembles"| M2
-    ST1 --> T1
-    ST6 --> T2
+```
+┌─────────────────────────────────────────────────────────────┐
+│  L1: Stream Layer (Real-time incremental)                   │
+│  ─────────────────────────────────────────────────────────  │
+│  message_start → text_delta → text_delta → tool_use_start  │
+│  → input_json_delta → tool_use_stop → tool_result          │
+│  → message_stop                                             │
+│                                                             │
+│  Purpose: Real-time UI updates (typewriter effect)          │
+│  Category: stream                                            │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          │ MealyMachine assembles
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  L2: State Layer (State transitions)                        │
+│  ─────────────────────────────────────────────────────────  │
+│  conversation_start → conversation_thinking                 │
+│  → conversation_responding → tool_planned                   │
+│  → tool_executing → tool_completed → conversation_end       │
+│                                                             │
+│  Purpose: Loading indicators, state machines                 │
+│  Category: state                                             │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          │ MealyMachine assembles
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  L3: Message Layer (Complete messages)                      │
+│  ─────────────────────────────────────────────────────────  │
+│  user_message → assistant_message → tool_call_message       │
+│  → tool_result_message                                       │
+│                                                             │
+│  Purpose: Chat history, persistence                          │
+│  Category: message                                           │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          │ MealyMachine tracks
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  L4: Turn Layer (Analytics)                                 │
+│  ─────────────────────────────────────────────────────────  │
+│  turn_request → turn_response                               │
+│  (duration, tokens, cost)                                    │
+│                                                             │
+│  Purpose: Billing, monitoring, analytics                     │
+│  Category: turn                                              │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 | Layer | Category | Purpose | Consumers |
@@ -186,21 +232,29 @@ graph TB
 
 ## Command Event Pattern
 
-All API operations use request/response events:
+All API operations use **request/response** events with correlation IDs:
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant AgentX
-    participant Runtime
-    participant Container
-
-    Client->>AgentX: request("container_create_request", { containerId })
-    AgentX->>Runtime: emit(ContainerCreateRequest)
-    Runtime->>Container: create()
-    Container-->>Runtime: created
-    Runtime-->>AgentX: emit(ContainerCreateResponse)
-    AgentX-->>Client: return response
+```
+┌─────────────┐                                    ┌──────────┐
+│   Client    │                                    │ Runtime  │
+└─────────────┘                                    └──────────┘
+      │                                                  │
+      │ request("container_create_request", { ... })    │
+      │──────────────────────────────────────────────────▶│
+      │                                                  │
+      │   { type: "container_create_request",            │
+      │     requestId: "req_123",                        │
+      │     data: { containerId: "my-container" } }      │
+      │                                                  │
+      │                              [Container created] │
+      │                                                  │
+      │   { type: "container_create_response",           │
+      │     requestId: "req_123",                        │
+      │◀──────────────────────────────────────────────────│
+      │     data: { containerId: "my-container" } }      │
+      │                                                  │
+      │ return response                                  │
+      │                                                  │
 ```
 
 Request types and their responses:
@@ -210,72 +264,40 @@ Request types and their responses:
 | `container_create_request` | `container_create_response` | Create container |
 | `agent_run_request` | `agent_run_response` | Run agent |
 | `agent_receive_request` | `agent_receive_response` | Send message |
+| `agent_interrupt_request` | `agent_interrupt_response` | Interrupt agent |
 | `agent_destroy_request` | `agent_destroy_response` | Destroy agent |
-| `image_snapshot_request` | `image_snapshot_response` | Create image |
-
-## AgentX: Local vs Remote
-
-AgentX provides the same API for both local and remote modes:
-
-```mermaid
-graph TB
-    subgraph "Local Mode"
-        AX1[AgentX]
-        RT1[Runtime]
-        LLM1[Claude API]
-
-        AX1 --> RT1
-        RT1 --> LLM1
-    end
-
-    subgraph "Remote Mode"
-        AX2[AgentX]
-        WS[WebSocket]
-        SRV[Server]
-        RT2[Runtime]
-        LLM2[Claude API]
-
-        AX2 --> WS
-        WS --> SRV
-        SRV --> RT2
-        RT2 --> LLM2
-    end
-```
-
-```typescript
-// Local mode - embedded runtime
-const agentx = await createAgentX();
-
-// Remote mode - connect to server
-const agentx = await createAgentX({ server: "ws://localhost:5200" });
-
-// Same API for both!
-await agentx.request("agent_run_request", { containerId, config });
-agentx.on("text_delta", (e) => console.log(e.data.text));
-```
+| `image_snapshot_request` | `image_snapshot_response` | Create snapshot |
+| `image_resume_request` | `image_resume_response` | Resume from snapshot |
 
 ## Package Dependencies
 
-```mermaid
-graph BT
-    T["@agentxjs/types<br/>(zero deps)"]
-    C["@agentxjs/common<br/>(logger)"]
-    E["@agentxjs/engine<br/>(MealyMachine)"]
-    A["@agentxjs/agent<br/>(AgentEngine)"]
-    X["agentxjs<br/>(AgentX API)"]
-    N["@agentxjs/node-runtime<br/>(ClaudeDriver, SQLite)"]
-    U["@agentxjs/ui<br/>(React components)"]
-
-    T --> C
-    C --> E
-    E --> A
-    A --> X
-    X --> N
-    N --> U
+```
+@agentxjs/types
+  (Type definitions - zero dependencies)
+       │
+       ▼
+@agentxjs/common
+  (Logger facade - shared infrastructure)
+       │
+       ▼
+@agentxjs/agent
+  (AgentEngine - pure event processor with MealyMachine)
+       │
+       ▼
+@agentxjs/runtime
+  (Runtime - Container, Session, Bus, Environment, Claude SDK)
+       │
+       ▼
+agentxjs
+  (Unified API - local/remote modes)
+       │
+       ▼
+@agentxjs/ui
+  (React components - Storybook)
 ```
 
 ## Next Steps
 
-- [Event System](./event-system.md) - Deep dive into the four-layer event system
-- [Lifecycle](./lifecycle.md) - Agent lifecycle management
-- [Mealy Machine](./mealy-machine.md) - The core state machine pattern
+- **[Event System](./event-system.md)** - Deep dive into the four-layer event system
+- **[Lifecycle](./lifecycle.md)** - Agent lifecycle management (run, stop, resume, destroy)
+- **[Mealy Machine](./mealy-machine.md)** - The core state machine pattern
