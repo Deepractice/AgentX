@@ -1,14 +1,14 @@
 /**
  * useAgent - React hook for Agent event binding
  *
- * Binds to an existing Agent instance and provides reactive state
+ * Binds to AgentX events for a specific agent and provides reactive state
  * for messages, streaming text, errors, and agent status.
  *
  * @example
  * ```tsx
  * import { useAgent } from "@agentxjs/ui";
  *
- * function ChatPage({ agent }) {
+ * function ChatPage({ agentx, agentId }) {
  *   const {
  *     messages,
  *     streaming,
@@ -16,7 +16,7 @@
  *     errors,
  *     send,
  *     isLoading,
- *   } = useAgent(agent);
+ *   } = useAgent(agentx, agentId);
  *
  *   return (
  *     <div>
@@ -30,16 +30,49 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { Agent, AgentState, Message, AgentError, UserMessage } from "@agentxjs/types";
+import type { AgentX, SystemEvent } from "agentxjs";
+import { createLogger } from "@agentxjs/common";
+
+const logger = createLogger("ui/useAgent");
+
+/**
+ * Agent state for UI
+ */
+export type AgentStatus =
+  | "idle"
+  | "queued"
+  | "thinking"
+  | "responding"
+  | "tool_executing"
+  | "error";
+
+/**
+ * Message for UI display
+ */
+export interface UIMessage {
+  id: string;
+  role: "user" | "assistant" | "tool_call" | "tool_result";
+  content: string | unknown;
+  timestamp: number;
+}
+
+/**
+ * Error info for UI
+ */
+export interface UIError {
+  code: string;
+  message: string;
+  recoverable: boolean;
+}
 
 /**
  * Return type of useAgent hook
  */
 export interface UseAgentResult {
   /**
-   * All messages in the conversation (user, assistant, tool-use, error)
+   * All messages in the conversation
    */
-  messages: Message[];
+  messages: UIMessage[];
 
   /**
    * Current streaming text (accumulates during response)
@@ -47,14 +80,14 @@ export interface UseAgentResult {
   streaming: string;
 
   /**
-   * Current agent state
+   * Current agent status
    */
-  status: AgentState;
+  status: AgentStatus;
 
   /**
-   * Errors received (AgentError objects, not Messages)
+   * Errors received
    */
-  errors: AgentError[];
+  errors: UIError[];
 
   /**
    * Send a message to the agent
@@ -89,7 +122,7 @@ export interface UseAgentOptions {
   /**
    * Initial messages to display
    */
-  initialMessages?: Message[];
+  initialMessages?: UIMessage[];
 
   /**
    * Callback when a message is sent
@@ -99,29 +132,34 @@ export interface UseAgentOptions {
   /**
    * Callback when an error occurs
    */
-  onError?: (error: AgentError) => void;
+  onError?: (error: UIError) => void;
 
   /**
    * Callback when status changes
    */
-  onStatusChange?: (status: AgentState) => void;
+  onStatusChange?: (status: AgentStatus) => void;
 }
 
 /**
- * React hook for binding to an Agent instance
+ * React hook for binding to Agent events via AgentX
  *
- * @param agent - The Agent instance to bind to
+ * @param agentx - The AgentX instance
+ * @param agentId - The agent ID to bind to
  * @param options - Optional configuration
  * @returns Reactive state and control functions
  */
-export function useAgent(agent: Agent | null, options: UseAgentOptions = {}): UseAgentResult {
+export function useAgent(
+  agentx: AgentX | null,
+  agentId: string | null,
+  options: UseAgentOptions = {}
+): UseAgentResult {
   const { initialMessages = [], onSend, onError, onStatusChange } = options;
 
   // State
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<UIMessage[]>(initialMessages);
   const [streaming, setStreaming] = useState("");
-  const [status, setStatus] = useState<AgentState>(agent?.state ?? "idle");
-  const [errors, setErrors] = useState<AgentError[]>([]);
+  const [status, setStatus] = useState<AgentStatus>("idle");
+  const [errors, setErrors] = useState<UIError[]>([]);
 
   // Track if component is mounted
   const mountedRef = useRef(true);
@@ -129,123 +167,216 @@ export function useAgent(agent: Agent | null, options: UseAgentOptions = {}): Us
   // Derive isLoading from status
   const isLoading =
     status === "queued" ||
-    status === "responding" ||
     status === "thinking" ||
-    status === "planning_tool" ||
-    status === "awaiting_tool_result" ||
-    status === "conversation_active";
+    status === "responding" ||
+    status === "tool_executing";
 
-  // Reset state when agent changes
+  // Reset state when agentId changes
   useEffect(() => {
-    setMessages([]);
+    setMessages(initialMessages);
     setStreaming("");
     setErrors([]);
-    setStatus(agent?.state ?? "idle");
-  }, [agent]);
+    setStatus("idle");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agentId]);
 
   // Subscribe to agent events
   useEffect(() => {
-    if (!agent) return;
+    if (!agentx || !agentId) return;
 
     mountedRef.current = true;
+    const unsubscribes: Array<() => void> = [];
 
-    // Subscribe to events using the new react() API
-    const unsubEvents = agent.react({
-      // Stream layer - text deltas
-      onTextDelta: (event) => {
-        if (!mountedRef.current) return;
-        setStreaming((prev) => prev + event.data.text);
-      },
+    // Helper to check if event is for this agent
+    const isForThisAgent = (event: SystemEvent): boolean => {
+      return event.context?.agentId === agentId;
+    };
 
-      // Message layer - complete messages
-      onAssistantMessage: (event) => {
-        if (!mountedRef.current) return;
-        const msg = event.data;
+    // Stream events - text_delta
+    unsubscribes.push(
+      agentx.on("text_delta", (event) => {
+        if (!mountedRef.current || !isForThisAgent(event)) return;
+        const data = event.data as { text: string };
+        setStreaming((prev) => prev + data.text);
+      })
+    );
+
+    // State events - conversation lifecycle
+    unsubscribes.push(
+      agentx.on("conversation_start", (event) => {
+        if (!mountedRef.current || !isForThisAgent(event)) return;
+        setStatus("thinking");
+        onStatusChange?.("thinking");
+      })
+    );
+
+    unsubscribes.push(
+      agentx.on("conversation_thinking", (event) => {
+        if (!mountedRef.current || !isForThisAgent(event)) return;
+        setStatus("thinking");
+        onStatusChange?.("thinking");
+      })
+    );
+
+    unsubscribes.push(
+      agentx.on("conversation_responding", (event) => {
+        if (!mountedRef.current || !isForThisAgent(event)) return;
+        setStatus("responding");
+        onStatusChange?.("responding");
+      })
+    );
+
+    unsubscribes.push(
+      agentx.on("conversation_end", (event) => {
+        if (!mountedRef.current || !isForThisAgent(event)) return;
+        setStatus("idle");
+        onStatusChange?.("idle");
+      })
+    );
+
+    unsubscribes.push(
+      agentx.on("tool_executing", (event) => {
+        if (!mountedRef.current || !isForThisAgent(event)) return;
+        setStatus("tool_executing");
+        onStatusChange?.("tool_executing");
+      })
+    );
+
+    // Message events - complete messages
+    unsubscribes.push(
+      agentx.on("assistant_message", (event) => {
+        if (!mountedRef.current || !isForThisAgent(event)) return;
+        const data = event.data as {
+          messageId: string;
+          content: unknown;
+          timestamp: number;
+        };
         setStreaming(""); // Clear streaming
         setMessages((prev) => {
-          // Prevent duplicates
-          if (prev.some((m) => m.id === msg.id)) return prev;
-          return [...prev, msg];
+          if (prev.some((m) => m.id === data.messageId)) return prev;
+          return [
+            ...prev,
+            {
+              id: data.messageId,
+              role: "assistant",
+              content: data.content,
+              timestamp: data.timestamp,
+            },
+          ];
         });
-      },
+      })
+    );
 
-      onToolCallMessage: (event) => {
-        if (!mountedRef.current) return;
-        const msg = event.data;
+    unsubscribes.push(
+      agentx.on("tool_call_message", (event) => {
+        if (!mountedRef.current || !isForThisAgent(event)) return;
+        const data = event.data as {
+          messageId: string;
+          toolCalls: unknown;
+          timestamp: number;
+        };
         setMessages((prev) => {
-          if (prev.some((m) => m.id === msg.id)) return prev;
-          return [...prev, msg];
+          if (prev.some((m) => m.id === data.messageId)) return prev;
+          return [
+            ...prev,
+            {
+              id: data.messageId,
+              role: "tool_call",
+              content: data.toolCalls,
+              timestamp: data.timestamp,
+            },
+          ];
         });
-      },
+      })
+    );
 
-      onToolResultMessage: (event) => {
-        if (!mountedRef.current) return;
-        const msg = event.data;
+    unsubscribes.push(
+      agentx.on("tool_result_message", (event) => {
+        if (!mountedRef.current || !isForThisAgent(event)) return;
+        const data = event.data as {
+          messageId: string;
+          results: unknown;
+          timestamp: number;
+        };
         setMessages((prev) => {
-          if (prev.some((m) => m.id === msg.id)) return prev;
-          return [...prev, msg];
+          if (prev.some((m) => m.id === data.messageId)) return prev;
+          return [
+            ...prev,
+            {
+              id: data.messageId,
+              role: "tool_result",
+              content: data.results,
+              timestamp: data.timestamp,
+            },
+          ];
         });
-      },
+      })
+    );
 
-      // Error handling (ErrorEvent, not ErrorMessageEvent)
-      onError: (event) => {
-        if (!mountedRef.current) return;
-        const error = event.data.error;
-        setErrors((prev) => [...prev, error]);
+    // Error events
+    unsubscribes.push(
+      agentx.on("error_occurred", (event) => {
+        if (!mountedRef.current || !isForThisAgent(event)) return;
+        const data = event.data as UIError;
+        setErrors((prev) => [...prev, data]);
         setStreaming(""); // Clear streaming on error
-        onError?.(error);
-      },
-    });
+        setStatus("error");
+        onError?.(data);
+        onStatusChange?.("error");
+      })
+    );
 
-    // Subscribe to state changes
-    const unsubState = agent.onStateChange((change) => {
-      if (!mountedRef.current) return;
-      setStatus(change.current);
-      onStatusChange?.(change.current);
-    });
-
-    // Sync initial state
-    setStatus(agent.state);
+    logger.debug("Subscribed to agent events", { agentId });
 
     return () => {
       mountedRef.current = false;
-      unsubEvents();
-      unsubState();
+      unsubscribes.forEach((unsub) => unsub());
+      logger.debug("Unsubscribed from agent events", { agentId });
     };
-  }, [agent, onError, onStatusChange]);
+  }, [agentx, agentId, onError, onStatusChange]);
 
   // Send message
   const send = useCallback(
     (text: string) => {
-      if (!agent) return;
+      if (!agentx || !agentId) return;
 
       // Clear errors on new message
       setErrors([]);
       onSend?.(text);
 
       // Add user message to local state immediately
-      const userMessage: UserMessage = {
+      const userMessage: UIMessage = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
         role: "user",
-        subtype: "user",
         content: text,
         timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, userMessage]);
+      setStatus("queued");
+      onStatusChange?.("queued");
 
-      // Send to agent (fire-and-forget, errors come via events)
-      agent.receive(text).catch(() => {
-        // Error already emitted via error_message event
-        // Swallow to prevent unhandled rejection
-      });
+      // Send to agent via request
+      agentx
+        .request("agent_receive_request", { agentId, content: text })
+        .catch((error) => {
+          logger.error("Failed to send message", { agentId, error });
+          setStatus("error");
+          onStatusChange?.("error");
+        });
     },
-    [agent, onSend]
+    [agentx, agentId, onSend, onStatusChange]
   );
 
   // Interrupt
   const interrupt = useCallback(() => {
-    agent?.interrupt();
-  }, [agent]);
+    if (!agentx || !agentId) return;
+
+    agentx
+      .request("agent_interrupt_request", { agentId })
+      .catch((error) => {
+        logger.error("Failed to interrupt agent", { agentId, error });
+      });
+  }, [agentx, agentId]);
 
   // Clear messages
   const clearMessages = useCallback(() => {

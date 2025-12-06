@@ -1,33 +1,37 @@
 /**
- * Container Components - Pure UI Panes
+ * Container Components
  *
- * Part of UI-Backend API Consistency design (see index.ts ADR #5):
- * - These are pure UI components (presentational)
- * - For integration, use Studio from ~/components/studio
+ * New architecture:
+ * - Agent instance = one conversation (short-lived)
+ * - Image = saved conversation snapshot (persistent)
+ *
+ * Components:
+ * - ContainerView: Main layout (ImagePane + ChatPane)
+ * - ImagePane: Saved conversations list
+ * - ChatPane: Current conversation
+ * - MessagePane: Message display
+ * - InputPane: User input
  */
 
-// ContainerView - Pure UI layout component
+// ContainerView - Main layout component
 export { ContainerView } from "./ContainerView";
-export type { ContainerViewProps, ContainerViewRenderProps } from "./ContainerView";
+export type { ContainerViewProps } from "./ContainerView";
 
-// Pure UI Panes
-export { DefinitionPane } from "./DefinitionPane";
-export type { DefinitionPaneProps } from "./DefinitionPane";
+// ImagePane - Saved conversations list
+export { ImagePane } from "./ImagePane";
+export type { ImagePaneProps } from "./ImagePane";
 
-export { SessionPane } from "./SessionPane";
-export type { SessionPaneProps } from "./SessionPane";
+// ChatPane - Current conversation
+export { ChatPane } from "./ChatPane";
+export type { ChatPaneProps } from "./ChatPane";
 
-export { AgentPane } from "./AgentPane";
-export type { AgentPaneProps } from "./AgentPane";
-
+// MessagePane - Message display
 export { MessagePane } from "./MessagePane";
 export type { MessagePaneProps } from "./MessagePane";
 
+// InputPane - User input
 export { InputPane } from "./InputPane";
 export type { InputPaneProps } from "./InputPane";
 
-export { InputToolBar } from "./InputToolBar";
-export type { InputToolBarProps } from "./InputToolBar";
-
 // Types
-export type { SessionItem, AgentDefinitionItem } from "./types";
+export type { ImageItem, ConversationState } from "./types";

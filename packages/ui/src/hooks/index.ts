@@ -1,30 +1,53 @@
 /**
  * React Hooks for AgentX integration
  *
- * Hooks follow UI-Backend API Consistency principle (see index.ts ADR #5):
- * - useSession maps to agentx.sessions
- * - useAgent maps to agentx.agents
- * - useAgentX provides AgentX context
+ * New architecture:
+ * - Agent instance = one conversation
+ * - Image = saved conversation snapshot (can be resumed)
+ * - Session is internal (not exposed to UI)
+ *
+ * Hooks:
+ * - useAgentX: Create and manage AgentX instance
+ * - useAgent: Subscribe to agent events, send messages
+ * - useImages: Manage saved conversations (list, resume, delete, snapshot)
  *
  * @example
  * ```tsx
- * import { useSession, useAgent, useAgentX } from "@agentxjs/ui";
+ * import { useAgentX, useAgent, useImages } from "@agentxjs/ui";
  *
- * function ChatPage({ userId }) {
- *   const agentx = useAgentX();
+ * function App() {
+ *   const agentx = useAgentX({ server: "ws://localhost:5200" });
+ *   const [agentId, setAgentId] = useState<string | null>(null);
  *
- *   // Session management (maps to agentx.sessions)
- *   const { sessions, currentSession, selectSession, createSession } = useSession(agentx, userId);
+ *   // Image management (saved conversations)
+ *   const { images, resumeImage, snapshotAgent } = useImages(agentx);
  *
- *   // Agent state (maps to agentx.agents)
- *   const { messages, streaming, send, isLoading } = useAgent(agent);
+ *   // Current conversation
+ *   const { messages, streaming, send, isLoading } = useAgent(agentx, agentId);
+ *
+ *   const handleResume = async (imageId: string) => {
+ *     const { agentId } = await resumeImage(imageId);
+ *     setAgentId(agentId);
+ *   };
  *
  *   return <Chat messages={messages} streaming={streaming} onSend={send} />;
  * }
  * ```
  */
 
-export { useAgent, type UseAgentResult, type UseAgentOptions } from "./useAgent";
+export {
+  useAgent,
+  type UseAgentResult,
+  type UseAgentOptions,
+  type AgentStatus,
+  type UIMessage,
+  type UIError,
+} from "./useAgent";
+
 export { useAgentX } from "./useAgentX";
-export { useSession, type UseSessionResult, type UseSessionOptions } from "./useSession";
-// Note: SessionItem is exported from ~/components/container to avoid duplicate exports
+
+export {
+  useImages,
+  type UseImagesResult,
+  type UseImagesOptions,
+} from "./useImages";

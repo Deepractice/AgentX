@@ -1,33 +1,19 @@
 /**
- * MessagePane - Business container for message display
+ * MessagePane - Simple message display container
  *
- * Wraps MessageList with business logic:
- * - Status indicator
- * - Error alerts
- * - Scroll management
- *
- * @example
- * ```tsx
- * <MessagePane
- *   messages={messages}
- *   streaming={streamingText}
- *   errors={errors}
- *   status={status}
- *   isLoading={isLoading}
- * />
- * ```
+ * Displays a list of messages with optional streaming text.
+ * For a full-featured chat experience, use ChatPane instead.
  */
 
-import type { Message, AgentError, AgentState } from "@agentxjs/types";
-import { MessageList } from "~/components/message/MessageList";
-import { StatusIndicator } from "~/components/message/StatusIndicator";
-import { ErrorAlert } from "~/components/message/items/ErrorAlert";
+import { useRef, useEffect } from "react";
+import type { UIMessage } from "~/hooks/useAgent";
+import { cn } from "~/utils";
 
 export interface MessagePaneProps {
   /**
    * Messages to display
    */
-  messages: Message[];
+  messages: UIMessage[];
 
   /**
    * Current streaming text
@@ -35,62 +21,66 @@ export interface MessagePaneProps {
   streaming?: string;
 
   /**
-   * Errors to display
-   */
-  errors?: AgentError[];
-
-  /**
-   * Current agent state
-   */
-  status?: AgentState;
-
-  /**
-   * Whether agent is loading
-   */
-  isLoading?: boolean;
-
-  /**
-   * Callback to abort current operation
-   */
-  onAbort?: () => void;
-
-  /**
    * Custom className
    */
   className?: string;
 }
 
+/**
+ * Single message component
+ */
+function MessageItem({ message }: { message: UIMessage }) {
+  const isUser = message.role === "user";
+
+  return (
+    <div className={cn("flex w-full", isUser ? "justify-end" : "justify-start")}>
+      <div
+        className={cn(
+          "max-w-[80%] rounded-lg px-4 py-2",
+          isUser
+            ? "bg-blue-500 text-white"
+            : "bg-gray-100 dark:bg-gray-800"
+        )}
+      >
+        <div className="text-sm whitespace-pre-wrap">
+          {typeof message.content === "string"
+            ? message.content
+            : JSON.stringify(message.content, null, 2)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function MessagePane({
   messages,
   streaming = "",
-  errors = [],
-  status = "idle",
-  isLoading = false,
-  onAbort,
   className = "",
 }: MessagePaneProps) {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, streaming]);
+
   return (
-    <div className={`flex flex-col h-full ${className}`}>
-      {/* Message list */}
-      <div className="flex-1 min-h-0">
-        <MessageList messages={messages} streamingText={streaming} className="h-full" />
-      </div>
+    <div className={cn("flex flex-col h-full overflow-y-auto p-4 space-y-3", className)}>
+      {messages.map((msg) => (
+        <MessageItem key={msg.id} message={msg} />
+      ))}
 
-      {/* Status indicator */}
-      {isLoading && (
-        <div className="px-4 py-2 border-t border-border">
-          <StatusIndicator status={status} isLoading={isLoading} onAbort={onAbort} />
+      {/* Streaming text */}
+      {streaming && (
+        <div className="flex w-full justify-start">
+          <div className="max-w-[80%] rounded-lg px-4 py-2 bg-gray-100 dark:bg-gray-800">
+            <div className="text-sm whitespace-pre-wrap">{streaming}</div>
+            <span className="inline-block w-2 h-4 bg-gray-400 animate-pulse ml-1" />
+          </div>
         </div>
       )}
 
-      {/* Error alerts */}
-      {errors.length > 0 && (
-        <div className="px-4 py-2 space-y-2 border-t border-border">
-          {errors.map((error, index) => (
-            <ErrorAlert key={`error-${index}`} error={error} showDetails={true} />
-          ))}
-        </div>
-      )}
+      <div ref={messagesEndRef} />
     </div>
   );
 }

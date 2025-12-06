@@ -1,23 +1,12 @@
 /**
- * InputPane - Business container for user input
+ * InputPane - Simple input container
  *
- * Expanded input area with toolbar and full-width input box.
- * Designed to be used inside a resizable Panel.
- *
- * @example
- * ```tsx
- * <Allotment.Pane minSize={120} maxSize={600}>
- *   <InputPane
- *     onSend={send}
- *     onFileAttach={handleFiles}
- *     disabled={isLoading}
- *   />
- * </Allotment.Pane>
- * ```
+ * Provides a text input area with send button.
+ * For a full-featured chat experience, use ChatPane instead.
  */
 
-import { InputBox } from "~/components/input/InputBox";
-import { InputToolBar } from "./InputToolBar";
+import React, { useRef } from "react";
+import { cn } from "~/utils";
 
 export interface InputPaneProps {
   /**
@@ -36,16 +25,6 @@ export interface InputPaneProps {
   placeholder?: string;
 
   /**
-   * Callback when user uploads files via toolbar
-   */
-  onFileAttach?: (files: File[]) => void;
-
-  /**
-   * Show toolbar
-   */
-  showToolbar?: boolean;
-
-  /**
    * Custom className
    */
   className?: string;
@@ -55,21 +34,52 @@ export function InputPane({
   onSend,
   disabled = false,
   placeholder = "Type a message...",
-  onFileAttach,
-  showToolbar = true,
   className = "",
 }: InputPaneProps) {
-  return (
-    <div className={`h-full flex flex-col bg-muted/30 border-t border-border ${className}`}>
-      {/* Toolbar */}
-      {showToolbar && <InputToolBar onFileAttach={onFileAttach} disabled={disabled} />}
+  const [text, setText] = React.useState("");
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-      {/* Input area - expands to fill available space */}
-      <div className="flex-1 flex flex-col px-4 py-3 overflow-hidden">
-        <div className="w-full h-full flex flex-col">
-          <InputBox onSend={onSend} disabled={disabled} placeholder={placeholder} />
-        </div>
-      </div>
+  const handleSend = () => {
+    if (!text.trim() || disabled) return;
+    onSend(text.trim());
+    setText("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  return (
+    <div className={cn("flex items-end gap-2 p-3 border-t border-gray-200 dark:border-gray-700", className)}>
+      <textarea
+        ref={inputRef}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        disabled={disabled}
+        className={cn(
+          "flex-1 resize-none rounded-lg border border-gray-300 dark:border-gray-600",
+          "px-3 py-2 text-sm bg-white dark:bg-gray-800",
+          "focus:outline-none focus:ring-2 focus:ring-blue-500",
+          "disabled:opacity-50 disabled:cursor-not-allowed",
+          "min-h-[40px] max-h-[120px]"
+        )}
+        rows={1}
+      />
+      <button
+        onClick={handleSend}
+        disabled={!text.trim() || disabled}
+        className={cn(
+          "px-4 py-2 rounded-lg bg-blue-500 text-white transition-colors",
+          "hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+        )}
+      >
+        Send
+      </button>
     </div>
   );
 }

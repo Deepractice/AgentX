@@ -1,273 +1,237 @@
 /**
- * ContainerView - Pure UI layout component for multi-agent workspace
+ * ContainerView - Main container component
  *
- * This is a presentational component that receives all data and callbacks
- * as props. It contains NO business logic or state management.
+ * Combines ImagePane (sidebar) and ChatPane (main area).
+ * Manages the conversation state and coordinates between components.
  *
- * Part of UI-Backend API Consistency design (see index.ts ADR #5):
- * - Studio (integration) uses useSession + useAgent hooks
- * - ContainerView (pure UI) renders the layout
+ * New architecture:
+ * - Agent instance = one conversation (short-lived)
+ * - Image = saved conversation snapshot (persistent)
  *
- * @example
- * ```tsx
- * // Used by Studio (integration layer)
- * <ContainerView
- *   definitions={definitions}
- *   sessions={sessions}
- *   currentDefinition={currentDefinition}
- *   currentSession={currentSession}
- *   messages={messages}
- *   streaming={streaming}
- *   isLoading={isLoading}
- *   onSelectDefinition={handleSelectDefinition}
- *   onSelectSession={handleSelectSession}
- *   onCreateSession={handleCreateSession}
- *   onSend={handleSend}
- * />
+ * Layout:
+ * ```
+ * ┌─────────────┬───────────────────────────────────┐
+ * │             │                                   │
+ * │  ImagePane  │          ChatPane                 │
+ * │  (sidebar)  │                                   │
+ * │             │  ┌─────────────────────────────┐  │
+ * │  [Images]   │  │      Messages               │  │
+ * │             │  └─────────────────────────────┘  │
+ * │             │  ┌─────────────────────────────┐  │
+ * │  [+ New]    │  │      Input                  │  │
+ * │             │  └─────────────────────────────┘  │
+ * └─────────────┴───────────────────────────────────┘
  * ```
  */
 
-import type { ReactNode } from "react";
-import type { Message, AgentError } from "@agentxjs/types";
-import type { AgentDefinitionItem } from "./types";
-import type { SessionItem } from "~/hooks/useSession";
+import React from "react";
+import type { AgentX } from "agentxjs";
+import { useAgent, useImages } from "~/hooks";
+import { ImagePane } from "./ImagePane";
+import { ChatPane } from "./ChatPane";
+import type { ImageItem } from "./types";
+import { cn } from "~/utils";
+import { createLogger } from "@agentxjs/common";
 
-// Pane components
-import { DefinitionPane } from "./DefinitionPane";
-import { SessionPane } from "./SessionPane";
-import { AgentPane } from "./AgentPane";
-import { InputPane } from "./InputPane";
+const logger = createLogger("ui/ContainerView");
 
-/**
- * Props for ContainerView component
- *
- * All data is passed in, no internal state management.
- */
 export interface ContainerViewProps {
-  // ===== Data =====
-
   /**
-   * Available agent definitions
+   * AgentX instance
    */
-  definitions: AgentDefinitionItem[];
+  agentx: AgentX;
 
   /**
-   * User's sessions
+   * Container ID for creating new agents
    */
-  sessions: SessionItem[];
+  containerId: string;
 
   /**
-   * Currently selected definition
+   * Default agent config for new conversations
    */
-  currentDefinition: AgentDefinitionItem | null;
+  defaultAgentConfig?: {
+    name: string;
+    systemPrompt?: string;
+  };
 
   /**
-   * Currently selected session
-   */
-  currentSession: SessionItem | null;
-
-  /**
-   * Messages in current conversation
-   */
-  messages: Message[];
-
-  /**
-   * Current streaming text (assistant response in progress)
-   */
-  streaming?: string;
-
-  /**
-   * Errors from agent
-   */
-  errors?: AgentError[];
-
-  /**
-   * Whether agent is processing
-   */
-  isLoading: boolean;
-
-  // ===== Callbacks =====
-
-  /**
-   * Called when user selects a definition
-   */
-  onSelectDefinition: (definition: AgentDefinitionItem) => void;
-
-  /**
-   * Called when user selects a session
-   */
-  onSelectSession: (session: SessionItem) => void;
-
-  /**
-   * Called when user wants to create a new session
-   */
-  onCreateSession: () => void;
-
-  /**
-   * Called when user sends a message
-   */
-  onSend: (text: string) => void;
-
-  /**
-   * Called when user wants to abort current response
-   */
-  onAbort?: () => void;
-
-  /**
-   * Called when user wants to add a definition
-   */
-  onAddDefinition?: () => void;
-
-  /**
-   * Called when user wants to delete a session
-   */
-  onDeleteSession?: (sessionId: string) => void;
-
-  // ===== Layout customization =====
-
-  /**
-   * Custom render for the entire layout
-   * If provided, takes full control of rendering
-   */
-  children?: (props: ContainerViewRenderProps) => ReactNode;
-
-  /**
-   * Custom className for container
+   * Additional class name
    */
   className?: string;
 }
 
 /**
- * Props passed to custom render function
- */
-export interface ContainerViewRenderProps {
-  // All data props
-  definitions: AgentDefinitionItem[];
-  sessions: SessionItem[];
-  currentDefinition: AgentDefinitionItem | null;
-  currentSession: SessionItem | null;
-  messages: Message[];
-  streaming?: string;
-  errors?: AgentError[];
-  isLoading: boolean;
-
-  // All callbacks
-  onSelectDefinition: (definition: AgentDefinitionItem) => void;
-  onSelectSession: (session: SessionItem) => void;
-  onCreateSession: () => void;
-  onSend: (text: string) => void;
-  onAbort?: () => void;
-  onAddDefinition?: () => void;
-  onDeleteSession?: (sessionId: string) => void;
-}
-
-/**
- * ContainerView - Pure UI layout component
- *
- * Default layout (3-column):
- * ```
- * ┌──────────┬────────────┬──────────────────────────┐
- * │          │            │                          │
- * │ Def.Pane │ Sess.Pane  │      AgentPane           │
- * │  (60px)  │  (240px)   │                          │
- * │          │            ├──────────────────────────┤
- * │          │            │      InputPane           │
- * └──────────┴────────────┴──────────────────────────┘
- * ```
- *
- * When `children` is provided, it acts as a render props container.
+ * ContainerView component
  */
 export function ContainerView({
-  definitions,
-  sessions,
-  currentDefinition,
-  currentSession,
-  messages,
-  streaming,
-  errors,
-  isLoading,
-  onSelectDefinition,
-  onSelectSession,
-  onCreateSession,
-  onSend,
-  onAbort,
-  onAddDefinition,
-  onDeleteSession,
-  children,
-  className = "",
+  agentx,
+  containerId,
+  defaultAgentConfig = { name: "Assistant" },
+  className,
 }: ContainerViewProps) {
-  // Build render props
-  const renderProps: ContainerViewRenderProps = {
-    definitions,
-    sessions,
-    currentDefinition,
-    currentSession,
+  // Current agent state
+  const [currentAgentId, setCurrentAgentId] = React.useState<string | null>(null);
+  const [selectedImageId, setSelectedImageId] = React.useState<string | null>(null);
+
+  // Images hook
+  const {
+    images,
+    isLoading: imagesLoading,
+    refresh: refreshImages,
+    resumeImage,
+    deleteImage,
+    snapshotAgent,
+  } = useImages(agentx, {
+    onResume: (agentId) => {
+      setCurrentAgentId(agentId);
+    },
+  });
+
+  // Agent hook
+  const {
     messages,
     streaming,
-    errors,
-    isLoading,
-    onSelectDefinition,
-    onSelectSession,
-    onCreateSession,
-    onSend,
-    onAbort,
-    onAddDefinition,
-    onDeleteSession,
+    status,
+    isLoading: agentLoading,
+    send,
+    interrupt,
+    clearMessages,
+  } = useAgent(agentx, currentAgentId);
+
+  // Convert ImageRecord[] to ImageItem[]
+  const imageItems: ImageItem[] = React.useMemo(() => {
+    return images.map((img) => ({
+      ...img,
+      preview: img.messages.length > 0
+        ? String((img.messages[img.messages.length - 1] as { content?: string })?.content || "").slice(0, 50)
+        : undefined,
+      isActive: img.agentId === currentAgentId,
+    }));
+  }, [images, currentAgentId]);
+
+  // Handle selecting an image (resume conversation)
+  const handleSelectImage = async (image: ImageItem) => {
+    try {
+      setSelectedImageId(image.imageId);
+      const { agentId } = await resumeImage(image.imageId);
+      setCurrentAgentId(agentId);
+      logger.info("Resumed conversation", { imageId: image.imageId, agentId });
+    } catch (error) {
+      logger.error("Failed to resume conversation", { error });
+      setSelectedImageId(null);
+    }
   };
 
-  // If custom render provided, use it
-  if (children) {
-    return <div className={`h-full flex flex-col ${className}`}>{children(renderProps)}</div>;
-  }
+  // Handle deleting an image
+  const handleDeleteImage = async (imageId: string) => {
+    try {
+      await deleteImage(imageId);
+      if (selectedImageId === imageId) {
+        setSelectedImageId(null);
+        setCurrentAgentId(null);
+        clearMessages();
+      }
+      logger.info("Deleted conversation", { imageId });
+    } catch (error) {
+      logger.error("Failed to delete conversation", { error });
+    }
+  };
 
-  // Default 3-column layout
+  // Handle creating a new conversation
+  const handleNewConversation = async () => {
+    try {
+      // Create a new agent
+      const response = await agentx.request("agent_run_request", {
+        containerId,
+        config: defaultAgentConfig,
+      });
+
+      if (response.data.error) {
+        throw new Error(response.data.error);
+      }
+
+      const { agentId } = response.data;
+      if (agentId) {
+        setCurrentAgentId(agentId);
+        setSelectedImageId(null);
+        clearMessages();
+        logger.info("Created new conversation", { agentId });
+      }
+    } catch (error) {
+      logger.error("Failed to create new conversation", { error });
+    }
+  };
+
+  // Handle saving current conversation
+  const handleSaveConversation = async () => {
+    if (!currentAgentId) return;
+
+    try {
+      const record = await snapshotAgent(currentAgentId);
+      setSelectedImageId(record.imageId);
+      await refreshImages();
+      logger.info("Saved conversation", { imageId: record.imageId });
+    } catch (error) {
+      logger.error("Failed to save conversation", { error });
+    }
+  };
+
   return (
-    <div className={`h-full flex ${className}`}>
-      {/* Left: Definition Pane */}
-      <div className="w-[60px] border-r border-border flex-shrink-0">
-        <DefinitionPane
-          definitions={definitions}
-          current={currentDefinition}
-          onSelect={onSelectDefinition}
+    <div className={cn("flex h-full", className)}>
+      {/* Sidebar - Image list */}
+      <div className="w-64 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+        <ImagePane
+          images={imageItems}
+          selectedImageId={selectedImageId}
+          isLoading={imagesLoading}
+          onSelectImage={handleSelectImage}
+          onDeleteImage={handleDeleteImage}
+          onNewConversation={handleNewConversation}
         />
       </div>
 
-      {/* Middle: Session Pane */}
-      <div className="w-[240px] border-r border-border flex-shrink-0">
-        <SessionPane
-          sessions={sessions}
-          current={currentSession}
-          onSelect={onSelectSession}
-          onCreate={onCreateSession}
-          onDelete={onDeleteSession}
-        />
-      </div>
-
-      {/* Right: Agent + Input */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Agent Pane */}
-        <div className="flex-1 min-h-0">
-          <AgentPane
-            definition={currentDefinition}
-            session={currentSession}
+      {/* Main area - Chat */}
+      <div className="flex-1 bg-white dark:bg-gray-800">
+        {currentAgentId ? (
+          <ChatPane
             messages={messages}
             streaming={streaming}
-            errors={errors}
-            isLoading={isLoading}
-            onAbort={onAbort}
-            onCreateSession={onCreateSession}
+            status={status}
+            isLoading={agentLoading}
+            onSend={send}
+            onInterrupt={interrupt}
+            onSave={handleSaveConversation}
+            agentName={defaultAgentConfig.name}
           />
-        </div>
-
-        {/* Input Pane */}
-        <div className="flex-shrink-0 border-t border-border">
-          <InputPane onSend={onSend} disabled={isLoading} />
-        </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+            <svg
+              className="w-20 h-20 mb-4 opacity-30"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1}
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+            <p className="text-lg font-medium mb-2">No conversation selected</p>
+            <p className="text-sm mb-4">Select a conversation or start a new one</p>
+            <button
+              onClick={handleNewConversation}
+              className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+            >
+              New Conversation
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 // Re-export types
-export type { AgentDefinitionItem } from "./types";
-export type { SessionItem } from "~/hooks/useSession";
+export type { ImageItem, ConversationState } from "./types";

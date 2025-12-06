@@ -1,87 +1,47 @@
 /**
  * Container Component Types
  *
- * UI-specific types extending core agentx-types for display purposes.
+ * New architecture:
+ * - Agent instance = one conversation (short-lived)
+ * - Image = saved conversation snapshot (persistent)
+ * - Session is internal (not exposed to UI)
  */
 
-import type { AgentDefinition } from "@agentxjs/types";
+import type { ImageRecord } from "agentxjs";
 
 /**
- * Session item for UI display (pure data, no methods)
+ * Image item for UI display
  *
- * Core fields come from Session interface (Docker-style architecture).
- * Additional fields (preview, unreadCount) are computed/derived by UI.
- *
- * Part of Docker-style layered architecture:
- * Definition → build → Image → run → Agent
- *                        ↓
- *                    Session (containerId + imageId)
+ * Extends ImageRecord with UI-specific fields.
  */
-export interface SessionItem {
+export interface ImageItem extends ImageRecord {
   /**
-   * Unique session identifier
-   */
-  sessionId: string;
-
-  /**
-   * Associated container ID
-   */
-  containerId: string;
-
-  /**
-   * Associated image ID (frozen runtime snapshot)
-   */
-  imageId: string;
-
-  /**
-   * Display title (can be AI-generated summary)
-   */
-  title: string | null;
-
-  /**
-   * Session creation timestamp (Unix ms)
-   */
-  createdAt: number;
-
-  /**
-   * Last update timestamp (Unix ms)
-   */
-  updatedAt: number;
-
-  // ===== UI computed fields (not from Session) =====
-
-  /**
-   * Preview text (last message snippet) - computed from messages
+   * Preview text (last message snippet)
    */
   preview?: string;
 
   /**
-   * Unread message count - computed by UI
+   * Whether this image is currently active (has a running agent)
    */
-  unreadCount?: number;
+  isActive?: boolean;
 }
 
 /**
- * Extended AgentDefinition with UI metadata
+ * Active conversation state
  */
-export interface AgentDefinitionItem extends AgentDefinition {
+export interface ConversationState {
   /**
-   * Icon identifier or emoji
+   * Current agent ID (null if no active conversation)
    */
-  icon?: string;
+  agentId: string | null;
 
   /**
-   * Badge color for visual distinction
+   * Container ID
    */
-  color?: string;
+  containerId: string | null;
 
   /**
-   * Whether this agent is online/available
+   * Source image ID (if resumed from an image)
    */
-  isOnline?: boolean;
-
-  /**
-   * Number of active sessions
-   */
-  activeSessionCount?: number;
+  sourceImageId?: string;
 }

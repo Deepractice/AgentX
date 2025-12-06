@@ -10,9 +10,6 @@ export * from "~/components/container";
 // Studio Components (integration layer)
 export * from "~/components/studio";
 
-// Message Components (message display)
-export * from "~/components/message";
-
 // Input Components (user input)
 export * from "~/components/input";
 
