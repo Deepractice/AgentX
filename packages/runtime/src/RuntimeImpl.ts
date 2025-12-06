@@ -7,17 +7,28 @@ import type {
   Runtime,
   ContainersAPI,
   AgentsAPI,
+  ImagesAPI,
   EventsAPI,
   ContainerInfo,
   Unsubscribe,
   RuntimeEventHandler,
   ClaudeLLMConfig,
   LLMProvider,
+  AgentImage,
+  ImageMessage,
 } from "@agentxjs/types/runtime";
 import type { Agent, AgentConfig } from "@agentxjs/types/runtime";
+import type { Message } from "@agentxjs/types/agent";
 import type { Environment, SystemBus } from "@agentxjs/types/runtime/internal";
 import type { RuntimeConfig } from "./createRuntime";
-import { SystemBusImpl, RuntimeAgent, RuntimeSession, RuntimeSandbox } from "./internal";
+import type { RuntimeImageContext } from "./internal";
+import {
+  SystemBusImpl,
+  RuntimeAgent,
+  RuntimeSession,
+  RuntimeSandbox,
+  RuntimeAgentImage,
+} from "./internal";
 import { ClaudeEnvironment } from "./environment";
 import { createLogger } from "@agentxjs/common";
 import { homedir } from "node:os";
@@ -31,6 +42,7 @@ const logger = createLogger("runtime/RuntimeImpl");
 export class RuntimeImpl implements Runtime {
   readonly containers: ContainersAPI;
   readonly agents: AgentsAPI;
+  readonly images: ImagesAPI;
   readonly events: EventsAPI;
 
   private readonly persistence: Persistence;
@@ -85,6 +97,7 @@ export class RuntimeImpl implements Runtime {
     logger.info("Creating APIs");
     this.containers = this.createContainersAPI();
     this.agents = this.createAgentsAPI();
+    this.images = this.createImagesAPI();
     this.events = this.createEventsAPI();
     logger.info("RuntimeImpl constructor done");
   }
@@ -324,6 +337,167 @@ export class RuntimeImpl implements Runtime {
         for (const agentId of Array.from(agentIds)) {
           await this.agents.destroy(agentId);
         }
+      },
+    };
+  }
+
+  // ==================== Images API ====================
+
+  /**
+   * Create RuntimeImageContext for RuntimeAgentImage
+   */
+  private createImageContext(): RuntimeImageContext {
+    return {
+      createAgentWithMessages: async (
+        containerId: string,
+        config: { name: string; description?: string; systemPrompt?: string },
+        messages: Message[]
+      ): Promise<Agent> => {
+        return this.runAgentWithMessages(containerId, config, messages);
+      },
+      imageRepository: this.persistence.images,
+    };
+  }
+
+  /**
+   * Internal: Run agent with pre-loaded messages
+   */
+  private async runAgentWithMessages(
+    containerId: string,
+    config: AgentConfig,
+    messages: Message[]
+  ): Promise<Agent> {
+    // Verify container exists
+    const container = await this.persistence.containers.findContainerById(containerId);
+    if (!container) {
+      throw new Error(`Container not found: ${containerId}`);
+    }
+
+    // Generate agent ID and session ID
+    const agentId = this.generateId();
+    const sessionId = this.generateId();
+
+    // Create and initialize Sandbox
+    const sandbox = new RuntimeSandbox({
+      agentId,
+      containerId,
+      basePath: this.basePath,
+    });
+    await sandbox.initialize();
+
+    // Create Session
+    const session = new RuntimeSession({
+      sessionId,
+      agentId,
+      containerId,
+      repository: this.persistence.sessions,
+      bus: this.bus,
+    });
+    await session.initialize();
+
+    // Pre-load messages into session
+    for (const message of messages) {
+      await session.addMessage(message);
+    }
+
+    // Create RuntimeAgent
+    const agent = new RuntimeAgent({
+      agentId,
+      containerId,
+      config,
+      bus: this.bus,
+      sandbox,
+      session,
+    });
+
+    // Register
+    this.agentRegistry.set(agentId, agent);
+
+    // Add to container
+    let agentIds = this.containerAgents.get(containerId);
+    if (!agentIds) {
+      agentIds = new Set();
+      this.containerAgents.set(containerId, agentIds);
+    }
+    agentIds.add(agentId);
+
+    // Emit agent_registered event
+    this.bus.emit({
+      type: "agent_registered",
+      timestamp: Date.now(),
+      source: "container",
+      category: "lifecycle",
+      intent: "notification",
+      data: {
+        containerId,
+        agentId,
+        definitionName: config.name,
+        registeredAt: Date.now(),
+        resumedFromImage: true,
+      },
+      context: {
+        containerId,
+        agentId,
+      },
+    });
+
+    return agent;
+  }
+
+  private createImagesAPI(): ImagesAPI {
+    const imageContext = this.createImageContext();
+
+    return {
+      snapshot: async (agent: Agent): Promise<AgentImage> => {
+        // Verify it's a RuntimeAgent
+        if (!(agent instanceof RuntimeAgent)) {
+          throw new Error("Agent must be a RuntimeAgent instance");
+        }
+        return RuntimeAgentImage.snapshot(agent, imageContext);
+      },
+
+      list: async (): Promise<AgentImage[]> => {
+        const records = await this.persistence.images.findAllImages();
+        return records.map(
+          (record) =>
+            new RuntimeAgentImage(
+              {
+                imageId: record.imageId,
+                containerId: record.containerId,
+                agentId: record.agentId,
+                name: record.name,
+                description: record.description,
+                systemPrompt: record.systemPrompt,
+                messages: record.messages as unknown as ImageMessage[],
+                parentImageId: record.parentImageId,
+                createdAt: record.createdAt,
+              },
+              imageContext
+            )
+        );
+      },
+
+      get: async (imageId: string): Promise<AgentImage | null> => {
+        const record = await this.persistence.images.findImageById(imageId);
+        if (!record) return null;
+        return new RuntimeAgentImage(
+          {
+            imageId: record.imageId,
+            containerId: record.containerId,
+            agentId: record.agentId,
+            name: record.name,
+            description: record.description,
+            systemPrompt: record.systemPrompt,
+            messages: record.messages as unknown as ImageMessage[],
+            parentImageId: record.parentImageId,
+            createdAt: record.createdAt,
+          },
+          imageContext
+        );
+      },
+
+      delete: async (imageId: string): Promise<void> => {
+        await this.persistence.images.deleteImage(imageId);
       },
     };
   }

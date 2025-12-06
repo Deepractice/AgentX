@@ -24,9 +24,14 @@ export interface ImageRepository {
   findAllImages(): Promise<ImageRecord[]>;
 
   /**
-   * Find images by definition name
+   * Find images by agent name
    */
-  findImagesByDefinitionName(definitionName: string): Promise<ImageRecord[]>;
+  findImagesByName(name: string): Promise<ImageRecord[]>;
+
+  /**
+   * Find images by container ID
+   */
+  findImagesByContainerId(containerId: string): Promise<ImageRecord[]>;
 
   /**
    * Delete image by ID

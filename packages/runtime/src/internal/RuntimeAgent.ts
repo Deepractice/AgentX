@@ -75,7 +75,8 @@ export class RuntimeAgent implements RuntimeAgentInterface {
   private readonly driver: BusDriver;
   private readonly bus: SystemBus;
   private readonly sandbox: Sandbox;
-  private readonly session: Session;
+  readonly session: Session;
+  readonly config: AgentConfig;
 
   constructor(config: RuntimeAgentConfig) {
     this.agentId = config.agentId;
@@ -85,6 +86,7 @@ export class RuntimeAgent implements RuntimeAgentInterface {
     this.bus = config.bus;
     this.sandbox = config.sandbox;
     this.session = config.session;
+    this.config = config.config;
 
     // Create Driver
     this.driver = new BusDriver(config.bus, { agentId: this.agentId });

@@ -1,82 +1,63 @@
 /**
  * ImageRecord - Storage schema for AgentImage persistence
  *
- * Pure data type representing an image (frozen snapshot) in storage.
- * Contains serialized definition and messages for resume/fork capability.
+ * Pure data type representing an Agent snapshot in storage.
+ * Contains all information needed to fully restore an Agent:
+ * - Runtime context (containerId, agentId)
+ * - Configuration (name, systemPrompt)
+ * - Conversation history (messages)
  *
- * Part of Docker-style layered architecture:
- * Definition → build → Image → run → Agent
- *
- * Supports two image types:
- * - 'meta': Genesis image (auto-created from Definition)
- * - 'derived': Committed image (from session.commit())
- *
- * Note: Environment-specific state (e.g., Claude SDK session_id) is stored
- * separately in EnvironmentRecord, not here. This keeps ImageRecord clean
- * and focused on business-layer concerns.
+ * Workflow:
+ * Agent.commit() → ImageRecord (storage) → runtime.images.resume() → Agent
  */
-
-/**
- * Image type discriminator
- */
-export type ImageType = "meta" | "derived";
 
 /**
  * Image storage record
  *
- * Stores the complete frozen snapshot including:
- * - Type (meta or derived)
- * - Definition name (for lookup)
- * - Definition (business config at build time)
- * - Messages (conversation history)
- * - Parent image (for derived images)
+ * Stores the complete frozen snapshot of an Agent's state.
  */
 export interface ImageRecord {
   /**
    * Unique image identifier
-   * - MetaImage: `meta_${definitionName}`
-   * - DerivedImage: `img_${nanoid()}`
+   * Pattern: `img_${nanoid()}`
    */
   imageId: string;
 
   /**
-   * Image type discriminator
-   * - 'meta': Genesis image from Definition
-   * - 'derived': Committed image from Session
+   * Container ID where this agent was running
    */
-  type: ImageType;
+  containerId: string;
 
   /**
-   * Source definition name
-   * Used for looking up MetaImage by definition
+   * Original agent ID (for traceability)
    */
-  definitionName: string;
+  agentId: string;
 
   /**
-   * Parent image ID (only for derived images)
-   * - MetaImage: null
-   * - DerivedImage: parent imageId
+   * Agent name
    */
-  parentImageId: string | null;
+  name: string;
 
   /**
-   * Serialized agent definition (JSON)
-   * Frozen snapshot of business config at build time
+   * Agent description (optional)
    */
-  definition: Record<string, unknown>;
+  description?: string;
 
   /**
-   * Runtime config (JSON)
-   * Contains model, apiKey reference, etc.
+   * System prompt - controls agent behavior
    */
-  config: Record<string, unknown>;
+  systemPrompt?: string;
 
   /**
    * Serialized messages (JSON array)
-   * - MetaImage: always []
-   * - DerivedImage: frozen conversation history
+   * Frozen conversation history
    */
   messages: Record<string, unknown>[];
+
+  /**
+   * Parent image ID (if derived from another image)
+   */
+  parentImageId?: string;
 
   /**
    * Creation timestamp (Unix milliseconds)

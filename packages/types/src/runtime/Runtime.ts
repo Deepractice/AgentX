@@ -25,6 +25,7 @@
 
 import type { Agent } from "./Agent";
 import type { AgentConfig } from "./AgentConfig";
+import type { AgentImage } from "./AgentImage";
 
 /**
  * Unsubscribe function returned by event subscription.
@@ -119,6 +120,39 @@ export interface EventsAPI<E = unknown> {
 }
 
 /**
+ * Images API - Agent snapshot management operations (thin layer)
+ *
+ * This is a thin routing layer. The actual logic lives in AgentImage objects.
+ */
+export interface ImagesAPI {
+  /**
+   * Create a snapshot of an agent
+   *
+   * Captures the current state of the agent including configuration
+   * and conversation history.
+   *
+   * @param agent - The agent to snapshot
+   * @returns AgentImage with resume() capability
+   */
+  snapshot(agent: Agent): Promise<AgentImage>;
+
+  /**
+   * List all images
+   */
+  list(): Promise<AgentImage[]>;
+
+  /**
+   * Get image by ID
+   */
+  get(imageId: string): Promise<AgentImage | null>;
+
+  /**
+   * Delete image by ID
+   */
+  delete(imageId: string): Promise<void>;
+}
+
+/**
  * Runtime interface - the unified API for AI Agents
  */
 export interface Runtime<E = unknown> {
@@ -131,6 +165,11 @@ export interface Runtime<E = unknown> {
    * Agent management API
    */
   readonly agents: AgentsAPI;
+
+  /**
+   * Image management API
+   */
+  readonly images: ImagesAPI;
 
   /**
    * Event subscription API

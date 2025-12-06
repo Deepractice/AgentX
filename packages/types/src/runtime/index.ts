@@ -20,8 +20,11 @@ export type {
   ContainerInfo,
   ContainersAPI,
   AgentsAPI,
+  ImagesAPI,
   EventsAPI,
 } from "./Runtime";
+
+export type { AgentImage, ImageMessage } from "./AgentImage";
 
 export type {
   LLMProvider,
