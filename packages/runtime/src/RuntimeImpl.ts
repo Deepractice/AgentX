@@ -348,7 +348,7 @@ export class RuntimeImpl implements Runtime {
         }
 
         const messages = await image.getMessages();
-        logger.info("Raw messages from storage", { imageId, count: messages.length, firstMessage: messages[0] });
+        logger.debug("Got messages from storage", { imageId, count: messages.length });
         return messages.map(m => {
           // Extract content based on message subtype
           let content: unknown;
@@ -363,8 +363,6 @@ export class RuntimeImpl implements Runtime {
             content = (m as { toolResult: unknown }).toolResult;
             role = "tool_result";
           }
-
-          logger.debug("Mapped message", { id: m.id, subtype: m.subtype, role, hasContent: !!content });
 
           return {
             id: m.id,

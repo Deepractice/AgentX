@@ -197,7 +197,6 @@ export function useAgent(
         .request("image_messages_request", { imageId })
         .then((response) => {
           if (!mountedRef.current) return;
-          logger.info("Full response from server", { imageId, responseData: response.data, responseKeys: Object.keys(response.data || {}) });
           const data = response.data as {
             messages: Array<{
               id: string;
@@ -207,18 +206,14 @@ export function useAgent(
             }>;
           };
           if (data.messages && data.messages.length > 0) {
-            logger.info("Raw messages from server", { imageId, messages: data.messages, firstMessage: JSON.stringify(data.messages[0]) });
-            const mappedMessages = data.messages.map((m, idx) => {
-              logger.info("Mapping message", { idx, id: m.id, role: m.role, hasContent: !!m.content });
-              return {
-                id: m.id,
-                role: m.role,
-                content: m.content as string | unknown,
-                timestamp: m.timestamp,
-              };
-            });
-            logger.info("Mapped messages", { count: mappedMessages.length, ids: mappedMessages.map(m => m.id) });
+            const mappedMessages = data.messages.map((m) => ({
+              id: m.id,
+              role: m.role,
+              content: m.content as string | unknown,
+              timestamp: m.timestamp,
+            }));
             setMessages(mappedMessages);
+            logger.debug("Loaded messages from storage", { imageId, count: mappedMessages.length });
           }
         })
         .catch((err) => {
@@ -292,22 +287,24 @@ export function useAgent(
       })
     );
 
-    // Message events - complete messages
+    // Message events - complete messages (now in Message type format)
     unsubscribes.push(
       agentx.on("assistant_message", (event) => {
         if (!mountedRef.current || !isForThisImage(event)) return;
         const data = event.data as {
-          messageId: string;
+          id: string;
+          role: string;
+          subtype: string;
           content: unknown;
           timestamp: number;
         };
         setStreaming(""); // Clear streaming
         setMessages((prev) => {
-          if (prev.some((m) => m.id === data.messageId)) return prev;
+          if (prev.some((m) => m.id === data.id)) return prev;
           return [
             ...prev,
             {
-              id: data.messageId,
+              id: data.id,
               role: "assistant",
               content: data.content,
               timestamp: data.timestamp,
@@ -321,18 +318,20 @@ export function useAgent(
       agentx.on("tool_call_message", (event) => {
         if (!mountedRef.current || !isForThisImage(event)) return;
         const data = event.data as {
-          messageId: string;
-          toolCalls: unknown;
+          id: string;
+          role: string;
+          subtype: string;
+          toolCall: unknown;
           timestamp: number;
         };
         setMessages((prev) => {
-          if (prev.some((m) => m.id === data.messageId)) return prev;
+          if (prev.some((m) => m.id === data.id)) return prev;
           return [
             ...prev,
             {
-              id: data.messageId,
+              id: data.id,
               role: "tool_call",
-              content: data.toolCalls,
+              content: data.toolCall,
               timestamp: data.timestamp,
             },
           ];
@@ -344,18 +343,20 @@ export function useAgent(
       agentx.on("tool_result_message", (event) => {
         if (!mountedRef.current || !isForThisImage(event)) return;
         const data = event.data as {
-          messageId: string;
-          results: unknown;
+          id: string;
+          role: string;
+          subtype: string;
+          toolResult: unknown;
           timestamp: number;
         };
         setMessages((prev) => {
-          if (prev.some((m) => m.id === data.messageId)) return prev;
+          if (prev.some((m) => m.id === data.id)) return prev;
           return [
             ...prev,
             {
-              id: data.messageId,
+              id: data.id,
               role: "tool_result",
-              content: data.results,
+              content: data.toolResult,
               timestamp: data.timestamp,
             },
           ];

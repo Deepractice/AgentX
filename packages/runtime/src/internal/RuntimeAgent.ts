@@ -9,7 +9,19 @@
  */
 
 import type { Agent as RuntimeAgentInterface, AgentLifecycle, AgentConfig, SystemEvent, EventCategory } from "@agentxjs/types/runtime";
-import type { AgentEngine, AgentPresenter, AgentOutput, Message } from "@agentxjs/types/agent";
+import type {
+  AgentEngine,
+  AgentPresenter,
+  AgentOutput,
+  Message,
+  UserMessage,
+  AssistantMessage,
+  ToolCallMessage,
+  ToolResultMessage,
+  ContentPart,
+  ToolCallPart,
+  ToolResultPart,
+} from "@agentxjs/types/agent";
 import type { SystemBus, SystemBusProducer, Sandbox, Session } from "@agentxjs/types/runtime/internal";
 import { createAgent } from "@agentxjs/agent";
 import { createLogger } from "@agentxjs/common";
@@ -33,10 +45,16 @@ export interface RuntimeAgentConfig {
 /**
  * BusPresenter - Forwards AgentOutput to SystemBus as proper SystemEvent
  *
- * Converts lightweight EngineEvent (type, timestamp, data) to full SystemEvent
- * by adding source, category, intent, and context.
+ * Responsibilities:
+ * 1. Filter out Stream layer events (already sent via DriveableEvent)
+ * 2. Convert State/Message/Turn layer events to SystemEvent format
+ * 3. Transform Message layer data to proper Message type for persistence
  *
- * Uses SystemBusProducer (write-only) because Presenter only emits events.
+ * Event Flow:
+ * - Stream layer: SKIP (DriveableEvent already handles this)
+ * - State layer: Convert to SystemEvent, emit
+ * - Message layer: Convert data to Message type, emit, persist
+ * - Turn layer: Convert to SystemEvent, emit
  */
 class BusPresenter implements AgentPresenter {
   readonly name = "BusPresenter";
@@ -51,13 +69,27 @@ class BusPresenter implements AgentPresenter {
   ) {}
 
   present(_agentId: string, output: AgentOutput): void {
-    // Convert EngineEvent to SystemEvent
+    const category = this.getCategoryForOutput(output);
+
+    // Skip Stream layer events - already sent via DriveableEvent from ClaudeReceptor
+    if (category === "stream") {
+      return;
+    }
+
+    // Convert data format based on category
+    let data: unknown = output.data;
+    if (category === "message") {
+      data = this.convertToMessage(output);
+    }
+    // State and Turn layer data formats match SystemEvent expectations
+
+    // Build complete SystemEvent
     const systemEvent: SystemEvent = {
       type: output.type,
       timestamp: output.timestamp,
-      data: output.data,
+      data,
       source: "agent",
-      category: this.getCategoryForOutput(output),
+      category,
       intent: "notification",
       context: {
         containerId: this.containerId,
@@ -68,13 +100,82 @@ class BusPresenter implements AgentPresenter {
     };
 
     this.producer.emit(systemEvent);
+    logger.debug("Emitted SystemEvent", { type: output.type, category });
 
-    // Collect message events to session (fire-and-forget with error logging)
-    if (this.isMessageEvent(output)) {
-      this.session.addMessage(output.data as Message).catch((err) => {
-        // Log error but don't block - persistence failure shouldn't stop the agent
+    // Persist Message layer events to session
+    if (category === "message") {
+      this.session.addMessage(data as Message).catch((err) => {
         logger.error("Failed to persist message", { error: err, messageType: output.type });
       });
+    }
+  }
+
+  /**
+   * Convert AgentOutput to proper Message type for persistence
+   *
+   * Event data format → Message type format:
+   * - messageId → id
+   * - Add role and subtype fields
+   * - Normalize content structure
+   */
+  private convertToMessage(output: AgentOutput): Message {
+    const eventData = output.data as Record<string, unknown>;
+    const messageId = eventData.messageId as string;
+    const timestamp = (eventData.timestamp as number) || output.timestamp;
+
+    switch (output.type) {
+      case "user_message": {
+        const content = eventData.content as string;
+        return {
+          id: messageId,
+          role: "user",
+          subtype: "user",
+          content,
+          timestamp,
+        } as UserMessage;
+      }
+
+      case "assistant_message": {
+        const content = eventData.content as ContentPart[];
+        return {
+          id: messageId,
+          role: "assistant",
+          subtype: "assistant",
+          content,
+          timestamp,
+        } as AssistantMessage;
+      }
+
+      case "tool_call_message": {
+        const toolCalls = eventData.toolCalls as ToolCallPart[];
+        // ToolCallMessage stores single toolCall, take first one
+        const toolCall = toolCalls[0];
+        return {
+          id: messageId,
+          role: "assistant",
+          subtype: "tool-call",
+          toolCall,
+          timestamp,
+        } as ToolCallMessage;
+      }
+
+      case "tool_result_message": {
+        const results = eventData.results as ToolResultPart[];
+        // ToolResultMessage stores single toolResult, take first one
+        const toolResult = results[0];
+        return {
+          id: messageId,
+          role: "tool",
+          subtype: "tool-result",
+          toolCallId: toolResult.id, // ToolResultPart uses 'id' for tool call reference
+          toolResult,
+          timestamp,
+        } as ToolResultMessage;
+      }
+
+      default:
+        logger.warn("Unknown message type, passing through", { type: output.type });
+        return eventData as unknown as Message;
     }
   }
 
@@ -84,7 +185,7 @@ class BusPresenter implements AgentPresenter {
   private getCategoryForOutput(output: AgentOutput): EventCategory {
     const type = output.type;
 
-    // Stream events
+    // Stream events - SKIP these, handled by DriveableEvent
     if (
       type === "message_start" ||
       type === "message_delta" ||
@@ -115,15 +216,6 @@ class BusPresenter implements AgentPresenter {
 
     // State events (default)
     return "state";
-  }
-
-  private isMessageEvent(output: AgentOutput): boolean {
-    return (
-      output.type === "user_message" ||
-      output.type === "assistant_message" ||
-      output.type === "tool_call_message" ||
-      output.type === "tool_result_message"
-    );
   }
 }
 
