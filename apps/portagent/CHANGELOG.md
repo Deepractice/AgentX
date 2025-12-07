@@ -1,5 +1,17 @@
 # @agentxjs/portagent
 
+## 0.1.7
+
+### Patch Changes
+
+- 06dc1d6: fix: run Docker container as non-root user
+  - Add agentx user (UID 1001) to Docker image
+  - Run container as non-root user to allow Claude Agent SDK bypassPermissions mode
+  - Set AGENTX_DATA_DIR to user home directory
+  - agentxjs@0.1.7
+  - @agentxjs/runtime@0.1.7
+  - @agentxjs/ui@0.1.7
+
 ## 0.1.6
 
 ### Patch Changes
