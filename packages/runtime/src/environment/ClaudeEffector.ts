@@ -28,6 +28,8 @@ const DEFAULT_TIMEOUT = 30_000;
  * ClaudeEffector configuration
  */
 export interface ClaudeEffectorConfig {
+  /** Agent ID for filtering events (required) */
+  agentId: string;
   apiKey: string;
   baseUrl?: string;
   model?: string;
@@ -65,9 +67,12 @@ export class ClaudeEffector implements Effector {
    * Connect to SystemBus consumer to subscribe to events
    */
   connect(consumer: SystemBusConsumer): void {
-    logger.debug("ClaudeEffector connected to SystemBusConsumer");
+    logger.debug("ClaudeEffector connected to SystemBusConsumer", {
+      agentId: this.config.agentId,
+    });
 
     // Listen for user_message events (with requestId and context)
+    // Filter by agentId to only process messages for this agent
     consumer.on("user_message", async (event) => {
       const typedEvent = event as {
         type: string;
@@ -75,6 +80,12 @@ export class ClaudeEffector implements Effector {
         requestId?: string;
         context?: EventContext;
       };
+
+      // Filter by agentId - only process messages for this agent
+      if (typedEvent.context?.agentId !== this.config.agentId) {
+        return;
+      }
+
       const message = typedEvent.data;
       const meta: ReceptorMeta = {
         requestId: typedEvent.requestId || "",
@@ -84,12 +95,19 @@ export class ClaudeEffector implements Effector {
     });
 
     // Listen for interrupt events
+    // Filter by agentId to only process interrupts for this agent
     consumer.on("interrupt", (event) => {
       const typedEvent = event as {
         type: string;
         requestId?: string;
         context?: EventContext;
       };
+
+      // Filter by agentId - only process interrupts for this agent
+      if (typedEvent.context?.agentId !== this.config.agentId) {
+        return;
+      }
+
       const meta: ReceptorMeta = {
         requestId: typedEvent.requestId || "",
         context: typedEvent.context || {},
@@ -198,9 +216,14 @@ export class ClaudeEffector implements Effector {
     (async () => {
       try {
         for await (const sdkMsg of this.claudeQuery!) {
-          // Forward to receptor for emission with current meta
+          // Forward stream_event to receptor for emission with current meta
           if (sdkMsg.type === "stream_event" && this.currentMeta) {
             this.receptor.feed(sdkMsg, this.currentMeta);
+          }
+
+          // Forward user message (contains tool_result) to receptor
+          if (sdkMsg.type === "user" && this.currentMeta) {
+            this.receptor.feedUserMessage(sdkMsg, this.currentMeta);
           }
 
           // Capture session ID
@@ -224,14 +247,6 @@ export class ClaudeEffector implements Effector {
         }
       }
     })();
-  }
-
-  /**
-   * Process SDK responses (wait for result)
-   */
-  private async processResponses(): Promise<void> {
-    // Wait for the background listener to process responses
-    // The receptor will emit events to SystemBus
   }
 
   /**

@@ -8,9 +8,9 @@
  * - Container tracks imageId → agentId mapping
  */
 
-import type { Container, Agent } from "@agentxjs/types/runtime";
+import type { Container, Agent, ClaudeLLMConfig } from "@agentxjs/types/runtime";
 import type { Persistence, ContainerRecord, ImageRecord } from "@agentxjs/types";
-import type { SystemBus, Environment } from "@agentxjs/types/runtime/internal";
+import type { SystemBus } from "@agentxjs/types/runtime/internal";
 import { RuntimeAgent } from "./RuntimeAgent";
 import { RuntimeSession } from "./RuntimeSession";
 import { RuntimeSandbox } from "./RuntimeSandbox";
@@ -24,7 +24,8 @@ const logger = createLogger("runtime/RuntimeContainer");
 export interface RuntimeContainerContext {
   persistence: Persistence;
   bus: SystemBus;
-  environment: Environment;
+  /** LLM configuration for creating agent environments */
+  llmConfig: ClaudeLLMConfig;
   basePath: string;
   /** Callback when container is disposed */
   onDisposed?: (containerId: string) => void;
@@ -150,7 +151,7 @@ export class RuntimeContainer implements Container {
     });
     // Note: Don't call initialize() - session already exists in storage
 
-    // Create RuntimeAgent
+    // Create RuntimeAgent with its own Environment
     const agent = new RuntimeAgent({
       agentId,
       imageId: image.imageId,
@@ -163,6 +164,9 @@ export class RuntimeContainer implements Container {
       bus: this.context.bus,
       sandbox,
       session,
+      llmConfig: this.context.llmConfig,
+      image, // Pass full image record for metadata access
+      imageRepository: this.context.persistence.images,
     });
 
     // Register agent and mapping

@@ -21,7 +21,7 @@
 import * as React from "react";
 import type { AgentX } from "agentxjs";
 import { Save, Smile, Paperclip, FolderOpen } from "lucide-react";
-import { MessagePane, InputPane, type MessagePaneItem, type ToolBarItem } from "~/components/pane";
+import { MessagePane, InputPane, type MessagePaneItem, type ToolBarItem, type ToolMetadata } from "~/components/pane";
 import { useAgent, type UIMessage } from "~/hooks";
 import { cn } from "~/utils";
 import { ChatHeader } from "./ChatHeader";
@@ -70,17 +70,115 @@ export interface ChatProps {
 }
 
 /**
+ * Tool call content structure from events
+ */
+interface ToolCallContent {
+  type: "tool-call";
+  id: string;
+  name: string;
+  input: Record<string, unknown>;
+}
+
+/**
+ * Tool result content structure from events
+ */
+interface ToolResultContent {
+  type: "tool-result";
+  id: string;
+  name: string;
+  output: {
+    type: string;
+    value: unknown;
+  };
+}
+
+/**
+ * Pending tool calls for matching with results
+ */
+const pendingToolCalls = new Map<string, { name: string; input: Record<string, unknown>; timestamp: number }>();
+
+/**
  * Convert UIMessage to MessagePaneItem
  */
-function toMessagePaneItem(msg: UIMessage): MessagePaneItem {
+function toMessagePaneItem(msg: UIMessage, allMessages: UIMessage[]): MessagePaneItem {
+  // Handle tool_call messages
+  if (msg.role === "tool_call") {
+    const toolCall = msg.content as ToolCallContent;
+
+    // Store for later matching with result
+    pendingToolCalls.set(toolCall.id, {
+      name: toolCall.name,
+      input: toolCall.input,
+      timestamp: msg.timestamp,
+    });
+
+    // Find matching result
+    const resultMsg = allMessages.find(
+      (m) => m.role === "tool_result" && (m.content as ToolResultContent)?.id === toolCall.id
+    );
+    const result = resultMsg ? (resultMsg.content as ToolResultContent) : undefined;
+
+    // Build tool metadata
+    const toolMetadata: ToolMetadata = {
+      toolName: toolCall.name || "Unknown Tool",
+      toolId: toolCall.id,
+      status: result ? "success" : "executing",
+      input: toolCall.input,
+      output: result?.output?.value,
+      isError: result?.output?.type?.includes("error"),
+      duration: resultMsg ? (resultMsg.timestamp - msg.timestamp) / 1000 : undefined,
+    };
+
+    return {
+      id: msg.id,
+      role: "tool",
+      content: msg.content,
+      timestamp: msg.timestamp,
+      toolMetadata,
+    };
+  }
+
+  // Skip tool_result messages - they are merged into tool_call
+  if (msg.role === "tool_result") {
+    const toolResult = msg.content as ToolResultContent;
+    const pending = pendingToolCalls.get(toolResult.id);
+
+    // If we already rendered this as part of tool_call, skip
+    // But if somehow the call wasn't received, render standalone
+    if (!pending) {
+      const toolMetadata: ToolMetadata = {
+        toolName: toolResult.name || "Unknown Tool",
+        toolId: toolResult.id,
+        status: toolResult.output?.type?.includes("error") ? "error" : "success",
+        output: toolResult.output?.value,
+        isError: toolResult.output?.type?.includes("error"),
+      };
+
+      return {
+        id: msg.id,
+        role: "tool",
+        content: msg.content,
+        timestamp: msg.timestamp,
+        toolMetadata,
+      };
+    }
+
+    // Return null marker - will be filtered out
+    return {
+      id: msg.id,
+      role: "tool",
+      content: null,
+      timestamp: msg.timestamp,
+      metadata: { skip: true },
+    };
+  }
+
+  // Regular messages
   return {
     id: msg.id,
-    role: msg.role === "tool_call" || msg.role === "tool_result" ? "tool" : msg.role,
+    role: msg.role,
     content: msg.content,
     timestamp: msg.timestamp,
-    metadata: msg.role === "tool_call" || msg.role === "tool_result"
-      ? { toolName: msg.role === "tool_call" ? "Tool Call" : "Tool Result" }
-      : undefined,
   };
 }
 
@@ -109,8 +207,15 @@ export function Chat({
   } = useAgent(agentx, imageId ?? null);
 
   // Map UIMessage[] to MessagePaneItem[]
+  // Filter out tool_result messages that have been merged into tool_call
+  // Sort by timestamp to ensure correct order
   const items: MessagePaneItem[] = React.useMemo(() => {
-    return messages.map(toMessagePaneItem);
+    // Clear pending tool calls on each render
+    pendingToolCalls.clear();
+    return messages
+      .map((msg) => toMessagePaneItem(msg, messages))
+      .filter((item) => !item.metadata?.skip)
+      .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
   }, [messages]);
 
   // Determine loading state

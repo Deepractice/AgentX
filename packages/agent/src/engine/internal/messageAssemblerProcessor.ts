@@ -27,7 +27,6 @@ import type {
   TextDeltaEvent,
   ToolUseStartEvent,
   InputJsonDeltaEvent,
-  ToolUseStopEvent,
   ToolResultEvent,
   MessageStopEvent,
   // Output: Message events
@@ -291,9 +290,8 @@ function handleInputJsonDelta(
  */
 function handleToolUseStop(
   state: Readonly<MessageAssemblerState>,
-  event: StreamEvent
+  _event: StreamEvent
 ): [MessageAssemblerState, MessageAssemblerOutput[]] {
-  const data = event.data as ToolUseStopEvent["data"];
   const index = 1;
   const pendingContent = state.pendingContents[index];
 
@@ -301,10 +299,18 @@ function handleToolUseStop(
     return [state, []];
   }
 
-  // Use input from event data (already parsed by Driver)
-  const toolInput = data.input;
-  const toolId = data.toolCallId;
-  const toolName = data.toolName;
+  // Get tool info from pendingContent (saved during tool_use_start)
+  const toolId = pendingContent.toolId || "";
+  const toolName = pendingContent.toolName || "";
+
+  // Parse tool input JSON (accumulated during input_json_delta)
+  let toolInput: Record<string, unknown> = {};
+  try {
+    toolInput = pendingContent.toolInputJson ? JSON.parse(pendingContent.toolInputJson) : {};
+  } catch {
+    // Failed to parse, use empty object
+    toolInput = {};
+  }
 
   // Create ToolCallPart
   const toolCall: ToolCallPart = {

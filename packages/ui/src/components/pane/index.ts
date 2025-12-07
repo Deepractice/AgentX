@@ -31,7 +31,7 @@ export type { ListPaneProps, ListPaneItem } from "./ListPane";
 
 // MessagePane - Message display area
 export { MessagePane } from "./MessagePane";
-export type { MessagePaneProps, MessagePaneItem } from "./MessagePane";
+export type { MessagePaneProps, MessagePaneItem, ToolMetadata } from "./MessagePane";
 
 // InputPane - Input area with toolbar
 export { InputPane } from "./InputPane";

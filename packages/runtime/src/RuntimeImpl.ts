@@ -20,7 +20,6 @@ import type { Persistence } from "@agentxjs/types";
 import type { Runtime, ClaudeLLMConfig, LLMProvider } from "@agentxjs/types/runtime";
 import type { Agent } from "@agentxjs/types/runtime";
 import type {
-  Environment,
   BusEventHandler,
   SubscribeOptions,
   Unsubscribe,
@@ -36,7 +35,6 @@ import {
   CommandHandler,
   type RuntimeOperations,
 } from "./internal";
-import { ClaudeEnvironment } from "./environment";
 import { createLogger } from "@agentxjs/common";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -52,7 +50,7 @@ export class RuntimeImpl implements Runtime {
   private readonly persistence: Persistence;
   private readonly llmProvider: LLMProvider<ClaudeLLMConfig>;
   private readonly bus: SystemBusImpl;
-  private readonly environment: Environment;
+  private readonly llmConfig: ClaudeLLMConfig;
   private readonly basePath: string;
   private readonly commandHandler: CommandHandler;
 
@@ -69,22 +67,12 @@ export class RuntimeImpl implements Runtime {
     logger.info("Creating SystemBus");
     this.bus = new SystemBusImpl();
 
-    // Use custom environment or create ClaudeEnvironment from LLMProvider
-    if (config.environment) {
-      logger.info("Using custom Environment");
-      this.environment = config.environment;
-    } else {
-      logger.info("Creating ClaudeEnvironment");
-      const llmConfig = this.llmProvider.provide();
-      this.environment = new ClaudeEnvironment({
-        apiKey: llmConfig.apiKey,
-        baseUrl: llmConfig.baseUrl,
-        model: llmConfig.model,
-      });
-    }
-    logger.info("Connecting Environment to bus");
-    this.environment.receptor.connect(this.bus.asProducer());
-    this.environment.effector.connect(this.bus.asConsumer());
+    // Get LLM config (each Agent will create its own Environment)
+    this.llmConfig = this.llmProvider.provide();
+    logger.info("LLM config loaded", {
+      hasApiKey: !!this.llmConfig.apiKey,
+      model: this.llmConfig.model,
+    });
 
     // Create CommandHandler to handle command events
     logger.info("Creating CommandHandler");
@@ -464,7 +452,7 @@ export class RuntimeImpl implements Runtime {
     return {
       persistence: this.persistence,
       bus: this.bus,
-      environment: this.environment,
+      llmConfig: this.llmConfig,
       basePath: this.basePath,
       onDisposed: (containerId) => {
         this.containerRegistry.delete(containerId);
@@ -487,14 +475,9 @@ export class RuntimeImpl implements Runtime {
     // Dispose CommandHandler
     this.commandHandler.dispose();
 
-    // Dispose all containers (which destroys all agents)
+    // Dispose all containers (which destroys all agents and their environments)
     for (const container of this.containerRegistry.values()) {
       await container.dispose();
-    }
-
-    // Dispose environment (if it has a dispose method)
-    if ("dispose" in this.environment && typeof this.environment.dispose === "function") {
-      (this.environment as { dispose: () => void }).dispose();
     }
 
     // Destroy bus

@@ -25,7 +25,28 @@ import * as React from "react";
 import { cn } from "~/utils/utils";
 import { MarkdownText } from "~/components/typography/MarkdownText";
 import { EmptyState } from "~/components/element/EmptyState";
+import { ToolCard, type ToolStatus } from "~/components/container/ToolCard";
 import { MessageSquare } from "lucide-react";
+
+/**
+ * Tool metadata for ToolCard rendering
+ */
+export interface ToolMetadata {
+  /** Tool name (e.g., "Bash", "Read") */
+  toolName: string;
+  /** Tool call ID */
+  toolId?: string;
+  /** Tool status */
+  status: ToolStatus;
+  /** Tool input parameters */
+  input?: Record<string, unknown>;
+  /** Tool output */
+  output?: unknown;
+  /** Whether output is an error */
+  isError?: boolean;
+  /** Execution duration in seconds */
+  duration?: number;
+}
 
 /**
  * Message item data
@@ -48,9 +69,13 @@ export interface MessagePaneItem {
    */
   timestamp?: number;
   /**
-   * Optional metadata (tool name, etc.)
+   * Optional metadata (tool info for role="tool")
    */
   metadata?: Record<string, unknown>;
+  /**
+   * Tool-specific metadata (for role="tool")
+   */
+  toolMetadata?: ToolMetadata;
 }
 
 export interface MessagePaneProps {
@@ -198,8 +223,25 @@ const MessageBubble = ({
     );
   }
 
-  // Tool messages have special styling
+  // Tool messages use ToolCard component
   if (isTool) {
+    const toolMeta = item.toolMetadata;
+    if (toolMeta) {
+      return (
+        <div className="py-2 ml-11 max-w-2xl">
+          <ToolCard
+            name={toolMeta.toolName}
+            id={toolMeta.toolId}
+            status={toolMeta.status}
+            input={toolMeta.input}
+            output={toolMeta.output}
+            isError={toolMeta.isError}
+            duration={toolMeta.duration}
+          />
+        </div>
+      );
+    }
+    // Fallback for legacy tool messages without toolMetadata
     return (
       <div className="flex gap-3 py-2">
         {renderAvatar(item.role)}

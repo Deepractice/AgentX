@@ -2,7 +2,7 @@
  * ImageRepository - Persistence interface for agent images
  */
 
-import type { ImageRecord } from "./record/ImageRecord";
+import type { ImageRecord, ImageMetadata } from "./record/ImageRecord";
 
 /**
  * ImageRepository - Storage operations for images
@@ -42,4 +42,10 @@ export interface ImageRepository {
    * Check if image exists
    */
   imageExists(imageId: string): Promise<boolean>;
+
+  /**
+   * Update image metadata (e.g., Claude SDK session ID)
+   * Merges with existing metadata
+   */
+  updateMetadata(imageId: string, metadata: Partial<ImageMetadata>): Promise<void>;
 }

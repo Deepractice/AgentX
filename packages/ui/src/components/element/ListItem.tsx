@@ -181,7 +181,7 @@ export const ListItem = React.forwardRef<HTMLDivElement, ListItemProps>(
               className={cn(
                 "w-full p-2 rounded-md transition-colors duration-200",
                 isClickable && "cursor-pointer hover:bg-accent/50",
-                selected && "bg-accent text-accent-foreground",
+                selected && "bg-blue-50 dark:bg-blue-900/30",
                 !isClickable && !selected && "pointer-events-none"
               )}
               onClick={onClick}

@@ -13,6 +13,14 @@
  */
 
 /**
+ * Image metadata for storing provider-specific data
+ */
+export interface ImageMetadata {
+  /** Claude SDK session ID for conversation resume */
+  claudeSdkSessionId?: string;
+}
+
+/**
  * Image storage record
  *
  * Represents a conversation that persists across server restarts.
@@ -54,6 +62,11 @@ export interface ImageRecord {
    * Parent image ID (for fork/branch feature)
    */
   parentImageId?: string;
+
+  /**
+   * Provider-specific metadata (e.g., Claude SDK session ID)
+   */
+  metadata?: ImageMetadata;
 
   /**
    * Creation timestamp (Unix milliseconds)

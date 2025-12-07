@@ -17,7 +17,7 @@
  */
 
 export type { ContainerRecord, ContainerConfig } from "./ContainerRecord";
-export type { ImageRecord } from "./ImageRecord";
+export type { ImageRecord, ImageMetadata } from "./ImageRecord";
 export type { SessionRecord } from "./SessionRecord";
 export type { MessageRecord } from "./MessageRecord";
 export type { EnvironmentRecord } from "./EnvironmentRecord";

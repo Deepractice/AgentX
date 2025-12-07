@@ -33,7 +33,7 @@
  * ```
  */
 
-import type { Agent as RuntimeAgentInterface, AgentLifecycle, AgentConfig, SystemEvent, EventCategory } from "@agentxjs/types/runtime";
+import type { Agent as RuntimeAgentInterface, AgentLifecycle, AgentConfig, SystemEvent, EventCategory, ClaudeLLMConfig } from "@agentxjs/types/runtime";
 import type {
   AgentEngine,
   AgentPresenter,
@@ -46,11 +46,12 @@ import type {
   ToolCallPart,
   ToolResultPart,
 } from "@agentxjs/types/agent";
-import type { SystemBus, SystemBusProducer, Sandbox, Session } from "@agentxjs/types/runtime/internal";
+import type { SystemBus, SystemBusProducer, Sandbox, Session, ImageRepository, ImageRecord } from "@agentxjs/types/runtime/internal";
 import { createAgent } from "@agentxjs/agent";
 import { createLogger } from "@agentxjs/common";
 import { BusDriver } from "./BusDriver";
 import { AgentInteractor } from "./AgentInteractor";
+import { ClaudeEnvironment } from "../environment";
 
 const logger = createLogger("runtime/RuntimeAgent");
 
@@ -65,6 +66,12 @@ export interface RuntimeAgentConfig {
   bus: SystemBus;
   sandbox: Sandbox;
   session: Session;
+  /** LLM configuration for this agent's environment */
+  llmConfig: ClaudeLLMConfig;
+  /** Full image record for metadata access */
+  image: ImageRecord;
+  /** Image repository for persisting metadata */
+  imageRepository: ImageRepository;
 }
 
 /**
@@ -242,6 +249,8 @@ export class RuntimeAgent implements RuntimeAgentInterface {
   private readonly driver: BusDriver;
   private readonly engine: AgentEngine;
   private readonly producer: SystemBusProducer;
+  private readonly environment: ClaudeEnvironment;
+  private readonly imageRepository: ImageRepository;
   readonly session: Session;
   readonly config: AgentConfig;
 
@@ -254,6 +263,32 @@ export class RuntimeAgent implements RuntimeAgentInterface {
     this.producer = config.bus.asProducer();
     this.session = config.session;
     this.config = config.config;
+    this.imageRepository = config.imageRepository;
+
+    // Create this agent's own ClaudeEnvironment
+    // Resume using stored sdkSessionId if available
+    const resumeSessionId = config.image.metadata?.claudeSdkSessionId;
+    this.environment = new ClaudeEnvironment({
+      agentId: this.agentId,
+      apiKey: config.llmConfig.apiKey,
+      baseUrl: config.llmConfig.baseUrl,
+      model: config.llmConfig.model,
+      systemPrompt: config.config.systemPrompt,
+      resumeSessionId,
+      onSessionIdCaptured: (sdkSessionId) => {
+        // Persist sdkSessionId to image metadata for future resume
+        this.saveSessionId(sdkSessionId);
+      },
+    });
+
+    // Connect environment to bus
+    this.environment.receptor.connect(config.bus.asProducer());
+    this.environment.effector.connect(config.bus.asConsumer());
+
+    logger.debug("ClaudeEnvironment created for agent", {
+      agentId: this.agentId,
+      resumeSessionId: resumeSessionId ?? "none",
+    });
 
     // Create Presenter (forwards to bus + persists to session)
     const presenter = new BusPresenter(
@@ -310,6 +345,21 @@ export class RuntimeAgent implements RuntimeAgentInterface {
       agentId: this.agentId,
       imageId: this.imageId,
     });
+  }
+
+  /**
+   * Save SDK session ID to image metadata for future resume
+   */
+  private saveSessionId(sdkSessionId: string): void {
+    logger.info("Saving SDK session ID to image metadata", {
+      agentId: this.agentId,
+      imageId: this.imageId,
+      sdkSessionId,
+    });
+    this.imageRepository.updateMetadata(this.imageId, { claudeSdkSessionId: sdkSessionId })
+      .catch((err) => {
+        logger.error("Failed to save SDK session ID", { error: err, imageId: this.imageId });
+      });
   }
 
   get lifecycle(): AgentLifecycle {
@@ -408,6 +458,9 @@ export class RuntimeAgent implements RuntimeAgentInterface {
     if (this._lifecycle !== "destroyed") {
       // Dispose driver (stop listening)
       this.driver.dispose();
+
+      // Dispose environment (cleanup SDK resources)
+      this.environment.dispose();
 
       // Destroy engine
       await this.engine.destroy();

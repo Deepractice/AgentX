@@ -5,7 +5,7 @@
  */
 
 import type { Storage } from "unstorage";
-import type { ImageRepository, ImageRecord } from "@agentxjs/types/runtime/internal";
+import type { ImageRepository, ImageRecord, ImageMetadata } from "@agentxjs/types/runtime/internal";
 import { createLogger } from "@agentxjs/common";
 
 const logger = createLogger("persistence/ImageRepository");
@@ -136,5 +136,25 @@ export class StorageImageRepository implements ImageRepository {
 
   async imageExists(imageId: string): Promise<boolean> {
     return await this.storage.hasItem(this.key(imageId));
+  }
+
+  async updateMetadata(imageId: string, metadata: Partial<ImageMetadata>): Promise<void> {
+    const record = await this.findImageById(imageId);
+    if (!record) {
+      throw new Error(`Image not found: ${imageId}`);
+    }
+
+    // Merge metadata
+    const updatedRecord: ImageRecord = {
+      ...record,
+      metadata: {
+        ...record.metadata,
+        ...metadata,
+      },
+      updatedAt: Date.now(),
+    };
+
+    await this.storage.setItem(this.key(imageId), updatedRecord);
+    logger.debug("Image metadata updated", { imageId, metadata });
   }
 }

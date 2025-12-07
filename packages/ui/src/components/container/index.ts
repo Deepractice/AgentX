@@ -29,3 +29,7 @@ export type { ChatProps } from "./Chat";
 // ChatHeader - Chat header component
 export { ChatHeader } from "./ChatHeader";
 export type { ChatHeaderProps } from "./ChatHeader";
+
+// ToolCard - Collapsible tool call/result card
+export { ToolCard } from "./ToolCard";
+export type { ToolCardProps, ToolStatus } from "./ToolCard";

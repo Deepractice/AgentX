@@ -25,10 +25,9 @@
 
 import * as React from "react";
 import type { AgentX } from "agentxjs";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Bot } from "lucide-react";
 import { ListPane, type ListPaneItem } from "~/components/pane";
 import { useImages } from "~/hooks";
-import { AgentLogo } from "~/components/element/AgentLogo";
 import { cn } from "~/utils";
 
 export interface AgentListProps {
@@ -99,7 +98,7 @@ export function AgentList({
     return images.map((img) => ({
       id: img.imageId,
       title: img.name || "Untitled",
-      leading: <AgentLogo className="w-3 h-3" />,
+      leading: <Bot className="w-4 h-4 text-muted-foreground" />,
       trailing: (
         <span
           className={cn(

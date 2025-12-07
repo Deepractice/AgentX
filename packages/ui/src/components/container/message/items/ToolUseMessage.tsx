@@ -45,7 +45,7 @@ export function ToolUseMessage({
 
   // Determine status
   const status = toolResult
-    ? toolResult.toolResult.output.type.includes("error")
+    ? toolResult.toolResult?.output?.type?.includes("error")
       ? "error"
       : "success"
     : "executing";
