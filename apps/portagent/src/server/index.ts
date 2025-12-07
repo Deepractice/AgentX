@@ -113,7 +113,8 @@ async function createApp() {
   const agentx = await createAgentX({
     llm: {
       apiKey,
-      baseUrl: process.env.LLM_BASE_URL,
+      baseUrl: process.env.LLM_PROVIDER_URL,
+      model: process.env.LLM_PROVIDER_MODEL,
     },
     storage: {
       driver: "sqlite",
