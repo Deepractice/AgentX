@@ -23,6 +23,7 @@ import * as React from "react";
 import { Send, Square } from "lucide-react";
 import { cn } from "~/utils/utils";
 import { InputToolBar, type ToolBarItem } from "./InputToolBar";
+import { EmojiPicker, type Emoji } from "../element/EmojiPicker";
 
 export interface InputPaneProps {
   /**
@@ -66,6 +67,11 @@ export interface InputPaneProps {
    * Additional class name
    */
   className?: string;
+  /**
+   * Enable built-in emoji picker for toolbar item with id='emoji'
+   * @default true
+   */
+  enableEmojiPicker?: boolean;
 }
 
 /**
@@ -84,11 +90,39 @@ export const InputPane = React.forwardRef<HTMLDivElement, InputPaneProps>(
       onToolbarItemClick,
       showToolbar,
       className,
+      enableEmojiPicker = true,
     },
     ref
   ) => {
     const [text, setText] = React.useState("");
+    const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+    const emojiPickerRef = React.useRef<HTMLDivElement>(null);
+
+    // Close emoji picker when clicking outside
+    React.useEffect(() => {
+      if (!showEmojiPicker) return;
+
+      const handleClickOutside = (e: MouseEvent) => {
+        if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node)) {
+          setShowEmojiPicker(false);
+        }
+      };
+
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          setShowEmojiPicker(false);
+        }
+      };
+
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleEscape);
+
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("keydown", handleEscape);
+      };
+    }, [showEmojiPicker]);
 
     const handleSend = () => {
       if (!text.trim() || disabled || isLoading) return;
@@ -103,6 +137,23 @@ export const InputPane = React.forwardRef<HTMLDivElement, InputPaneProps>(
         handleSend();
       }
     };
+
+    const handleEmojiSelect = (emoji: Emoji) => {
+      setText((prev) => prev + emoji.native);
+      setShowEmojiPicker(false);
+      textareaRef.current?.focus();
+    };
+
+    const handleToolbarItemClick = (id: string) => {
+      if (id === "emoji" && enableEmojiPicker) {
+        setShowEmojiPicker((prev) => !prev);
+      }
+      onToolbarItemClick?.(id);
+    };
+
+    // Check if toolbar has emoji item
+    const hasEmojiItem = toolbarItems?.some((item) => item.id === "emoji") ||
+      toolbarRightItems?.some((item) => item.id === "emoji");
 
     const shouldShowToolbar =
       showToolbar ?? (toolbarItems && toolbarItems.length > 0);
@@ -119,12 +170,31 @@ export const InputPane = React.forwardRef<HTMLDivElement, InputPaneProps>(
       >
         {/* Toolbar at top */}
         {shouldShowToolbar && (
-          <InputToolBar
-            items={toolbarItems || []}
-            rightItems={toolbarRightItems}
-            onItemClick={onToolbarItemClick}
-            className="flex-shrink-0 border-b border-border"
-          />
+          <div className="flex-shrink-0 border-b border-border relative">
+            <InputToolBar
+              items={toolbarItems || []}
+              rightItems={toolbarRightItems}
+              onItemClick={handleToolbarItemClick}
+            />
+            {/* Emoji Picker Popover */}
+            {enableEmojiPicker && hasEmojiItem && showEmojiPicker && (
+              <div
+                ref={emojiPickerRef}
+                className="absolute left-0 bottom-full z-50 mb-1"
+              >
+                <div
+                  className="bg-popover rounded-lg shadow-lg border border-border"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <EmojiPicker
+                    onEmojiSelect={handleEmojiSelect}
+                    theme="auto"
+                    perLine={8}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Full-height textarea area */}

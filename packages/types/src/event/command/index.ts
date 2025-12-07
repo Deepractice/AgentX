@@ -23,8 +23,8 @@ export type {
   AgentDestroyResponse,
   AgentDestroyAllRequest,
   AgentDestroyAllResponse,
-  AgentReceiveRequest,
-  AgentReceiveResponse,
+  MessageSendRequest,
+  MessageSendResponse,
   AgentInterruptRequest,
   AgentInterruptResponse,
   // Image commands

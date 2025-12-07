@@ -95,6 +95,27 @@ export const WeChatStyle: Story = {
   },
 };
 
+export const WithEmojiPicker: Story = {
+  render: () => (
+    <div className="w-full max-w-2xl h-80 border border-border rounded-lg overflow-hidden">
+      <InputPane
+        onSend={(text) => console.log("Send:", text)}
+        placeholder="Click the emoji button to open picker..."
+        toolbarItems={wechatToolbarItems}
+        onToolbarItemClick={(id) => console.log("Toolbar click:", id)}
+      />
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Click the emoji (smile) button to open the emoji picker. Select an emoji to insert it into the input.",
+      },
+    },
+  },
+};
+
 export const WithToolbar: Story = {
   render: () => (
     <div className="w-full max-w-2xl h-40 border border-border rounded-lg overflow-hidden">

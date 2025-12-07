@@ -172,11 +172,11 @@ export interface AgentDestroyAllResponse extends BaseCommandResponse<"agent_dest
 }> {}
 
 /**
- * Request to send a message to an agent
+ * Request to send a message
  * Can use either imageId (preferred) or agentId
  * If using imageId and agent is not running, it will be auto-activated
  */
-export interface AgentReceiveRequest extends BaseCommandRequest<"agent_receive_request", {
+export interface MessageSendRequest extends BaseCommandRequest<"message_send_request", {
   requestId: string;
   /** Image ID (preferred) - will auto-activate if offline */
   imageId?: string;
@@ -186,9 +186,9 @@ export interface AgentReceiveRequest extends BaseCommandRequest<"agent_receive_r
 }> {}
 
 /**
- * Response to agent receive (acknowledges message received, not completion)
+ * Response to message send (acknowledges message received, not completion)
  */
-export interface AgentReceiveResponse extends BaseCommandResponse<"agent_receive_response", {
+export interface MessageSendResponse extends BaseCommandResponse<"message_send_response", {
   requestId: string;
   imageId?: string;
   agentId: string;
@@ -402,7 +402,7 @@ export type CommandRequest =
   | AgentListRequest
   | AgentDestroyRequest
   | AgentDestroyAllRequest
-  | AgentReceiveRequest
+  | MessageSendRequest
   | AgentInterruptRequest
   // Image
   | ImageCreateRequest
@@ -427,7 +427,7 @@ export type CommandResponse =
   | AgentListResponse
   | AgentDestroyResponse
   | AgentDestroyAllResponse
-  | AgentReceiveResponse
+  | MessageSendResponse
   | AgentInterruptResponse
   // Image
   | ImageCreateResponse
@@ -502,8 +502,8 @@ export interface CommandEventMap {
   "agent_destroy_response": AgentDestroyResponse;
   "agent_destroy_all_request": AgentDestroyAllRequest;
   "agent_destroy_all_response": AgentDestroyAllResponse;
-  "agent_receive_request": AgentReceiveRequest;
-  "agent_receive_response": AgentReceiveResponse;
+  "message_send_request": MessageSendRequest;
+  "message_send_response": MessageSendResponse;
   "agent_interrupt_request": AgentInterruptRequest;
   "agent_interrupt_response": AgentInterruptResponse;
   // Image
@@ -536,7 +536,7 @@ export interface CommandRequestResponseMap {
   "agent_list_request": "agent_list_response";
   "agent_destroy_request": "agent_destroy_response";
   "agent_destroy_all_request": "agent_destroy_all_response";
-  "agent_receive_request": "agent_receive_response";
+  "message_send_request": "message_send_response";
   "agent_interrupt_request": "agent_interrupt_response";
   "image_create_request": "image_create_response";
   "image_run_request": "image_run_response";

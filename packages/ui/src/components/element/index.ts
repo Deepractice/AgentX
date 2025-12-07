@@ -4,6 +4,8 @@ export { AgentLogo } from "./AgentLogo";
 export { AppHeader } from "./AppHeader";
 export { Badge } from "./Badge";
 export { Button } from "./Button";
+export { EmojiPicker } from "./EmojiPicker";
+export type { Emoji, EmojiPickerProps } from "./EmojiPicker";
 export { EmptyState } from "./EmptyState";
 export { ImageAttachment } from "./ImageAttachment";
 export { Input } from "./Input";
