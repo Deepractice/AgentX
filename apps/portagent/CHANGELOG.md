@@ -1,5 +1,20 @@
 # @agentxjs/portagent
 
+## 0.1.3
+
+### Patch Changes
+
+- 02171e5: fix: remove private packages from published dependencies
+
+  Move @agentxjs/types, @agentxjs/common, @agentxjs/agent from dependencies
+  to devDependencies. These packages are bundled via tsup noExternal config
+  and should not appear in the published package.json dependencies.
+
+- Updated dependencies [02171e5]
+  - agentxjs@0.1.3
+  - @agentxjs/runtime@0.1.3
+  - @agentxjs/ui@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes
