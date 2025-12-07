@@ -68,6 +68,7 @@ export class ClaudeReceptor implements Receptor {
       source: "environment",
       category: "stream",
       intent: "notification",
+      broadcastable: false, // Internal event, processed by BusDriver only
       turnId: "", // TODO: Need to track turnId
       data: { reason },
     } as InterruptedEvent);
@@ -83,6 +84,10 @@ export class ClaudeReceptor implements Receptor {
     const event = sdkMsg.event;
     const turnId = ""; // TODO: Implement turnId tracking
 
+    // All DriveableEvents are internal-only (broadcastable: false)
+    // They are consumed by BusDriver and processed through MealyMachine
+    // BusPresenter will emit the transformed SystemEvents to clients
+
     switch (event.type) {
       case "message_start":
         this.emitToBus({
@@ -91,6 +96,7 @@ export class ClaudeReceptor implements Receptor {
           source: "environment",
           category: "stream",
           intent: "notification",
+          broadcastable: false,
           turnId,
           data: {
             message: {
@@ -109,6 +115,7 @@ export class ClaudeReceptor implements Receptor {
             source: "environment",
             category: "stream",
             intent: "notification",
+            broadcastable: false,
             turnId,
             data: { text: event.delta.text },
           } as TextDeltaEvent);
@@ -122,6 +129,7 @@ export class ClaudeReceptor implements Receptor {
           source: "environment",
           category: "stream",
           intent: "notification",
+          broadcastable: false,
           turnId,
           data: { stopReason: "end_turn" },
         } as MessageStopEvent);

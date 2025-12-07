@@ -118,8 +118,13 @@ async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
         });
       });
 
-      // Forward runtime events to all clients
+      // Forward runtime events to all clients (only broadcastable events)
       runtime.onAny((event) => {
+        // Skip non-broadcastable events (internal events like DriveableEvent)
+        if (event.broadcastable === false) {
+          return;
+        }
+
         logger.info("Broadcasting to clients", { type: event.type, category: event.category, requestId: (event.data as { requestId?: string })?.requestId });
         const message = JSON.stringify(event);
         for (const ws of connections) {

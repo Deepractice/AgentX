@@ -141,6 +141,7 @@ export interface EventContext {
  * - category: What kind of event
  * - intent: What it means (notification/request/result)
  * - context: Optional scope information
+ * - broadcastable: Whether to broadcast to external clients (default: true)
  */
 export interface SystemEvent<
   T extends string = string,
@@ -183,6 +184,18 @@ export interface SystemEvent<
    * Event context - scope information (optional)
    */
   readonly context?: EventContext;
+
+  /**
+   * Whether to broadcast this event to external clients (SSE/WebSocket)
+   *
+   * - true or undefined: Broadcast to all external clients
+   * - false: Only consumed internally, not broadcast
+   *
+   * Used for internal events like DriveableEvent that should be
+   * processed by the engine but not sent directly to clients.
+   * @default true
+   */
+  readonly broadcastable?: boolean;
 }
 
 // ============================================================================

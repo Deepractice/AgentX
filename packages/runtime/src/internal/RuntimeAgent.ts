@@ -71,19 +71,15 @@ class BusPresenter implements AgentPresenter {
   present(_agentId: string, output: AgentOutput): void {
     const category = this.getCategoryForOutput(output);
 
-    // Skip Stream layer events - already sent via DriveableEvent from ClaudeReceptor
-    if (category === "stream") {
-      return;
-    }
-
     // Convert data format based on category
     let data: unknown = output.data;
     if (category === "message") {
       data = this.convertToMessage(output);
     }
-    // State and Turn layer data formats match SystemEvent expectations
+    // Stream, State and Turn layer data formats match SystemEvent expectations
 
-    // Build complete SystemEvent
+    // Build complete SystemEvent with full context
+    // All events from BusPresenter are broadcastable (default true)
     const systemEvent: SystemEvent = {
       type: output.type,
       timestamp: output.timestamp,
@@ -100,7 +96,6 @@ class BusPresenter implements AgentPresenter {
     };
 
     this.producer.emit(systemEvent);
-    logger.debug("Emitted SystemEvent", { type: output.type, category });
 
     // Persist Message layer events to session
     if (category === "message") {
