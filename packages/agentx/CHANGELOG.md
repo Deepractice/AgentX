@@ -1,5 +1,12 @@
 # agentxjs
 
+## 0.1.7
+
+### Patch Changes
+
+- Updated dependencies [da67096]
+  - @agentxjs/runtime@0.1.7
+
 ## 0.1.6
 
 ### Patch Changes
