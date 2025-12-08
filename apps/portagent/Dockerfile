@@ -13,8 +13,7 @@ WORKDIR /app
 RUN sudo npm install -g @agentxjs/portagent@${VERSION}
 
 # Create data directory for node user
-RUN mkdir -p /home/node/.agentx && \
-    chown -R node:node /home/node/.agentx /app
+RUN mkdir -p /home/node/.agentx
 
 # Environment - Defaults
 ENV NODE_ENV=production
