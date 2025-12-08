@@ -157,6 +157,7 @@ export class BrowserWebSocketClient implements ChannelClient {
   private openHandlers = new Set<() => void>();
   private closeHandlers = new Set<() => void>();
   private errorHandlers = new Set<(error: Error) => void>();
+  private hasConnectedBefore = false; // Track if this is a reconnection
 
   constructor(options: ChannelClientOptions) {
     if (!isBrowser) {
@@ -207,7 +208,12 @@ export class BrowserWebSocketClient implements ChannelClient {
 
     return new Promise<void>((resolve, reject) => {
       const onOpen = () => {
-        logger.info("WebSocket connected", { serverUrl: this.serverUrl });
+        if (this.hasConnectedBefore) {
+          logger.info("WebSocket reconnected successfully", { serverUrl: this.serverUrl });
+        } else {
+          logger.info("WebSocket connected", { serverUrl: this.serverUrl });
+          this.hasConnectedBefore = true;
+        }
         for (const handler of this.openHandlers) {
           handler();
         }
@@ -235,7 +241,7 @@ export class BrowserWebSocketClient implements ChannelClient {
       }) as any);
 
       this.ws!.addEventListener("close", (() => {
-        logger.warn("WebSocket closed, will attempt to reconnect...");
+        logger.info("WebSocket closed, attempting to reconnect...");
         for (const handler of this.closeHandlers) {
           handler();
         }
