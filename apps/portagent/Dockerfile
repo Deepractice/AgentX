@@ -9,24 +9,18 @@ ARG VERSION=latest
 
 WORKDIR /app
 
-# Switch to root for npm install
-USER root
+# Install specific version from npm (using sudo from base image)
+RUN sudo npm install -g @agentxjs/portagent@${VERSION}
 
-# Install specific version from npm
-RUN npm install -g @agentxjs/portagent@${VERSION}
-
-# Create non-root user for security
-# Claude Agent SDK requires non-root user for bypassPermissions mode
-RUN addgroup -g 1001 -S agentx && \
-    adduser -u 1001 -S agentx -G agentx && \
-    mkdir -p /home/agentx/.agentx && \
-    chown -R agentx:agentx /home/agentx /app
+# Create data directory for node user
+RUN mkdir -p /home/node/.agentx && \
+    chown -R node:node /home/node/.agentx /app
 
 # Environment - Defaults
 ENV NODE_ENV=production
 ENV PORT=5200
 ENV LOG_LEVEL=info
-ENV DATA_DIR=/home/agentx/.agentx
+ENV DATA_DIR=/home/node/.agentx
 
 # Environment - Required (must be provided at runtime)
 # LLM_PROVIDER_KEY=sk-ant-xxxxx    # Anthropic API key
@@ -36,8 +30,8 @@ ENV DATA_DIR=/home/agentx/.agentx
 # JWT_SECRET=your-jwt-secret       # Auto-generated if not set
 # INVITE_CODE_REQUIRED=true        # Set to "false" to disable
 
-# Switch to non-root user
-USER agentx
+# Run as non-root user (already defined in base image)
+USER node
 
 # Expose port
 EXPOSE 5200
