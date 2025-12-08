@@ -174,3 +174,9 @@ Create changeset file in `.changeset/`:
 ---
 Description of changes
 ```
+
+**Version Guidelines**:
+
+- Use `patch` for bug fixes and internal improvements
+- Use `minor` for new features and enhancements
+- **DO NOT use `major`** - Breaking changes should be avoided. If absolutely necessary, discuss with team first.
