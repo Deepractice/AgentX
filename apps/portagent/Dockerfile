@@ -4,10 +4,13 @@
 
 FROM node:20-alpine
 
+# Version to install (passed from CI)
+ARG VERSION=latest
+
 WORKDIR /app
 
-# Install portagent from npm
-RUN npm install -g @agentxjs/portagent
+# Install specific version from npm
+RUN npm install -g @agentxjs/portagent@${VERSION}
 
 # Create non-root user for security
 # Claude Agent SDK requires non-root user for bypassPermissions mode

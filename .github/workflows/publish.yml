@@ -119,16 +119,19 @@ jobs:
 
       - name: Wait for NPM Package Availability
         run: |
-          echo "Waiting for @agentxjs/portagent to be available on NPM..."
-          for i in {1..6}; do
-            if npm view @agentxjs/portagent@latest version &>/dev/null; then
-              echo "Package is available!"
+          VERSION=${{ steps.version.outputs.version }}
+          echo "Waiting for @agentxjs/portagent@${VERSION} to be available on NPM..."
+          for i in {1..30}; do
+            PUBLISHED=$(npm view @agentxjs/portagent@${VERSION} version 2>/dev/null || echo "")
+            if [ "$PUBLISHED" = "$VERSION" ]; then
+              echo "Package @agentxjs/portagent@${VERSION} is available!"
               exit 0
             fi
-            echo "Attempt $i/6: Package not yet available, waiting 10 seconds..."
+            echo "Attempt $i/30: Version ${VERSION} not yet available, waiting 10 seconds..."
             sleep 10
           done
-          echo "Warning: Package still not available after 1 minute, proceeding anyway..."
+          echo "Error: Package @agentxjs/portagent@${VERSION} not available after 5 minutes"
+          exit 1
 
       - name: Build and Push Platform Image
         uses: docker/build-push-action@v5
@@ -139,6 +142,8 @@ jobs:
           push: true
           tags: |
             deepracticexs/portagent:${{ steps.version.outputs.version }}-${{ matrix.suffix }}
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
           cache-from: type=gha,scope=${{ matrix.suffix }}
           cache-to: type=gha,scope=${{ matrix.suffix }},mode=max
 
