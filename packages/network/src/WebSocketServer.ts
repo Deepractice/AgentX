@@ -36,6 +36,7 @@ class WebSocketConnection implements ChannelConnection {
 
       ws.on("pong", () => {
         this.isAlive = true;
+        logger.debug("Heartbeat pong received", { id: this.id });
       });
 
       this.heartbeatInterval = setInterval(() => {
@@ -47,6 +48,7 @@ class WebSocketConnection implements ChannelConnection {
         }
         this.isAlive = false;
         ws.ping();
+        logger.debug("Heartbeat ping sent", { id: this.id });
       }, interval);
     }
 
