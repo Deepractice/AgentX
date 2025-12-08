@@ -2,7 +2,7 @@
 # Image: deepracticexs/portagent
 # Dogfooding: Install directly from npm registry
 
-FROM node:20-alpine
+FROM deepracticexs/agent-runtime
 
 # Version to install (passed from CI)
 ARG VERSION=latest
