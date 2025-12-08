@@ -1,5 +1,16 @@
 # @agentxjs/portagent
 
+## 0.1.8
+
+### Patch Changes
+
+- d873f12: refactor(portagent): simplify environment variable names
+  - Rename `PORTAGENT_DATA_DIR` to `DATA_DIR` for brevity
+  - Remove deprecated `PORTAGENT_PASSWORD` environment variable and CLI option
+  - agentxjs@0.1.8
+  - @agentxjs/runtime@0.1.8
+  - @agentxjs/ui@0.1.8
+
 ## 0.1.7
 
 ### Patch Changes
