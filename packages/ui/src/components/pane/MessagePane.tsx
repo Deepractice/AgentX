@@ -16,8 +16,18 @@
  * @example
  * ```tsx
  * <MessagePane>
- *   {messages.map(msg => <MessageRenderer key={msg.id} message={msg} />)}
- *   {streaming && <StreamingMessage text={streaming} />}
+ *   {messages.map(msg => (
+ *     msg.role === 'assistant' ? (
+ *       <AssistantMessage
+ *         key={msg.id}
+ *         message={msg}
+ *         status={msg.metadata?.status}
+ *         streamingText={streaming}
+ *       />
+ *     ) : (
+ *       <MessageRenderer key={msg.id} message={msg} />
+ *     )
+ *   ))}
  * </MessagePane>
  * ```
  */

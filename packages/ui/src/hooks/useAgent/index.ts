@@ -101,6 +101,32 @@ export function useAgent(
     []
   );
 
+  // Update last assistant message status
+  const updateLastAssistantMessageStatus = useCallback(
+    (messages: UIMessage[], newStatus: MessageStatus): UIMessage[] => {
+      // Find last assistant message (iterate backwards)
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role === "assistant") {
+          return messages.map((m, idx) => {
+            if (idx === i) {
+              return {
+                ...m,
+                metadata: {
+                  ...m.metadata,
+                  status: newStatus,
+                  statusChangedAt: Date.now(),
+                },
+              };
+            }
+            return m;
+          });
+        }
+      }
+      return messages;
+    },
+    []
+  );
+
   // Reset state when imageId changes
   useEffect(() => {
     // When imageId changes, clear messages
@@ -139,9 +165,20 @@ export function useAgent(
       },
       onAssistantMessage: (message: Message) => {
         setMessages((prev) => {
-          if (prev.some((m) => m.id === message.id)) return prev;
-          // Just add the assistant message, user message status already set by send()
-          return [...prev, message];
+          // Remove queued placeholder and add real assistant message with success status
+          const filtered = prev.filter(
+            (m) => !(m.role === "assistant" && m.metadata?.status !== "success")
+          );
+          return [
+            ...filtered,
+            {
+              ...message,
+              metadata: {
+                status: "success",
+                statusChangedAt: Date.now(),
+              },
+            } as UIMessage,
+          ];
         });
       },
       onErrorMessage: (message: Message) => {
@@ -156,11 +193,14 @@ export function useAgent(
       updateLastUserMessageStatus: (status: MessageStatus, errorCode?: string) => {
         setMessages((prev) => updateLastUserMessageStatus(prev, status, errorCode));
       },
+      updateLastAssistantMessageStatus: (status: MessageStatus) => {
+        setMessages((prev) => updateLastAssistantMessageStatus(prev, status));
+      },
       clearStreaming: () => {
         setStreaming("");
       },
     }),
-    [updateLastUserMessageStatus]
+    [updateLastUserMessageStatus, updateLastAssistantMessageStatus]
   );
 
   // Subscribe to agent events
@@ -212,6 +252,20 @@ export function useAgent(
 
         // Mark as success immediately - message delivered to server
         setMessages((prev) => updateLastUserMessageStatus(prev, "success"));
+
+        // Add queued assistant message placeholder
+        const queuedAssistant: UIMessage = {
+          id: `msg_assistant_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+          role: "assistant",
+          subtype: "assistant",
+          content: "",
+          timestamp: Date.now(),
+          metadata: {
+            status: "queued",
+            statusChangedAt: Date.now(),
+          },
+        };
+        setMessages((prev) => [...prev, queuedAssistant]);
       } catch (error) {
         logger.error("Failed to send message", { imageId, error });
         // Mark as error - failed to send

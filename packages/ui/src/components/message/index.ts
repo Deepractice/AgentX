@@ -60,13 +60,12 @@ export {
   AssistantMessage,
   AssistantMessageHandler,
   type AssistantMessageProps,
+  type AssistantMessageStatus,
 } from "./AssistantMessage";
 export { ToolMessage, ToolMessageHandler, type ToolMessageProps } from "./ToolMessage";
 export { ErrorMessage, ErrorMessageHandler, type ErrorMessageProps } from "./ErrorMessage";
 
-// Special state components (no handlers)
-export { StreamingMessage, type StreamingMessageProps } from "./StreamingMessage";
-export { ThinkingMessage, type ThinkingMessageProps } from "./ThinkingMessage";
+// Special components (no handlers)
 export { UnknownMessage, type UnknownMessageProps } from "./UnknownMessage";
 
 // Utility components

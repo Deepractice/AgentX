@@ -19,11 +19,16 @@
  */
 
 import * as React from "react";
-import type { AgentX, Message, ToolCallMessage, ToolResultMessage } from "agentxjs";
+import type {
+  AgentX,
+  ToolCallMessage,
+  ToolResultMessage,
+  AssistantMessage as AssistantMessageType,
+} from "agentxjs";
 import { Save, Smile, Paperclip, FolderOpen } from "lucide-react";
 import { MessagePane, InputPane, type ToolBarItem } from "~/components/pane";
-import { MessageRenderer, StreamingMessage, ThinkingMessage } from "~/components/message";
-import { useAgent } from "~/hooks";
+import { MessageRenderer, AssistantMessage } from "~/components/message";
+import { useAgent, type UIMessage } from "~/hooks";
 import { cn } from "~/utils";
 import { ChatHeader } from "./ChatHeader";
 
@@ -71,21 +76,21 @@ export interface ChatProps {
 }
 
 /**
- * Extended message with tool result attached
+ * Extended UIMessage with tool result attached
  * Used for pairing tool-call and tool-result
  */
-interface MessageWithToolResult extends ToolCallMessage {
-  metadata?: {
+type UIMessageWithToolResult = UIMessage & {
+  metadata?: UIMessage["metadata"] & {
     toolResult?: ToolResultMessage;
   };
-}
+};
 
 /**
  * Process messages for rendering
  * - Pair tool-call with tool-result
  * - Filter out standalone tool-result messages
  */
-function processMessages(messages: Message[]): Message[] {
+function processMessages(messages: UIMessage[]): UIMessage[] {
   // Build a map of tool-result by toolCallId
   const toolResultMap = new Map<string, ToolResultMessage>();
 
@@ -97,7 +102,7 @@ function processMessages(messages: Message[]): Message[] {
   });
 
   // Filter and enrich messages
-  const processed: Message[] = [];
+  const processed: UIMessage[] = [];
 
   messages.forEach((msg) => {
     // Skip tool-result messages (they will be attached to tool-call)
@@ -107,7 +112,7 @@ function processMessages(messages: Message[]): Message[] {
 
     // For tool-call messages, attach the corresponding tool-result
     if (msg.subtype === "tool-call") {
-      const toolCall = msg as ToolCallMessage;
+      const toolCall = msg as ToolCallMessage & UIMessage;
       // Now we can directly access toolCall field (proper Message structure)
       const toolCallId = toolCall.toolCall.id;
 
@@ -115,9 +120,10 @@ function processMessages(messages: Message[]): Message[] {
 
       if (toolResult) {
         // Attach tool-result via metadata
-        const enriched: MessageWithToolResult = {
+        const enriched: UIMessageWithToolResult = {
           ...toolCall,
           metadata: {
+            ...toolCall.metadata,
             toolResult,
           },
         };
@@ -155,11 +161,11 @@ export function Chat({
   const { messages, streaming, status, send, interrupt } = useAgent(agentx, imageId ?? null);
 
   // Process messages: pair tool-call with tool-result
-  // Note: UIMessage from useAgent is compatible with Message interface
-  const processedMessages = React.useMemo(
-    () => processMessages(messages as unknown as Message[]),
-    [messages]
-  );
+  const processedMessages = React.useMemo(() => {
+    const processed = processMessages(messages);
+    console.log("[Chat] processedMessages:", processed);
+    return processed;
+  }, [messages]);
 
   // Determine loading state
   const isLoading =
@@ -219,16 +225,34 @@ export function Chat({
       {/* Message area */}
       <div style={{ height: messageHeight }} className="min-h-0">
         <MessagePane>
-          {/* Render each message through the handler chain */}
-          {processedMessages.map((message) => (
-            <MessageRenderer key={message.id} message={message} />
-          ))}
+          {/* Render each message */}
+          {processedMessages.map((message) => {
+            console.log("[Chat] Rendering message:", message.id, message.subtype, message);
 
-          {/* Streaming text indicator */}
-          {streaming && <StreamingMessage text={streaming} />}
+            // Assistant messages: handle all lifecycle states
+            if (message.role === "assistant" && message.subtype === "assistant") {
+              const assistantMsg = message as UIMessage & AssistantMessageType;
+              const messageStatus = assistantMsg.metadata?.status as
+                | "queued"
+                | "thinking"
+                | "responding"
+                | "success"
+                | undefined;
 
-          {/* Thinking indicator */}
-          {isLoading && !streaming && <ThinkingMessage />}
+              return (
+                <AssistantMessage
+                  key={message.id}
+                  message={assistantMsg}
+                  status={messageStatus}
+                  streamingText={streaming}
+                />
+              );
+            }
+
+            // All other messages render through handler chain
+            console.log("[Chat] Using MessageRenderer for:", message.subtype);
+            return <MessageRenderer key={message.id} message={message} />;
+          })}
         </MessagePane>
       </div>
 

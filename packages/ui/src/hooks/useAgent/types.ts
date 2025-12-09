@@ -10,15 +10,25 @@ import type { Message, AgentState } from "agentxjs";
 export type AgentStatus = AgentState;
 
 /**
- * Message status for user messages
+ * Status for user messages
  */
-export type MessageStatus = "pending" | "success" | "error" | "interrupted";
+export type UserMessageStatus = "pending" | "success" | "error" | "interrupted";
+
+/**
+ * Status for assistant messages
+ */
+export type AssistantMessageStatus = "queued" | "thinking" | "responding" | "success";
+
+/**
+ * Combined message status type
+ */
+export type MessageStatus = UserMessageStatus | AssistantMessageStatus;
 
 /**
  * UI-specific metadata for messages
  */
 export interface UIMessageMetadata {
-  /** Status for user messages (pending/success/error/interrupted) */
+  /** Status for messages */
   status?: MessageStatus;
   /** Error code if status is error */
   errorCode?: string;

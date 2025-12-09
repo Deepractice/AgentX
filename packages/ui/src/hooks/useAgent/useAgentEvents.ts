@@ -46,6 +46,11 @@ export interface AgentEventHandlers {
   updateLastUserMessageStatus: (status: MessageStatus, errorCode?: string) => void;
 
   /**
+   * Update last assistant message status
+   */
+  updateLastAssistantMessageStatus: (status: MessageStatus) => void;
+
+  /**
    * Clear streaming text
    */
   clearStreaming: () => void;
@@ -97,6 +102,7 @@ export function useAgentEvents({
       agentx.on("conversation_start", (event) => {
         if (!mountedRef.current || !isForThisImage(event)) return;
         handlers.onStatusChange("thinking");
+        handlers.updateLastAssistantMessageStatus("thinking");
         onStatusChangeCallback?.("thinking");
       })
     );
@@ -105,6 +111,7 @@ export function useAgentEvents({
       agentx.on("conversation_thinking", (event) => {
         if (!mountedRef.current || !isForThisImage(event)) return;
         handlers.onStatusChange("thinking");
+        handlers.updateLastAssistantMessageStatus("thinking");
         onStatusChangeCallback?.("thinking");
       })
     );
@@ -113,6 +120,7 @@ export function useAgentEvents({
       agentx.on("conversation_responding", (event) => {
         if (!mountedRef.current || !isForThisImage(event)) return;
         handlers.onStatusChange("responding");
+        handlers.updateLastAssistantMessageStatus("responding");
         onStatusChangeCallback?.("responding");
       })
     );
