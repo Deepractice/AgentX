@@ -26,6 +26,11 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
 
   // Dynamic import to avoid bundling runtime in browser
   const { createRuntime, createPersistence } = await import("@agentxjs/runtime");
+  const { homedir } = await import("node:os");
+  const { join } = await import("node:path");
+
+  // Determine base path for runtime data
+  const basePath = config.agentxDir ?? join(homedir(), ".agentx");
 
   // Create persistence from storage config (async)
   const storageConfig = config.storage ?? {};
@@ -35,6 +40,7 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
 
   const runtime = createRuntime({
     persistence,
+    basePath,
     llmProvider: {
       name: "claude",
       provide: () => ({

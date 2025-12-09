@@ -42,8 +42,6 @@ import {
   type RuntimeOperations,
 } from "./internal";
 import { createLogger } from "@agentxjs/common";
-import { homedir } from "node:os";
-import { join } from "node:path";
 
 const logger = createLogger("runtime/RuntimeImpl");
 
@@ -67,7 +65,7 @@ export class RuntimeImpl implements Runtime {
     logger.info("RuntimeImpl constructor start");
     this.persistence = config.persistence;
     this.llmProvider = config.llmProvider;
-    this.basePath = join(homedir(), ".agentx");
+    this.basePath = config.basePath;
 
     // Create SystemBus
     logger.info("Creating SystemBus");

@@ -34,6 +34,7 @@ async function startDevServer() {
 
   const PORT = 5200;
   const LOG_DIR = resolve(__dirname, "../../logs");
+  const AGENTX_DIR = resolve(__dirname, "../../.agentx");
 
   console.log("Starting AgentX Development Server...\n");
   console.log("Configuration:");
@@ -42,6 +43,7 @@ async function startDevServer() {
     console.log(`  Base URL: ${baseUrl}`);
   }
   console.log(`  Port: ${PORT}`);
+  console.log(`  AgentX Directory: ${AGENTX_DIR}`);
   console.log(`  Log Directory: ${LOG_DIR}`);
   console.log(`  Storage: fs (${LOG_DIR})`);
   console.log();
@@ -62,6 +64,7 @@ async function startDevServer() {
       level: "debug",
       factory: new FileLoggerFactory("debug", LOG_DIR),
     },
+    agentxDir: AGENTX_DIR,
   });
 
   // Create default container for Studio (single-tenant mode)

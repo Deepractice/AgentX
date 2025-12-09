@@ -34,10 +34,10 @@ import { PinoLoggerFactory } from "./logger";
 
 /**
  * Get data directory paths
- * Uses DATA_DIR env var, or defaults to ~/.agentx
+ * Uses AGENTX_DIR env var, or defaults to ~/.agentx
  *
  * Directory structure:
- *   data-dir/
+ *   agentx-dir/
  *   ├── data/           # Database files
  *   │   ├── agentx.db
  *   │   └── portagent.db
@@ -45,7 +45,7 @@ import { PinoLoggerFactory } from "./logger";
  *       └── portagent.log
  */
 function getDataPaths() {
-  const dataDir = process.env.DATA_DIR || join(homedir(), ".agentx");
+  const dataDir = process.env.AGENTX_DIR || join(homedir(), ".agentx");
   const dataDirPath = join(dataDir, "data");
   const logsDirPath = join(dataDir, "logs");
 
@@ -124,6 +124,7 @@ async function createApp() {
       level: logLevel,
       factory: loggerFactory,
     },
+    agentxDir: paths.dataDir, // Use configured data directory
     server, // Attach to existing HTTP server
   });
 

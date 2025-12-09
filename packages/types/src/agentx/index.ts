@@ -182,6 +182,14 @@ export interface LocalConfig {
   logger?: LoggerConfig;
 
   /**
+   * AgentX base directory for runtime data (containers, workdirs, etc.)
+   * @default "~/.agentx" (user's home directory)
+   * @example "/var/lib/agentx"
+   * @example "/Users/john/.agentx"
+   */
+  agentxDir?: string;
+
+  /**
    * HTTP server to attach WebSocket to.
    * If provided, WebSocket upgrade will be handled on the same port.
    * The server should handle authentication before upgrading.
