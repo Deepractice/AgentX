@@ -32,11 +32,12 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
   // Determine base path for runtime data
   const basePath = config.agentxDir ?? join(homedir(), ".agentx");
 
-  // Create persistence from storage config (async)
-  const storageConfig = config.storage ?? {};
-  const persistence = await createPersistence(
-    storageConfig as Parameters<typeof createPersistence>[0]
-  );
+  // Auto-configure storage: SQLite at {agentxDir}/data/agentx.db
+  const storagePath = join(basePath, "data", "agentx.db");
+  const persistence = await createPersistence({
+    driver: "sqlite",
+    path: storagePath,
+  });
 
   const runtime = createRuntime({
     persistence,
