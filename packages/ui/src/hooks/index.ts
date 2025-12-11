@@ -23,15 +23,10 @@
  *   const { images, createImage, runImage, stopImage, deleteImage } = useImages(agentx);
  *
  *   // Current conversation - use imageId, agent auto-activates on first message
- *   const { messages, streaming, send, isLoading, agentId } = useAgent(
+ *   const { messages, pendingAssistant, streaming, send, isLoading } = useAgent(
  *     agentx,
- *     { imageId: currentImageId }
+ *     currentImageId
  *   );
- *
- *   const handleNewConversation = async () => {
- *     const image = await createImage({ name: "New Chat" });
- *     setCurrentImageId(image.imageId);
- *   };
  *
  *   return <Chat messages={messages} streaming={streaming} onSend={send} />;
  * }
@@ -42,11 +37,16 @@ export {
   useAgent,
   type UseAgentResult,
   type UseAgentOptions,
-  type AgentIdentifier,
   type AgentStatus,
-  type MessageStatus,
-  type UIMessage,
-  type UIMessageMetadata,
+  type UserMessageStatus,
+  type AssistantMessageStatus,
+  type RenderMessage,
+  type RenderUserMessage,
+  type RenderAssistantMessage,
+  type RenderToolCallMessage,
+  type RenderErrorMessage,
+  type EmbeddedToolResult,
+  type PendingAssistant,
   type UIError,
 } from "./useAgent";
 

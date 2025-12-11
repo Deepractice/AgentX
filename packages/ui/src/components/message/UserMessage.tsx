@@ -1,28 +1,25 @@
 /**
- * UserMessage - User message handler and component
+ * UserMessage - User message component
  *
- * Handler: Processes messages with subtype "user"
- * Component: Displays user message with right-aligned layout and status indicator
+ * Displays user message with right-aligned layout and status indicator.
  */
 
 import * as React from "react";
-import type { Message, UserMessage as UserMessageType } from "agentxjs";
 import { Loader2, Check, AlertCircle, PauseCircle } from "lucide-react";
-import { BaseMessageHandler } from "./MessageHandler";
 import { MessageAvatar } from "./MessageAvatar";
 import { MessageContent } from "./MessageContent";
 import { cn } from "~/utils/utils";
-import type { MessageStatus, UIMessage } from "~/hooks/useAgent";
-
-// ============================================================================
-// Component
-// ============================================================================
+import type { UserMessageStatus } from "~/hooks/useAgent";
 
 export interface UserMessageProps {
   /**
-   * User message data
+   * Message content
    */
-  message: UIMessage;
+  content: string;
+  /**
+   * Message status
+   */
+  status: UserMessageStatus;
   /**
    * Additional class name
    */
@@ -32,9 +29,7 @@ export interface UserMessageProps {
 /**
  * Status icon component
  */
-const StatusIcon: React.FC<{ status?: MessageStatus }> = ({ status }) => {
-  if (!status) return null;
-
+const StatusIcon: React.FC<{ status: UserMessageStatus }> = ({ status }) => {
   const iconClassName = "w-4 h-4 flex-shrink-0";
 
   switch (status) {
@@ -54,16 +49,13 @@ const StatusIcon: React.FC<{ status?: MessageStatus }> = ({ status }) => {
 /**
  * UserMessage Component
  */
-export const UserMessage: React.FC<UserMessageProps> = ({ message, className }) => {
-  const status = message.metadata?.status;
-  const userMessage = message as UserMessageType;
-
+export const UserMessage: React.FC<UserMessageProps> = ({ content, status, className }) => {
   return (
     <div className={cn("flex gap-3 py-2 flex-row-reverse", className)}>
       <MessageAvatar role="user" />
       <div className="flex items-start gap-2 max-w-[80%]">
         <div className="rounded-lg px-4 py-2 bg-primary text-primary-foreground">
-          <MessageContent content={userMessage.content} className="text-sm" />
+          <MessageContent content={content} className="text-sm" />
         </div>
         <div className="flex items-center h-8">
           <StatusIcon status={status} />
@@ -72,17 +64,3 @@ export const UserMessage: React.FC<UserMessageProps> = ({ message, className }) 
     </div>
   );
 };
-
-// ============================================================================
-// Handler
-// ============================================================================
-
-export class UserMessageHandler extends BaseMessageHandler {
-  canHandle(message: Message): boolean {
-    return message.subtype === "user";
-  }
-
-  protected renderMessage(message: Message): React.ReactNode {
-    return <UserMessage message={message as UIMessage} />;
-  }
-}
