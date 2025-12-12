@@ -75,15 +75,10 @@ export const MobileInputPane = React.forwardRef<HTMLDivElement, MobileInputPaneP
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      // On mobile, Enter always creates new line
-      // Send button is used to send
+      // Enter to send, Shift+Enter for new line
       if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-        // Only send on Enter for desktop-like behavior
-        // For mobile, we rely on the send button
-        if (window.innerWidth >= 768) {
-          e.preventDefault();
-          handleSend();
-        }
+        e.preventDefault();
+        handleSend();
       }
     };
 
