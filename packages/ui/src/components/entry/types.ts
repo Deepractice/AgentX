@@ -46,8 +46,12 @@ export interface TextBlockData extends BlockBase {
 
 /**
  * Tool block status
+ * - planning: AI is generating tool input (tool_use_start received, waiting for complete input)
+ * - executing: Tool input complete, tool is executing
+ * - success: Tool execution completed successfully
+ * - error: Tool execution failed
  */
-export type ToolBlockStatus = "executing" | "success" | "error";
+export type ToolBlockStatus = "planning" | "executing" | "success" | "error";
 
 /**
  * Tool block data - tool call in AssistantConversation

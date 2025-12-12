@@ -55,6 +55,14 @@ const statusConfig: Record<
     label: string;
   }
 > = {
+  planning: {
+    icon: <Loader2 className="w-4 h-4 animate-spin" />,
+    bgColor: "bg-amber-50 dark:bg-amber-950/30",
+    borderColor: "border-amber-200 dark:border-amber-800",
+    textColor: "text-amber-700 dark:text-amber-300",
+    iconColor: "text-amber-500",
+    label: "Planning...",
+  },
   executing: {
     icon: <Loader2 className="w-4 h-4 animate-spin" />,
     bgColor: "bg-blue-50 dark:bg-blue-950/30",
@@ -134,8 +142,8 @@ export function ToolBlock({ block, defaultExpanded = false, className }: ToolBlo
             <span className="text-xs opacity-60">• {block.duration.toFixed(2)}s</span>
           )}
 
-          {/* Status Label (only for executing) */}
-          {block.status === "executing" && (
+          {/* Status Label (for planning and executing) */}
+          {(block.status === "planning" || block.status === "executing") && (
             <span className="text-xs opacity-60">• {config.label}</span>
           )}
         </div>
@@ -184,7 +192,13 @@ export function ToolBlock({ block, defaultExpanded = false, className }: ToolBlo
             </div>
           )}
 
-          {/* Waiting for result */}
+          {/* Waiting message */}
+          {block.status === "planning" && (
+            <div className="flex items-center gap-2 text-xs opacity-60 py-1">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span>Generating input...</span>
+            </div>
+          )}
           {block.status === "executing" && (
             <div className="flex items-center gap-2 text-xs opacity-60 py-1">
               <Loader2 className="w-3 h-3 animate-spin" />

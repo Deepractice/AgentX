@@ -186,6 +186,19 @@ export function useAgent(
       })
     );
 
+    // Stream events - tool_use_start (create planning ToolBlock)
+    unsubscribes.push(
+      agentx.on("tool_use_start", (event) => {
+        if (!isForThisImage(event)) return;
+        const data = event.data as { toolCallId: string; toolName: string };
+        dispatch({
+          type: "TOOL_BLOCK_PLANNING",
+          toolCallId: data.toolCallId,
+          toolName: data.toolName,
+        });
+      })
+    );
+
     // Message events - assistant_message finishes current TextBlock
     unsubscribes.push(
       agentx.on("assistant_message", (event) => {

@@ -14,6 +14,16 @@ const meta: Meta<typeof ToolBlock> = {
 export default meta;
 type Story = StoryObj<typeof ToolBlock>;
 
+const planningBlock: ToolBlockData = {
+  type: "tool",
+  id: "msg_000",
+  toolCallId: "toolu_00PLAN",
+  name: "Bash",
+  input: {},
+  timestamp: Date.now(),
+  status: "planning",
+};
+
 const executingBlock: ToolBlockData = {
   type: "tool",
   id: "msg_001",
@@ -73,6 +83,12 @@ const complexInputBlock: ToolBlockData = {
   duration: 2.45,
 };
 
+export const Planning: Story = {
+  args: {
+    block: planningBlock,
+  },
+};
+
 export const Executing: Story = {
   args: {
     block: executingBlock,
@@ -107,6 +123,7 @@ export const DefaultExpanded: Story = {
 export const AllStates: Story = {
   render: () => (
     <div className="space-y-4 max-w-2xl">
+      <ToolBlock block={planningBlock} />
       <ToolBlock block={executingBlock} />
       <ToolBlock block={successBlock} />
       <ToolBlock block={errorBlock} />

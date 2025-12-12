@@ -101,6 +101,7 @@ export type ConversationAction =
   | { type: "TEXT_BLOCK_DELTA"; text: string }
   | { type: "TEXT_BLOCK_FINISH" }
   // Tool block actions
+  | { type: "TOOL_BLOCK_PLANNING"; toolCallId: string; toolName: string }
   | { type: "TOOL_BLOCK_ADD"; message: ToolCallMessage }
   | { type: "TOOL_BLOCK_RESULT"; message: ToolResultMessage }
   // Error actions

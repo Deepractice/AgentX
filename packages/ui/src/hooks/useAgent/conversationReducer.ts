@@ -501,6 +501,81 @@ export function conversationReducer(
 
     // ========== Tool Block ==========
 
+    case "TOOL_BLOCK_PLANNING": {
+      // First, finish any current text block
+      let newState = state;
+      if (state.currentTextBlockId) {
+        newState = finishCurrentTextBlock(state);
+      }
+
+      const convIndex = findStreamingConversationIndex(newState);
+      if (convIndex === -1) {
+        // No streaming conversation, create one
+        const newConversation: AssistantConversationData = {
+          type: "assistant",
+          id: generateId("assistant"),
+          messageIds: [],
+          timestamp: Date.now(),
+          status: "streaming",
+          blocks: [
+            {
+              type: "tool",
+              id: generateId("tool"),
+              toolCallId: action.toolCallId,
+              name: action.toolName,
+              input: {},
+              timestamp: Date.now(),
+              status: "planning",
+              startTime: Date.now(),
+            } as ToolBlockData,
+          ],
+        };
+
+        const newConversationIds = new Set(newState.conversationIds);
+        newConversationIds.add(newConversation.id);
+
+        const newPendingToolCalls = new Map(newState.pendingToolCalls);
+        newPendingToolCalls.set(action.toolCallId, newConversation.id);
+
+        return {
+          ...newState,
+          conversations: [...newState.conversations, newConversation],
+          conversationIds: newConversationIds,
+          pendingToolCalls: newPendingToolCalls,
+          streamingConversationId: newConversation.id,
+        };
+      }
+
+      // Add planning block to existing streaming conversation
+      const conversations = [...newState.conversations];
+      const conv = conversations[convIndex] as AssistantConversationData;
+
+      const newBlock: ToolBlockData = {
+        type: "tool",
+        id: generateId("tool"),
+        toolCallId: action.toolCallId,
+        name: action.toolName,
+        input: {},
+        timestamp: Date.now(),
+        status: "planning",
+        startTime: Date.now(),
+      };
+
+      conversations[convIndex] = {
+        ...conv,
+        blocks: [...conv.blocks, newBlock],
+      };
+
+      const newPendingToolCalls = new Map(newState.pendingToolCalls);
+      newPendingToolCalls.set(action.toolCallId, conv.id);
+
+      return {
+        ...newState,
+        conversations,
+        pendingToolCalls: newPendingToolCalls,
+      };
+    }
+
     case "TOOL_BLOCK_ADD": {
       const msg = action.message;
 
@@ -510,6 +585,48 @@ export function conversationReducer(
         newState = finishCurrentTextBlock(state);
       }
 
+      // Check if there's already a planning block for this toolCallId
+      const parentConversationId = newState.pendingToolCalls.get(msg.toolCall.id);
+      if (parentConversationId) {
+        // Find the conversation and update the planning block to executing
+        const parentIndex = newState.conversations.findIndex(
+          (c) => c.type === "assistant" && c.id === parentConversationId
+        );
+
+        if (parentIndex !== -1) {
+          const conversations = [...newState.conversations];
+          const parentConv = conversations[parentIndex] as AssistantConversationData;
+
+          const blockIndex = parentConv.blocks.findIndex(
+            (b) => b.type === "tool" && (b as ToolBlockData).toolCallId === msg.toolCall.id
+          );
+
+          if (blockIndex !== -1) {
+            // Update existing planning block to executing with full input
+            const existingBlock = parentConv.blocks[blockIndex] as ToolBlockData;
+            const updatedBlock: ToolBlockData = {
+              ...existingBlock,
+              input: msg.toolCall.input,
+              status: "executing",
+            };
+
+            const newBlocks = [...parentConv.blocks];
+            newBlocks[blockIndex] = updatedBlock;
+
+            conversations[parentIndex] = {
+              ...parentConv,
+              blocks: newBlocks,
+            };
+
+            return {
+              ...newState,
+              conversations,
+            };
+          }
+        }
+      }
+
+      // No planning block found, create new tool block (fallback)
       const parentMessageId = msg.parentId;
 
       // Find parent conversation by messageId
