@@ -1,5 +1,12 @@
 # @agentxjs/ui
 
+## 1.1.2
+
+### Patch Changes
+
+- e588944: Fix publish workflow to use pnpm for workspace protocol resolution
+  - agentxjs@1.1.2
+
 ## 1.1.1
 
 ### Patch Changes
