@@ -1,5 +1,13 @@
 # @agentxjs/runtime
 
+## 1.1.4
+
+### Patch Changes
+
+- @agentxjs/agent@1.1.4
+- @agentxjs/types@1.1.4
+- @agentxjs/common@1.1.4
+
 ## 1.1.3
 
 ### Patch Changes

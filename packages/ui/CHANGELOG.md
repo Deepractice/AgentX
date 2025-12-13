@@ -1,5 +1,13 @@
 # @agentxjs/ui
 
+## 1.1.4
+
+### Patch Changes
+
+- 23a6643: Test release workflow
+  - agentxjs@1.1.4
+  - @agentxjs/common@1.1.4
+
 ## 1.1.3
 
 ### Patch Changes
