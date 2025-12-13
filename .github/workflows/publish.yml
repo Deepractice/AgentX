@@ -58,7 +58,7 @@ jobs:
               if [ "$PRIVATE" != "true" ]; then
                 echo "Publishing $NAME..."
                 cd "$pkg"
-                pnpm publish --access public --no-git-checks || echo "Failed to publish $NAME (may already exist)"
+                npm publish --access public || echo "Failed to publish $NAME (may already exist)"
                 cd -
               else
                 echo "Skipping private package: $NAME"
