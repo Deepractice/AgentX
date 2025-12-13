@@ -2,10 +2,16 @@ name: Version
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run - only show version calculation without consuming changesets"
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   version:
-    name: Create Release PR
+    name: ${{ inputs.dry_run && 'Preview Version' || 'Create Release PR' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -29,7 +35,22 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Preview Version (Dry Run)
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "🔍 Dry Run Mode - Previewing version calculation"
+          echo ""
+          echo "=== Changeset Status ==="
+          pnpm changeset status --verbose
+          echo ""
+          echo "=== Changeset Files ==="
+          find .changeset -name "*.md" ! -name "README.md" -exec echo "📄 {}" \; -exec cat {} \; -exec echo "" \;
+          echo ""
+          echo "✅ Dry run complete. No changesets were consumed."
+          echo "To create the release PR, run this workflow again with dry_run unchecked."
+
       - name: Backup Changesets
+        if: ${{ !inputs.dry_run }}
         id: backup
         run: |
           # Backup changeset files (exclude README.md and config.json)
@@ -63,6 +84,7 @@ jobs:
           } >> $GITHUB_OUTPUT
 
       - name: Configure Git
+        if: ${{ !inputs.dry_run }}
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
@@ -71,9 +93,11 @@ jobs:
           git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
 
       - name: Version Packages
+        if: ${{ !inputs.dry_run }}
         run: pnpm changeset version
 
       - name: Get Version and Create Branch
+        if: ${{ !inputs.dry_run }}
         id: version
         run: |
           # Get version from apps/portagent as the main version
@@ -87,17 +111,20 @@ jobs:
           git checkout -b "${BRANCH_NAME}"
 
       - name: Commit Version Changes
+        if: ${{ !inputs.dry_run }}
         run: |
           git add .
           git commit --no-verify -m "chore: version packages for ${{ steps.version.outputs.version }}" || echo "No changes to commit"
 
       - name: Push Release Branch
+        if: ${{ !inputs.dry_run }}
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           git push --no-verify origin ${{ steps.version.outputs.branch }}
 
       - name: Create Release PR
+        if: ${{ !inputs.dry_run }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         run: |
