@@ -71,35 +71,21 @@ async function startDevServer() {
   });
 
   // Create default container for Studio (single-tenant mode)
+  // Container is idempotent - will reuse existing if already created
   try {
     console.log("Creating default container...");
     await agentx.request("container_create_request", {
       containerId: "default",
     });
-    console.log("✓ Default container created");
+    console.log("✓ Default container ready");
   } catch (error) {
     console.error("Failed to create default container:", error);
     process.exit(1);
   }
 
-  // Create default agent image (uses defaultAgent configuration from createAgentX)
-  try {
-    console.log("Creating default agent image...");
-    const imageResponse = await agentx.request("image_create_request", {
-      containerId: "default",
-      config: {}, // Empty config - defaultAgent provides name, systemPrompt, mcpServers
-    });
-    if (imageResponse.data.error) {
-      throw new Error(imageResponse.data.error);
-    }
-    console.log(`✓ Default agent image created: ${ClaudeAgent.name}`);
-    console.log(
-      `  - MCP Servers: ${Object.keys(ClaudeAgent.mcpServers || {}).join(", ") || "none"}`
-    );
-  } catch (error) {
-    console.error("Failed to create default agent image:", error);
-    process.exit(1);
-  }
+  // Log defaultAgent configuration (images are created on-demand by UI)
+  console.log(`✓ Default agent configured: ${ClaudeAgent.name}`);
+  console.log(`  - MCP Servers: ${Object.keys(ClaudeAgent.mcpServers || {}).join(", ") || "none"}`);
 
   // Start WebSocket server
   await agentx.listen(PORT);
