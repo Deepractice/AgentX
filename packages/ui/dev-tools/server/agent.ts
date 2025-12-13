@@ -17,8 +17,8 @@ export const ClaudeAgent = defineAgent({
   systemPrompt: "你是 AgentX 的助手，专门帮助用户使用 AgentX 平台进行 AI Agent 开发。",
   mcpServers: {
     promptx: {
-      type: "http",
-      url: "http://127.0.0.1:5203/mcp",
+      command: "npx",
+      args: ["-y", "@promptx/mcp-server"],
     },
   },
 });
