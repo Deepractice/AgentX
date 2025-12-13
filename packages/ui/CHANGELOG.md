@@ -1,5 +1,22 @@
 # @agentxjs/ui
 
+## 1.3.0
+
+### Minor Changes
+
+- c29d0eb: feat(ui): add collapsible sidebar to Studio component
+  - Add collapse button (ChevronsLeft) to ListPane header
+  - Move "+" new button to search bar area
+  - Add `collapsible` prop to Studio (default: true)
+  - Add `showCollapseButton` and `onCollapse` props to ListPane and AgentList
+  - When collapsed, sidebar shows only an expand button (ChevronsRight)
+  - Smooth transition animation for sidebar collapse/expand
+
+### Patch Changes
+
+- agentxjs@1.3.0
+- @agentxjs/common@1.3.0
+
 ## 1.2.0
 
 ### Patch Changes
