@@ -9,6 +9,7 @@ import { config } from "dotenv";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 import { FileLoggerFactory } from "./FileLogger.js";
+import { ClaudeAgent } from "./agent.js";
 
 // Get __dirname equivalent in ES module
 const __filename = fileURLToPath(import.meta.url);
@@ -54,6 +55,7 @@ async function startDevServer() {
   const { createAgentX } = await import("agentxjs");
 
   // Storage is auto-configured: SQLite at {agentxDir}/data/agentx.db
+  // defaultAgent is used as base config when creating new images
   const agentx = await createAgentX({
     llm: {
       apiKey,
@@ -65,19 +67,25 @@ async function startDevServer() {
       factory: new FileLoggerFactory("debug", LOG_DIR),
     },
     agentxDir: AGENTX_DIR,
+    defaultAgent: ClaudeAgent,
   });
 
   // Create default container for Studio (single-tenant mode)
+  // Container is idempotent - will reuse existing if already created
   try {
     console.log("Creating default container...");
     await agentx.request("container_create_request", {
       containerId: "default",
     });
-    console.log("✓ Default container created");
+    console.log("✓ Default container ready");
   } catch (error) {
     console.error("Failed to create default container:", error);
     process.exit(1);
   }
+
+  // Log defaultAgent configuration (images are created on-demand by UI)
+  console.log(`✓ Default agent configured: ${ClaudeAgent.name}`);
+  console.log(`  - MCP Servers: ${Object.keys(ClaudeAgent.mcpServers || {}).join(", ") || "none"}`);
 
   // Start WebSocket server
   await agentx.listen(PORT);
