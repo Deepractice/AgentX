@@ -1,0 +1,18 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# TypeScript/JavaScript
+*.ts linguist-language=TypeScript
+*.tsx linguist-language=TypeScript
+*.js linguist-language=JavaScript
+*.jsx linguist-language=JavaScript
+*.mjs linguist-language=JavaScript
+*.cjs linguist-language=JavaScript
+
+# Explicitly mark generated files
+pnpm-lock.yaml linguist-generated=true
+*.min.js linguist-generated=true
+*.min.css linguist-generated=true
+
+# Documentation
+*.md linguist-documentation=true
