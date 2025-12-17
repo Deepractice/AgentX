@@ -545,10 +545,25 @@ export const InputPane = React.forwardRef<HTMLDivElement, InputPaneProps>(
           </div>
         )}
 
-        {/* Drag overlay */}
+        {/* Drag overlay - WeChat style dark mask */}
         {isDragging && (
-          <div className="absolute inset-0 z-40 flex items-center justify-center bg-primary/10 border-2 border-dashed border-primary rounded-lg">
-            <p className="text-primary font-medium">Drop files here</p>
+          <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/60 rounded-lg">
+            <div className="w-16 h-16 mb-3 rounded-xl bg-emerald-500/90 flex items-center justify-center">
+              <svg
+                className="w-8 h-8 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                />
+              </svg>
+            </div>
+            <p className="text-white text-base">松开发送</p>
           </div>
         )}
 
