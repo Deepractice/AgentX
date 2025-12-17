@@ -1,5 +1,30 @@
 # @agentxjs/ui
 
+## 1.4.0
+
+### Minor Changes
+
+- 38217f0: Add multimodal content support (images and files/PDFs)
+  - Add ImageBlock and FileBlock components for displaying attachments
+  - Add MessageContent component for rendering multimodal messages
+  - Update InputPane with attachment support (paste, drag & drop, file picker)
+  - Expand drag & drop zone to full Chat area with dark overlay
+  - Accept all file types by default
+  - Simplify toolbar to emoji + folder buttons (WeChat style)
+  - Enable full multimodal content flow from UI to runtime
+
+### Patch Changes
+
+- f56aeea: fix(MobileDrawer): use internal portal container to fix z-index stacking issues
+
+  When MobileDrawer was used in host applications with high z-index elements (e.g., carousels, modals), the drawer would appear behind those elements. This was because vaul's Portal rendered to document.body by default.
+
+  Now MobileDrawer creates its own portal container with z-index: 9999, ensuring the drawer always appears on top regardless of the host application's DOM structure.
+
+- Updated dependencies [38217f0]
+  - agentxjs@1.4.0
+  - @agentxjs/common@1.4.0
+
 ## 1.3.0
 
 ### Minor Changes

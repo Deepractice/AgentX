@@ -1,5 +1,23 @@
 # agentxjs
 
+## 1.4.0
+
+### Patch Changes
+
+- 38217f0: Add multimodal content support (images and files/PDFs)
+  - Add ImageBlock and FileBlock components for displaying attachments
+  - Add MessageContent component for rendering multimodal messages
+  - Update InputPane with attachment support (paste, drag & drop, file picker)
+  - Expand drag & drop zone to full Chat area with dark overlay
+  - Accept all file types by default
+  - Simplify toolbar to emoji + folder buttons (WeChat style)
+  - Enable full multimodal content flow from UI to runtime
+
+- Updated dependencies [38217f0]
+  - @agentxjs/types@1.4.0
+  - @agentxjs/common@1.4.0
+  - @agentxjs/network@1.4.0
+
 ## 1.3.0
 
 ### Patch Changes

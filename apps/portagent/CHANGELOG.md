@@ -1,5 +1,15 @@
 # @agentxjs/portagent
 
+## 1.4.0
+
+### Patch Changes
+
+- Updated dependencies [f56aeea]
+- Updated dependencies [38217f0]
+  - @agentxjs/ui@1.4.0
+  - agentxjs@1.4.0
+  - @agentxjs/runtime@1.4.0
+
 ## 1.3.0
 
 ### Patch Changes
