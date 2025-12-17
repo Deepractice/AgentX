@@ -403,13 +403,17 @@ export const InputPane = React.forwardRef<HTMLDivElement, InputPaneProps>(
       [enableAttachments, addFiles]
     );
 
+    // Stable ref for addFiles to avoid useEffect re-running
+    const addFilesRef = React.useRef(addFiles);
+    addFilesRef.current = addFiles;
+
     // Process files dropped from parent component (full-area drag & drop)
     React.useEffect(() => {
       if (droppedFiles && droppedFiles.length > 0) {
-        addFiles(droppedFiles);
+        addFilesRef.current(droppedFiles);
         onDroppedFilesProcessed?.();
       }
-    }, [droppedFiles, onDroppedFilesProcessed, addFiles]);
+    }, [droppedFiles, onDroppedFilesProcessed]);
 
     /**
      * Handle emoji select
