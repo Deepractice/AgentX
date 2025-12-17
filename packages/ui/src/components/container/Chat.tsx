@@ -20,7 +20,7 @@
 
 import * as React from "react";
 import type { AgentX } from "agentxjs";
-import { Save, Smile, Paperclip, FolderOpen } from "lucide-react";
+import { Save, Smile, FolderOpen } from "lucide-react";
 import { MessagePane, InputPane, type ToolBarItem } from "~/components/pane";
 import { UserEntry, AssistantEntry, ErrorEntry } from "~/components/entry";
 import { useAgent, type ConversationData } from "~/hooks";
@@ -139,7 +139,6 @@ export function Chat({
   const toolbarItems: ToolBarItem[] = React.useMemo(
     () => [
       { id: "emoji", icon: <Smile className="w-4 h-4" />, label: "Emoji" },
-      { id: "attach", icon: <Paperclip className="w-4 h-4" />, label: "Attach" },
       { id: "folder", icon: <FolderOpen className="w-4 h-4" />, label: "File" },
     ],
     []
