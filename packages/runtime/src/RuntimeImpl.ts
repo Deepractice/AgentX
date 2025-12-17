@@ -19,6 +19,7 @@
 import type { Persistence } from "@agentxjs/types";
 import type { Runtime, ClaudeLLMConfig, LLMProvider } from "@agentxjs/types/runtime";
 import type { Agent } from "@agentxjs/types/runtime";
+import type { UserContentPart } from "@agentxjs/types/agent";
 import type {
   BusEventHandler,
   SubscribeOptions,
@@ -201,7 +202,7 @@ export class RuntimeImpl implements Runtime {
       receiveMessage: async (
         imageId: string | undefined,
         agentId: string | undefined,
-        content: string,
+        content: string | UserContentPart[],
         requestId: string
       ) => {
         // If imageId provided, auto-activate the image

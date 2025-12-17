@@ -14,7 +14,7 @@
 
 import type { SystemBus, McpServerConfig } from "@agentxjs/types/runtime/internal";
 import type { SystemEvent } from "@agentxjs/types/event";
-import type { Message } from "@agentxjs/types/agent";
+import type { Message, UserContentPart } from "@agentxjs/types/agent";
 import { BaseEventHandler } from "./BaseEventHandler";
 import { createLogger } from "@agentxjs/common";
 
@@ -55,7 +55,7 @@ export interface RuntimeOperations {
   receiveMessage(
     imageId: string | undefined,
     agentId: string | undefined,
-    content: string,
+    content: string | UserContentPart[],
     requestId: string
   ): Promise<{ agentId: string; imageId?: string }>;
   interruptAgent(
@@ -362,7 +362,12 @@ export class CommandHandler extends BaseEventHandler {
   }
 
   private async handleMessageSend(event: {
-    data: { requestId: string; imageId?: string; agentId?: string; content: string };
+    data: {
+      requestId: string;
+      imageId?: string;
+      agentId?: string;
+      content: string | UserContentPart[];
+    };
   }): Promise<void> {
     const { requestId, imageId, agentId, content } = event.data;
     logger.debug("Handling message_send_request", { requestId, imageId, agentId });

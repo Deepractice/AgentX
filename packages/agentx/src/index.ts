@@ -206,6 +206,7 @@ export type {
   AgentError,
   AgentState,
   ContentPart,
+  UserContentPart,
   TextPart,
   ThinkingPart,
   ImagePart,

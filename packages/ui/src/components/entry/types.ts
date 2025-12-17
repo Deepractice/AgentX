@@ -122,8 +122,8 @@ export interface UserConversationData {
   type: "user";
   /** Conversation id */
   id: string;
-  /** Message content */
-  content: string;
+  /** Message content (string for text-only, array for multimodal) */
+  content: string | import("agentxjs").UserContentPart[];
   /** Timestamp */
   timestamp: number;
   /** Send status */

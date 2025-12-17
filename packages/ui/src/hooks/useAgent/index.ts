@@ -43,7 +43,7 @@
  */
 
 import { useReducer, useCallback, useRef, useEffect } from "react";
-import type { AgentX, Message } from "agentxjs";
+import type { AgentX, Message, UserContentPart } from "agentxjs";
 import { createLogger } from "@agentxjs/common";
 import type { UserConversationData, UseAgentResult, UseAgentOptions, UIError } from "./types";
 import { conversationReducer, initialConversationState } from "./conversationReducer";
@@ -261,18 +261,18 @@ export function useAgent(
 
   // Send message
   const send = useCallback(
-    async (text: string) => {
+    async (content: string | UserContentPart[]) => {
       if (!agentx || !imageId) return;
 
       // Clear errors
       dispatch({ type: "ERRORS_CLEAR" });
-      onSend?.(text);
+      onSend?.(content);
 
       // Add user conversation immediately
       const userConversation: UserConversationData = {
         type: "user",
         id: generateId("user"),
-        content: text,
+        content: content,
         timestamp: Date.now(),
         status: "pending",
       };
@@ -282,7 +282,7 @@ export function useAgent(
         // Send to agent
         const response = await agentx.request("message_send_request", {
           imageId,
-          content: text,
+          content: content,
         });
 
         // Update agent ID

@@ -29,34 +29,11 @@
 
 import * as React from "react";
 import { Send, Square, X } from "lucide-react";
+import type { UserContentPart, ImagePart, FilePart } from "agentxjs";
 import { cn } from "~/utils/utils";
 import { InputToolBar, type ToolBarItem } from "./InputToolBar";
 import { EmojiPicker, type Emoji } from "../element/EmojiPicker";
 import { ImageAttachment } from "../element/ImageAttachment";
-
-/**
- * Content part types for multimodal messages
- */
-interface TextPart {
-  type: "text";
-  text: string;
-}
-
-interface ImagePart {
-  type: "image";
-  data: string;
-  mediaType: string;
-  name?: string;
-}
-
-interface FilePart {
-  type: "file";
-  data: string;
-  mediaType: string;
-  filename?: string;
-}
-
-type UserContentPart = TextPart | ImagePart | FilePart;
 
 /**
  * Internal attachment representation
@@ -324,14 +301,14 @@ export const InputPane = React.forwardRef<HTMLDivElement, InputPaneProps>(
             parts.push({
               type: "image",
               data: base64,
-              mediaType: attachment.file.type,
+              mediaType: attachment.file.type as ImagePart["mediaType"],
               name: attachment.file.name,
             });
           } else {
             parts.push({
               type: "file",
               data: base64,
-              mediaType: attachment.file.type,
+              mediaType: attachment.file.type as FilePart["mediaType"],
               filename: attachment.file.name,
             });
           }

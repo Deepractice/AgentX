@@ -147,8 +147,8 @@ export interface UseAgentResult {
   /** Errors */
   errors: UIError[];
 
-  /** Send a message */
-  send: (text: string) => void;
+  /** Send a message (text-only or multimodal) */
+  send: (content: string | import("agentxjs").UserContentPart[]) => void;
 
   /** Interrupt current response */
   interrupt: () => void;
@@ -170,7 +170,7 @@ export interface UseAgentResult {
  * Options for useAgent hook
  */
 export interface UseAgentOptions {
-  onSend?: (text: string) => void;
+  onSend?: (content: string | import("agentxjs").UserContentPart[]) => void;
   onError?: (error: UIError) => void;
   onStatusChange?: (status: AgentStatus) => void;
 }

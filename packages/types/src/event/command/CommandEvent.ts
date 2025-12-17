@@ -24,6 +24,7 @@
 
 import type { SystemEvent } from "../base";
 import type { ImageRecord } from "~/runtime/internal/persistence";
+import type { UserContentPart } from "~/agent/message/parts";
 
 // ============================================================================
 // Base Types
@@ -241,7 +242,8 @@ export interface MessageSendRequest
       imageId?: string;
       /** Agent ID (legacy) - must be already running */
       agentId?: string;
-      content: string;
+      /** Message content (text-only or multimodal) */
+      content: string | UserContentPart[];
     }
   > {}
 
