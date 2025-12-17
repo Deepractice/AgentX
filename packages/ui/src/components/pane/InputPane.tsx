@@ -119,6 +119,14 @@ export interface InputPaneProps {
    * @default ['application/pdf']
    */
   acceptedFileTypes?: string[];
+  /**
+   * Files dropped from parent component (for full-area drag & drop)
+   */
+  droppedFiles?: File[];
+  /**
+   * Callback when dropped files have been processed
+   */
+  onDroppedFilesProcessed?: () => void;
 }
 
 /**
@@ -167,6 +175,8 @@ export const InputPane = React.forwardRef<HTMLDivElement, InputPaneProps>(
       maxFileSize = 5 * 1024 * 1024, // 5MB
       acceptedImageTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"],
       acceptedFileTypes = ["application/pdf"],
+      droppedFiles,
+      onDroppedFilesProcessed,
     },
     ref
   ) => {
@@ -392,6 +402,14 @@ export const InputPane = React.forwardRef<HTMLDivElement, InputPaneProps>(
       },
       [enableAttachments, addFiles]
     );
+
+    // Process files dropped from parent component (full-area drag & drop)
+    React.useEffect(() => {
+      if (droppedFiles && droppedFiles.length > 0) {
+        addFiles(droppedFiles);
+        onDroppedFilesProcessed?.();
+      }
+    }, [droppedFiles, onDroppedFilesProcessed, addFiles]);
 
     /**
      * Handle emoji select

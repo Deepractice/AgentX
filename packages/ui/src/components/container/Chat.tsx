@@ -135,6 +135,52 @@ export function Chat({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isLoading, interrupt]);
 
+  // Full-area drag & drop state
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [droppedFiles, setDroppedFiles] = React.useState<File[] | undefined>(undefined);
+  const dragCounterRef = React.useRef(0);
+
+  // Handle drag events for full-area drop zone
+  const handleDragEnter = React.useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current++;
+    if (e.dataTransfer?.types.includes("Files")) {
+      setIsDragging(true);
+    }
+  }, []);
+
+  const handleDragLeave = React.useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDragOver = React.useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = React.useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current = 0;
+    setIsDragging(false);
+
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) {
+      setDroppedFiles(Array.from(files));
+    }
+  }, []);
+
+  // Clear dropped files after they've been processed by InputPane
+  const handleDroppedFilesProcessed = React.useCallback(() => {
+    setDroppedFiles(undefined);
+  }, []);
+
   // Toolbar items
   const toolbarItems: ToolBarItem[] = React.useMemo(
     () => [
@@ -177,7 +223,13 @@ export function Chat({
   }
 
   return (
-    <div className={cn("flex flex-col h-full bg-background", className)}>
+    <div
+      className={cn("flex flex-col h-full bg-background relative", className)}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
       {/* Header */}
       <ChatHeader agentName={agentName} status={status} messageCount={conversations.length} />
 
@@ -203,8 +255,19 @@ export function Chat({
           toolbarItems={toolbarItems}
           toolbarRightItems={toolbarRightItems}
           onToolbarItemClick={handleToolbarClick}
+          droppedFiles={droppedFiles}
+          onDroppedFilesProcessed={handleDroppedFilesProcessed}
         />
       </div>
+
+      {/* Full-area drop overlay */}
+      {isDragging && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-primary/10 border-2 border-dashed border-primary pointer-events-none">
+          <div className="bg-background/90 px-6 py-4 rounded-lg shadow-lg">
+            <p className="text-primary font-medium text-lg">Drop files here</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
