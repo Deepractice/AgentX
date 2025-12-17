@@ -1,6 +1,4 @@
-import type { TextPart } from "./parts/TextPart";
-import type { ImagePart } from "./parts/ImagePart";
-import type { FilePart } from "./parts/FilePart";
+import type { UserContentPart } from "./parts/UserContentPart";
 
 /**
  * User Message
@@ -19,7 +17,7 @@ export interface UserMessage {
   subtype: "user";
 
   /** Message content - can be simple string or array of parts */
-  content: string | Array<TextPart | ImagePart | FilePart>;
+  content: string | UserContentPart[];
 
   /** When this message was created (Unix timestamp in milliseconds) */
   timestamp: number;

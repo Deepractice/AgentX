@@ -41,7 +41,13 @@ import type {
   EventCategory,
   ClaudeLLMConfig,
 } from "@agentxjs/types/runtime";
-import type { AgentEngine, AgentPresenter, AgentOutput, Message } from "@agentxjs/types/agent";
+import type {
+  AgentEngine,
+  AgentPresenter,
+  AgentOutput,
+  Message,
+  UserContentPart,
+} from "@agentxjs/types/agent";
 import type {
   SystemBus,
   SystemBusProducer,
@@ -335,13 +341,16 @@ export class RuntimeAgent implements RuntimeAgentInterface {
   /**
    * Receive a message from user
    *
-   * @param content - Message content
+   * @param content - Message content (string or multimodal content parts)
    * @param requestId - Request ID for correlation
    */
-  async receive(content: string, requestId?: string): Promise<void> {
+  async receive(content: string | UserContentPart[], requestId?: string): Promise<void> {
+    const contentPreview =
+      typeof content === "string" ? content.substring(0, 50) : `[${content.length} parts]`;
+
     logger.debug("RuntimeAgent.receive called", {
       agentId: this.agentId,
-      contentPreview: content.substring(0, 50),
+      contentPreview,
       requestId,
     });
 

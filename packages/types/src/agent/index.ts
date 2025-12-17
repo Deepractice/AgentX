@@ -93,6 +93,7 @@ export type {
   MessageRole,
   MessageSubtype,
   ContentPart,
+  UserContentPart,
   TextPart,
   ThinkingPart,
   ImagePart,

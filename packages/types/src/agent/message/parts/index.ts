@@ -5,6 +5,7 @@
  */
 
 export type { ContentPart } from "./ContentPart";
+export type { UserContentPart } from "./UserContentPart";
 export type { TextPart } from "./TextPart";
 export type { ThinkingPart } from "./ThinkingPart";
 export type { ImagePart } from "./ImagePart";

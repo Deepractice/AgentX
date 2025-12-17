@@ -52,6 +52,7 @@ export type { MessageRole } from "./MessageRole";
 // Content parts
 export type {
   ContentPart,
+  UserContentPart,
   TextPart,
   ThinkingPart,
   ImagePart,

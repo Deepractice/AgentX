@@ -45,3 +45,7 @@ export { ErrorMessage, type ErrorMessageProps } from "./ErrorMessage";
 // Utility components
 export { MessageAvatar, type MessageAvatarProps } from "./MessageAvatar";
 export { MessageContent, type MessageContentProps } from "./MessageContent";
+
+// Content block components
+export { ImageBlock, type ImageBlockProps } from "./ImageBlock";
+export { FileBlock, type FileBlockProps } from "./FileBlock";

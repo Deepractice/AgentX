@@ -13,7 +13,7 @@
  */
 
 import type { SystemBusProducer, Session } from "@agentxjs/types/runtime/internal";
-import type { UserMessage } from "@agentxjs/types/agent";
+import type { UserMessage, UserContentPart } from "@agentxjs/types/agent";
 import type { EventContext } from "@agentxjs/types/runtime";
 import { createLogger } from "@agentxjs/common";
 
@@ -47,14 +47,17 @@ export class AgentInteractor {
   /**
    * Receive user message
    *
-   * @param content - Message content
+   * @param content - Message content (string or ContentPart array for multimodal)
    * @param requestId - Request ID for correlation
    */
-  async receive(content: string, requestId: string): Promise<UserMessage> {
+  async receive(content: string | UserContentPart[], requestId: string): Promise<UserMessage> {
+    const contentPreview =
+      typeof content === "string" ? content.substring(0, 50) : `[${content.length} parts]`;
+
     logger.debug("AgentInteractor.receive", {
       requestId,
       agentId: this.context.agentId,
-      contentPreview: content.substring(0, 50),
+      contentPreview,
     });
 
     // 1. Build UserMessage

@@ -29,6 +29,7 @@
  */
 
 import type { AgentLifecycle } from "./AgentLifecycle";
+import type { UserContentPart } from "../agent/message/parts/UserContentPart";
 
 /**
  * Runtime Agent interface
@@ -64,10 +65,10 @@ export interface Agent {
   /**
    * Send a message to the agent
    *
-   * @param message - User message content
+   * @param content - User message content (string or multimodal content parts)
    * @param requestId - Optional request ID for event correlation
    */
-  receive(message: string, requestId?: string): Promise<void>;
+  receive(content: string | UserContentPart[], requestId?: string): Promise<void>;
 
   /**
    * Interrupt current processing

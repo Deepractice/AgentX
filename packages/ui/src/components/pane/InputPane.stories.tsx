@@ -188,10 +188,20 @@ export const Interactive: Story = {
     const [messages, setMessages] = React.useState<string[]>([]);
     const [isLoading, setIsLoading] = React.useState(false);
 
-    const handleSend = (text: string) => {
-      setMessages((prev) => [...prev, text]);
-      setIsLoading(true);
-      setTimeout(() => setIsLoading(false), 2000);
+    const handleSend = (content: string | Array<{ type: string; text?: string }>) => {
+      // Handle both string and multimodal content
+      const text =
+        typeof content === "string"
+          ? content
+          : content
+              .filter((p) => p.type === "text")
+              .map((p) => p.text)
+              .join("\n");
+      if (text) {
+        setMessages((prev) => [...prev, text]);
+        setIsLoading(true);
+        setTimeout(() => setIsLoading(false), 2000);
+      }
     };
 
     return (
@@ -298,6 +308,137 @@ export const ToolBarSizes: Story = {
     docs: {
       description: {
         story: "InputToolBar supports different sizes",
+      },
+    },
+  },
+};
+
+// Attachment support stories
+export const WithAttachmentSupport: Story = {
+  render: () => (
+    <div className="w-full max-w-2xl h-48 border border-border rounded-lg overflow-hidden">
+      <InputPane
+        onSend={(content) => {
+          if (typeof content === "string") {
+            console.log("Text only:", content);
+          } else {
+            console.log("Multimodal content:", content);
+          }
+        }}
+        placeholder="Type a message or drag & drop files..."
+        toolbarItems={[
+          { id: "emoji", icon: <Smile className="w-4 h-4" />, label: "Emoji" },
+          { id: "image", icon: <Image className="w-4 h-4" />, label: "Add image" },
+          { id: "attach", icon: <Paperclip className="w-4 h-4" />, label: "Attach file" },
+        ]}
+        enableAttachments
+      />
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "InputPane with attachment support. Click the image/attach buttons, drag & drop files, or paste images (Ctrl+V).",
+      },
+    },
+  },
+};
+
+export const AttachmentConfig: Story = {
+  render: () => (
+    <div className="w-full max-w-2xl h-48 border border-border rounded-lg overflow-hidden">
+      <InputPane
+        onSend={(content) => console.log("Send:", content)}
+        placeholder="Custom attachment settings..."
+        toolbarItems={[
+          { id: "image", icon: <Image className="w-4 h-4" />, label: "Add image" },
+          { id: "attach", icon: <Paperclip className="w-4 h-4" />, label: "Attach file" },
+        ]}
+        enableAttachments
+        maxAttachments={5}
+        maxFileSize={10 * 1024 * 1024} // 10MB
+        acceptedImageTypes={["image/jpeg", "image/png"]}
+        acceptedFileTypes={["application/pdf", "text/plain"]}
+      />
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Custom attachment configuration: max 5 files, 10MB limit, only JPEG/PNG images and PDF/TXT files.",
+      },
+    },
+  },
+};
+
+export const DisabledAttachments: Story = {
+  render: () => (
+    <div className="w-full max-w-2xl h-40 border border-border rounded-lg overflow-hidden">
+      <InputPane
+        onSend={(content) => console.log("Send:", content)}
+        placeholder="Attachments disabled..."
+        toolbarItems={[
+          { id: "emoji", icon: <Smile className="w-4 h-4" />, label: "Emoji" },
+          { id: "image", icon: <Image className="w-4 h-4" />, label: "Add image" },
+        ]}
+        enableAttachments={false}
+      />
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: "Toolbar buttons present but attachment handling is disabled.",
+      },
+    },
+  },
+};
+
+export const DragAndDropDemo: Story = {
+  render: () => (
+    <div className="w-full max-w-2xl space-y-4">
+      <div className="p-4 bg-muted/30 rounded-lg text-sm text-muted-foreground">
+        <p className="font-medium mb-2">Drag & Drop Demo</p>
+        <ul className="list-disc list-inside space-y-1">
+          <li>Drag image files (JPEG, PNG, GIF, WebP) into the input area</li>
+          <li>Drag PDF files for document attachments</li>
+          <li>Paste images from clipboard (Ctrl+V)</li>
+          <li>Maximum 10 files, 5MB each</li>
+        </ul>
+      </div>
+      <div className="h-48 border border-border rounded-lg overflow-hidden">
+        <InputPane
+          onSend={(content) => {
+            if (typeof content === "string") {
+              console.log("Text:", content);
+            } else {
+              console.log(
+                "Attachments:",
+                content.map((p) =>
+                  p.type === "text"
+                    ? p.text
+                    : `${p.type}: ${(p as { name?: string; filename?: string }).name || (p as { name?: string; filename?: string }).filename}`
+                )
+              );
+            }
+          }}
+          placeholder="Drag files here or paste images..."
+          toolbarItems={[
+            { id: "image", icon: <Image className="w-4 h-4" />, label: "Add image" },
+            { id: "attach", icon: <Paperclip className="w-4 h-4" />, label: "Attach file" },
+            { id: "folder", icon: <FolderOpen className="w-4 h-4" />, label: "Browse files" },
+          ]}
+          enableAttachments
+        />
+      </div>
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: "Interactive demo showing drag & drop, paste, and toolbar button file selection.",
       },
     },
   },

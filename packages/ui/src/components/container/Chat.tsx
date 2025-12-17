@@ -194,7 +194,21 @@ export function Chat({
       {/* Input area */}
       <div style={{ height: inputHeight }} className="min-h-0">
         <InputPane
-          onSend={send}
+          onSend={(content) => {
+            // Handle both string and multimodal content
+            if (typeof content === "string") {
+              send(content);
+            } else {
+              // For multimodal content, extract text for now
+              // TODO: Full multimodal support in useAgent hook
+              const textParts = content
+                .filter((p): p is { type: "text"; text: string } => p.type === "text")
+                .map((p) => p.text);
+              if (textParts.length > 0) {
+                send(textParts.join("\n"));
+              }
+            }
+          }}
           onStop={interrupt}
           isLoading={isLoading}
           placeholder={placeholder}

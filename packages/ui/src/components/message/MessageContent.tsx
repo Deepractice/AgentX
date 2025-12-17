@@ -1,15 +1,17 @@
 /**
- * MessageContent - Render message content with Markdown support
+ * MessageContent - Render message content with Markdown and multimodal support
  *
  * Pure UI component that handles:
  * - String content (renders as Markdown)
- * - ContentPart array (extracts text and renders)
+ * - ContentPart array (renders text, images, files)
  * - Other content (renders as JSON)
  */
 
 import * as React from "react";
 import type { ContentPart } from "agentxjs";
 import { MarkdownText } from "~/components/typography/MarkdownText";
+import { ImageBlock } from "./ImageBlock";
+import { FileBlock } from "./FileBlock";
 
 export interface MessageContentProps {
   /**
@@ -24,24 +26,118 @@ export interface MessageContentProps {
 }
 
 /**
- * Extract text from ContentPart array
+ * Type guards for ContentPart types
  */
-const extractTextFromContentParts = (content: unknown): string | null => {
-  if (!Array.isArray(content)) return null;
+interface TextPartLike {
+  type: "text";
+  text: string;
+}
 
-  const textParts = content
-    .filter(
-      (part): part is { type: string; text: string } =>
-        typeof part === "object" &&
-        part !== null &&
-        "type" in part &&
-        part.type === "text" &&
-        "text" in part &&
-        typeof part.text === "string"
-    )
-    .map((part) => part.text);
+interface ImagePartLike {
+  type: "image";
+  data: string;
+  mediaType: string;
+  name?: string;
+}
 
-  return textParts.length > 0 ? textParts.join("\n") : null;
+interface FilePartLike {
+  type: "file";
+  data: string;
+  mediaType: string;
+  filename?: string;
+}
+
+function isTextPart(part: unknown): part is TextPartLike {
+  return (
+    typeof part === "object" &&
+    part !== null &&
+    "type" in part &&
+    (part as { type: unknown }).type === "text" &&
+    "text" in part &&
+    typeof (part as { text: unknown }).text === "string"
+  );
+}
+
+function isImagePart(part: unknown): part is ImagePartLike {
+  return (
+    typeof part === "object" &&
+    part !== null &&
+    "type" in part &&
+    (part as { type: unknown }).type === "image" &&
+    "data" in part &&
+    "mediaType" in part
+  );
+}
+
+function isFilePart(part: unknown): part is FilePartLike {
+  return (
+    typeof part === "object" &&
+    part !== null &&
+    "type" in part &&
+    (part as { type: unknown }).type === "file" &&
+    "data" in part &&
+    "mediaType" in part
+  );
+}
+
+/**
+ * Check if content is a ContentPart array
+ */
+function isContentPartArray(content: unknown): content is ContentPart[] {
+  if (!Array.isArray(content)) return false;
+  if (content.length === 0) return false;
+
+  // Check if at least one item looks like a ContentPart
+  return content.some(
+    (part) =>
+      typeof part === "object" &&
+      part !== null &&
+      "type" in part &&
+      typeof (part as { type: unknown }).type === "string"
+  );
+}
+
+/**
+ * Check if content only contains text parts
+ */
+function isTextOnly(parts: ContentPart[]): boolean {
+  return parts.every((part) => isTextPart(part));
+}
+
+/**
+ * Render a single ContentPart
+ */
+const ContentPartRenderer: React.FC<{ part: ContentPart; index: number }> = ({ part, index }) => {
+  if (isTextPart(part)) {
+    return <MarkdownText key={index}>{part.text}</MarkdownText>;
+  }
+
+  if (isImagePart(part)) {
+    return (
+      <ImageBlock
+        key={index}
+        src={part.data}
+        mediaType={part.mediaType}
+        alt={part.name}
+        className="my-2"
+      />
+    );
+  }
+
+  if (isFilePart(part)) {
+    return (
+      <FileBlock
+        key={index}
+        data={part.data}
+        mediaType={part.mediaType}
+        filename={part.filename}
+        className="my-2"
+      />
+    );
+  }
+
+  // Unknown part type - skip
+  return null;
 };
 
 /**
@@ -57,12 +153,27 @@ export const MessageContent: React.FC<MessageContentProps> = ({ content, classNa
     );
   }
 
-  // Handle ContentPart[] array (e.g., [{ type: "text", text: "..." }])
-  const extractedText = extractTextFromContentParts(content);
-  if (extractedText !== null) {
+  // Handle ContentPart[] array
+  if (isContentPartArray(content)) {
+    // Optimization: if only text parts, join and render as single Markdown
+    if (isTextOnly(content)) {
+      const text = content
+        .filter(isTextPart)
+        .map((p) => p.text)
+        .join("\n");
+      return (
+        <div className={className}>
+          <MarkdownText>{text}</MarkdownText>
+        </div>
+      );
+    }
+
+    // Mixed content - render each part
     return (
       <div className={className}>
-        <MarkdownText>{extractedText}</MarkdownText>
+        {content.map((part, index) => (
+          <ContentPartRenderer key={index} part={part} index={index} />
+        ))}
       </div>
     );
   }
