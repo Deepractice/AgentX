@@ -558,12 +558,12 @@ export const InputPane = React.forwardRef<HTMLDivElement, InputPaneProps>(
           </div>
         )}
 
-        {/* Drag overlay - WeChat style dark mask */}
+        {/* Drag overlay - dark mask style */}
         {isDragging && (
           <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/60 rounded-lg">
-            <div className="w-16 h-16 mb-3 rounded-xl bg-emerald-500/90 flex items-center justify-center">
+            <div className="w-16 h-16 mb-3 rounded-xl bg-primary flex items-center justify-center">
               <svg
-                className="w-8 h-8 text-white"
+                className="w-8 h-8 text-primary-foreground"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -576,7 +576,7 @@ export const InputPane = React.forwardRef<HTMLDivElement, InputPaneProps>(
                 />
               </svg>
             </div>
-            <p className="text-white text-base">松开发送</p>
+            <p className="text-white text-base">Drop to send</p>
           </div>
         )}
 

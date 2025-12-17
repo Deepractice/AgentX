@@ -260,12 +260,12 @@ export function Chat({
         />
       </div>
 
-      {/* Full-area drop overlay - WeChat style dark mask */}
+      {/* Full-area drop overlay - dark mask style */}
       {isDragging && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 pointer-events-none">
-          <div className="w-20 h-20 mb-4 rounded-2xl bg-emerald-500/90 flex items-center justify-center">
+          <div className="w-20 h-20 mb-4 rounded-2xl bg-primary flex items-center justify-center">
             <svg
-              className="w-10 h-10 text-white"
+              className="w-10 h-10 text-primary-foreground"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -278,7 +278,7 @@ export function Chat({
               />
             </svg>
           </div>
-          <p className="text-white text-lg">松开发送给对话</p>
+          <p className="text-white text-lg">Drop to send</p>
         </div>
       )}
     </div>
