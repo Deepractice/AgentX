@@ -120,6 +120,11 @@ export interface InputPaneProps {
    */
   acceptedFileTypes?: string[];
   /**
+   * Accept all file types without validation
+   * @default true
+   */
+  acceptAllFileTypes?: boolean;
+  /**
    * Files dropped from parent component (for full-area drag & drop)
    */
   droppedFiles?: File[];
@@ -175,6 +180,7 @@ export const InputPane = React.forwardRef<HTMLDivElement, InputPaneProps>(
       maxFileSize = 5 * 1024 * 1024, // 5MB
       acceptedImageTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"],
       acceptedFileTypes = ["application/pdf"],
+      acceptAllFileTypes = true,
       droppedFiles,
       onDroppedFilesProcessed,
     },
@@ -235,8 +241,8 @@ export const InputPane = React.forwardRef<HTMLDivElement, InputPaneProps>(
             break;
           }
 
-          // Check file type
-          if (!allAcceptedTypes.includes(file.type)) {
+          // Check file type (skip if acceptAllFileTypes is true)
+          if (!acceptAllFileTypes && !allAcceptedTypes.includes(file.type)) {
             console.warn(`File type ${file.type} not accepted`);
             continue;
           }
@@ -270,7 +276,14 @@ export const InputPane = React.forwardRef<HTMLDivElement, InputPaneProps>(
           setAttachments((prev) => [...prev, attachment]);
         }
       },
-      [attachments.length, maxAttachments, maxFileSize, allAcceptedTypes, acceptedImageTypes]
+      [
+        attachments.length,
+        maxAttachments,
+        maxFileSize,
+        allAcceptedTypes,
+        acceptedImageTypes,
+        acceptAllFileTypes,
+      ]
     );
 
     /**
@@ -485,7 +498,7 @@ export const InputPane = React.forwardRef<HTMLDivElement, InputPaneProps>(
         <input
           ref={fileInputRef}
           type="file"
-          accept={allAcceptedTypes.join(",")}
+          accept={acceptAllFileTypes ? "*/*" : allAcceptedTypes.join(",")}
           multiple
           className="hidden"
           onChange={handleFileInputChange}
