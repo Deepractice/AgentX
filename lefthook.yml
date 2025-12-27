@@ -10,27 +10,27 @@ pre-commit:
   commands:
     format-fix:
       glob: "*.{js,ts,jsx,tsx,json,md,yml,yaml}"
-      run: pnpm prettier --write {staged_files} && git add {staged_files}
+      run: bun prettier --write {staged_files} && git add {staged_files}
 
     lint-fix:
       glob: "*.{js,ts,jsx,tsx}"
-      run: pnpm eslint --fix {staged_files} && git add {staged_files}
+      run: bun eslint --fix {staged_files} && git add {staged_files}
 
 pre-push:
   parallel: false
   commands:
     format:
-      run: pnpm format:check
+      run: bun format:check
 
     lint:
-      run: pnpm lint
+      run: bun lint
 
     install-check:
-      run: pnpm install --frozen-lockfile
-      fail_text: "Lockfile is outdated. Run 'pnpm install' to update it."
+      run: bun install --frozen-lockfile
+      fail_text: "Lockfile is outdated. Run 'bun install' to update it."
 
     typecheck:
-      run: pnpm typecheck
+      run: bun typecheck
 
     # Optional: enable when you want to run test/build before push
     # CI will catch these issues anyway

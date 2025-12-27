@@ -9,12 +9,26 @@ export default defineConfig({
       "~": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    exclude: ["@agentxjs/runtime"], // Don't pre-bundle server-only package
+  },
   root: ".",
   publicDir: "public",
   build: {
     outDir: "dist/public",
     emptyDirOnly: true,
     sourcemap: true,
+    commonjsOptions: {
+      exclude: ["@agentxjs/runtime"], // Exclude server package from CJS transform
+    },
+    rollupOptions: {
+      external: [
+        // Mark server-only imports as external (they won't be bundled)
+        /^db0\/connectors\//,
+        /^bun:/,
+        /^node:/,
+      ],
+    },
   },
   server: {
     port: 5173,

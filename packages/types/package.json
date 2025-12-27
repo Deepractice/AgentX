@@ -9,96 +9,58 @@
   },
   "homepage": "https://github.com/Deepractice/AgentX",
   "type": "module",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     },
     "./agent": {
-      "types": "./dist/agent.d.ts",
-      "import": "./dist/agent.js",
-      "require": "./dist/agent.cjs"
+      "types": "./dist/src/agent/index.d.ts",
+      "default": "./dist/src/agent/index.js"
     },
     "./agent/internal": {
-      "types": "./dist/agent-internal.d.ts",
-      "import": "./dist/agent-internal.js",
-      "require": "./dist/agent-internal.cjs"
+      "types": "./dist/src/agent/internal/index.d.ts",
+      "default": "./dist/src/agent/internal/index.js"
     },
     "./runtime": {
-      "types": "./dist/runtime.d.ts",
-      "import": "./dist/runtime.js",
-      "require": "./dist/runtime.cjs"
+      "types": "./dist/src/runtime/index.d.ts",
+      "default": "./dist/src/runtime/index.js"
     },
     "./runtime/internal": {
-      "types": "./dist/runtime-internal.d.ts",
-      "import": "./dist/runtime-internal.js",
-      "require": "./dist/runtime-internal.cjs"
+      "types": "./dist/src/runtime/internal/index.d.ts",
+      "default": "./dist/src/runtime/internal/index.js"
     },
     "./event": {
-      "types": "./dist/event.d.ts",
-      "import": "./dist/event.js",
-      "require": "./dist/event.cjs"
+      "types": "./dist/src/event/index.d.ts",
+      "default": "./dist/src/event/index.js"
     },
     "./common": {
-      "types": "./dist/common.d.ts",
-      "import": "./dist/common.js",
-      "require": "./dist/common.cjs"
+      "types": "./dist/src/common/index.d.ts",
+      "default": "./dist/src/common/index.js"
     },
     "./agentx": {
-      "types": "./dist/agentx.d.ts",
-      "import": "./dist/agentx.js",
-      "require": "./dist/agentx.cjs"
+      "types": "./dist/src/agentx/index.d.ts",
+      "default": "./dist/src/agentx/index.js"
     },
     "./network": {
-      "types": "./dist/network.d.ts",
-      "import": "./dist/network.js",
-      "require": "./dist/network.cjs"
-    }
-  },
-  "typesVersions": {
-    "*": {
-      "agent": [
-        "./dist/agent.d.ts"
-      ],
-      "agent/internal": [
-        "./dist/agent-internal.d.ts"
-      ],
-      "runtime": [
-        "./dist/runtime.d.ts"
-      ],
-      "runtime/internal": [
-        "./dist/runtime-internal.d.ts"
-      ],
-      "event": [
-        "./dist/event.d.ts"
-      ],
-      "common": [
-        "./dist/common.d.ts"
-      ],
-      "agentx": [
-        "./dist/agentx.d.ts"
-      ],
-      "network": [
-        "./dist/network.d.ts"
-      ]
+      "types": "./dist/src/network/index.d.ts",
+      "default": "./dist/src/network/index.js"
     }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "bun run build.ts",
     "clean": "rm -rf dist",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "dev": "tsup --watch",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:update": "vitest run --update"
+    "dev": "bun --watch build.ts",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:update": "bun test --update-snapshots"
   },
   "keywords": [
     "agentx",
@@ -109,9 +71,8 @@
   ],
   "author": "Deepractice AI",
   "devDependencies": {
-    "tsup": "^8.0.1",
-    "typescript": "^5.3.3",
-    "vitest": "^3.2.4"
+    "bun-dts": "0.1.70",
+    "typescript": "^5.3.3"
   },
   "publishConfig": {
     "access": "public"

@@ -18,13 +18,13 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "bun run build.ts",
+    "dev": "bun --watch build.ts",
     "clean": "rm -rf dist",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "bun test",
+    "test:watch": "bun test --watch"
   },
   "keywords": [
     "ai",
@@ -50,10 +50,8 @@
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
-    "@deepracticex/vitest-cucumber": "^1.4.3",
     "@types/node": "^24.9.2",
-    "tsup": "^8.5.0",
-    "typescript": "^5.9.3",
-    "vitest": "^3.2.3"
+    "bun-dts": "0.1.70",
+    "typescript": "^5.9.3"
   }
 }

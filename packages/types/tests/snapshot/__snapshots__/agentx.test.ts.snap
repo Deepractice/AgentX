@@ -6,3 +6,10 @@ exports[`AgentX Types Contract > should maintain stable exports 1`] = `
   "defineAgent": "undefined",
 }
 `;
+
+exports[`AgentX Types Contract should maintain stable exports 1`] = `
+{
+  "isLocalConfig": "function(1 args)",
+  "isRemoteConfig": "function(1 args)",
+}
+`;

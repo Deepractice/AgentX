@@ -5,42 +5,37 @@
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "default": "./dist/index.js"
     }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "bun run build.ts",
+    "dev": "bun --watch build.ts",
     "clean": "rm -rf dist",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "bun test",
+    "test:watch": "bun test --watch"
   },
   "dependencies": {
     "@agentxjs/agent": "workspace:*",
     "@agentxjs/common": "workspace:*",
     "@agentxjs/types": "workspace:*",
     "@anthropic-ai/claude-agent-sdk": "^0.1.30",
-    "better-sqlite3": "^11.7.0",
     "db0": "^0.3.4",
     "rxjs": "^7.8.2",
     "unstorage": "^1.14.4"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^24.9.2",
-    "tsup": "^8.3.5",
-    "typescript": "^5.7.2",
-    "vitest": "^3.2.4"
+    "bun-dts": "0.1.70",
+    "typescript": "^5.7.2"
   }
 }

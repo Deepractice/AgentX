@@ -10,12 +10,10 @@
   "homepage": "https://github.com/Deepractice/AgentX",
   "type": "module",
   "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/src/index.d.ts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
     "./globals.css": "./dist/globals.css"
@@ -30,14 +28,15 @@
   ],
   "scripts": {
     "dev": "vite",
-    "dev:server": "tsx --watch dev-tools/server/dev-server.ts",
-    "dev:full": "concurrently \"pnpm dev:server\" \"storybook dev -p 6007\"",
-    "build": "tsc && vite build",
+    "dev:server": "bun --watch dev-tools/server/dev-server.ts",
+    "dev:full": "concurrently \"bun dev:server\" \"storybook dev -p 6007\"",
+    "build": "bun run build.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "@agentxjs/common": "workspace:*",
@@ -74,15 +73,14 @@
     "@types/ws": "^8.5.13",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "bun-dts": "0.1.70",
     "concurrently": "^9.1.0",
     "dotenv": "^16.6.1",
     "postcss": "^8.4.49",
     "storybook": "^8.4.7",
     "tailwindcss": "^4.1.17",
-    "tsx": "^4.19.2",
     "typescript": "^5.9.3",
     "vite": "^6.0.5",
-    "vite-plugin-dts": "^4.3.0",
     "ws": "^8.18.0"
   },
   "peerDependencies": {

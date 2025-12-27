@@ -173,8 +173,12 @@ yarn.lock
 .yarn/
 .yarn-integrity
 
-# pnpm - keep pnpm-lock.yaml for reproducibility!
-# (pnpm-lock.yaml should be committed)
+# pnpm (no longer used)
+pnpm-lock.yaml
+.pnpm-store/
+
+# Bun - keep bun.lockb for reproducibility!
+# (bun.lockb should be committed)
 
 # ============================================
 # Miscellaneous

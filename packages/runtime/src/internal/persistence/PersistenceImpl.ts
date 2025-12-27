@@ -175,9 +175,10 @@ async function createStorageFromConfig(config: PersistenceConfig): Promise<Stora
     case "sqlite": {
       const { default: db0Driver } = await import("unstorage/drivers/db0");
       const { createDatabase } = await import("db0");
+      // Using Bun's native SQLite connector (3-6x faster than better-sqlite3)
       // @ts-expect-error - db0 connectors use .mts exports, not compatible with moduleResolution: node
-      const { default: sqliteConnector } = await import("db0/connectors/better-sqlite3");
-      const database = createDatabase(sqliteConnector({ path: config.path ?? "./data.db" }));
+      const { default: bunSqliteConnector } = await import("db0/connectors/bun");
+      const database = createDatabase(bunSqliteConnector({ name: config.path ?? "./data.db" }));
       return createStorage({
         driver: db0Driver({ database }),
       });

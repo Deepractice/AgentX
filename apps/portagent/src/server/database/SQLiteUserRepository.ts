@@ -9,19 +9,16 @@
  * - User.userId is stored in Container.config.ownerId field
  */
 
-import Database from "better-sqlite3";
+import { Database } from "bun:sqlite";
 import { randomUUID } from "crypto";
-import { hash, compare } from "bcrypt";
 import type { UserRepository } from "../user/UserRepository";
 import type { UserRecord, RegisterUserInput } from "../user/types";
-
-const SALT_ROUNDS = 10;
 
 /**
  * SQLite implementation of UserRepository
  */
 export class SQLiteUserRepository implements UserRepository {
-  private db: Database.Database;
+  private db: Database;
 
   constructor(dbPath: string) {
     this.db = new Database(dbPath);
@@ -70,8 +67,11 @@ export class SQLiteUserRepository implements UserRepository {
       throw new Error(`Email '${input.email}' already exists`);
     }
 
-    // Hash password
-    const passwordHash = await hash(input.password, SALT_ROUNDS);
+    // Hash password using Bun's built-in password API (bcrypt algorithm)
+    const passwordHash = await Bun.password.hash(input.password, {
+      algorithm: "bcrypt",
+      cost: 10,
+    });
 
     // Create user record
     const userId = randomUUID();
@@ -288,7 +288,7 @@ export class SQLiteUserRepository implements UserRepository {
       return null; // Inactive user
     }
 
-    const isValid = await compare(password, user.passwordHash);
+    const isValid = await Bun.password.verify(password, user.passwordHash);
     return isValid ? user : null;
   }
 
