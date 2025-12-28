@@ -58,7 +58,7 @@ export function ImageAttachment({
   uploadProgress,
   error,
   className,
-}: ImageAttachmentProps) {
+}: ImageAttachmentProps): React.ReactElement {
   const [preview, setPreview] = React.useState<string>("");
 
   React.useEffect(() => {

@@ -108,7 +108,7 @@ export function Chat({
   placeholder = "Type a message...",
   inputHeightRatio = 0.25,
   className,
-}: ChatProps) {
+}: ChatProps): React.ReactElement | null {
   // Use Conversation-first, Block-based state
   const { conversations, streamingText, currentTextBlockId, status, send, interrupt } = useAgent(
     agentx,

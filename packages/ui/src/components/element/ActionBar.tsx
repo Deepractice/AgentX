@@ -82,22 +82,24 @@ export interface ActionBarGroupProps extends React.HTMLAttributes<HTMLDivElement
  * </ActionBar>
  * ```
  */
-const ActionBarRoot = React.forwardRef<HTMLDivElement, ActionBarProps>(
-  ({ children, className, ...props }, ref) => {
-    return (
-      <div ref={ref} className={cn("flex gap-2", className)} {...props}>
-        {children}
-      </div>
-    );
-  }
-);
+const ActionBarRoot: React.ForwardRefExoticComponent<
+  ActionBarProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, ActionBarProps>(({ children, className, ...props }, ref) => {
+  return (
+    <div ref={ref} className={cn("flex gap-2", className)} {...props}>
+      {children}
+    </div>
+  );
+});
 
 ActionBarRoot.displayName = "ActionBar";
 
 /**
  * ActionBar.Primary - Primary action button (takes flex-1)
  */
-const ActionBarPrimary = React.forwardRef<HTMLButtonElement, ActionBarPrimaryProps>(
+const ActionBarPrimary: React.ForwardRefExoticComponent<
+  ActionBarPrimaryProps & React.RefAttributes<HTMLButtonElement>
+> = React.forwardRef<HTMLButtonElement, ActionBarPrimaryProps>(
   (
     { children, loading = false, variant = "default", size = "sm", className, disabled, ...props },
     ref
@@ -129,7 +131,9 @@ ActionBarPrimary.displayName = "ActionBar.Primary";
 /**
  * ActionBar.Icon - Icon-only action button (square)
  */
-const ActionBarIcon = React.forwardRef<HTMLButtonElement, ActionBarIconProps>(
+const ActionBarIcon: React.ForwardRefExoticComponent<
+  ActionBarIconProps & React.RefAttributes<HTMLButtonElement>
+> = React.forwardRef<HTMLButtonElement, ActionBarIconProps>(
   (
     { children, loading = false, variant = "outline", size = "sm", className, disabled, ...props },
     ref
@@ -158,7 +162,9 @@ ActionBarIcon.displayName = "ActionBar.Icon";
 /**
  * ActionBar.Group - Group buttons together
  */
-const ActionBarGroup = React.forwardRef<HTMLDivElement, ActionBarGroupProps>(
+const ActionBarGroup: React.ForwardRefExoticComponent<
+  ActionBarGroupProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, ActionBarGroupProps>(
   ({ children, className, ...props }, ref) => {
     return (
       <div ref={ref} className={cn("flex gap-2", className)} {...props}>
@@ -171,9 +177,20 @@ const ActionBarGroup = React.forwardRef<HTMLDivElement, ActionBarGroupProps>(
 ActionBarGroup.displayName = "ActionBar.Group";
 
 /**
+ * ActionBar compound component type
+ */
+type ActionBarComponent = React.ForwardRefExoticComponent<
+  ActionBarProps & React.RefAttributes<HTMLDivElement>
+> & {
+  Primary: typeof ActionBarPrimary;
+  Icon: typeof ActionBarIcon;
+  Group: typeof ActionBarGroup;
+};
+
+/**
  * Compound component export
  */
-export const ActionBar = Object.assign(ActionBarRoot, {
+export const ActionBar: ActionBarComponent = Object.assign(ActionBarRoot, {
   Primary: ActionBarPrimary,
   Icon: ActionBarIcon,
   Group: ActionBarGroup,

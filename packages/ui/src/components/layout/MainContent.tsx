@@ -21,18 +21,18 @@ export interface MainContentProps extends React.HTMLAttributes<HTMLDivElement> {
  * </MainContent>
  * ```
  */
-export const MainContent = React.forwardRef<HTMLDivElement, MainContentProps>(
-  ({ className, children, ...props }, ref) => {
-    return (
-      <div
-        ref={ref}
-        className={cn("h-full w-full flex flex-col bg-background", className)}
-        {...props}
-      >
-        {children}
-      </div>
-    );
-  }
-);
+export const MainContent: React.ForwardRefExoticComponent<
+  MainContentProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, MainContentProps>(({ className, children, ...props }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={cn("h-full w-full flex flex-col bg-background", className)}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+});
 
 MainContent.displayName = "MainContent";

@@ -34,7 +34,9 @@ export interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
  * </Allotment>
  * ```
  */
-export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
+export const Sidebar: React.ForwardRefExoticComponent<
+  SidebarProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, SidebarProps>(
   ({ position = "left", className, children, ...props }, ref) => {
     return (
       <div

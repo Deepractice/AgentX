@@ -79,7 +79,9 @@ export interface SearchInputProps extends Omit<
  * />
  * ```
  */
-export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
+export const SearchInput: React.ForwardRefExoticComponent<
+  SearchInputProps & React.RefAttributes<HTMLInputElement>
+> = React.forwardRef<HTMLInputElement, SearchInputProps>(
   (
     {
       value,

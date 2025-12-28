@@ -22,7 +22,11 @@ interface PopoverProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export function Popover({ children, open: controlledOpen, onOpenChange }: PopoverProps) {
+export function Popover({
+  children,
+  open: controlledOpen,
+  onOpenChange,
+}: PopoverProps): React.ReactElement {
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
 
   const open = controlledOpen ?? uncontrolledOpen;
@@ -40,7 +44,7 @@ interface PopoverTriggerProps {
   asChild?: boolean;
 }
 
-export function PopoverTrigger({ children, asChild }: PopoverTriggerProps) {
+export function PopoverTrigger({ children, asChild }: PopoverTriggerProps): React.ReactElement {
   const { open, setOpen } = usePopoverContext();
 
   const handleClick = (e: React.MouseEvent) => {
@@ -76,7 +80,7 @@ export function PopoverContent({
   align = "center",
   side = "bottom",
   className,
-}: PopoverContentProps) {
+}: PopoverContentProps): React.ReactElement | null {
   const { open, setOpen } = usePopoverContext();
   const contentRef = React.useRef<HTMLDivElement>(null);
 

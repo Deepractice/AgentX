@@ -84,7 +84,9 @@ export interface AppHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
  * />
  * ```
  */
-export const AppHeader = React.forwardRef<HTMLDivElement, AppHeaderProps>(
+export const AppHeader: React.ForwardRefExoticComponent<
+  AppHeaderProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, AppHeaderProps>(
   (
     {
       logo,

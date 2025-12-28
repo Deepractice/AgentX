@@ -43,7 +43,9 @@ export interface MobileInputPaneProps {
  *
  * A mobile-optimized input area with clean, minimal design.
  */
-export const MobileInputPane = React.forwardRef<HTMLDivElement, MobileInputPaneProps>(
+export const MobileInputPane: React.ForwardRefExoticComponent<
+  MobileInputPaneProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, MobileInputPaneProps>(
   (
     { onSend, onStop, disabled = false, isLoading = false, placeholder = "Message...", className },
     ref

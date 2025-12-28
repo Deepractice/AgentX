@@ -74,7 +74,7 @@ export function ChatHeader({
   messageCount = 0,
   actions,
   className,
-}: ChatHeaderProps) {
+}: ChatHeaderProps): React.ReactElement {
   const statusInfo = getStatusInfo(status);
   const isActive = status !== "idle";
 

@@ -56,7 +56,9 @@ export interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
  * />
  * ```
  */
-export const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
+export const EmptyState: React.ForwardRefExoticComponent<
+  EmptyStateProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, EmptyStateProps>(
   ({ icon, title, description, action, spacing = "md", className, ...props }, ref) => {
     const spacingClasses = {
       sm: "py-8",

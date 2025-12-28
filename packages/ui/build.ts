@@ -3,7 +3,7 @@
  * ESM-only React component library build
  */
 
-import { dts } from "bun-dts";
+import { generateDts, logIsolatedDeclarationErrors } from "bun-dts";
 import { cp } from "fs/promises";
 
 const entrypoints = ["src/index.ts"];
@@ -12,6 +12,37 @@ const outdir = "./dist";
 await Bun.$`rm -rf ${outdir}`;
 
 console.log("🚀 Building @agentxjs/ui (ESM-only)\n");
+
+// Generate declarations first with error checking
+const dtsResult = await generateDts(entrypoints);
+
+// Files with cva() exports - these can't have explicit types due to VariantProps compatibility
+const cvaExportFiles = ["Button.tsx", "Badge.tsx", "TabNavigation.tsx"];
+
+// Filter: allow TS9010 (missing type annotation) for known cva files
+const isCvaRelatedError = (e: (typeof dtsResult.errors)[0]): boolean => {
+  const isCvaFile = cvaExportFiles.some((f) => e.file.endsWith(f));
+  const isTS9010 = e.error.message?.includes("TS9010");
+  return isCvaFile && isTS9010;
+};
+
+const actualErrors = dtsResult.errors.filter((e) => !isCvaRelatedError(e));
+const cvaWarnings = dtsResult.errors.filter((e) => isCvaRelatedError(e));
+
+// Log cva warnings but don't fail
+if (cvaWarnings.length > 0) {
+  console.warn("⚠️  cva type warnings (non-blocking - VariantProps compatibility):");
+  for (const w of cvaWarnings) {
+    console.warn(`   ${w.file.split("/").pop()}: ${w.error.message?.split(":")[0]}`);
+  }
+}
+
+// Fail on actual errors
+if (actualErrors.length > 0) {
+  console.error("❌ Declaration generation failed:");
+  logIsolatedDeclarationErrors(actualErrors);
+  process.exit(1);
+}
 
 const result = await Bun.build({
   entrypoints,
@@ -41,7 +72,6 @@ const result = await Bun.build({
     "@emoji-mart/data",
     "@emoji-mart/react",
   ],
-  plugins: [dts()],
 });
 
 if (!result.success) {
@@ -49,6 +79,12 @@ if (!result.success) {
   for (const log of result.logs) console.error(log);
   process.exit(1);
 }
+
+// Write declaration files
+for (const file of dtsResult.files) {
+  await Bun.write(`${outdir}/${file.outputPath}`, file.dts);
+}
+console.log("✅ DTS generated");
 
 // Copy globals.css to dist
 console.log("📦 Copying globals.css...");

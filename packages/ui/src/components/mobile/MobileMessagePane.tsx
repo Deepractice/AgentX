@@ -35,7 +35,9 @@ export interface MobileMessagePaneProps {
  *
  * A mobile-optimized message container with auto-scroll and hidden scrollbar.
  */
-export const MobileMessagePane = React.forwardRef<HTMLDivElement, MobileMessagePaneProps>(
+export const MobileMessagePane: React.ForwardRefExoticComponent<
+  MobileMessagePaneProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, MobileMessagePaneProps>(
   (
     {
       children,

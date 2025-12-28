@@ -63,7 +63,9 @@ export interface ActivityBarProps extends React.HTMLAttributes<HTMLDivElement> {
  * />
  * ```
  */
-export const ActivityBar = React.forwardRef<HTMLDivElement, ActivityBarProps>(
+export const ActivityBar: React.ForwardRefExoticComponent<
+  ActivityBarProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, ActivityBarProps>(
   ({ items, bottomItems, activeId, onItemClick, position = "left", className, ...props }, ref) => {
     const renderItem = (item: ActivityBarItem) => {
       const isActive = item.id === activeId;

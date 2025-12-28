@@ -161,7 +161,9 @@ function generateId(): string {
 /**
  * InputPane component - WeChat style full-height input with attachments
  */
-export const InputPane = React.forwardRef<HTMLDivElement, InputPaneProps>(
+export const InputPane: React.ForwardRefExoticComponent<
+  InputPaneProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, InputPaneProps>(
   (
     {
       onSend,

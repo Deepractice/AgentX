@@ -147,7 +147,9 @@ export interface TabNavigationProps
  * />
  * ```
  */
-export const TabNavigation = React.forwardRef<HTMLDivElement, TabNavigationProps>(
+export const TabNavigation: React.ForwardRefExoticComponent<
+  TabNavigationProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, TabNavigationProps>(
   (
     {
       tabs,

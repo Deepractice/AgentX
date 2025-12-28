@@ -98,7 +98,7 @@ export function Studio({
   showSaveButton = false, // Default to false in Image-First model
   inputHeightRatio = 0.25,
   className,
-}: StudioProps) {
+}: StudioProps): React.ReactElement {
   // State - only track imageId now (agentId is managed by useAgent)
   const [currentImageId, setCurrentImageId] = React.useState<string | null>(null);
   const [currentImageName, setCurrentImageName] = React.useState<string | undefined>(undefined);

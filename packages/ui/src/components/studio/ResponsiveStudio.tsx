@@ -77,7 +77,7 @@ export function ResponsiveStudio({
   inputHeightRatio = 0.25,
   placeholder,
   className,
-}: ResponsiveStudioProps) {
+}: ResponsiveStudioProps): React.ReactElement {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = React.useState(false);
 

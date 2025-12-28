@@ -134,7 +134,9 @@ const ToolBarButton = ({
 /**
  * InputToolBar component
  */
-export const InputToolBar = React.forwardRef<HTMLDivElement, InputToolBarProps>(
+export const InputToolBar: React.ForwardRefExoticComponent<
+  InputToolBarProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, InputToolBarProps>(
   ({ items, rightItems, onItemClick, size = "sm", className }, ref) => {
     return (
       <div ref={ref} className={cn("flex items-center justify-between px-2 py-1", className)}>

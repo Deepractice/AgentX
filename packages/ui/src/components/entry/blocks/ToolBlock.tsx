@@ -105,7 +105,11 @@ function formatOutput(output: unknown): string {
 /**
  * ToolBlock component
  */
-export function ToolBlock({ block, defaultExpanded = false, className }: ToolBlockProps) {
+export function ToolBlock({
+  block,
+  defaultExpanded = false,
+  className,
+}: ToolBlockProps): React.ReactElement {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const config = statusConfig[block.status];
 

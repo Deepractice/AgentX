@@ -1,3 +1,4 @@
+import * as React from "react";
 import { cn } from "~/utils/utils";
 
 export interface TokenUsagePieProps {
@@ -33,7 +34,11 @@ export interface TokenUsagePieProps {
  * <TokenUsagePie used={120000} total={200000} />
  * ```
  */
-export function TokenUsagePie({ used, total, className }: TokenUsagePieProps) {
+export function TokenUsagePie({
+  used,
+  total,
+  className,
+}: TokenUsagePieProps): React.ReactElement | null {
   if (used == null || total == null || total <= 0) return null;
 
   const percentage = Math.min(100, (used / total) * 100);

@@ -125,7 +125,7 @@ export function ToolCard({
   isError,
   defaultExpanded = false,
   className,
-}: ToolCardProps) {
+}: ToolCardProps): React.ReactElement {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   // Use error status if isError is true

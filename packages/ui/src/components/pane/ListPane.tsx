@@ -161,7 +161,9 @@ function formatRelativeTime(timestamp: number): string {
 /**
  * ListPane component
  */
-export const ListPane = React.forwardRef<HTMLDivElement, ListPaneProps>(
+export const ListPane: React.ForwardRefExoticComponent<
+  ListPaneProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, ListPaneProps>(
   (
     {
       title = "Items",

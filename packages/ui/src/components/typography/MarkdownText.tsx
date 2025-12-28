@@ -133,7 +133,7 @@ export interface MarkdownTextProps {
  * </MarkdownText>
  * ```
  */
-export const MarkdownText = ({ children, className }: MarkdownTextProps) => {
+export function MarkdownText({ children, className }: MarkdownTextProps): React.ReactElement {
   const content = normalizeInlineCodeFences(String(children ?? ""));
   return (
     <div className={className}>
@@ -142,6 +142,4 @@ export const MarkdownText = ({ children, className }: MarkdownTextProps) => {
       </ReactMarkdown>
     </div>
   );
-};
-
-MarkdownText.displayName = "MarkdownText";
+}

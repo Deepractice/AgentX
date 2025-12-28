@@ -44,7 +44,9 @@ export interface PanelProps extends React.HTMLAttributes<HTMLDivElement> {
  * </Allotment>
  * ```
  */
-export const Panel = React.forwardRef<HTMLDivElement, PanelProps>(
+export const Panel: React.ForwardRefExoticComponent<
+  PanelProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, PanelProps>(
   ({ height = 200, minHeight = 100, maxHeight = 500, className, children, ...props }, ref) => {
     return (
       <div
