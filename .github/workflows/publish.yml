@@ -41,7 +41,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build Packages
-        run: bun run build
+        run: turbo build --filter='!@agentx/dev-storybook'
 
       - name: Publish packages to NPM
         run: |
