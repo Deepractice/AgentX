@@ -11,8 +11,22 @@
 
 # Explicitly mark generated files
 pnpm-lock.yaml linguist-generated=true
+bun.lock linguist-generated=true
 *.min.js linguist-generated=true
 *.min.css linguist-generated=true
+dist/** linguist-generated=true
+storybook-static/** linguist-generated=true
+**/__snapshots__/** linguist-generated=true
+
+# Development and testing files
+*.stories.tsx linguist-detectable=false
+*.test.ts linguist-detectable=false
+*.test.tsx linguist-detectable=false
+*.spec.ts linguist-detectable=false
+*.spec.tsx linguist-detectable=false
+
+# HTML entry files (not significant for language stats)
+index.html linguist-detectable=false
 
 # Documentation
 *.md linguist-documentation=true
