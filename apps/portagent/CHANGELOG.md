@@ -1,5 +1,14 @@
 # @agentxjs/portagent
 
+## 1.5.1
+
+### Patch Changes
+
+- ff03a86: Fix npm publish workflow to use bun publish for automatic workspace:\* resolution
+  - agentxjs@1.5.1
+  - @agentxjs/runtime@1.5.1
+  - @agentxjs/ui@1.5.1
+
 ## 1.5.0
 
 ### Minor Changes

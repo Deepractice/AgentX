@@ -1,5 +1,13 @@
 # @agentxjs/runtime
 
+## 1.5.1
+
+### Patch Changes
+
+- @agentxjs/agent@1.5.1
+- @agentxjs/types@1.5.1
+- @agentxjs/common@1.5.1
+
 ## 1.5.0
 
 ### Minor Changes

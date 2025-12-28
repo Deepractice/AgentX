@@ -1,5 +1,11 @@
 # @agentx/dev-storybook
 
+## 0.0.2
+
+### Patch Changes
+
+- @agentxjs/ui@1.5.1
+
 ## 0.0.1
 
 ### Patch Changes
