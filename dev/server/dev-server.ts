@@ -20,17 +20,17 @@ const envPath = resolve(__dirname, ".env.test");
 config({ path: envPath });
 
 async function startDevServer() {
-  // Support both AGENT_API_KEY and ANTHROPIC_API_KEY
-  const apiKey = process.env.AGENT_API_KEY || process.env.ANTHROPIC_API_KEY;
-  const baseUrl = process.env.AGENT_BASE_URL || process.env.ANTHROPIC_BASE_URL;
-  const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514";
+  // Use same env vars as portagent for consistency
+  const apiKey = process.env.LLM_PROVIDER_KEY;
+  const baseUrl = process.env.LLM_PROVIDER_URL;
+  const model = process.env.LLM_PROVIDER_MODEL || "claude-sonnet-4-20250514";
 
   if (!apiKey) {
     console.error("Error: API key is not set");
     console.log("\nPlease set your API key in one of these ways:");
     console.log("  1. Create .env.test file in dev/server/");
-    console.log("     ANTHROPIC_API_KEY=your-api-key");
-    console.log("  2. export ANTHROPIC_API_KEY='your-api-key'");
+    console.log("     LLM_PROVIDER_KEY=your-api-key");
+    console.log("  2. export LLM_PROVIDER_KEY='your-api-key'");
     process.exit(1);
   }
 
