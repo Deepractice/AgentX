@@ -41,6 +41,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "bun-dts": "0.1.70",
+    "bun-types": "1.3.5",
     "concurrently": "^9.1.0",
     "dotenv": "^16.6.1",
     "eslint": "^9.37.0",

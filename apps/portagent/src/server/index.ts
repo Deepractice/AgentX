@@ -11,12 +11,8 @@
  * - WebSocket upgrade on /ws path handled by AgentX
  */
 
-import { dirname, resolve } from "path";
-import { fileURLToPath } from "url";
+import { resolve } from "path";
 import { createServer } from "http";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 import { Hono } from "hono";
 import { cors } from "hono/cors";

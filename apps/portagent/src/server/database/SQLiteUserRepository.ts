@@ -106,8 +106,8 @@ export class SQLiteUserRepository implements UserRepository {
       user.email,
       user.passwordHash,
       user.containerId,
-      user.displayName,
-      user.avatar,
+      user.displayName ?? null,
+      user.avatar ?? null,
       user.isActive ? 1 : 0,
       user.createdAt,
       user.updatedAt
