@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { ToolBlock } from "@agentxjs/ui";
-import type { ToolBlockData } from "../types";
+import type { ToolBlockData } from "@agentxjs/ui";
 
 const meta: Meta<typeof ToolBlock> = {
   title: "Entry/Blocks/ToolBlock",
