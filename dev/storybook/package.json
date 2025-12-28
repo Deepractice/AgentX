@@ -1,6 +1,6 @@
 {
   "name": "@agentx/dev-storybook",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "description": "Storybook for AgentX UI components development",
   "type": "module",
