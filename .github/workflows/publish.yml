@@ -21,21 +21,22 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
-      - name: Setup Node.js
+      - name: Setup Node.js (for npm publish)
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "pnpm"
           registry-url: "https://registry.npmjs.org"
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Build Packages
-        run: pnpm build
+        run: bun build
 
       - name: Publish packages to NPM
         run: |
@@ -58,7 +59,7 @@ jobs:
               if [ "$PRIVATE" != "true" ]; then
                 echo "Publishing $NAME..."
                 cd "$pkg"
-                pnpm publish --access public --no-git-checks || echo "Failed to publish $NAME (may already exist)"
+                npm publish --access public --no-git-checks || echo "Failed to publish $NAME (may already exist)"
                 cd -
               else
                 echo "Skipping private package: $NAME"
