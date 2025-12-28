@@ -40,12 +40,7 @@
     "reconnecting-websocket": "^4.4.0",
     "ws": "^8.18.0"
   },
-  "devDependencies": {
-    "@types/node": "^22.19.1",
-    "@types/ws": "^8.5.13",
-    "bun-dts": "0.1.70",
-    "typescript": "^5.9.3"
-  },
+  "devDependencies": {},
   "publishConfig": {
     "access": "public"
   }

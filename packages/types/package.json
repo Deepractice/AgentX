@@ -69,10 +69,7 @@
     "deepractice"
   ],
   "author": "Deepractice AI",
-  "devDependencies": {
-    "bun-dts": "0.1.70",
-    "typescript": "^5.3.3"
-  },
+  "devDependencies": {},
   "publishConfig": {
     "access": "public"
   }

@@ -48,9 +48,5 @@
     "@agentxjs/types": "workspace:*",
     "rxjs": "^7.8.2"
   },
-  "devDependencies": {
-    "@types/node": "^24.9.2",
-    "bun-dts": "0.1.70",
-    "typescript": "^5.9.3"
-  }
+  "devDependencies": {}
 }

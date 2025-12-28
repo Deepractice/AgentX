@@ -36,11 +36,7 @@
   "dependencies": {
     "@agentxjs/types": "workspace:*"
   },
-  "devDependencies": {
-    "@types/node": "^22.19.1",
-    "bun-dts": "0.1.70",
-    "typescript": "^5.9.3"
-  },
+  "devDependencies": {},
   "publishConfig": {
     "access": "public"
   }

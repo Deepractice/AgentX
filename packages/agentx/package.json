@@ -36,11 +36,7 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@agentxjs/runtime": "workspace:*",
-    "@types/node": "^24.9.2",
-    "@types/ws": "^8.5.13",
-    "bun-dts": "0.1.70",
-    "typescript": "^5.7.2"
+    "@agentxjs/runtime": "workspace:*"
   },
   "publishConfig": {
     "access": "public"
