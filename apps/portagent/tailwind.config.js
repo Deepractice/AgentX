@@ -11,6 +11,6 @@ export default {
   content: [
     "./index.html",
     "./src/client/**/*.{ts,tsx}",
-    "./node_modules/@agentxjs/ui/dist/**/*.js",
+    "../../node_modules/@agentxjs/ui/dist/**/*.js",
   ],
 };

@@ -12,7 +12,11 @@ const __dirname = dirname(__filename);
 // Project root for dev mode
 const projectRoot = resolve(__dirname, "../..");
 
-// Load .env files for dev
+// Load .env files - use DOTENV_CONFIG_PATH if provided, otherwise default locations
+const envPath = process.env.DOTENV_CONFIG_PATH;
+if (envPath) {
+  config({ path: envPath });
+}
 config({ path: resolve(projectRoot, ".env.local") });
 config({ path: resolve(projectRoot, ".env") });
 

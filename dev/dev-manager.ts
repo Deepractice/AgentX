@@ -16,6 +16,9 @@
 import { spawn } from "bun";
 import { join } from "path";
 
+// Dev environment config path
+const DEV_ENV_PATH = join(import.meta.dir, ".env.local");
+
 const SERVICES = {
   "portagent:server": {
     name: "Portagent Server",
@@ -71,6 +74,10 @@ class DevManager {
         stdout: "pipe",
         stderr: "pipe",
         stdin: "ignore",
+        env: {
+          ...process.env,
+          DOTENV_CONFIG_PATH: DEV_ENV_PATH,
+        },
       });
 
       this.processes.set(serviceName, proc);
