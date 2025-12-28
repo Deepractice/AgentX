@@ -30,7 +30,7 @@ export class SQLiteUserRepository implements UserRepository {
    */
   private initDatabase(): void {
     // Enable foreign keys
-    this.db.pragma("foreign_keys = ON");
+    this.db.run("PRAGMA foreign_keys = ON");
 
     // Create users table
     this.db.exec(`
