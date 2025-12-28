@@ -86,14 +86,18 @@ function App() {
 
 ### Mode 2: Precompiled CSS (Zero Config)
 
-**Status**: ⚠️ Currently unavailable - precompiled CSS generation requires build environment setup.
-
-**Recommended**: Use Mode 1 (Tailwind Preset) for all projects.
-
-<details>
-<summary>Future Mode 2 Setup (when available)</summary>
-
 **Best for**: Quick prototypes, demos, or non-Tailwind projects.
+
+**Pros**:
+
+- 🚀 Zero configuration
+- ⚡ Quick setup
+
+**Cons**:
+
+- 📦 Larger bundle size (~40KB, includes all UI component classes)
+
+**Setup**:
 
 ```tsx
 import { Button } from "@agentxjs/ui";
@@ -103,8 +107,6 @@ function App() {
   return <Button>Click me</Button>;
 }
 ```
-
-</details>
 
 ---
 
@@ -125,11 +127,12 @@ See Storybook for interactive examples (run from repository root: `bun --filter 
 // Components
 import { Button, Input, Chat } from "@agentxjs/ui";
 
-// Tailwind Preset (Recommended)
+// Tailwind Preset (Mode 1)
 import agentxPreset from "@agentxjs/ui/tailwind-preset";
 
-// Styles
-import "@agentxjs/ui/globals.css"; // Base styles + CSS variables (use with Mode 1)
+// Styles (Mode 2)
+import "@agentxjs/ui/globals.css"; // Base styles + CSS variables
+import "@agentxjs/ui/dist/agentx-ui.css"; // Precompiled CSS (zero-config)
 ```
 
 ---
