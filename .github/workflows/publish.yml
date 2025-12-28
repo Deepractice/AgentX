@@ -38,8 +38,15 @@ jobs:
       - name: Build Packages
         run: bun run build
 
+      - name: Configure NPM Registry
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Publish packages to NPM
         run: |
+          # bun publish automatically resolves workspace:* to actual versions
           # Publish public packages in dependency order
           PACKAGES=(
             "packages/types"
@@ -59,15 +66,13 @@ jobs:
               if [ "$PRIVATE" != "true" ]; then
                 echo "Publishing $NAME..."
                 cd "$pkg"
-                npm publish --access public --no-git-checks || echo "Failed to publish $NAME (may already exist)"
+                bun publish --access public --no-git-checks || echo "Failed to publish $NAME (may already exist)"
                 cd -
               else
                 echo "Skipping private package: $NAME"
               fi
             fi
           done
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Summary
         run: |
