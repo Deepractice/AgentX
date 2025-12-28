@@ -326,8 +326,12 @@ import type { Endpoint, ListAgentsEndpoint, CreateAgentEndpoint } from "@agentxj
 
 // Endpoint<Method, Path, Input, Output>
 interface ListAgentsEndpoint extends Endpoint<"GET", "/agents", void, ListAgentsResponse> {}
-interface CreateAgentEndpoint
-  extends Endpoint<"POST", "/agents", CreateAgentRequest, CreateAgentResponse> {}
+interface CreateAgentEndpoint extends Endpoint<
+  "POST",
+  "/agents",
+  CreateAgentRequest,
+  CreateAgentResponse
+> {}
 ```
 
 ---
