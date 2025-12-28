@@ -20,6 +20,7 @@
     "README.md"
   ],
   "scripts": {
+    "dev:client": "vite",
     "build": "bun run build.ts",
     "start": "node dist/cli/index.js",
     "typecheck": "tsc --noEmit",
