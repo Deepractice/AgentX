@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { AppHeader } from "./AppHeader";
+import { AppHeader } from "@agentxjs/ui";
 import { MessageSquare, Bot, Settings, Menu, Bell, User, Search } from "lucide-react";
-import { Button } from "./Button";
-import { Badge } from "./Badge";
+import { Button } from "@agentxjs/ui";
+import { Badge } from "@agentxjs/ui";
 
 const meta: Meta<typeof AppHeader> = {
   title: "Element/AppHeader",

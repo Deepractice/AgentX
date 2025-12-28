@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { ErrorEntry } from "./ErrorEntry";
-import type { ErrorConversationData } from "./types";
+import { ErrorEntry } from "@agentxjs/ui";
+import type { ErrorConversationData } from "@agentxjs/ui";
 
 const meta: Meta<typeof ErrorEntry> = {
   title: "Entry/ErrorEntry",

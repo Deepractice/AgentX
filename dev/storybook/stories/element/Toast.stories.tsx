@@ -3,8 +3,8 @@
  */
 
 import type { Meta, StoryObj } from "@storybook/react";
-import { Toast, ToastContainer, useToast } from "./Toast";
-import { Button } from "./Button";
+import { Toast, ToastContainer, useToast } from "@agentxjs/ui";
+import { Button } from "@agentxjs/ui";
 
 const meta = {
   title: "Element/Toast",

@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { ListPane } from "./ListPane";
+import { ListPane } from "@agentxjs/ui";
 import { MessageSquare, File, Folder, User, Clock, Star } from "lucide-react";
 import { Badge } from "~/components/element/Badge";
 import { AgentLogo } from "~/components/element/AgentLogo";

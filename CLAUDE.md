@@ -34,16 +34,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 bun install           # Install dependencies
-bun dev               # Start development (portagent app)
 bun build             # Build all packages
 bun typecheck         # Type checking
 bun lint              # Lint code
 bun test              # Run tests
 bun clean             # Clean artifacts
 
-# Development tools
-bun --filter @agentx/dev-storybook dev       # Start Storybook (port 6006)
-bun --filter @agentx/dev-storybook dev:full  # Start Storybook + dev server
+# Development (unified dev-manager)
+bun dev               # Start portagent app (default)
+bun dev portagent     # Start portagent app explicitly
+bun dev server        # Start WebSocket dev server (port 5200)
+bun dev storybook     # Start Storybook (port 6006)
+bun dev storybook server  # Start Storybook + WebSocket server
+bun dev all           # Start all dev tools (server + storybook)
+bun dev --help        # Show all available services
 
 # Single package commands
 bun --filter @agentxjs/agent test            # Run tests for one package

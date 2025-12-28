@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { MessageContent } from "./MessageContent";
+import { MessageContent } from "@agentxjs/ui";
 
 // React needed for JSX in render functions
 

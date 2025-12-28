@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { TokenUsagePie } from "./TokenUsagePie";
+import { TokenUsagePie } from "@agentxjs/ui";
 
 const meta: Meta<typeof TokenUsagePie> = {
   title: "Element/TokenUsagePie",

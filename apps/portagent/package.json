@@ -20,9 +20,6 @@
     "README.md"
   ],
   "scripts": {
-    "dev": "concurrently \"bun dev:server\" \"bun dev:client\"",
-    "dev:server": "bun --watch src/server/main.ts",
-    "dev:client": "bun dev.ts",
     "build": "bun run build.ts",
     "start": "node dist/cli/index.js",
     "typecheck": "tsc --noEmit",

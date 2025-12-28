@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { MobileInputPane } from "./MobileInputPane";
+import { MobileInputPane } from "@agentxjs/ui";
 
 const meta: Meta<typeof MobileInputPane> = {
   title: "Mobile/MobileInputPane",

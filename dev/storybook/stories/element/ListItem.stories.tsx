@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { ListItem } from "./ListItem";
+import { ListItem } from "@agentxjs/ui";
 import {
   Clock,
   Trash2,
@@ -13,9 +13,9 @@ import {
   Edit,
   Star,
 } from "lucide-react";
-import { Badge } from "./Badge";
-import { TimeAgo } from "./TimeAgo";
-import { AgentLogo } from "./AgentLogo";
+import { Badge } from "@agentxjs/ui";
+import { TimeAgo } from "@agentxjs/ui";
+import { AgentLogo } from "@agentxjs/ui";
 
 const meta: Meta<typeof ListItem> = {
   title: "Element/ListItem",

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { ToolBlock } from "./ToolBlock";
+import { ToolBlock } from "@agentxjs/ui";
 import type { ToolBlockData } from "../types";
 
 const meta: Meta<typeof ToolBlock> = {

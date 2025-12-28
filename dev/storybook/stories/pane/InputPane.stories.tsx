@@ -1,7 +1,7 @@
 import * as React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { InputPane } from "./InputPane";
-import { InputToolBar } from "./InputToolBar";
+import { InputPane } from "@agentxjs/ui";
+import { InputToolBar } from "@agentxjs/ui";
 import { Paperclip, Image, Smile, AtSign, Scissors, FolderOpen } from "lucide-react";
 
 const meta: Meta<typeof InputPane> = {

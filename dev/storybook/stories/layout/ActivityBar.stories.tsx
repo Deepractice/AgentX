@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
-import { ActivityBar } from "./ActivityBar";
+import { ActivityBar } from "@agentxjs/ui";
 import {
   MessageSquare,
   Search,

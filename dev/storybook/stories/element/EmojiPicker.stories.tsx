@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { EmojiPicker, type Emoji } from "./EmojiPicker";
+import { EmojiPicker, type Emoji } from "@agentxjs/ui";
 
 const meta: Meta<typeof EmojiPicker> = {
   title: "Element/EmojiPicker",

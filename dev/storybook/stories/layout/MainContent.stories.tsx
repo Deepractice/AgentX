@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { MainContent } from "./MainContent";
+import { MainContent } from "@agentxjs/ui";
 
 const meta: Meta<typeof MainContent> = {
   title: "Layout/MainContent",

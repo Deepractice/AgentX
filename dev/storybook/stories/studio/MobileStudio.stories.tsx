@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { MobileStudio } from "./MobileStudio";
+import { MobileStudio } from "@agentxjs/ui";
 import { useAgentX } from "~/hooks";
 
 const meta: Meta<typeof MobileStudio> = {

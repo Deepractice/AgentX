@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { TimeAgo } from "./TimeAgo";
+import { TimeAgo } from "@agentxjs/ui";
 import { Clock } from "lucide-react";
 
 const meta: Meta<typeof TimeAgo> = {

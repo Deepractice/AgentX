@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { JSONRenderer } from "./JSONRenderer";
+import { JSONRenderer } from "@agentxjs/ui";
 
 const meta: Meta<typeof JSONRenderer> = {
   title: "Content/JSONRenderer",

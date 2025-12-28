@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { ActionBar } from "./ActionBar";
+import { ActionBar } from "@agentxjs/ui";
 import {
   MessageSquare,
   RefreshCw,

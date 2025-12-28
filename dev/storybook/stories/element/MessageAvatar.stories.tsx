@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { MessageAvatar } from "./MessageAvatar";
+import { MessageAvatar } from "@agentxjs/ui";
 import { Bot, User, AlertCircle, Wrench, Sparkles, Brain, Shield } from "lucide-react";
 
 const meta: Meta<typeof MessageAvatar> = {

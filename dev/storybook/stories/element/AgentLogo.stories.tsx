@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { AgentLogo } from "./AgentLogo";
+import { AgentLogo } from "@agentxjs/ui";
 
 const meta: Meta<typeof AgentLogo> = {
   title: "Element/AgentLogo",

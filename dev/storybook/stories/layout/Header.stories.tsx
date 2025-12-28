@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
-import { Header } from "./Header";
+import { Header } from "@agentxjs/ui";
 import { Button } from "../element/Button";
 import { SearchInput } from "../element/SearchInput";
 import { AgentLogo } from "../element/AgentLogo";

@@ -5,9 +5,6 @@
   "description": "Storybook for AgentX UI components development",
   "type": "module",
   "scripts": {
-    "dev": "storybook dev -p 6006",
-    "dev:server": "bun --watch ../server/dev-server.ts",
-    "dev:full": "concurrently \"bun dev:server\" \"storybook dev -p 6007\"",
     "build": "storybook build",
     "preview": "http-server storybook-static"
   },

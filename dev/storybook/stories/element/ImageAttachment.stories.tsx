@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import React from "react";
-import { ImageAttachment } from "./ImageAttachment";
+import { ImageAttachment } from "@agentxjs/ui";
 
 // Mock file for demo purposes
 const createMockFile = (name: string = "sample-image.jpg"): File => {

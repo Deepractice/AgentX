@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { RightSidebar } from "./RightSidebar";
+import { RightSidebar } from "@agentxjs/ui";
 import { Allotment } from "allotment";
 import "allotment/dist/style.css";
 import { FileText, Settings, Eye } from "lucide-react";

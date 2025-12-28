@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
-import { TabNavigation } from "./TabNavigation";
+import { TabNavigation } from "@agentxjs/ui";
 import { MessageSquare, Terminal, Folder, Home, Settings, User } from "lucide-react";
 
 const meta: Meta<typeof TabNavigation> = {

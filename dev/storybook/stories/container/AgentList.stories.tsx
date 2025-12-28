@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { AgentList } from "./AgentList";
+import { AgentList } from "@agentxjs/ui";
 import { useAgentX } from "~/hooks";
 
 const meta: Meta<typeof AgentList> = {

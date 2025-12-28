@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { StatusBar, StatusBarSection, StatusBarItem } from "./StatusBar";
+import { StatusBar, StatusBarSection, StatusBarItem } from "@agentxjs/ui";
 import { GitBranch, AlertCircle, CheckCircle, Wifi, WifiOff, Zap } from "lucide-react";
 
 const meta: Meta<typeof StatusBar> = {

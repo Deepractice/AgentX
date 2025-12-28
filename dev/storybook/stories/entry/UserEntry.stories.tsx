@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { UserEntry } from "./UserEntry";
-import type { UserConversationData } from "./types";
+import { UserEntry } from "@agentxjs/ui";
+import type { UserConversationData } from "@agentxjs/ui";
 
 const meta: Meta<typeof UserEntry> = {
   title: "Entry/UserEntry",

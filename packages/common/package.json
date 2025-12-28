@@ -29,7 +29,6 @@
   ],
   "scripts": {
     "build": "bun run build.ts",
-    "dev": "bun --watch build.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"

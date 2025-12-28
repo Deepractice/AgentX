@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { AssistantEntry } from "./AssistantEntry";
-import type { AssistantConversationData, TextBlockData, ToolBlockData } from "./types";
+import { AssistantEntry } from "@agentxjs/ui";
+import type { AssistantConversationData, TextBlockData, ToolBlockData } from "@agentxjs/ui";
 
 const meta: Meta<typeof AssistantEntry> = {
   title: "Entry/AssistantEntry",

@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
-import { PageHeader } from "./PageHeader";
-import { TabNavigation } from "./TabNavigation";
-import { Button } from "./Button";
+import { PageHeader } from "@agentxjs/ui";
+import { TabNavigation } from "@agentxjs/ui";
+import { Button } from "@agentxjs/ui";
 import { Menu, ArrowLeft, Settings, MessageSquare, Terminal, Folder } from "lucide-react";
 
 const meta: Meta<typeof PageHeader> = {

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { DiffViewer } from "./DiffViewer";
+import { DiffViewer } from "@agentxjs/ui";
 
 const meta: Meta<typeof DiffViewer> = {
   title: "Content/DiffViewer",

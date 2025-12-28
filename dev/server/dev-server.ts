@@ -28,7 +28,7 @@ async function startDevServer() {
   if (!apiKey) {
     console.error("Error: API key is not set");
     console.log("\nPlease set your API key in one of these ways:");
-    console.log("  1. Create .env.test file in dev-tools/server/");
+    console.log("  1. Create .env.test file in dev/server/");
     console.log("     ANTHROPIC_API_KEY=your-api-key");
     console.log("  2. export ANTHROPIC_API_KEY='your-api-key'");
     process.exit(1);

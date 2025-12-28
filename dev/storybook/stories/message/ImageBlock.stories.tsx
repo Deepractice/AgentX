@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { ImageBlock } from "./ImageBlock";
+import { ImageBlock } from "@agentxjs/ui";
 
 // React needed for JSX in render functions
 

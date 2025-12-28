@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { NavBar, type NavBarItem } from "./NavBar";
+import { NavBar, type NavBarItem } from "@agentxjs/ui";
 import { MessageSquare, Search, Settings, User, Bell, History, Bookmark } from "lucide-react";
 
 const meta: Meta<typeof NavBar> = {

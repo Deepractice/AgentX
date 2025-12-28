@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { LoadingState } from "./LoadingState";
+import { LoadingState } from "@agentxjs/ui";
 import { RefreshCw, Download, Upload, Database } from "lucide-react";
 
 const meta: Meta<typeof LoadingState> = {

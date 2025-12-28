@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { EmptyState } from "./EmptyState";
+import { EmptyState } from "@agentxjs/ui";
 import { MessageSquare, Inbox, Search, File, Users, Database, FolderOpen } from "lucide-react";
-import { Button } from "./Button";
+import { Button } from "@agentxjs/ui";
 
 const meta: Meta<typeof EmptyState> = {
   title: "Element/EmptyState",

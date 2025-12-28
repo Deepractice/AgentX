@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Panel } from "./Panel";
-import { MainContent } from "./MainContent";
+import { Panel } from "@agentxjs/ui";
+import { MainContent } from "@agentxjs/ui";
 import { Allotment } from "allotment";
 import "allotment/dist/style.css";
 import { Terminal, FileText, AlertCircle } from "lucide-react";

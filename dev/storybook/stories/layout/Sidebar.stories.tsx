@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Sidebar } from "./Sidebar";
+import { Sidebar } from "@agentxjs/ui";
 import { Allotment } from "allotment";
 import "allotment/dist/style.css";
 

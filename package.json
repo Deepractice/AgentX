@@ -10,7 +10,7 @@
     "dev/*"
   ],
   "scripts": {
-    "dev": "turbo run dev --filter=@agentxjs/portagent",
+    "dev": "bun dev/dev-manager.ts",
     "start": "bun apps/portagent/bin/portagent.js",
     "build": "turbo build",
     "lint": "turbo lint",
