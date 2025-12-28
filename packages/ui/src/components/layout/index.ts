@@ -5,4 +5,4 @@ export { MainContent } from "./MainContent";
 export { Panel } from "./Panel";
 export { RightSidebar } from "./RightSidebar";
 export { Sidebar } from "./Sidebar";
-export { StatusBar } from "./StatusBar";
+export { StatusBar, StatusBarSection, StatusBarItem } from "./StatusBar";

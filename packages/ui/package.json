@@ -17,7 +17,7 @@
       "default": "./dist/index.js"
     },
     "./globals.css": "./dist/globals.css",
-    "./tailwind-preset": "./tailwind-preset.js",
+    "./tailwind-preset": "./tailwind.config.js",
     "./dist/agentx-ui.css": "./dist/agentx-ui.css"
   },
   "sideEffects": [
@@ -26,7 +26,7 @@
   ],
   "files": [
     "dist",
-    "tailwind-preset.js",
+    "tailwind.config.js",
     "README.md"
   ],
   "scripts": {

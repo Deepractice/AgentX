@@ -1,7 +1,5 @@
 import type { Preview } from "@storybook/react";
-// Switch between modes:
-// import "@agentxjs/ui/dist/agentx-ui.css";  // Mode A: Precompiled (working)
-import "../styles.css"; // Mode B: PostCSS + Tailwind Preset (debugging)
+import "../styles.css";
 
 const preview: Preview = {
   parameters: {
