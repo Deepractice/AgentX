@@ -3,20 +3,14 @@
  *
  * Uses @agentxjs/ui preset for consistent design system
  */
-import agentxPreset from "../../packages/ui/tailwind-preset.js";
+import agentxPreset from "@agentxjs/ui/tailwind-preset";
 
 /** @type {import('tailwindcss').Config} */
 export default {
   presets: [agentxPreset],
   content: [
-    // Portagent source files
+    "./index.html",
     "./src/client/**/*.{ts,tsx}",
-    // UI package components
-    "../../packages/ui/src/**/*.{ts,tsx}",
+    "./node_modules/@agentxjs/ui/dist/**/*.js",
   ],
-  theme: {
-    extend: {
-      // Portagent-specific customizations can go here
-    },
-  },
 };
