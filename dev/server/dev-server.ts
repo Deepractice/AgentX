@@ -36,11 +36,11 @@ async function startDevServer() {
     process.exit(1);
   }
 
-  const PORT = 5200;
+  const PORT = 5201;
   const AGENTX_DIR = resolve(__dirname, "../../.agentx");
   const LOG_DIR = resolve(AGENTX_DIR, "logs");
 
-  console.log("Starting AgentX Development Server...\n");
+  console.log("Starting Dev WebSocket Server...\n");
   console.log("Configuration:");
   console.log(`  API Key: ${apiKey.substring(0, 15)}...`);
   console.log(`  Model: ${model}`);

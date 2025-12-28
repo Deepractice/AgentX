@@ -22,7 +22,7 @@ const SERVICES = {
     cmd: "bun",
     args: ["--watch", "apps/portagent/src/server/main.ts"],
     cwd: join(import.meta.dir, ".."),
-    port: 3000,
+    port: 5200,
     color: "\x1b[32m", // Green
   },
   "portagent:client": {
@@ -34,11 +34,11 @@ const SERVICES = {
     color: "\x1b[33m", // Yellow
   },
   server: {
-    name: "WebSocket Server",
+    name: "Dev WebSocket Server",
     cmd: "bun",
     args: ["--watch", "dev/server/dev-server.ts"],
     cwd: join(import.meta.dir, ".."),
-    port: 5200,
+    port: 5201,
     color: "\x1b[36m", // Cyan
   },
   storybook: {
@@ -144,8 +144,8 @@ if (args.includes("--help") || args.includes("-h")) {
   console.log("Usage:");
   console.log("  bun dev [service...]\n");
   console.log("Available services:");
-  console.log("  portagent  - Main web application (server + client) [default]");
-  console.log("  server     - WebSocket dev server (port 5200)");
+  console.log("  portagent  - Main web application (5200 + 5173) [default]");
+  console.log("  server     - Dev WebSocket server (port 5201)");
   console.log("  storybook  - Component development (port 6006)");
   console.log("  all        - All dev tools (server + storybook)\n");
   console.log("Examples:");
