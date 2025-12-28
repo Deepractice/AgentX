@@ -64,7 +64,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build All Services
-        run: bun build
+        run: bun run build
 
       - name: Check Build Artifacts
         run: |
