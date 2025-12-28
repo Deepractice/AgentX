@@ -56,13 +56,19 @@ await cp("src/styles/globals.css", `${outdir}/globals.css`);
 
 // Generate precompiled CSS with Tailwind CLI (for zero-config mode)
 console.log("📦 Generating precompiled CSS (agentx-ui.css)...");
-const tailwindResult =
-  await Bun.$`bunx tailwindcss -i src/styles/globals.css -o ${outdir}/agentx-ui.css --minify`.quiet();
+try {
+  // Try workspace root node_modules first, then local
+  const tailwindBin = "../../node_modules/.bin/tailwindcss";
+  const tailwindResult =
+    await Bun.$`${tailwindBin} -i src/styles/globals.css -o ${outdir}/agentx-ui.css --minify`.quiet();
 
-if (tailwindResult.exitCode !== 0) {
-  console.warn("⚠️  Tailwind CSS generation failed, skipping precompiled CSS");
-} else {
-  console.log("✅ Precompiled CSS generated");
+  if (tailwindResult.exitCode !== 0) {
+    console.warn("⚠️  Tailwind CSS generation failed, skipping precompiled CSS");
+  } else {
+    console.log("✅ Precompiled CSS generated");
+  }
+} catch (error) {
+  console.warn("⚠️  Tailwind CSS not available, skipping precompiled CSS");
 }
 
 console.log(`✅ ESM build: ${result.outputs.length} files`);

@@ -86,18 +86,14 @@ function App() {
 
 ### Mode 2: Precompiled CSS (Zero Config)
 
+**Status**: ⚠️ Currently unavailable - precompiled CSS generation requires build environment setup.
+
+**Recommended**: Use Mode 1 (Tailwind Preset) for all projects.
+
+<details>
+<summary>Future Mode 2 Setup (when available)</summary>
+
 **Best for**: Quick prototypes, demos, or non-Tailwind projects.
-
-**Pros**:
-
-- 🚀 Zero configuration
-- ⚡ Quick setup
-
-**Cons**:
-
-- 📦 Larger bundle size (~300KB, includes all UI component classes)
-
-**Setup**:
 
 ```tsx
 import { Button } from "@agentxjs/ui";
@@ -107,6 +103,8 @@ function App() {
   return <Button>Click me</Button>;
 }
 ```
+
+</details>
 
 ---
 
@@ -119,7 +117,7 @@ function App() {
 - **Typography**: `MarkdownText`, `JSONRenderer`, `DiffViewer`
 - **Containers**: `AgentList`, `ToolCard`
 
-See [Storybook](http://localhost:6006) for interactive examples.
+See Storybook for interactive examples (run from repository root: `bun --filter @agentx/dev-storybook dev`).
 
 ## Exports
 
@@ -127,12 +125,11 @@ See [Storybook](http://localhost:6006) for interactive examples.
 // Components
 import { Button, Input, Chat } from "@agentxjs/ui";
 
-// Tailwind Preset (Mode 1)
+// Tailwind Preset (Recommended)
 import agentxPreset from "@agentxjs/ui/tailwind-preset";
 
-// Styles (Mode 2)
-import "@agentxjs/ui/globals.css"; // Base styles + CSS variables
-import "@agentxjs/ui/dist/agentx-ui.css"; // Precompiled CSS (zero-config)
+// Styles
+import "@agentxjs/ui/globals.css"; // Base styles + CSS variables (use with Mode 1)
 ```
 
 ---
@@ -160,13 +157,17 @@ The component library uses a semantic token system:
 
 ## Development
 
+**Note**: This package is part of the AgentX monorepo. Development tools (Storybook) are in the `dev/` directory.
+
 ```bash
+# From repository root:
 # Install dependencies
 bun install
 
 # Run Storybook (port 6006)
-bun storybook
+bun --filter @agentx/dev-storybook dev
 
+# From packages/ui directory:
 # Build the library
 bun build
 

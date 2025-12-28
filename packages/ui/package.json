@@ -26,6 +26,7 @@
   ],
   "files": [
     "dist",
+    "tailwind-preset.js",
     "README.md"
   ],
   "scripts": {
