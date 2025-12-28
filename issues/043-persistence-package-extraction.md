@@ -278,17 +278,17 @@ const agentx = await createAgentX({
 
 ## Tasks
 
-- [ ] Create `packages/persistence/` directory structure
-- [ ] Implement core Persistence interface and createPersistence
-- [ ] Implement memory driver (default, no deps)
-- [ ] Implement sqlite driver (db0 + bun-sqlite)
-- [ ] Implement redis driver (ioredis)
-- [ ] Implement mongodb driver (mongodb)
-- [ ] Implement mysql driver (mysql2)
-- [ ] Implement postgresql driver (pg)
-- [ ] Configure package.json exports
-- [ ] Update @agentxjs/runtime to use new package
-- [ ] Update @agentxjs/agentx createLocalAgentX
+- [x] Create `packages/persistence/` directory structure
+- [x] Implement core Persistence interface and createPersistence
+- [x] Implement memory driver (default, no deps)
+- [x] Implement sqlite driver (db0 + bun-sqlite)
+- [x] Implement redis driver (ioredis)
+- [x] Implement mongodb driver (mongodb)
+- [x] Implement mysql driver (mysql2)
+- [x] Implement postgresql driver (pg)
+- [x] Configure package.json exports
+- [x] Update @agentxjs/runtime to use new package
+- [x] Update @agentxjs/agentx createLocalAgentX
 - [ ] Add persistence config option to AgentXConfig
-- [ ] Update CLAUDE.md package dependency graph
-- [ ] Test binary build with new structure
+- [x] Update CLAUDE.md package dependency graph
+- [x] Test binary build with new structure

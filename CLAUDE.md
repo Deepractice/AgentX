@@ -15,9 +15,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── packages/
 │   ├── types/            # @agentxjs/types - Type definitions (zero deps)
 │   ├── common/           # @agentxjs/common - Logger facade
+│   ├── persistence/      # @agentxjs/persistence - Storage layer (SQLite, Redis, etc.)
+│   ├── network/          # @agentxjs/network - WebSocket server
 │   ├── agent/            # @agentxjs/agent - Agent lifecycle and event management
 │   ├── agentx/           # agentxjs - Platform API (unified entry point)
-│   ├── runtime/          # @agentxjs/runtime - Claude driver, SQLite, SystemBus
+│   ├── runtime/          # @agentxjs/runtime - Claude driver, SystemBus
 │   └── ui/               # @agentxjs/ui - React components (pure UI, no server deps)
 └── dev/
     ├── server/           # Shared dev server (WebSocket, Agent runtime)
@@ -26,7 +28,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
         └── stories/      # Component stories
 ```
 
-**Package Dependency**: `types → common → agent → agentx → runtime → ui`
+**Package Dependency**: `types → common → persistence → agent → agentx → runtime → ui`
 
 **Dev Tools Isolation**: All development tools (Storybook, dev server) are isolated in `dev/`, ensuring `packages/ui` remains frontend-only with zero server dependencies.
 
