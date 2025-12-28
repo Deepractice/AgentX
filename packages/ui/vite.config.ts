@@ -25,20 +25,7 @@ export default defineConfig({
       fileName: (format) => `index.${format === "es" ? "js" : "cjs"}`,
     },
     rollupOptions: {
-      external: [
-        "react",
-        "react-dom",
-        "react/jsx-runtime",
-        // Server-only packages (prevent bundling)
-        "@agentxjs/runtime",
-        /^db0\//,
-        /^unstorage\//,
-        /^bun:/,
-        /^node:/,
-        "pg",
-        "mongodb",
-        "mysql2",
-      ],
+      external: ["react", "react-dom", "react/jsx-runtime"],
       output: {
         globals: {
           react: "React",

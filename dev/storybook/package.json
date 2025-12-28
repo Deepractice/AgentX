@@ -1,0 +1,34 @@
+{
+  "name": "@agentx/dev-storybook",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Storybook for AgentX UI components development",
+  "type": "module",
+  "scripts": {
+    "dev": "storybook dev -p 6006",
+    "dev:server": "bun --watch ../server/dev-server.ts",
+    "dev:full": "concurrently \"bun dev:server\" \"storybook dev -p 6007\"",
+    "build": "storybook build",
+    "preview": "http-server storybook-static"
+  },
+  "dependencies": {
+    "@agentxjs/ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@storybook/addon-a11y": "^8.4.7",
+    "@storybook/addon-essentials": "^8.4.7",
+    "@storybook/addon-interactions": "^8.4.7",
+    "@storybook/addon-links": "^8.4.7",
+    "@storybook/react": "^8.4.7",
+    "@storybook/react-vite": "^8.4.7",
+    "@types/node": "^24.9.2",
+    "@types/ws": "^8.5.13",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "dotenv": "^16.6.1",
+    "storybook": "^8.4.7",
+    "typescript": "^5.9.3",
+    "vite": "^6.0.5",
+    "ws": "^8.18.0"
+  }
+}

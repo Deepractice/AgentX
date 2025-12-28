@@ -6,7 +6,8 @@
   "type": "module",
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/*",
+    "dev/*"
   ],
   "scripts": {
     "dev": "turbo run dev --filter=@agentxjs/portagent",

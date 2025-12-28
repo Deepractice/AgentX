@@ -30,14 +30,10 @@
   ],
   "scripts": {
     "dev": "vite",
-    "dev:server": "bun --watch dev-tools/server/dev-server.ts",
-    "dev:full": "concurrently \"bun dev:server\" \"storybook dev -p 6007\"",
     "build": "bun run build.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
     "clean": "rm -rf dist"
   },
   "dependencies": {
@@ -60,30 +56,18 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
-    "@agentxjs/runtime": "workspace:*",
-    "@storybook/addon-a11y": "^8.4.7",
-    "@storybook/addon-essentials": "^8.4.7",
-    "@storybook/addon-interactions": "^8.4.7",
-    "@storybook/addon-links": "^8.4.7",
-    "@storybook/react": "^8.4.7",
-    "@storybook/react-vite": "^8.4.7",
     "@tailwindcss/postcss": "^4.1.17",
     "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^24.9.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@types/ws": "^8.5.13",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "bun-dts": "0.1.70",
-    "concurrently": "^9.1.0",
-    "dotenv": "^16.6.1",
     "postcss": "^8.4.49",
-    "storybook": "^8.4.7",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
-    "vite": "^6.0.5",
-    "ws": "^8.18.0"
+    "vite": "^6.0.5"
   },
   "peerDependencies": {
     "react": "^18.0.0",
