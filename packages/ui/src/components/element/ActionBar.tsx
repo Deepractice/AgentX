@@ -11,8 +11,7 @@ export interface ActionBarProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export interface ActionBarPrimaryProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   /**
    * Button content
    */
@@ -24,8 +23,7 @@ export interface ActionBarPrimaryProps
 }
 
 export interface ActionBarIconProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   /**
    * Icon element
    */

@@ -2,8 +2,10 @@ import * as React from "react";
 import { Search, X } from "lucide-react";
 import { cn } from "~/utils/utils";
 
-export interface SearchInputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "onChange"> {
+export interface SearchInputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "type" | "onChange"
+> {
   /**
    * Current search value (controlled)
    */

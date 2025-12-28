@@ -26,8 +26,7 @@ const avatarVariants = cva("w-8 h-8 rounded-full flex items-center justify-cente
 });
 
 export interface MessageAvatarProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof avatarVariants> {
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof avatarVariants> {
   /**
    * Label text to display next to avatar
    */

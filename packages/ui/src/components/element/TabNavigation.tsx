@@ -78,7 +78,8 @@ export interface Tab {
 }
 
 export interface TabNavigationProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange">,
+  extends
+    Omit<React.HTMLAttributes<HTMLDivElement>, "onChange">,
     VariantProps<typeof tabNavigationVariants> {
   /**
    * Array of tab items

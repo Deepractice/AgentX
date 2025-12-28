@@ -18,20 +18,35 @@ import type { SystemEvent } from "~/event/base";
 /**
  * Base MCPRequest
  */
-interface BaseMCPRequest<T extends string, D = unknown>
-  extends SystemEvent<T, D, "sandbox", "mcp", "request"> {}
+interface BaseMCPRequest<T extends string, D = unknown> extends SystemEvent<
+  T,
+  D,
+  "sandbox",
+  "mcp",
+  "request"
+> {}
 
 /**
  * Base MCPResult
  */
-interface BaseMCPResult<T extends string, D = unknown>
-  extends SystemEvent<T, D, "sandbox", "mcp", "result"> {}
+interface BaseMCPResult<T extends string, D = unknown> extends SystemEvent<
+  T,
+  D,
+  "sandbox",
+  "mcp",
+  "result"
+> {}
 
 /**
  * Base MCPNotification
  */
-interface BaseMCPNotification<T extends string, D = unknown>
-  extends SystemEvent<T, D, "sandbox", "mcp", "notification"> {}
+interface BaseMCPNotification<T extends string, D = unknown> extends SystemEvent<
+  T,
+  D,
+  "sandbox",
+  "mcp",
+  "notification"
+> {}
 
 // ============================================================================
 // Tool Execution Events
@@ -40,47 +55,44 @@ interface BaseMCPNotification<T extends string, D = unknown>
 /**
  * ToolExecuteRequest - Request to execute a tool
  */
-export interface ToolExecuteRequest
-  extends BaseMCPRequest<
-    "tool_execute_request",
-    {
-      toolId: string;
-      toolName: string;
-      serverName: string;
-      input: Record<string, unknown>;
-      timestamp: number;
-    }
-  > {}
+export interface ToolExecuteRequest extends BaseMCPRequest<
+  "tool_execute_request",
+  {
+    toolId: string;
+    toolName: string;
+    serverName: string;
+    input: Record<string, unknown>;
+    timestamp: number;
+  }
+> {}
 
 /**
  * ToolExecutedEvent - Tool execution completed
  */
-export interface ToolExecutedEvent
-  extends BaseMCPResult<
-    "tool_executed",
-    {
-      toolId: string;
-      toolName: string;
-      result: unknown;
-      duration: number;
-      timestamp: number;
-    }
-  > {}
+export interface ToolExecutedEvent extends BaseMCPResult<
+  "tool_executed",
+  {
+    toolId: string;
+    toolName: string;
+    result: unknown;
+    duration: number;
+    timestamp: number;
+  }
+> {}
 
 /**
  * ToolExecutionErrorEvent - Tool execution failed
  */
-export interface ToolExecutionErrorEvent
-  extends BaseMCPNotification<
-    "tool_execution_error",
-    {
-      toolId: string;
-      toolName: string;
-      code: string;
-      message: string;
-      timestamp: number;
-    }
-  > {}
+export interface ToolExecutionErrorEvent extends BaseMCPNotification<
+  "tool_execution_error",
+  {
+    toolId: string;
+    toolName: string;
+    code: string;
+    message: string;
+    timestamp: number;
+  }
+> {}
 
 // ============================================================================
 // MCP Server Events
@@ -89,30 +101,28 @@ export interface ToolExecutionErrorEvent
 /**
  * MCPServerConnectedEvent - MCP server connected
  */
-export interface MCPServerConnectedEvent
-  extends BaseMCPNotification<
-    "mcp_server_connected",
-    {
-      serverName: string;
-      version?: string;
-      toolCount: number;
-      resourceCount: number;
-      timestamp: number;
-    }
-  > {}
+export interface MCPServerConnectedEvent extends BaseMCPNotification<
+  "mcp_server_connected",
+  {
+    serverName: string;
+    version?: string;
+    toolCount: number;
+    resourceCount: number;
+    timestamp: number;
+  }
+> {}
 
 /**
  * MCPServerDisconnectedEvent - MCP server disconnected
  */
-export interface MCPServerDisconnectedEvent
-  extends BaseMCPNotification<
-    "mcp_server_disconnected",
-    {
-      serverName: string;
-      reason?: string;
-      timestamp: number;
-    }
-  > {}
+export interface MCPServerDisconnectedEvent extends BaseMCPNotification<
+  "mcp_server_disconnected",
+  {
+    serverName: string;
+    reason?: string;
+    timestamp: number;
+  }
+> {}
 
 // ============================================================================
 // Resource Events
@@ -121,28 +131,26 @@ export interface MCPServerDisconnectedEvent
 /**
  * ResourceReadRequest - Request to read an MCP resource
  */
-export interface ResourceReadRequest
-  extends BaseMCPRequest<
-    "resource_read_request",
-    {
-      serverName: string;
-      uri: string;
-    }
-  > {}
+export interface ResourceReadRequest extends BaseMCPRequest<
+  "resource_read_request",
+  {
+    serverName: string;
+    uri: string;
+  }
+> {}
 
 /**
  * ResourceReadResult - Resource read result
  */
-export interface ResourceReadResult
-  extends BaseMCPResult<
-    "resource_read_result",
-    {
-      serverName: string;
-      uri: string;
-      content: unknown;
-      mimeType?: string;
-    }
-  > {}
+export interface ResourceReadResult extends BaseMCPResult<
+  "resource_read_result",
+  {
+    serverName: string;
+    uri: string;
+    content: unknown;
+    mimeType?: string;
+  }
+> {}
 
 // ============================================================================
 // Union Type

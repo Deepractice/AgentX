@@ -20,8 +20,11 @@ import type {
 /**
  * Base type for message events
  */
-export interface AgentMessageEventBase<T extends string, D>
-  extends BaseAgentEvent<T, D, "message"> {}
+export interface AgentMessageEventBase<T extends string, D> extends BaseAgentEvent<
+  T,
+  D,
+  "message"
+> {}
 
 // ============================================================================
 // Message Events
@@ -37,22 +40,28 @@ export interface UserMessageEvent extends AgentMessageEventBase<"user_message", 
  * AssistantMessageEvent - Assistant response message
  * Data: Complete AssistantMessage object
  */
-export interface AssistantMessageEvent
-  extends AgentMessageEventBase<"assistant_message", AssistantMessage> {}
+export interface AssistantMessageEvent extends AgentMessageEventBase<
+  "assistant_message",
+  AssistantMessage
+> {}
 
 /**
  * ToolCallMessageEvent - Tool call message (part of assistant turn)
  * Data: Complete ToolCallMessage object
  */
-export interface ToolCallMessageEvent
-  extends AgentMessageEventBase<"tool_call_message", ToolCallMessage> {}
+export interface ToolCallMessageEvent extends AgentMessageEventBase<
+  "tool_call_message",
+  ToolCallMessage
+> {}
 
 /**
  * ToolResultMessageEvent - Tool result message
  * Data: Complete ToolResultMessage object
  */
-export interface ToolResultMessageEvent
-  extends AgentMessageEventBase<"tool_result_message", ToolResultMessage> {}
+export interface ToolResultMessageEvent extends AgentMessageEventBase<
+  "tool_result_message",
+  ToolResultMessage
+> {}
 
 /**
  * ErrorMessageEvent - Error message displayed in chat

@@ -19,8 +19,13 @@ import type { SystemEvent } from "../base";
 /**
  * Base interface for all connection events
  */
-interface BaseConnectionEvent<T extends string, D = unknown>
-  extends SystemEvent<T, D, "environment", "connection", "notification"> {}
+interface BaseConnectionEvent<T extends string, D = unknown> extends SystemEvent<
+  T,
+  D,
+  "environment",
+  "connection",
+  "notification"
+> {}
 
 // ============================================================================
 // Connection Events
@@ -29,40 +34,37 @@ interface BaseConnectionEvent<T extends string, D = unknown>
 /**
  * ConnectedEvent - Connection established
  */
-export interface ConnectedEvent
-  extends BaseConnectionEvent<
-    "connected",
-    {
-      url?: string;
-      reconnectAttempt?: number;
-    }
-  > {}
+export interface ConnectedEvent extends BaseConnectionEvent<
+  "connected",
+  {
+    url?: string;
+    reconnectAttempt?: number;
+  }
+> {}
 
 /**
  * DisconnectedEvent - Connection lost
  */
-export interface DisconnectedEvent
-  extends BaseConnectionEvent<
-    "disconnected",
-    {
-      reason?: string;
-      code?: number;
-      willReconnect?: boolean;
-    }
-  > {}
+export interface DisconnectedEvent extends BaseConnectionEvent<
+  "disconnected",
+  {
+    reason?: string;
+    code?: number;
+    willReconnect?: boolean;
+  }
+> {}
 
 /**
  * ReconnectingEvent - Attempting to reconnect
  */
-export interface ReconnectingEvent
-  extends BaseConnectionEvent<
-    "reconnecting",
-    {
-      attempt: number;
-      maxAttempts?: number;
-      delayMs: number;
-    }
-  > {}
+export interface ReconnectingEvent extends BaseConnectionEvent<
+  "reconnecting",
+  {
+    attempt: number;
+    maxAttempts?: number;
+    delayMs: number;
+  }
+> {}
 
 // ============================================================================
 // Union Type
