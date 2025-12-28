@@ -28,8 +28,8 @@ const SERVICES = {
   "portagent:client": {
     name: "Portagent Client",
     cmd: "bun",
-    args: ["apps/portagent/dev.ts"],
-    cwd: join(import.meta.dir, ".."),
+    args: ["dev.ts"],
+    cwd: join(import.meta.dir, "../apps/portagent"),
     port: 5173,
     color: "\x1b[33m", // Yellow
   },
