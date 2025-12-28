@@ -15,8 +15,9 @@ import { ClaudeAgent } from "./agent.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load environment variables from .env.test file
-const envPath = resolve(__dirname, ".env.test");
+// Load environment variables from dev/.env.local or dev/.env.test
+const devDir = resolve(__dirname, "..");
+const envPath = resolve(devDir, ".env.local");
 config({ path: envPath });
 
 async function startDevServer() {
@@ -28,9 +29,10 @@ async function startDevServer() {
   if (!apiKey) {
     console.error("Error: API key is not set");
     console.log("\nPlease set your API key in one of these ways:");
-    console.log("  1. Create .env.test file in dev/server/");
+    console.log("  1. Create dev/.env.local file");
     console.log("     LLM_PROVIDER_KEY=your-api-key");
     console.log("  2. export LLM_PROVIDER_KEY='your-api-key'");
+    console.log("\nSee dev/.env.example for all available options");
     process.exit(1);
   }
 
