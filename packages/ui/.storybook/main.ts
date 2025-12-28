@@ -21,6 +21,29 @@ const config: StorybookConfig = {
         "~": path.resolve(__dirname, "../src"),
       };
     }
+
+    // Exclude server-only packages (prevent Vite from bundling them)
+    if (config.optimizeDeps) {
+      config.optimizeDeps.exclude = [...(config.optimizeDeps.exclude || []), "@agentxjs/runtime"];
+    }
+
+    // Mark server-only dependencies as external for Rollup
+    if (config.build?.rollupOptions) {
+      config.build.rollupOptions.external = [
+        ...(Array.isArray(config.build.rollupOptions.external)
+          ? config.build.rollupOptions.external
+          : []),
+        /^@agentxjs\/runtime/,
+        /^db0\//,
+        /^unstorage\//,
+        /^bun:/,
+        /^node:/,
+        "pg",
+        "mongodb",
+        "mysql2",
+      ];
+    }
+
     return config;
   },
 };

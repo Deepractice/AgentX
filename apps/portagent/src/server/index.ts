@@ -154,8 +154,13 @@ async function createApp() {
   });
 
   // Static files
-  const publicDir = resolve(__dirname, "../public");
-  const isDev = process.env.NODE_ENV !== "production";
+  // Use import.meta.dir (Bun-native, more reliable than __dirname)
+  // In dev mode: src/server -> ../../dist/public
+  // In production: dist/server -> ../public
+  const isDev = import.meta.dir.includes("/src/");
+  const publicDir = isDev
+    ? resolve(import.meta.dir, "../../dist/public")
+    : resolve(import.meta.dir, "../public");
 
   if (existsSync(publicDir)) {
     // Serve static files

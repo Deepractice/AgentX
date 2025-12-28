@@ -22,12 +22,11 @@
   "scripts": {
     "dev": "concurrently \"bun dev:server\" \"bun dev:client\"",
     "dev:server": "bun --watch src/server/main.ts",
-    "dev:client": "vite",
+    "dev:client": "bun dev.ts",
     "build": "bun run build.ts",
     "start": "node dist/cli/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "preview": "vite preview",
     "clean": "rm -rf dist"
   },
   "dependencies": {
@@ -49,16 +48,13 @@
     "access": "public"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.17",
+    "@tailwindcss/postcss": "4.1.18",
     "@types/node": "^24.9.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.4",
-    "autoprefixer": "^10.4.20",
     "concurrently": "^9.1.0",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^4.1.17",
-    "typescript": "^5.9.3",
-    "vite": "^6.0.5"
+    "postcss": "8.5.6",
+    "postcss-cli": "11.0.1",
+    "typescript": "^5.9.3"
   }
 }

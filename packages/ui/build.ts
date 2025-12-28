@@ -50,9 +50,20 @@ if (!result.success) {
   process.exit(1);
 }
 
-// Copy CSS file to dist
-console.log("📦 Copying CSS...");
+// Copy globals.css to dist
+console.log("📦 Copying globals.css...");
 await cp("src/styles/globals.css", `${outdir}/globals.css`);
+
+// Generate precompiled CSS with Tailwind CLI (for zero-config mode)
+console.log("📦 Generating precompiled CSS (agentx-ui.css)...");
+const tailwindResult =
+  await Bun.$`bunx tailwindcss -i src/styles/globals.css -o ${outdir}/agentx-ui.css --minify`.quiet();
+
+if (tailwindResult.exitCode !== 0) {
+  console.warn("⚠️  Tailwind CSS generation failed, skipping precompiled CSS");
+} else {
+  console.log("✅ Precompiled CSS generated");
+}
 
 console.log(`✅ ESM build: ${result.outputs.length} files`);
 console.log(`✅ CSS copied`);

@@ -16,7 +16,9 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./globals.css": "./dist/globals.css"
+    "./globals.css": "./dist/globals.css",
+    "./tailwind-preset": "./tailwind-preset.js",
+    "./dist/agentx-ui.css": "./dist/agentx-ui.css"
   },
   "sideEffects": [
     "*.css",

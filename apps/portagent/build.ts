@@ -69,7 +69,7 @@ const clientResult = await Bun.build({
   naming: {
     entry: "assets/[name]-[hash].js",
     chunk: "assets/[name]-[hash].js",
-    asset: "assets/[name]-[hash][ext]",
+    asset: "assets/[name]-[hash].[ext]", // Keep .css extension
   },
   external: [
     // Server-only packages won't be imported in browser code anyway
@@ -85,11 +85,25 @@ try {
   // public folder might not exist or already copied
 }
 
+// Generate CSS with PostCSS + Tailwind 4.x
+console.log("📦 Generating Tailwind CSS...");
+try {
+  await Bun.$`bunx postcss src/client/input.css -o ${outdir}/public/assets/styles.css --env production`.quiet();
+  console.log("✅ Tailwind CSS generated");
+} catch (e) {
+  console.warn("⚠️  CSS generation failed:", e);
+}
+
 // Generate index.html
 console.log("📦 Generating index.html...");
-const entryFile = clientResult.outputs.find((o) => o.path.includes("main"));
+const entryFile = clientResult.outputs.find(
+  (o) => o.path.includes("main") && o.path.endsWith(".js")
+);
+
 if (entryFile) {
-  const scriptPath = entryFile.path.replace(`${outdir}/public/`, "/");
+  const jsFilename = entryFile.path.split("/").pop();
+  const scriptPath = `/assets/${jsFilename}`;
+
   const html = `<!doctype html>
 <html lang="en">
   <head>
@@ -97,6 +111,7 @@ if (entryFile) {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Portagent - AgentX Portal</title>
+    <link rel="stylesheet" href="/assets/styles.css" />
   </head>
   <body>
     <div id="root"></div>

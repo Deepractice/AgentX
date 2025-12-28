@@ -257,7 +257,7 @@ export class SQLiteUserRepository implements UserRepository {
       SELECT 1 FROM users WHERE username = ?
     `);
 
-    return stmt.get(username) !== undefined;
+    return stmt.get(username) !== null;
   }
 
   /**
@@ -268,7 +268,7 @@ export class SQLiteUserRepository implements UserRepository {
       SELECT 1 FROM users WHERE email = ?
     `);
 
-    return stmt.get(email) !== undefined;
+    return stmt.get(email) !== null;
   }
 
   /**
