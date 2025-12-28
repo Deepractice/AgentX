@@ -4,9 +4,14 @@
   "description": "AgentX - Define, Run, Scale AI Agents",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "dev/*"
+  ],
   "scripts": {
-    "dev": "turbo run dev --filter=@agentxjs/portagent",
-    "start": "node apps/portagent/bin/portagent.js",
+    "dev": "bun dev/dev-manager.ts",
+    "start": "bun apps/portagent/bin/portagent.js",
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
@@ -20,34 +25,46 @@
   },
   "author": "Deepractice",
   "license": "MIT",
-  "packageManager": "pnpm@10.15.1",
+  "packageManager": "bun@1.3.5",
   "devDependencies": {
     "@changesets/cli": "^2.29.7",
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
     "@eslint/js": "^9.37.0",
+    "@tailwindcss/typography": "^0.5.15",
+    "@types/node": "^24.9.2",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/ws": "^8.5.13",
     "@typescript-eslint/eslint-plugin": "^8.46.0",
     "@typescript-eslint/parser": "^8.46.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "bun-dts": "0.1.70",
+    "bun-types": "1.3.5",
+    "concurrently": "^9.1.0",
+    "dotenv": "^16.6.1",
     "eslint": "^9.37.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "lefthook": "^1.13.6",
+    "postcss": "^8.4.49",
+    "postcss-cli": "^11.0.1",
+    "postcss-import": "16.1.1",
     "prettier": "^3.6.2",
+    "tailwindcss": "^3.4.17",
     "turbo": "^2.5.8",
     "typedoc": "^0.28.15",
-    "wait-on": "^8.0.4"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "better-sqlite3",
-      "esbuild",
-      "node-pty",
-      "sharp"
-    ]
+    "typescript": "^5.9.3",
+    "vite": "^6.0.5",
+    "wait-on": "^8.0.4",
+    "ws": "^8.18.0"
   },
   "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=9.0.0"
+    "bun": ">=1.3.0"
+  },
+  "dependencies": {
+    "ajv": "8.17.1"
   }
 }

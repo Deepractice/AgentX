@@ -47,7 +47,9 @@ export interface TimeAgoProps extends React.HTMLAttributes<HTMLSpanElement> {
  * <TimeAgo date={date} showTooltip={false} />
  * ```
  */
-export const TimeAgo = React.forwardRef<HTMLSpanElement, TimeAgoProps>(
+export const TimeAgo: React.ForwardRefExoticComponent<
+  TimeAgoProps & React.RefAttributes<HTMLSpanElement>
+> = React.forwardRef<HTMLSpanElement, TimeAgoProps>(
   ({ date, updateInterval = 60000, showTooltip = true, className, ...props }, ref) => {
     const [currentTime, setCurrentTime] = React.useState(new Date());
 

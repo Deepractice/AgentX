@@ -9,35 +9,49 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Repository Structure
 
 ```text
-/Agent
+/AgentX
 ├── apps/
 │   └── portagent/        # Web UI with auth (Hono + Vite + React)
-└── packages/
-    ├── types/            # @agentxjs/types - Type definitions (zero deps)
-    ├── common/           # @agentxjs/common - Logger facade
-    ├── agent/            # @agentxjs/agent - Agent lifecycle and event management
-    ├── agentx/           # agentxjs - Platform API (unified entry point)
-    ├── runtime/          # @agentxjs/runtime - Claude driver, SQLite, SystemBus
-    └── ui/               # @agentxjs/ui - React components (Storybook)
+├── packages/
+│   ├── types/            # @agentxjs/types - Type definitions (zero deps)
+│   ├── common/           # @agentxjs/common - Logger facade
+│   ├── agent/            # @agentxjs/agent - Agent lifecycle and event management
+│   ├── agentx/           # agentxjs - Platform API (unified entry point)
+│   ├── runtime/          # @agentxjs/runtime - Claude driver, SQLite, SystemBus
+│   └── ui/               # @agentxjs/ui - React components (pure UI, no server deps)
+└── dev/
+    ├── server/           # Shared dev server (WebSocket, Agent runtime)
+    └── storybook/        # @agentx/dev-storybook - UI component development
+        ├── .storybook/   # Storybook configuration
+        └── stories/      # Component stories
 ```
 
 **Package Dependency**: `types → common → agent → agentx → runtime → ui`
 
+**Dev Tools Isolation**: All development tools (Storybook, dev server) are isolated in `dev/`, ensuring `packages/ui` remains frontend-only with zero server dependencies.
+
 ## Commands
 
 ```bash
-pnpm install          # Install dependencies
-pnpm dev              # Start development (portagent app)
-pnpm build            # Build all packages
-pnpm typecheck        # Type checking
-pnpm lint             # Lint code
-pnpm test             # Run tests
-pnpm clean            # Clean artifacts
+bun install           # Install dependencies
+bun build             # Build all packages
+bun typecheck         # Type checking
+bun lint              # Lint code
+bun test              # Run tests
+bun clean             # Clean artifacts
+
+# Development (unified dev-manager)
+bun dev               # Start portagent app (default)
+bun dev portagent     # Start portagent app explicitly
+bun dev server        # Start WebSocket dev server (port 5200)
+bun dev storybook     # Start Storybook (port 6006)
+bun dev storybook server  # Start Storybook + WebSocket server
+bun dev all           # Start all dev tools (server + storybook)
+bun dev --help        # Show all available services
 
 # Single package commands
-pnpm --filter @agentxjs/agent test           # Run tests for one package
-pnpm --filter @agentxjs/agent test:watch     # Watch mode
-pnpm --filter @agentxjs/ui storybook         # Start Storybook (port 6006)
+bun --filter @agentxjs/agent test            # Run tests for one package
+bun --filter @agentxjs/agent test:watch      # Watch mode
 ```
 
 ## Core Architecture

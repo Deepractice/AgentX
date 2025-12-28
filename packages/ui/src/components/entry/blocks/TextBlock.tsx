@@ -53,7 +53,11 @@ export interface TextBlockProps {
 /**
  * TextBlock component
  */
-export function TextBlock({ block, streamingText, className }: TextBlockProps) {
+export function TextBlock({
+  block,
+  streamingText,
+  className,
+}: TextBlockProps): React.ReactElement | null {
   // Use streamingText if provided and block is streaming, otherwise use block.content
   const displayContent =
     block.status === "streaming" && streamingText !== undefined ? streamingText : block.content;

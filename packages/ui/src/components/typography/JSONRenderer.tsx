@@ -1,3 +1,4 @@
+import * as React from "react";
 import { FileText } from "lucide-react";
 import { cn } from "~/utils/utils";
 
@@ -24,7 +25,7 @@ export interface JSONRendererProps {
  * <JSONRenderer content='{"name": "Agent", "version": "1.0"}' />
  * ```
  */
-export function JSONRenderer({ content, className }: JSONRendererProps) {
+export function JSONRenderer({ content, className }: JSONRendererProps): React.ReactElement | null {
   try {
     const parsed = JSON.parse(content);
     const formatted = JSON.stringify(parsed, null, 2);

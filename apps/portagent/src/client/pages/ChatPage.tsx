@@ -104,10 +104,10 @@ export function ChatPage() {
         const info = await response.json();
         if (!mounted) return;
 
-        // Determine WebSocket URL (same host, /ws path)
-        const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const wsPath = info.wsPath || "/ws";
-        const wsUrl = `${wsProtocol}//${window.location.host}${wsPath}`;
+        // Use explicit wsUrl from server in dev, or construct from current host in prod
+        const wsUrl =
+          info.wsUrl ||
+          `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}${info.wsPath || "/ws"}`;
 
         // Create AgentX instance in remote mode (WebSocket)
         agentxInstance = await createAgentX({ serverUrl: wsUrl });

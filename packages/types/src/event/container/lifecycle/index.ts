@@ -18,8 +18,13 @@ import type { SystemEvent } from "../../base";
 /**
  * Base ContainerLifecycleEvent
  */
-interface BaseContainerLifecycleEvent<T extends string, D = unknown>
-  extends SystemEvent<T, D, "container", "lifecycle", "notification"> {}
+interface BaseContainerLifecycleEvent<T extends string, D = unknown> extends SystemEvent<
+  T,
+  D,
+  "container",
+  "lifecycle",
+  "notification"
+> {}
 
 // ============================================================================
 // Container Lifecycle Events
@@ -28,28 +33,26 @@ interface BaseContainerLifecycleEvent<T extends string, D = unknown>
 /**
  * ContainerCreatedEvent - Container was created
  */
-export interface ContainerCreatedEvent
-  extends BaseContainerLifecycleEvent<
-    "container_created",
-    {
-      containerId: string;
-      name?: string;
-      createdAt: number;
-    }
-  > {}
+export interface ContainerCreatedEvent extends BaseContainerLifecycleEvent<
+  "container_created",
+  {
+    containerId: string;
+    name?: string;
+    createdAt: number;
+  }
+> {}
 
 /**
  * ContainerDestroyedEvent - Container was destroyed
  */
-export interface ContainerDestroyedEvent
-  extends BaseContainerLifecycleEvent<
-    "container_destroyed",
-    {
-      containerId: string;
-      reason?: string;
-      agentCount: number;
-    }
-  > {}
+export interface ContainerDestroyedEvent extends BaseContainerLifecycleEvent<
+  "container_destroyed",
+  {
+    containerId: string;
+    reason?: string;
+    agentCount: number;
+  }
+> {}
 
 // ============================================================================
 // Agent Registration Events
@@ -58,29 +61,27 @@ export interface ContainerDestroyedEvent
 /**
  * AgentRegisteredEvent - Agent was registered to container
  */
-export interface AgentRegisteredEvent
-  extends BaseContainerLifecycleEvent<
-    "agent_registered",
-    {
-      containerId: string;
-      agentId: string;
-      definitionName: string;
-      registeredAt: number;
-    }
-  > {}
+export interface AgentRegisteredEvent extends BaseContainerLifecycleEvent<
+  "agent_registered",
+  {
+    containerId: string;
+    agentId: string;
+    definitionName: string;
+    registeredAt: number;
+  }
+> {}
 
 /**
  * AgentUnregisteredEvent - Agent was unregistered from container
  */
-export interface AgentUnregisteredEvent
-  extends BaseContainerLifecycleEvent<
-    "agent_unregistered",
-    {
-      containerId: string;
-      agentId: string;
-      reason?: string;
-    }
-  > {}
+export interface AgentUnregisteredEvent extends BaseContainerLifecycleEvent<
+  "agent_unregistered",
+  {
+    containerId: string;
+    agentId: string;
+    reason?: string;
+  }
+> {}
 
 // ============================================================================
 // Union Type

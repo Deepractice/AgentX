@@ -94,7 +94,7 @@ export function AgentList({
   showCollapseButton = false,
   onCollapse,
   className,
-}: AgentListProps) {
+}: AgentListProps): React.ReactElement {
   const { images, isLoading, createImage, runImage, deleteImage, refresh } = useImages(agentx, {
     containerId,
   });

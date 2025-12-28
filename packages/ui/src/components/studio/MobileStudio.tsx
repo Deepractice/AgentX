@@ -89,7 +89,7 @@ export function MobileStudio({
   searchable = true,
   placeholder,
   className,
-}: MobileStudioProps) {
+}: MobileStudioProps): React.ReactElement {
   // State
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [currentImageId, setCurrentImageId] = React.useState<string | null>(null);

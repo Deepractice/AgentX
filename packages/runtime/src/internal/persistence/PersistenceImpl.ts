@@ -175,9 +175,9 @@ async function createStorageFromConfig(config: PersistenceConfig): Promise<Stora
     case "sqlite": {
       const { default: db0Driver } = await import("unstorage/drivers/db0");
       const { createDatabase } = await import("db0");
-      // @ts-expect-error - db0 connectors use .mts exports, not compatible with moduleResolution: node
-      const { default: sqliteConnector } = await import("db0/connectors/better-sqlite3");
-      const database = createDatabase(sqliteConnector({ path: config.path ?? "./data.db" }));
+      // Using Bun's native SQLite connector (3-6x faster than better-sqlite3)
+      const { default: bunSqliteConnector } = await import("db0/connectors/bun-sqlite");
+      const database = createDatabase(bunSqliteConnector({ name: config.path ?? "./data.db" }));
       return createStorage({
         driver: db0Driver({ database }),
       });
@@ -186,7 +186,6 @@ async function createStorageFromConfig(config: PersistenceConfig): Promise<Stora
     case "mysql": {
       const { default: db0Driver } = await import("unstorage/drivers/db0");
       const { createDatabase } = await import("db0");
-      // @ts-expect-error - db0 connectors use .mts exports, not compatible with moduleResolution: node
       const { default: mysqlConnector } = await import("db0/connectors/mysql2");
       const database = createDatabase(
         mysqlConnector({ uri: config.url ?? "mysql://localhost:3306/agentx" })
@@ -199,7 +198,6 @@ async function createStorageFromConfig(config: PersistenceConfig): Promise<Stora
     case "postgresql": {
       const { default: db0Driver } = await import("unstorage/drivers/db0");
       const { createDatabase } = await import("db0");
-      // @ts-expect-error - db0 connectors use .mts exports, not compatible with moduleResolution: node
       const { default: pgConnector } = await import("db0/connectors/postgresql");
       const database = createDatabase(
         pgConnector({ connectionString: config.url ?? "postgres://localhost:5432/agentx" })

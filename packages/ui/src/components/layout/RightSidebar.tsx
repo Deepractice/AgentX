@@ -43,7 +43,9 @@ export interface RightSidebarProps extends React.HTMLAttributes<HTMLDivElement> 
  * </Allotment>
  * ```
  */
-export const RightSidebar = React.forwardRef<HTMLDivElement, RightSidebarProps>(
+export const RightSidebar: React.ForwardRefExoticComponent<
+  RightSidebarProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, RightSidebarProps>(
   ({ width = 300, minWidth = 200, maxWidth = 600, className, children, ...props }, ref) => {
     return (
       <div

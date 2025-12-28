@@ -103,7 +103,7 @@ class EventBus {
 }
 
 // Export singleton instance
-export const eventBus = new EventBus();
+export const eventBus: EventBus = new EventBus();
 
 // Enable debug in development (lazy initialization to avoid SSR issues)
 // Will be called when first used in browser environment

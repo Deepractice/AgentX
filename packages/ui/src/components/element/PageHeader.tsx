@@ -90,7 +90,9 @@ export interface PageHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
  * />
  * ```
  */
-export const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(
+export const PageHeader: React.ForwardRefExoticComponent<
+  PageHeaderProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, PageHeaderProps>(
   (
     {
       title,

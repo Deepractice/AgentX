@@ -9,7 +9,7 @@
  *   pnpm test:update
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import * as RuntimeExports from "~/runtime";
 
 /**

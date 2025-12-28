@@ -10,6 +10,12 @@ export * from "~/components/studio";
 // Container Components (business logic layer)
 export * from "~/components/container";
 
+// Entry Components (conversation entries)
+export * from "~/components/entry";
+
+// Message Components (message blocks)
+export * from "~/components/message";
+
 // Pane Components (pure UI layer)
 export * from "~/components/pane";
 

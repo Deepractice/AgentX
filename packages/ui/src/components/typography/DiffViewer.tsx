@@ -1,3 +1,4 @@
+import * as React from "react";
 import { cn } from "~/utils/utils";
 
 export interface DiffViewerProps {
@@ -47,7 +48,7 @@ export function DiffViewer({
   isMobile,
   wrapText,
   className,
-}: DiffViewerProps) {
+}: DiffViewerProps): React.ReactElement {
   if (!diff) {
     return (
       <div className="p-4 text-center text-slate-500 dark:text-slate-400 text-sm">

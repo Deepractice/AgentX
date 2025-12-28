@@ -1,0 +1,13 @@
+[install]
+# Use exact versions for consistency
+exact = true
+# Enable peer dependency resolution
+peer = true
+
+[test]
+# Enable coverage reporting
+coverage = true
+
+[run]
+# Use Bun runtime for scripts
+bun = true

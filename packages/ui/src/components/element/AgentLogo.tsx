@@ -20,7 +20,9 @@ export interface AgentLogoProps extends React.ImgHTMLAttributes<HTMLImageElement
  * <AgentLogo src="/custom-logo.svg" />
  * ```
  */
-const AgentLogo = React.forwardRef<HTMLImageElement, AgentLogoProps>(
+const AgentLogo: React.ForwardRefExoticComponent<
+  AgentLogoProps & React.RefAttributes<HTMLImageElement>
+> = React.forwardRef<HTMLImageElement, AgentLogoProps>(
   ({ className, src = "/icons/agent-ai-icon.svg", alt = "Agent", ...props }, ref) => {
     return <img ref={ref} src={src} alt={alt} className={cn("w-5 h-5", className)} {...props} />;
   }

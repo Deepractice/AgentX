@@ -15,23 +15,20 @@
   },
   "license": "MIT",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "default": "./dist/index.js"
     }
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "files": [
     "dist",
     "README.md"
   ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "bun run build.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
@@ -39,11 +36,7 @@
   "dependencies": {
     "@agentxjs/types": "workspace:*"
   },
-  "devDependencies": {
-    "@types/node": "^22.19.1",
-    "tsup": "^8.5.0",
-    "typescript": "^5.9.3"
-  },
+  "devDependencies": {},
   "publishConfig": {
     "access": "public"
   }

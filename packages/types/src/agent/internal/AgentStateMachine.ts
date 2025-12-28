@@ -14,7 +14,7 @@
  */
 
 import type { AgentState } from "../AgentState";
-import type { StateChange, StateChangeHandler } from "../Agent";
+import type { StateChangeHandler } from "../Agent";
 import type { Unsubscribe } from "./AgentOutputCallback";
 import type { AgentOutput } from "../AgentOutput";
 

@@ -2,8 +2,10 @@ import * as React from "react";
 import { Search, X } from "lucide-react";
 import { cn } from "~/utils/utils";
 
-export interface SearchInputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "onChange"> {
+export interface SearchInputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "type" | "onChange"
+> {
   /**
    * Current search value (controlled)
    */
@@ -77,7 +79,9 @@ export interface SearchInputProps
  * />
  * ```
  */
-export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
+export const SearchInput: React.ForwardRefExoticComponent<
+  SearchInputProps & React.RefAttributes<HTMLInputElement>
+> = React.forwardRef<HTMLInputElement, SearchInputProps>(
   (
     {
       value,

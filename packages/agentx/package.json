@@ -10,29 +10,25 @@
   "homepage": "https://github.com/Deepractice/AgentX",
   "type": "module",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "browser": "./dist/browser.js",
       "node": "./dist/index.js",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "bun run build.ts",
     "clean": "rm -rf dist test-results",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test": "bun test",
+    "test:watch": "bun test --watch"
   },
   "dependencies": {
     "@agentxjs/common": "workspace:*",
@@ -42,12 +38,7 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@agentxjs/runtime": "workspace:*",
-    "@types/node": "^24.9.2",
-    "@types/ws": "^8.5.13",
-    "tsup": "^8.3.5",
-    "typescript": "^5.7.2",
-    "vitest": "^3.2.4"
+    "@agentxjs/runtime": "workspace:*"
   },
   "publishConfig": {
     "access": "public"

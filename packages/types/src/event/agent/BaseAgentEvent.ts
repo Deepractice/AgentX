@@ -19,8 +19,11 @@ export type AgentEventCategory = "stream" | "state" | "message" | "turn";
  *
  * Extends SystemEvent with fixed source and intent.
  */
-export interface BaseAgentEvent<T extends string, D, C extends AgentEventCategory>
-  extends SystemEvent<T, D, "agent", C, "notification"> {
+export interface BaseAgentEvent<
+  T extends string,
+  D,
+  C extends AgentEventCategory,
+> extends SystemEvent<T, D, "agent", C, "notification"> {
   /**
    * Runtime context (optional, added by Presenter)
    */

@@ -11,7 +11,6 @@ export { ImageAttachment } from "./ImageAttachment";
 export { Input } from "./Input";
 export { ListItem } from "./ListItem";
 export { LoadingState } from "./LoadingState";
-export { MessageAvatar } from "./MessageAvatar";
 export { PageHeader } from "./PageHeader";
 export { Popover } from "./Popover";
 export { ScrollArea } from "./ScrollArea";

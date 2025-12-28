@@ -62,7 +62,9 @@ export interface MessagePaneProps {
  *
  * Pure UI container with auto-scroll functionality.
  */
-export const MessagePane = React.forwardRef<HTMLDivElement, MessagePaneProps>(
+export const MessagePane: React.ForwardRefExoticComponent<
+  MessagePaneProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, MessagePaneProps>(
   (
     {
       children,

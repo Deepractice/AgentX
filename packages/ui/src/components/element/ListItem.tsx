@@ -106,7 +106,9 @@ export interface ListItemProps extends Omit<React.HTMLAttributes<HTMLDivElement>
  * />
  * ```
  */
-export const ListItem = React.forwardRef<HTMLDivElement, ListItemProps>(
+export const ListItem: React.ForwardRefExoticComponent<
+  ListItemProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, ListItemProps>(
   (
     {
       selected = false,

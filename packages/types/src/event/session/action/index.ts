@@ -18,14 +18,24 @@ import type { SystemEvent } from "../../base";
 /**
  * Base SessionActionRequest
  */
-interface BaseSessionActionRequest<T extends string, D = unknown>
-  extends SystemEvent<T, D, "session", "action", "request"> {}
+interface BaseSessionActionRequest<T extends string, D = unknown> extends SystemEvent<
+  T,
+  D,
+  "session",
+  "action",
+  "request"
+> {}
 
 /**
  * Base SessionActionResult
  */
-interface BaseSessionActionResult<T extends string, D = unknown>
-  extends SystemEvent<T, D, "session", "action", "result"> {}
+interface BaseSessionActionResult<T extends string, D = unknown> extends SystemEvent<
+  T,
+  D,
+  "session",
+  "action",
+  "result"
+> {}
 
 // ============================================================================
 // Resume Events
@@ -34,27 +44,25 @@ interface BaseSessionActionResult<T extends string, D = unknown>
 /**
  * SessionResumeRequest - Request to resume a session
  */
-export interface SessionResumeRequest
-  extends BaseSessionActionRequest<
-    "session_resume_request",
-    {
-      sessionId: string;
-      containerId?: string;
-    }
-  > {}
+export interface SessionResumeRequest extends BaseSessionActionRequest<
+  "session_resume_request",
+  {
+    sessionId: string;
+    containerId?: string;
+  }
+> {}
 
 /**
  * SessionResumedEvent - Session was resumed
  */
-export interface SessionResumedEvent
-  extends BaseSessionActionResult<
-    "session_resumed",
-    {
-      sessionId: string;
-      agentId: string;
-      resumedAt: number;
-    }
-  > {}
+export interface SessionResumedEvent extends BaseSessionActionResult<
+  "session_resumed",
+  {
+    sessionId: string;
+    agentId: string;
+    resumedAt: number;
+  }
+> {}
 
 // ============================================================================
 // Fork Events
@@ -63,28 +71,26 @@ export interface SessionResumedEvent
 /**
  * SessionForkRequest - Request to fork a session
  */
-export interface SessionForkRequest
-  extends BaseSessionActionRequest<
-    "session_fork_request",
-    {
-      sessionId: string;
-      newTitle?: string;
-    }
-  > {}
+export interface SessionForkRequest extends BaseSessionActionRequest<
+  "session_fork_request",
+  {
+    sessionId: string;
+    newTitle?: string;
+  }
+> {}
 
 /**
  * SessionForkedEvent - Session was forked
  */
-export interface SessionForkedEvent
-  extends BaseSessionActionResult<
-    "session_forked",
-    {
-      originalSessionId: string;
-      newSessionId: string;
-      newImageId: string;
-      forkedAt: number;
-    }
-  > {}
+export interface SessionForkedEvent extends BaseSessionActionResult<
+  "session_forked",
+  {
+    originalSessionId: string;
+    newSessionId: string;
+    newImageId: string;
+    forkedAt: number;
+  }
+> {}
 
 // ============================================================================
 // Title Update Events
@@ -93,27 +99,25 @@ export interface SessionForkedEvent
 /**
  * SessionTitleUpdateRequest - Request to update session title
  */
-export interface SessionTitleUpdateRequest
-  extends BaseSessionActionRequest<
-    "session_title_update_request",
-    {
-      sessionId: string;
-      title: string;
-    }
-  > {}
+export interface SessionTitleUpdateRequest extends BaseSessionActionRequest<
+  "session_title_update_request",
+  {
+    sessionId: string;
+    title: string;
+  }
+> {}
 
 /**
  * SessionTitleUpdatedEvent - Session title was updated
  */
-export interface SessionTitleUpdatedEvent
-  extends BaseSessionActionResult<
-    "session_title_updated",
-    {
-      sessionId: string;
-      title: string;
-      updatedAt: number;
-    }
-  > {}
+export interface SessionTitleUpdatedEvent extends BaseSessionActionResult<
+  "session_title_updated",
+  {
+    sessionId: string;
+    title: string;
+    updatedAt: number;
+  }
+> {}
 
 // ============================================================================
 // Union Types

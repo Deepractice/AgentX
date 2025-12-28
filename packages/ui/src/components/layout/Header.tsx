@@ -36,7 +36,9 @@ export interface HeaderProps extends React.HTMLAttributes<HTMLDivElement> {
  * />
  * ```
  */
-export const Header = React.forwardRef<HTMLDivElement, HeaderProps>(
+export const Header: React.ForwardRefExoticComponent<
+  HeaderProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, HeaderProps>(
   ({ left, center, right, height = 56, className, children, ...props }, ref) => {
     return (
       <div

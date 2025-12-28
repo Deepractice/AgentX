@@ -1,0 +1,6 @@
+/* Import AgentX CSS variables from UI package */
+@import "@agentxjs/ui/globals.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

@@ -11,12 +11,8 @@
  * - WebSocket upgrade on /ws path handled by AgentX
  */
 
-import { dirname, resolve } from "path";
-import { fileURLToPath } from "url";
+import { resolve } from "path";
 import { createServer } from "http";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -147,15 +143,25 @@ async function createApp() {
   // AgentX info endpoint (protected)
   app.use("/agentx/*", authMiddleware);
   app.get("/agentx/info", (c) => {
+    // In development, return full WebSocket URL for Vite proxy
+    const isDev = process.env.NODE_ENV !== "production";
+    const wsUrl = isDev ? `ws://localhost:${PORT}/ws` : undefined;
+
     return c.json({
       version: "0.1.0",
       wsPath: "/ws",
+      wsUrl, // Full URL in dev mode
     });
   });
 
   // Static files
-  const publicDir = resolve(__dirname, "../public");
-  const isDev = process.env.NODE_ENV !== "production";
+  // Use import.meta.dir (Bun-native, more reliable than __dirname)
+  // In dev mode: src/server -> ../../dist/public
+  // In production: dist/server -> ../public
+  const isDev = import.meta.dir.includes("/src/");
+  const publicDir = isDev
+    ? resolve(import.meta.dir, "../../dist/public")
+    : resolve(import.meta.dir, "../public");
 
   if (existsSync(publicDir)) {
     // Serve static files

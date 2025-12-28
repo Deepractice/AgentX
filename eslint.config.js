@@ -18,6 +18,8 @@ export default [
       "**/temp/**",
       "**/*.config.js",
       "**/*.config.ts",
+      "**/.bun-dts-*/**", // Bun DTS temporary files
+      "**/build.ts", // Bun build scripts (executed by Bun runtime)
     ],
   },
   js.configs.recommended,
@@ -31,6 +33,8 @@ export default [
         sourceType: "module",
       },
       globals: {
+        // Bun runtime
+        Bun: "readonly",
         // Console and process
         console: "readonly",
         process: "readonly",

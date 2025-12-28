@@ -20,24 +20,18 @@
     "README.md"
   ],
   "scripts": {
-    "dev": "concurrently \"pnpm dev:server\" \"pnpm dev:client\"",
-    "dev:server": "tsx --watch src/server/main.ts",
     "dev:client": "vite",
-    "build": "pnpm build:client && pnpm build:server",
-    "build:client": "vite build",
-    "build:server": "tsup",
+    "build": "bun run build.ts",
     "start": "node dist/cli/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "@agentxjs/runtime": "workspace:*",
     "@agentxjs/ui": "workspace:*",
     "@hono/node-server": "^1.13.7",
     "agentxjs": "workspace:*",
-    "bcrypt": "^6.0.0",
-    "better-sqlite3": "^11.10.0",
     "commander": "^12.1.0",
     "dotenv": "^16.6.1",
     "hono": "^4.6.12",
@@ -51,21 +45,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.17",
-    "@types/bcrypt": "^6.0.0",
-    "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^24.9.2",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.4",
-    "autoprefixer": "^10.4.20",
-    "concurrently": "^9.1.0",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^4.1.17",
-    "tsup": "^8.3.5",
-    "tsx": "^4.19.2",
-    "typescript": "^5.9.3",
-    "vite": "^6.0.5"
-  }
+  "devDependencies": {}
 }

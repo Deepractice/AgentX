@@ -22,14 +22,24 @@ import type { SystemEvent } from "../../base";
 /**
  * Base SessionPersistRequest
  */
-interface BaseSessionPersistRequest<T extends string, D = unknown>
-  extends SystemEvent<T, D, "session", "persist", "request"> {}
+interface BaseSessionPersistRequest<T extends string, D = unknown> extends SystemEvent<
+  T,
+  D,
+  "session",
+  "persist",
+  "request"
+> {}
 
 /**
  * Base SessionPersistResult
  */
-interface BaseSessionPersistResult<T extends string, D = unknown>
-  extends SystemEvent<T, D, "session", "persist", "result"> {}
+interface BaseSessionPersistResult<T extends string, D = unknown> extends SystemEvent<
+  T,
+  D,
+  "session",
+  "persist",
+  "result"
+> {}
 
 // ============================================================================
 // Save Events
@@ -38,27 +48,25 @@ interface BaseSessionPersistResult<T extends string, D = unknown>
 /**
  * SessionSaveRequest - Request to save session
  */
-export interface SessionSaveRequest
-  extends BaseSessionPersistRequest<
-    "session_save_request",
-    {
-      sessionId: string;
-      title?: string;
-      metadata?: Record<string, unknown>;
-    }
-  > {}
+export interface SessionSaveRequest extends BaseSessionPersistRequest<
+  "session_save_request",
+  {
+    sessionId: string;
+    title?: string;
+    metadata?: Record<string, unknown>;
+  }
+> {}
 
 /**
  * SessionSavedEvent - Session was saved
  */
-export interface SessionSavedEvent
-  extends BaseSessionPersistResult<
-    "session_saved",
-    {
-      sessionId: string;
-      savedAt: number;
-    }
-  > {}
+export interface SessionSavedEvent extends BaseSessionPersistResult<
+  "session_saved",
+  {
+    sessionId: string;
+    savedAt: number;
+  }
+> {}
 
 // ============================================================================
 // Message Persist Events
@@ -67,29 +75,27 @@ export interface SessionSavedEvent
 /**
  * MessagePersistRequest - Request to persist a message
  */
-export interface MessagePersistRequest
-  extends BaseSessionPersistRequest<
-    "message_persist_request",
-    {
-      sessionId: string;
-      messageId: string;
-      role: "user" | "assistant" | "tool_call" | "tool_result";
-      content: unknown;
-    }
-  > {}
+export interface MessagePersistRequest extends BaseSessionPersistRequest<
+  "message_persist_request",
+  {
+    sessionId: string;
+    messageId: string;
+    role: "user" | "assistant" | "tool_call" | "tool_result";
+    content: unknown;
+  }
+> {}
 
 /**
  * MessagePersistedEvent - Message was persisted
  */
-export interface MessagePersistedEvent
-  extends BaseSessionPersistResult<
-    "message_persisted",
-    {
-      sessionId: string;
-      messageId: string;
-      savedAt: number;
-    }
-  > {}
+export interface MessagePersistedEvent extends BaseSessionPersistResult<
+  "message_persisted",
+  {
+    sessionId: string;
+    messageId: string;
+    savedAt: number;
+  }
+> {}
 
 // ============================================================================
 // Union Types

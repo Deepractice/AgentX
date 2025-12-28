@@ -17,3 +17,5 @@ exports[`Runtime Types Contract > should maintain stable exports 1`] = `
   "toAgentStreamEvent": "function(2 args)",
 }
 `;
+
+exports[`Runtime Types Contract should maintain stable exports 1`] = `{}`;

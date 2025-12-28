@@ -23,17 +23,13 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 20
-          cache: "pnpm"
+          bun-version: latest
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Preview Version (Dry Run)
         if: ${{ inputs.dry_run }}
@@ -41,7 +37,7 @@ jobs:
           echo "🔍 Dry Run Mode - Previewing version calculation"
           echo ""
           echo "=== Changeset Status ==="
-          pnpm changeset status --verbose
+          bunx changeset status --verbose
           echo ""
           echo "=== Changeset Files ==="
           find .changeset -name "*.md" ! -name "README.md" -exec echo "📄 {}" \; -exec cat {} \; -exec echo "" \;
@@ -94,7 +90,7 @@ jobs:
 
       - name: Version Packages
         if: ${{ !inputs.dry_run }}
-        run: pnpm changeset version
+        run: bunx changeset version
 
       - name: Get Version and Create Branch
         if: ${{ !inputs.dry_run }}

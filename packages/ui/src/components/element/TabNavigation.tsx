@@ -78,7 +78,8 @@ export interface Tab {
 }
 
 export interface TabNavigationProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange">,
+  extends
+    Omit<React.HTMLAttributes<HTMLDivElement>, "onChange">,
     VariantProps<typeof tabNavigationVariants> {
   /**
    * Array of tab items
@@ -146,7 +147,9 @@ export interface TabNavigationProps
  * />
  * ```
  */
-export const TabNavigation = React.forwardRef<HTMLDivElement, TabNavigationProps>(
+export const TabNavigation: React.ForwardRefExoticComponent<
+  TabNavigationProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, TabNavigationProps>(
   (
     {
       tabs,

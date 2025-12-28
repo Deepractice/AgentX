@@ -18,8 +18,13 @@ import type { SystemEvent } from "../../base";
 /**
  * Base SessionLifecycleEvent
  */
-interface BaseSessionLifecycleEvent<T extends string, D = unknown>
-  extends SystemEvent<T, D, "session", "lifecycle", "notification"> {}
+interface BaseSessionLifecycleEvent<T extends string, D = unknown> extends SystemEvent<
+  T,
+  D,
+  "session",
+  "lifecycle",
+  "notification"
+> {}
 
 // ============================================================================
 // Lifecycle Events
@@ -28,29 +33,27 @@ interface BaseSessionLifecycleEvent<T extends string, D = unknown>
 /**
  * SessionCreatedEvent - Session was created
  */
-export interface SessionCreatedEvent
-  extends BaseSessionLifecycleEvent<
-    "session_created",
-    {
-      sessionId: string;
-      imageId: string;
-      containerId: string;
-      title?: string;
-      createdAt: number;
-    }
-  > {}
+export interface SessionCreatedEvent extends BaseSessionLifecycleEvent<
+  "session_created",
+  {
+    sessionId: string;
+    imageId: string;
+    containerId: string;
+    title?: string;
+    createdAt: number;
+  }
+> {}
 
 /**
  * SessionDestroyedEvent - Session was destroyed
  */
-export interface SessionDestroyedEvent
-  extends BaseSessionLifecycleEvent<
-    "session_destroyed",
-    {
-      sessionId: string;
-      reason?: string;
-    }
-  > {}
+export interface SessionDestroyedEvent extends BaseSessionLifecycleEvent<
+  "session_destroyed",
+  {
+    sessionId: string;
+    reason?: string;
+  }
+> {}
 
 // ============================================================================
 // Union Type

@@ -31,33 +31,31 @@ export interface TokenUsage {
 /**
  * TurnRequestEvent - Turn started (user message received)
  */
-export interface TurnRequestEvent
-  extends AgentTurnEventBase<
-    "turn_request",
-    {
-      turnId: string;
-      messageId: string;
-      content: string;
-      timestamp: number;
-    }
-  > {}
+export interface TurnRequestEvent extends AgentTurnEventBase<
+  "turn_request",
+  {
+    turnId: string;
+    messageId: string;
+    content: string;
+    timestamp: number;
+  }
+> {}
 
 /**
  * TurnResponseEvent - Turn completed (assistant response finished)
  */
-export interface TurnResponseEvent
-  extends AgentTurnEventBase<
-    "turn_response",
-    {
-      turnId: string;
-      messageId: string;
-      duration: number;
-      usage?: TokenUsage;
-      model?: string;
-      stopReason?: string;
-      timestamp: number;
-    }
-  > {}
+export interface TurnResponseEvent extends AgentTurnEventBase<
+  "turn_response",
+  {
+    turnId: string;
+    messageId: string;
+    duration: number;
+    usage?: TokenUsage;
+    model?: string;
+    stopReason?: string;
+    timestamp: number;
+  }
+> {}
 
 // ============================================================================
 // Union Type

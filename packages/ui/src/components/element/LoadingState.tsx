@@ -51,7 +51,9 @@ export interface LoadingStateProps extends React.HTMLAttributes<HTMLDivElement> 
  * <LoadingState showSpinner />
  * ```
  */
-export const LoadingState = React.forwardRef<HTMLDivElement, LoadingStateProps>(
+export const LoadingState: React.ForwardRefExoticComponent<
+  LoadingStateProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, LoadingStateProps>(
   ({ icon, title, description, spacing = "md", showSpinner = true, className, ...props }, ref) => {
     const spacingClasses = {
       sm: "py-8",

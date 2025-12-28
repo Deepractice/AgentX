@@ -19,7 +19,9 @@ export interface StatusBarItemProps extends React.HTMLAttributes<HTMLDivElement>
 /**
  * StatusBarItem - Individual item in the status bar
  */
-export const StatusBarItem = React.forwardRef<HTMLDivElement, StatusBarItemProps>(
+export const StatusBarItem: React.ForwardRefExoticComponent<
+  StatusBarItemProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, StatusBarItemProps>(
   ({ icon, children, clickable = false, className, ...props }, ref) => {
     return (
       <div
@@ -55,7 +57,9 @@ export interface StatusBarSectionProps extends React.HTMLAttributes<HTMLDivEleme
 /**
  * StatusBarSection - Group of items in the status bar
  */
-export const StatusBarSection = React.forwardRef<HTMLDivElement, StatusBarSectionProps>(
+export const StatusBarSection: React.ForwardRefExoticComponent<
+  StatusBarSectionProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, StatusBarSectionProps>(
   ({ align = "left", children, className, ...props }, ref) => {
     return (
       <div
@@ -109,7 +113,9 @@ export interface StatusBarProps extends React.HTMLAttributes<HTMLDivElement> {
  * </StatusBar>
  * ```
  */
-export const StatusBar = React.forwardRef<HTMLDivElement, StatusBarProps>(
+export const StatusBar: React.ForwardRefExoticComponent<
+  StatusBarProps & React.RefAttributes<HTMLDivElement>
+> = React.forwardRef<HTMLDivElement, StatusBarProps>(
   ({ height = 24, children, className, ...props }, ref) => {
     return (
       <div

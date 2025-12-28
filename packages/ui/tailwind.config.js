@@ -1,5 +1,24 @@
+/**
+ * AgentX UI Tailwind Configuration
+ *
+ * This file serves dual purposes:
+ * 1. Build agentx-ui.css (when used in packages/ui)
+ * 2. Export as preset for users (imported as @agentxjs/ui/tailwind-preset)
+ *
+ * @example User usage
+ * ```js
+ * import agentxPreset from '@agentxjs/ui/tailwind-preset'
+ *
+ * export default {
+ *   presets: [agentxPreset],
+ *   content: ['./src/**\/*.{ts,tsx}']
+ * }
+ * ```
+ */
+
 /** @type {import('tailwindcss').Config} */
 export default {
+  // Content is overridden when used as preset (users provide their own)
   content: ["./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
