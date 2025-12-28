@@ -73,11 +73,11 @@ export type AgentProcessorOutput =
  * Note: Raw StreamEvents are NOT output by this processor.
  * The AgentEngine handles pass-through of original events.
  */
-export const agentProcessor = combineProcessors<
+export const agentProcessor: Processor<
   AgentEngineState,
   AgentProcessorInput,
   AgentProcessorOutput
->({
+> = combineProcessors<AgentEngineState, AgentProcessorInput, AgentProcessorOutput>({
   messageAssembler: messageAssemblerProcessor as unknown as Processor<
     AgentEngineState["messageAssembler"],
     AgentProcessorInput,
@@ -98,8 +98,9 @@ export const agentProcessor = combineProcessors<
 /**
  * Initial state factory for the full agent engine
  */
-export const createInitialAgentEngineState = combineInitialStates<AgentEngineState>({
-  messageAssembler: createInitialMessageAssemblerState,
-  stateEventProcessor: createInitialStateEventProcessorContext,
-  turnTracker: createInitialTurnTrackerState,
-});
+export const createInitialAgentEngineState: () => AgentEngineState =
+  combineInitialStates<AgentEngineState>({
+    messageAssembler: createInitialMessageAssemblerState,
+    stateEventProcessor: createInitialStateEventProcessorContext,
+    turnTracker: createInitialTurnTrackerState,
+  });
