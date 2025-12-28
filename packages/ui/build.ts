@@ -54,13 +54,12 @@ if (!result.success) {
 console.log("📦 Copying globals.css...");
 await cp("src/styles/globals.css", `${outdir}/globals.css`);
 
-// Generate precompiled CSS with Tailwind CLI (for zero-config mode)
+// Generate precompiled CSS with Tailwind 3.x CLI (for zero-config mode)
 console.log("📦 Generating precompiled CSS (agentx-ui.css)...");
 try {
-  // Try workspace root node_modules first, then local
   const tailwindBin = "../../node_modules/.bin/tailwindcss";
   const tailwindResult =
-    await Bun.$`${tailwindBin} -i src/styles/globals.css -o ${outdir}/agentx-ui.css --minify`.quiet();
+    await Bun.$`${tailwindBin} --config ./tailwind.config.js --input ./styles-temp.css --output ${outdir}/agentx-ui.css --minify`.quiet();
 
   if (tailwindResult.exitCode !== 0) {
     console.warn("⚠️  Tailwind CSS generation failed, skipping precompiled CSS");
