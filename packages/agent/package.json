@@ -37,10 +37,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Deepractice/Agent.git"
+    "url": "git+https://github.com/Deepractice/AgentX.git"
   },
   "bugs": {
-    "url": "https://github.com/Deepractice/Agent/issues"
+    "url": "git+https://github.com/Deepractice/AgentX.git"
   },
   "homepage": "https://github.com/Deepractice/Agent#readme",
   "dependencies": {
