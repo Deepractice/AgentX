@@ -26,11 +26,10 @@
   "dependencies": {
     "@agentxjs/agent": "workspace:*",
     "@agentxjs/common": "workspace:*",
+    "@agentxjs/persistence": "workspace:*",
     "@agentxjs/types": "workspace:*",
     "@anthropic-ai/claude-agent-sdk": "^0.1.30",
-    "db0": "^0.3.4",
-    "rxjs": "^7.8.2",
-    "unstorage": "^1.14.4"
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {}
 }

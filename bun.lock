@@ -45,7 +45,7 @@
     },
     "apps/portagent": {
       "name": "@agentxjs/portagent",
-      "version": "1.4.0",
+      "version": "1.5.1",
       "bin": {
         "portagent": "./bin/portagent.js",
       },
@@ -67,7 +67,7 @@
     },
     "dev/storybook": {
       "name": "@agentx/dev-storybook",
-      "version": "0.0.0",
+      "version": "0.0.2",
       "dependencies": {
         "@agentxjs/ui": "workspace:*",
       },
@@ -83,7 +83,7 @@
     },
     "packages/agent": {
       "name": "@agentxjs/agent",
-      "version": "1.4.0",
+      "version": "1.5.1",
       "dependencies": {
         "@agentxjs/common": "workspace:*",
         "@agentxjs/types": "workspace:*",
@@ -92,7 +92,7 @@
     },
     "packages/agentx": {
       "name": "agentxjs",
-      "version": "1.4.0",
+      "version": "1.5.1",
       "dependencies": {
         "@agentxjs/common": "workspace:*",
         "@agentxjs/network": "workspace:*",
@@ -101,19 +101,20 @@
         "ws": "^8.18.0",
       },
       "devDependencies": {
+        "@agentxjs/persistence": "workspace:*",
         "@agentxjs/runtime": "workspace:*",
       },
     },
     "packages/common": {
       "name": "@agentxjs/common",
-      "version": "1.4.0",
+      "version": "1.5.1",
       "dependencies": {
         "@agentxjs/types": "workspace:*",
       },
     },
     "packages/network": {
       "name": "@agentxjs/network",
-      "version": "1.4.0",
+      "version": "1.5.1",
       "dependencies": {
         "@agentxjs/common": "workspace:*",
         "@agentxjs/types": "workspace:*",
@@ -121,26 +122,40 @@
         "ws": "^8.18.0",
       },
     },
+    "packages/persistence": {
+      "name": "@agentxjs/persistence",
+      "version": "1.5.1",
+      "dependencies": {
+        "@agentxjs/common": "workspace:*",
+        "@agentxjs/types": "workspace:*",
+        "unstorage": "^1.14.4",
+      },
+      "peerDependencies": {
+        "db0": "^0.2.0",
+      },
+      "optionalPeers": [
+        "db0",
+      ],
+    },
     "packages/runtime": {
       "name": "@agentxjs/runtime",
-      "version": "1.4.0",
+      "version": "1.5.1",
       "dependencies": {
         "@agentxjs/agent": "workspace:*",
         "@agentxjs/common": "workspace:*",
+        "@agentxjs/persistence": "workspace:*",
         "@agentxjs/types": "workspace:*",
         "@anthropic-ai/claude-agent-sdk": "^0.1.30",
-        "db0": "^0.3.4",
         "rxjs": "^7.8.2",
-        "unstorage": "^1.14.4",
       },
     },
     "packages/types": {
       "name": "@agentxjs/types",
-      "version": "1.4.0",
+      "version": "1.5.1",
     },
     "packages/ui": {
       "name": "@agentxjs/ui",
-      "version": "1.4.0",
+      "version": "1.5.1",
       "dependencies": {
         "@agentxjs/common": "workspace:*",
         "@emoji-mart/data": "^1.2.1",
@@ -176,6 +191,8 @@
     "@agentxjs/common": ["@agentxjs/common@workspace:packages/common"],
 
     "@agentxjs/network": ["@agentxjs/network@workspace:packages/network"],
+
+    "@agentxjs/persistence": ["@agentxjs/persistence@workspace:packages/persistence"],
 
     "@agentxjs/portagent": ["@agentxjs/portagent@workspace:apps/portagent"],
 
