@@ -1,6 +1,6 @@
 /**
- * Bun Build Script for @agentxjs/common
- * ESM-only modern build
+ * Bun Build Script for @agentxjs/runtime
+ * ESM-only server build
  */
 
 import { dts } from "bun-dts";
@@ -10,13 +10,13 @@ const outdir = "./dist";
 
 await Bun.$`rm -rf ${outdir}`;
 
-console.log("🚀 Building @agentxjs/common (ESM-only)\n");
+console.log("🚀 Building @agentxjs/runtime (ESM-only, Node.js target)\n");
 
 const result = await Bun.build({
   entrypoints,
   outdir,
   format: "esm",
-  target: "browser",
+  target: "node",
   sourcemap: "external",
   minify: false,
   external: ["@agentxjs/*", "@anthropic-ai/*", "rxjs", "db0", "unstorage", "ws"],
