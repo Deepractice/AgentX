@@ -1,5 +1,18 @@
 # @agentxjs/portagent
 
+## 1.5.7
+
+### Patch Changes
+
+- a9208c8: Fix npm publish: use standard root-directory publishing pattern
+  - Change bin entry to point directly to `./dist/cli.js`
+  - Convert CLI wrapper to ESM syntax
+  - Add `prepublishOnly` script to ensure build before publish
+  - Remove redundant `bin/portagent.js` and `dist/package.json` generation
+  - agentxjs@1.5.7
+  - @agentxjs/runtime@1.5.7
+  - @agentxjs/ui@1.5.7
+
 ## 1.5.6
 
 ### Patch Changes
