@@ -1,5 +1,13 @@
 # @agentxjs/persistence
 
+## 1.5.6
+
+### Patch Changes
+
+- Updated dependencies [cc51adb]
+  - @agentxjs/common@1.5.6
+  - @agentxjs/types@1.5.6
+
 ## 1.5.5
 
 ### Patch Changes

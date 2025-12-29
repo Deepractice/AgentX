@@ -1,6 +1,6 @@
 {
   "name": "@agentxjs/agent",
-  "version": "1.5.5",
+  "version": "1.5.6",
   "description": "Agent runtime for AgentX ecosystem - Agent lifecycle and event management",
   "type": "module",
   "main": "./dist/index.js",

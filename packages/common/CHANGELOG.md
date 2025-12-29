@@ -1,5 +1,12 @@
 # @agentxjs/common
 
+## 1.5.6
+
+### Patch Changes
+
+- cc51adb: Test complete workflow: version PR + npm publish + workspace replacement + unified release + Docker build
+  - @agentxjs/types@1.5.6
+
 ## 1.5.5
 
 ### Patch Changes
