@@ -1,5 +1,13 @@
 # @agentxjs/persistence
 
+## 1.5.3
+
+### Patch Changes
+
+- 07bb2b0: Test OIDC publish workflow
+  - @agentxjs/types@1.5.3
+  - @agentxjs/common@1.5.3
+
 ## 1.5.2
 
 ### Patch Changes
