@@ -28,11 +28,16 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
   }
 
   // Dynamic import to avoid bundling runtime in browser
-  const { createRuntime } = await import("@agentxjs/runtime");
+  const { createRuntime, RuntimeEnvironment } = await import("@agentxjs/runtime");
   const { createPersistence } = await import("@agentxjs/persistence");
   const { sqliteDriver } = await import("@agentxjs/persistence/sqlite");
   const { homedir } = await import("node:os");
   const { join } = await import("node:path");
+
+  // Configure global runtime environment if provided
+  if (config.environment?.claudeCodePath) {
+    RuntimeEnvironment.setClaudeCodePath(config.environment.claudeCodePath);
+  }
 
   // Determine base path for runtime data
   const basePath = config.agentxDir ?? join(homedir(), ".agentx");
@@ -53,7 +58,6 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
       }),
     },
     defaultAgent: config.defaultAgent,
-    claudeCodePath: config.environment?.claudeCodePath,
   });
 
   // Create WebSocket server

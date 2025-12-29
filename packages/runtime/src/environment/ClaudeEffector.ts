@@ -44,8 +44,6 @@ export interface ClaudeEffectorConfig {
   timeout?: number;
   /** MCP servers configuration */
   mcpServers?: Record<string, import("@agentxjs/types/runtime").McpServerConfig>;
-  /** Path to Claude Code executable (for binary distribution) */
-  claudeCodePath?: string;
 }
 
 /**
@@ -202,7 +200,6 @@ export class ClaudeEffector implements Effector {
       cwd: this.config.cwd,
       resume: this.config.resumeSessionId,
       mcpServers: this.config.mcpServers,
-      claudeCodePath: this.config.claudeCodePath,
     };
 
     const sdkOptions = buildOptions(context, abortController);

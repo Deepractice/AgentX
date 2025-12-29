@@ -25,6 +25,9 @@
 
 export { createRuntime, type RuntimeConfig } from "./createRuntime";
 
+// Runtime environment singleton (for advanced use cases like binary distribution)
+export { RuntimeEnvironment } from "./RuntimeEnvironment";
+
 // Re-export from @agentxjs/persistence for convenience
 export { createPersistence, memoryDriver } from "@agentxjs/persistence";
 export type { PersistenceDriver } from "@agentxjs/persistence";

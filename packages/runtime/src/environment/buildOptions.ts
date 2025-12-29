@@ -6,6 +6,7 @@
 
 import type { Options, McpServerConfig } from "@anthropic-ai/claude-agent-sdk";
 import { createLogger } from "@agentxjs/common";
+import { RuntimeEnvironment } from "../RuntimeEnvironment";
 
 const logger = createLogger("environment/buildOptions");
 
@@ -24,8 +25,6 @@ export interface EnvironmentContext {
   maxThinkingTokens?: number;
   /** MCP servers configuration */
   mcpServers?: Record<string, McpServerConfig>;
-  /** Path to Claude Code executable (for binary distribution) */
-  claudeCodePath?: string;
 }
 
 /**
@@ -83,10 +82,11 @@ export function buildOptions(
     logger.info("SDK stderr", { data: data.trim() });
   };
 
-  // Set Claude Code executable path if provided
-  if (context.claudeCodePath) {
-    options.pathToClaudeCodeExecutable = context.claudeCodePath;
-    logger.info("Claude Code path configured", { path: context.claudeCodePath });
+  // Set Claude Code executable path from global environment
+  const claudeCodePath = RuntimeEnvironment.getClaudeCodePath();
+  if (claudeCodePath) {
+    options.pathToClaudeCodeExecutable = claudeCodePath;
+    logger.info("Claude Code path configured", { path: claudeCodePath });
   }
 
   // Model configuration
