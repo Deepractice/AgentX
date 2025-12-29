@@ -81,6 +81,8 @@ export interface RuntimeAgentConfig {
   image: ImageRecord;
   /** Image repository for persisting metadata */
   imageRepository: ImageRepository;
+  /** Path to Claude Code executable (for binary distribution) */
+  claudeCodePath?: string;
 }
 
 /**
@@ -249,6 +251,7 @@ export class RuntimeAgent implements RuntimeAgentInterface {
       cwd: config.sandbox.workdir.path,
       resumeSessionId,
       mcpServers: config.image.mcpServers,
+      claudeCodePath: config.claudeCodePath,
       onSessionIdCaptured: (sdkSessionId) => {
         // Persist sdkSessionId to image metadata for future resume
         this.saveSessionId(sdkSessionId);

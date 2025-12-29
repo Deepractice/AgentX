@@ -53,6 +53,7 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
       }),
     },
     defaultAgent: config.defaultAgent,
+    claudeCodePath: config.environment?.claudeCodePath,
   });
 
   // Create WebSocket server

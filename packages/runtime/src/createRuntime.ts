@@ -39,6 +39,12 @@ export interface RuntimeConfig {
    * Used as base configuration when creating new images
    */
   defaultAgent?: AgentDefinition;
+
+  /**
+   * Path to Claude Code executable
+   * Required for binary distribution where Claude Code is bundled
+   */
+  claudeCodePath?: string;
 }
 
 /**

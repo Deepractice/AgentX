@@ -176,13 +176,13 @@ async function buildFrontend() {
 }
 
 async function buildBinaries() {
-  console.log(`\n🚀 Building Portagent v${VERSION} binaries\n`);
+  console.log(`\n🚀 Building Portagent v${VERSION} binaries (single package)\n`);
 
-  // Clean and prepare
-  await rm(`${outdir}/binaries`, { recursive: true, force: true });
-  await mkdir(`${outdir}/binaries`, { recursive: true });
+  // Clean dist completely
+  await rm(outdir, { recursive: true, force: true });
+  await mkdir(`${outdir}/bin`, { recursive: true });
 
-  // Build frontend first
+  // Build frontend to dist/public
   await buildFrontend();
 
   // Build binary for each platform
@@ -191,19 +191,16 @@ async function buildBinaries() {
   for (const { platform, target, ext } of BINARY_TARGETS) {
     console.log(`   🔨 ${platform}...`);
 
-    const pkgDir = join(outdir, "binaries", `portagent-${platform}`);
-    const binDir = join(pkgDir, "bin");
-    await mkdir(binDir, { recursive: true });
-
-    const binPath = join(binDir, `portagent${ext}`);
+    const binName = `portagent-${platform}${ext}`;
+    const binPath = join(outdir, "bin", binName);
 
     try {
-      // Build external args
       const externalArgs = BINARY_EXTERNALS.flatMap((pkg) => ["--external", pkg]);
 
       await Bun.$`bun build --compile \
         --target ${target} \
         --minify \
+        --define "IS_COMPILED_BINARY=true" \
         ${externalArgs} \
         ./src/cli/index.ts \
         --outfile ${binPath}`.quiet();
@@ -211,97 +208,62 @@ async function buildBinaries() {
       console.log(`      ✅ Built`);
     } catch (error: any) {
       console.error(`      ❌ Failed:`, error.stderr || error.message);
-      continue;
     }
-
-    // Create platform package.json
-    const osName = platform.startsWith("windows") ? "win32" : platform.split("-")[0];
-    const cpuName = platform.split("-")[1];
-
-    await writeFile(
-      join(pkgDir, "package.json"),
-      JSON.stringify(
-        {
-          name: `@agentxjs/portagent-${platform}`,
-          version: VERSION,
-          description: `Portagent binary for ${platform}`,
-          license: "MIT",
-          repository: {
-            type: "git",
-            url: "https://github.com/Deepractice/AgentX.git",
-          },
-          os: [osName],
-          cpu: [cpuName],
-          files: ["bin"],
-          publishConfig: { access: "public" },
-        },
-        null,
-        2
-      )
-    );
   }
 
-  // Create main wrapper package
-  console.log("\n📦 Creating main wrapper package...");
-  const mainPkgDir = join(outdir, "binaries", "portagent");
-  const mainBinDir = join(mainPkgDir, "bin");
-  await mkdir(mainBinDir, { recursive: true });
+  // Copy Claude Code to dist/
+  console.log("\n📦 Bundling Claude Code...");
+  const claudeCodeSrc = "../../node_modules/@anthropic-ai/claude-code";
+  const claudeCodeDest = join(outdir, "claude-code");
+  try {
+    await cp(claudeCodeSrc, claudeCodeDest, { recursive: true });
+    console.log(`   ✅ Claude Code bundled (~70MB)`);
+  } catch (error: any) {
+    console.error(`   ❌ Failed to copy Claude Code:`, error.message);
+  }
 
-  // Create wrapper script
+  // Create CLI wrapper script
+  console.log("\n📦 Creating CLI wrapper...");
   await writeFile(
-    join(mainBinDir, "portagent.js"),
+    join(outdir, "cli.js"),
     `#!/usr/bin/env node
-import { execFileSync } from "child_process";
-import { createRequire } from "module";
-import { dirname, join } from "path";
+const { execFileSync } = require("child_process");
+const { join } = require("path");
 
-const PLATFORMS = {
-  "darwin-arm64": "@agentxjs/portagent-darwin-arm64",
-  "darwin-x64": "@agentxjs/portagent-darwin-x64",
-  "linux-x64": "@agentxjs/portagent-linux-x64",
-  "linux-arm64": "@agentxjs/portagent-linux-arm64",
-  "win32-x64": "@agentxjs/portagent-windows-x64",
+const BINARIES = {
+  "darwin-arm64": "portagent-darwin-arm64",
+  "darwin-x64": "portagent-darwin-x64",
+  "linux-arm64": "portagent-linux-arm64",
+  "linux-x64": "portagent-linux-x64",
+  "win32-x64": "portagent-windows-x64.exe",
 };
 
 const platformKey = \`\${process.platform}-\${process.arch}\`;
-const pkgName = PLATFORMS[platformKey];
+const binName = BINARIES[platformKey];
 
-if (!pkgName) {
+if (!binName) {
   console.error(\`Unsupported platform: \${platformKey}\`);
-  console.error(\`Supported: \${Object.keys(PLATFORMS).join(", ")}\`);
+  console.error(\`Supported: \${Object.keys(BINARIES).join(", ")}\`);
   process.exit(1);
 }
 
-try {
-  const require = createRequire(import.meta.url);
-  const pkgJsonPath = require.resolve(\`\${pkgName}/package.json\`);
-  const pkgDir = dirname(pkgJsonPath);
-  const ext = process.platform === "win32" ? ".exe" : "";
-  const binPath = join(pkgDir, "bin", \`portagent\${ext}\`);
+const binPath = join(__dirname, "bin", binName);
 
+try {
   execFileSync(binPath, process.argv.slice(2), { stdio: "inherit" });
 } catch (error) {
-  if (error.code === "MODULE_NOT_FOUND") {
-    console.error(\`Platform package not found: \${pkgName}\`);
-    console.error("\\nTry reinstalling: npm install -g @agentxjs/portagent");
-  } else if (error.status !== undefined) {
+  if (error.status !== undefined) {
     process.exit(error.status);
-  } else {
-    console.error(\`Failed to run portagent: \${error.message}\`);
   }
+  console.error(\`Failed to run portagent: \${error.message}\`);
   process.exit(1);
 }
 `
   );
 
-  // Create main package.json
-  const optionalDeps: Record<string, string> = {};
-  for (const { platform } of BINARY_TARGETS) {
-    optionalDeps[`@agentxjs/portagent-${platform}`] = VERSION;
-  }
-
+  // Create package.json for npm publish
   await writeFile(
-    join(mainPkgDir, "package.json"),
+    join(outdir, "package.json"),
     JSON.stringify(
       {
         name: "@agentxjs/portagent",
@@ -312,10 +274,8 @@ try {
           type: "git",
           url: "https://github.com/Deepractice/AgentX.git",
         },
-        type: "module",
-        bin: { portagent: "./bin/portagent.js" },
-        files: ["bin"],
-        optionalDependencies: optionalDeps,
+        bin: { portagent: "cli.js" },
+        files: ["cli.js", "bin", "public", "claude-code"],
         publishConfig: { access: "public" },
       },
       null,
@@ -323,14 +283,24 @@ try {
     )
   );
 
+  // Copy README
+  try {
+    await cp("./README.md", join(outdir, "README.md"));
+  } catch {
+    // README might not exist
+  }
+
   // Summary
   console.log("\n📊 Build Summary:");
   console.log("─".repeat(50));
 
+  let totalSize = 0;
   for (const { platform, ext } of BINARY_TARGETS) {
-    const binPath = join(outdir, "binaries", `portagent-${platform}`, "bin", `portagent${ext}`);
+    const binName = `portagent-${platform}${ext}`;
+    const binPath = join(outdir, "bin", binName);
     try {
       const size = (await Bun.file(binPath).size) / 1024 / 1024;
+      totalSize += size;
       console.log(`   ${platform.padEnd(20)} ${size.toFixed(1)} MB`);
     } catch {
       console.log(`   ${platform.padEnd(20)} (not built)`);
@@ -338,10 +308,12 @@ try {
   }
 
   console.log("─".repeat(50));
-  console.log(`\n✅ Binaries ready in ${outdir}/binaries/`);
+  console.log(`   ${"Total".padEnd(20)} ${totalSize.toFixed(1)} MB`);
+  console.log(`\n✅ Package ready in ${outdir}/`);
+  console.log("\nTo test locally:");
+  console.log(`  node ${outdir}/cli.js --help`);
   console.log("\nTo publish:");
-  console.log(`  cd ${outdir}/binaries`);
-  console.log("  for d in */; do (cd $d && npm publish); done");
+  console.log(`  cd ${outdir} && npm publish`);
 }
 
 // Main

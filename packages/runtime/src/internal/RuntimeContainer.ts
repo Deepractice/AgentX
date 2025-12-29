@@ -29,6 +29,8 @@ export interface RuntimeContainerContext {
   basePath: string;
   /** Callback when container is disposed */
   onDisposed?: (containerId: string) => void;
+  /** Path to Claude Code executable (for binary distribution) */
+  claudeCodePath?: string;
 }
 
 /**
@@ -161,6 +163,7 @@ export class RuntimeContainer implements Container {
       llmConfig: this.context.llmConfig,
       image, // Pass full image record for metadata access
       imageRepository: this.context.persistence.images,
+      claudeCodePath: this.context.claudeCodePath,
     });
 
     // Register agent and mapping

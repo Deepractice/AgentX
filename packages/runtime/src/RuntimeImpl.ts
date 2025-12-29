@@ -61,6 +61,7 @@ export class RuntimeImpl implements Runtime {
   private readonly basePath: string;
   private readonly commandHandler: CommandHandler;
   private readonly defaultAgent?: AgentDefinition;
+  private readonly claudeCodePath?: string;
 
   /** Container registry: containerId -> RuntimeContainer */
   private readonly containerRegistry = new Map<string, RuntimeContainer>();
@@ -71,6 +72,7 @@ export class RuntimeImpl implements Runtime {
     this.llmProvider = config.llmProvider;
     this.basePath = config.basePath;
     this.defaultAgent = config.defaultAgent;
+    this.claudeCodePath = config.claudeCodePath;
 
     // Create SystemBus
     logger.info("Creating SystemBus");
@@ -493,6 +495,7 @@ export class RuntimeImpl implements Runtime {
       bus: this.bus,
       llmConfig: this.llmConfig,
       basePath: this.basePath,
+      claudeCodePath: this.claudeCodePath,
       onDisposed: (containerId) => {
         this.containerRegistry.delete(containerId);
       },

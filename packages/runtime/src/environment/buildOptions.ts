@@ -24,6 +24,8 @@ export interface EnvironmentContext {
   maxThinkingTokens?: number;
   /** MCP servers configuration */
   mcpServers?: Record<string, McpServerConfig>;
+  /** Path to Claude Code executable (for binary distribution) */
+  claudeCodePath?: string;
 }
 
 /**
@@ -81,8 +83,11 @@ export function buildOptions(
     logger.info("SDK stderr", { data: data.trim() });
   };
 
-  // Note: We don't set options.executable - SDK defaults to 'node' or 'bun'
-  // The SDK will automatically find the claude-code CLI
+  // Set Claude Code executable path if provided
+  if (context.claudeCodePath) {
+    options.pathToClaudeCodeExecutable = context.claudeCodePath;
+    logger.info("Claude Code path configured", { path: context.claudeCodePath });
+  }
 
   // Model configuration
   if (context.model) options.model = context.model;
