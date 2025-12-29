@@ -12,7 +12,7 @@
   "scripts": {
     "dev": "bun dev/dev-manager.ts",
     "start": "bun apps/portagent/bin/portagent.js",
-    "build": "turbo build",
+    "build": "turbo build --filter='!@agentx/dev-storybook'",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "format": "prettier --write .",
