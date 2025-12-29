@@ -1,148 +1,150 @@
 /**
- * PinoLogger - Production-grade logger using pino
+ * LogTapeLogger - Production-grade logger using LogTape
  *
  * Features:
- * - Fast JSON logging (pino is one of the fastest Node.js loggers)
- * - File logging with daily rotation
- * - Console output with pino-pretty in development
+ * - Zero dependencies, native Bun support
+ * - No worker threads (compatible with bun --compile)
+ * - File logging with rotation
+ * - Console output with formatting
  * - Implements AgentX LoggerFactory interface
  */
 
-import pino, { type Logger as PinoLogger } from "pino";
-import fs from "node:fs";
-import path from "node:path";
+import {
+  configure,
+  getConsoleSink,
+  getLogger,
+  type Logger as LogTapeLogger,
+} from "@logtape/logtape";
+import { getRotatingFileSink } from "@logtape/file";
 import type { Logger, LoggerFactory, LogContext, LogLevel } from "agentxjs";
 
 /**
- * Map AgentX log levels to pino log levels
+ * Map AgentX log levels to LogTape log levels
  */
-const LEVEL_MAP: Record<LogLevel, string> = {
+const LEVEL_MAP: Record<LogLevel, "debug" | "info" | "warning" | "error"> = {
   debug: "debug",
   info: "info",
-  warn: "warn",
+  warn: "warning",
   error: "error",
-  silent: "silent",
+  silent: "error", // LogTape doesn't have silent, use error as fallback
 };
 
 /**
- * PinoLoggerAdapter - Adapts pino logger to AgentX Logger interface
+ * LogTapeLoggerAdapter - Adapts LogTape logger to AgentX Logger interface
  */
-class PinoLoggerAdapter implements Logger {
+class LogTapeLoggerAdapter implements Logger {
   constructor(
     public readonly name: string,
     public readonly level: LogLevel,
-    private readonly pino: PinoLogger
+    private readonly logger: LogTapeLogger
   ) {}
 
   debug(message: string, context?: LogContext): void {
-    this.pino.debug(context || {}, message);
+    if (context) {
+      this.logger.debug("{message} {context}", { message, context });
+    } else {
+      this.logger.debug("{message}", { message });
+    }
   }
 
   info(message: string, context?: LogContext): void {
-    this.pino.info(context || {}, message);
+    if (context) {
+      this.logger.info("{message} {context}", { message, context });
+    } else {
+      this.logger.info("{message}", { message });
+    }
   }
 
   warn(message: string, context?: LogContext): void {
-    this.pino.warn(context || {}, message);
+    if (context) {
+      this.logger.warn("{message} {context}", { message, context });
+    } else {
+      this.logger.warn("{message}", { message });
+    }
   }
 
   error(message: string | Error, context?: LogContext): void {
     if (message instanceof Error) {
-      this.pino.error({ ...context, err: message }, message.message);
+      this.logger.error("{message} {error}", {
+        message: message.message,
+        error: message.stack,
+        ...context,
+      });
+    } else if (context) {
+      this.logger.error("{message} {context}", { message, context });
     } else {
-      this.pino.error(context || {}, message);
+      this.logger.error("{message}", { message });
     }
   }
 
   isDebugEnabled(): boolean {
-    return this.pino.isLevelEnabled("debug");
+    return this.level === "debug";
   }
 
   isInfoEnabled(): boolean {
-    return this.pino.isLevelEnabled("info");
+    return this.level === "debug" || this.level === "info";
   }
 
   isWarnEnabled(): boolean {
-    return this.pino.isLevelEnabled("warn");
+    return this.level !== "silent" && this.level !== "error";
   }
 
   isErrorEnabled(): boolean {
-    return this.pino.isLevelEnabled("error");
+    return this.level !== "silent";
   }
 }
 
 /**
- * PinoLoggerFactory - Creates pino-based loggers
+ * LogTapeLoggerFactory - Creates LogTape-based loggers
  *
  * Supports multiple output targets:
- * - Console (with pretty printing in dev)
- * - File (JSON format, daily rotation)
+ * - Console (with formatting)
+ * - File (with rotation)
  */
-export class PinoLoggerFactory implements LoggerFactory {
-  private readonly rootLogger: PinoLogger;
+export class LogTapeLoggerFactory implements LoggerFactory {
+  private readonly level: LogLevel;
+  private configured = false;
 
-  constructor(options: {
-    level: LogLevel;
-    logDir: string;
-    pretty?: boolean; // Use pino-pretty for console output
-  }) {
-    const { level, logDir, pretty = process.env.NODE_ENV !== "production" } = options;
-
-    // Ensure log directory exists
-    if (!fs.existsSync(logDir)) {
-      fs.mkdirSync(logDir, { recursive: true });
+  constructor(
+    private readonly options: {
+      level: LogLevel;
+      logDir: string;
+      pretty?: boolean;
     }
+  ) {
+    this.level = options.level;
+  }
 
-    // Create log file path with date
-    const getLogFilePath = () => {
-      const now = new Date();
-      const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-      return path.join(logDir, `portagent-${dateStr}.log`);
-    };
+  /**
+   * Initialize LogTape configuration (must be called once before getting loggers)
+   */
+  async initialize(): Promise<void> {
+    if (this.configured) return;
 
-    // Create pino transports
-    const targets: pino.TransportTargetOptions[] = [];
+    const { level, logDir } = this.options;
 
-    // File transport (always JSON)
-    targets.push({
-      target: "pino/file",
-      level: LEVEL_MAP[level],
-      options: {
-        destination: getLogFilePath(),
-        mkdir: true,
+    await configure({
+      sinks: {
+        console: getConsoleSink(),
+        file: getRotatingFileSink(`${logDir}/portagent.log`, {
+          maxSize: 10 * 1024 * 1024, // 10MB
+          maxFiles: 7,
+        }),
       },
-    });
-
-    // Console transport
-    if (pretty) {
-      targets.push({
-        target: "pino-pretty",
-        level: LEVEL_MAP[level],
-        options: {
-          colorize: true,
-          translateTime: "SYS:standard",
-          ignore: "pid,hostname",
+      loggers: [
+        {
+          category: ["portagent"],
+          lowestLevel: LEVEL_MAP[level],
+          sinks: ["console", "file"],
         },
-      });
-    } else {
-      targets.push({
-        target: "pino/file",
-        level: LEVEL_MAP[level],
-        options: { destination: 1 }, // stdout
-      });
-    }
-
-    // Create root logger with multi-stream transport
-    this.rootLogger = pino({
-      level: LEVEL_MAP[level],
-      transport: {
-        targets,
-      },
+      ],
     });
+
+    this.configured = true;
   }
 
   getLogger(name: string): Logger {
-    const childLogger = this.rootLogger.child({ name });
-    return new PinoLoggerAdapter(name, this.rootLogger.level as LogLevel, childLogger);
+    const logger = getLogger(["portagent", name]);
+    return new LogTapeLoggerAdapter(name, this.level, logger);
   }
 }

@@ -26,7 +26,7 @@ import { mkdirSync } from "node:fs";
 
 import { createAuthMiddleware, authRoutes } from "./auth";
 import { SQLiteUserRepository } from "./database";
-import { PinoLoggerFactory } from "./logger";
+import { LogTapeLoggerFactory } from "./logger";
 
 // Global type for compiled binary detection (injected at compile time via --define)
 declare const IS_COMPILED_BINARY: boolean | undefined;
@@ -101,11 +101,12 @@ async function createApp() {
 
   // Create logger factory
   const logLevel = (process.env.LOG_LEVEL || "info") as "debug" | "info" | "warn" | "error";
-  const loggerFactory = new PinoLoggerFactory({
+  const loggerFactory = new LogTapeLoggerFactory({
     level: logLevel,
     logDir: paths.logsDirPath,
     pretty: process.env.NODE_ENV !== "production",
   });
+  await loggerFactory.initialize();
 
   // Detect if running as compiled binary
   const isCompiledBinary = typeof IS_COMPILED_BINARY !== "undefined" && IS_COMPILED_BINARY;
