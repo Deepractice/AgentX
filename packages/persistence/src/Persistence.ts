@@ -67,6 +67,6 @@ export async function createPersistence(driver: PersistenceDriver): Promise<Pers
   const storage = await driver.createStorage();
   const persistence = new PersistenceImpl(storage);
 
-  logger.info("Persistence created successfully");
+  logger.info("Persistence created successfully", { driver: driver.constructor.name });
   return persistence;
 }
