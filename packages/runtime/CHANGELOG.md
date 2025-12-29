@@ -1,5 +1,14 @@
 # @agentxjs/runtime
 
+## 1.5.8
+
+### Patch Changes
+
+- @agentxjs/persistence@1.5.8
+- @agentxjs/agent@1.5.8
+- @agentxjs/types@1.5.8
+- @agentxjs/common@1.5.8
+
 ## 1.5.7
 
 ### Patch Changes
