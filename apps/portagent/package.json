@@ -30,6 +30,7 @@
   "dependencies": {
     "@agentxjs/runtime": "workspace:*",
     "@agentxjs/ui": "workspace:*",
+    "@anthropic-ai/claude-code": "^2.0.76",
     "@hono/node-server": "^1.13.7",
     "agentxjs": "workspace:*",
     "commander": "^12.1.0",

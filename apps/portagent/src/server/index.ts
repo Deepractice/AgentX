@@ -11,7 +11,7 @@
  * - WebSocket upgrade on /ws path handled by AgentX
  */
 
-import { resolve } from "path";
+import { resolve, dirname } from "path";
 import { createServer } from "http";
 
 import { Hono } from "hono";
@@ -27,6 +27,9 @@ import { mkdirSync } from "node:fs";
 import { createAuthMiddleware, authRoutes } from "./auth";
 import { SQLiteUserRepository } from "./database";
 import { PinoLoggerFactory } from "./logger";
+
+// Global type for compiled binary detection (injected at compile time via --define)
+declare const IS_COMPILED_BINARY: boolean | undefined;
 
 /**
  * Get data directory paths
@@ -104,6 +107,14 @@ async function createApp() {
     pretty: process.env.NODE_ENV !== "production",
   });
 
+  // Detect if running as compiled binary
+  const isCompiledBinary = typeof IS_COMPILED_BINARY !== "undefined" && IS_COMPILED_BINARY;
+
+  // Determine Claude Code path for binary distribution
+  const claudeCodePath = isCompiledBinary
+    ? resolve(dirname(process.execPath), "../claude-code/cli.js")
+    : undefined;
+
   // Create AgentX instance attached to HTTP server
   // WebSocket upgrade will be handled on /ws path
   // Storage is auto-configured: SQLite at {agentxDir}/data/agentx.db
@@ -119,6 +130,7 @@ async function createApp() {
     },
     agentxDir: paths.dataDir, // Auto-configures storage at {dataDir}/data/agentx.db
     server, // Attach to existing HTTP server
+    environment: claudeCodePath ? { claudeCodePath } : undefined,
   });
 
   // Initialize user repository (separate database)
@@ -154,14 +166,20 @@ async function createApp() {
     });
   });
 
-  // Static files
-  // Use import.meta.dir (Bun-native, more reliable than __dirname)
-  // In dev mode: src/server -> ../../dist/public
-  // In production: dist/server -> ../public
+  // Static files - determine public directory based on execution context
   const isDev = import.meta.dir.includes("/src/");
-  const publicDir = isDev
-    ? resolve(import.meta.dir, "../../dist/public")
-    : resolve(import.meta.dir, "../public");
+
+  let publicDir: string;
+  if (isCompiledBinary) {
+    // Compiled binary: public is sibling to bin directory
+    publicDir = resolve(dirname(process.execPath), "../public");
+  } else if (isDev) {
+    // Dev mode: src/server -> ../../dist/public
+    publicDir = resolve(import.meta.dir, "../../dist/public");
+  } else {
+    // ESM production: dist/server -> ../public
+    publicDir = resolve(import.meta.dir, "../public");
+  }
 
   if (existsSync(publicDir)) {
     // Serve static files

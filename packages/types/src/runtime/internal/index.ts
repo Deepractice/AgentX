@@ -75,6 +75,7 @@ export type {
 export type { Environment } from "./environment/Environment";
 export type { Receptor } from "./environment/Receptor";
 export type { Effector } from "./environment/Effector";
+export type { RuntimeEnvironmentConfig } from "./environment/RuntimeEnvironment";
 
 // ============================================================================
 // Session

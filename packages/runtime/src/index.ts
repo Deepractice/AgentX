@@ -3,11 +3,12 @@
  *
  * @example
  * ```typescript
- * import { createRuntime, createPersistence } from "@agentxjs/runtime";
+ * import { createRuntime } from "@agentxjs/runtime";
+ * import { createPersistence } from "@agentxjs/persistence";
+ * import { sqliteDriver } from "@agentxjs/persistence/sqlite";
  *
- * const runtime = createRuntime({
- *   persistence: createPersistence(),
- * });
+ * const persistence = await createPersistence(sqliteDriver({ path: "./data.db" }));
+ * const runtime = createRuntime({ persistence, ... });
  *
  * // Use request/response pattern
  * const res = await runtime.request("container_create_request", {
@@ -23,8 +24,10 @@
  */
 
 export { createRuntime, type RuntimeConfig } from "./createRuntime";
-export {
-  createPersistence,
-  type PersistenceConfig,
-  type StorageDriver,
-} from "./internal/persistence";
+
+// Runtime environment singleton (for advanced use cases like binary distribution)
+export { RuntimeEnvironment } from "./RuntimeEnvironment";
+
+// Re-export from @agentxjs/persistence for convenience
+export { createPersistence, memoryDriver } from "@agentxjs/persistence";
+export type { PersistenceDriver } from "@agentxjs/persistence";

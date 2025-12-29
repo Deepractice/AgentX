@@ -77,6 +77,7 @@ await runtime.dispose();
 
 ```typescript
 import { createRuntime, createPersistence } from "@agentxjs/runtime";
+import { sqliteDriver } from "@agentxjs/persistence/sqlite";
 
 const runtime = createRuntime({
   // LLM configuration
@@ -85,13 +86,8 @@ const runtime = createRuntime({
     baseUrl: "https://api.anthropic.com",
   },
 
-  // Persistence
-  persistence: createPersistence({
-    driver: "sqlite",
-    options: {
-      filename: "./data.db",
-    },
-  }),
+  // Persistence (using sqlite driver)
+  persistence: await createPersistence(sqliteDriver({ path: "./data.db" })),
 
   // Logger
   logger: {
@@ -353,31 +349,51 @@ await runtime.request("container_destroy_request", {
 
 ## Persistence - Storage Layer
 
+Persistence is now provided by the separate `@agentxjs/persistence` package with subpath exports for each driver.
+
 ### Built-in Storage Backends
 
 #### SQLite (Production)
 
 ```typescript
 import { createRuntime, createPersistence } from "@agentxjs/runtime";
+import { sqliteDriver } from "@agentxjs/persistence/sqlite";
 
 const runtime = createRuntime({
-  persistence: createPersistence({
-    driver: "sqlite",
-    options: {
-      filename: "./data.db",
-    },
-  }),
+  persistence: await createPersistence(sqliteDriver({ path: "./data.db" })),
 });
 ```
 
 #### Memory (Development)
 
 ```typescript
+import { createRuntime, createPersistence, memoryDriver } from "@agentxjs/runtime";
+
 const runtime = createRuntime({
-  persistence: createPersistence({
-    driver: "memory",
-  }),
+  persistence: await createPersistence(memoryDriver()),
 });
+```
+
+#### Other Drivers
+
+```typescript
+// Redis
+import { redisDriver } from "@agentxjs/persistence/redis";
+const persistence = await createPersistence(redisDriver({ url: "redis://localhost:6379" }));
+
+// MongoDB
+import { mongodbDriver } from "@agentxjs/persistence/mongodb";
+const persistence = await createPersistence(mongodbDriver({ connectionString: "mongodb://..." }));
+
+// MySQL
+import { mysqlDriver } from "@agentxjs/persistence/mysql";
+const persistence = await createPersistence(mysqlDriver({ host: "localhost", database: "agentx" }));
+
+// PostgreSQL
+import { postgresqlDriver } from "@agentxjs/persistence/postgresql";
+const persistence = await createPersistence(
+  postgresqlDriver({ host: "localhost", database: "agentx" })
+);
 ```
 
 ### Storage Schema
@@ -466,7 +482,7 @@ runtime.once("agent_created", (event) => {
 Runtime is designed for easy testing:
 
 ```typescript
-import { createRuntime, createPersistence } from "@agentxjs/runtime";
+import { createRuntime, createPersistence, memoryDriver } from "@agentxjs/runtime";
 import { describe, it, expect } from "vitest";
 
 describe("Runtime", () => {
@@ -475,7 +491,7 @@ describe("Runtime", () => {
       llm: {
         apiKey: "test-key",
       },
-      persistence: createPersistence({ driver: "memory" }),
+      persistence: await createPersistence(memoryDriver()),
     });
 
     // Create container
@@ -575,9 +591,11 @@ LOG_LEVEL=info                                  # debug, info, warn, error
        ↑
 @agentxjs/common       Logger facade
        ↑
+@agentxjs/persistence  Storage layer (drivers as subpath exports)
+       ↑
 @agentxjs/agent        AgentEngine
        ↑
-@agentxjs/runtime      This package (Runtime + Environment + Persistence)
+@agentxjs/runtime      This package (Runtime + Environment)
        ↑
 agentxjs               High-level unified API
 ```
@@ -588,6 +606,7 @@ agentxjs               High-level unified API
 
 - **[@agentxjs/types](../types)** - Type definitions
 - **[@agentxjs/common](../common)** - Logger facade
+- **[@agentxjs/persistence](../persistence)** - Storage layer with driver subpath exports
 - **[@agentxjs/agent](../agent)** - AgentEngine
 - **[agentxjs](../agentx)** - High-level unified API
 

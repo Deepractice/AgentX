@@ -6,6 +6,7 @@
 
 import type { Options, McpServerConfig } from "@anthropic-ai/claude-agent-sdk";
 import { createLogger } from "@agentxjs/common";
+import { RuntimeEnvironment } from "../RuntimeEnvironment";
 
 const logger = createLogger("environment/buildOptions");
 
@@ -81,8 +82,12 @@ export function buildOptions(
     logger.info("SDK stderr", { data: data.trim() });
   };
 
-  // Note: We don't set options.executable - SDK defaults to 'node' or 'bun'
-  // The SDK will automatically find the claude-code CLI
+  // Set Claude Code executable path from global environment
+  const claudeCodePath = RuntimeEnvironment.getClaudeCodePath();
+  if (claudeCodePath) {
+    options.pathToClaudeCodeExecutable = claudeCodePath;
+    logger.info("Claude Code path configured", { path: claudeCodePath });
+  }
 
   // Model configuration
   if (context.model) options.model = context.model;

@@ -45,13 +45,14 @@
     },
     "apps/portagent": {
       "name": "@agentxjs/portagent",
-      "version": "1.4.0",
+      "version": "1.5.1",
       "bin": {
         "portagent": "./bin/portagent.js",
       },
       "dependencies": {
         "@agentxjs/runtime": "workspace:*",
         "@agentxjs/ui": "workspace:*",
+        "@anthropic-ai/claude-code": "^2.0.76",
         "@hono/node-server": "^1.13.7",
         "agentxjs": "workspace:*",
         "commander": "^12.1.0",
@@ -67,7 +68,7 @@
     },
     "dev/storybook": {
       "name": "@agentx/dev-storybook",
-      "version": "0.0.0",
+      "version": "0.0.2",
       "dependencies": {
         "@agentxjs/ui": "workspace:*",
       },
@@ -83,7 +84,7 @@
     },
     "packages/agent": {
       "name": "@agentxjs/agent",
-      "version": "1.4.0",
+      "version": "1.5.1",
       "dependencies": {
         "@agentxjs/common": "workspace:*",
         "@agentxjs/types": "workspace:*",
@@ -92,7 +93,7 @@
     },
     "packages/agentx": {
       "name": "agentxjs",
-      "version": "1.4.0",
+      "version": "1.5.1",
       "dependencies": {
         "@agentxjs/common": "workspace:*",
         "@agentxjs/network": "workspace:*",
@@ -101,19 +102,20 @@
         "ws": "^8.18.0",
       },
       "devDependencies": {
+        "@agentxjs/persistence": "workspace:*",
         "@agentxjs/runtime": "workspace:*",
       },
     },
     "packages/common": {
       "name": "@agentxjs/common",
-      "version": "1.4.0",
+      "version": "1.5.1",
       "dependencies": {
         "@agentxjs/types": "workspace:*",
       },
     },
     "packages/network": {
       "name": "@agentxjs/network",
-      "version": "1.4.0",
+      "version": "1.5.1",
       "dependencies": {
         "@agentxjs/common": "workspace:*",
         "@agentxjs/types": "workspace:*",
@@ -121,26 +123,40 @@
         "ws": "^8.18.0",
       },
     },
+    "packages/persistence": {
+      "name": "@agentxjs/persistence",
+      "version": "1.5.1",
+      "dependencies": {
+        "@agentxjs/common": "workspace:*",
+        "@agentxjs/types": "workspace:*",
+        "unstorage": "^1.14.4",
+      },
+      "peerDependencies": {
+        "db0": "^0.2.0",
+      },
+      "optionalPeers": [
+        "db0",
+      ],
+    },
     "packages/runtime": {
       "name": "@agentxjs/runtime",
-      "version": "1.4.0",
+      "version": "1.5.1",
       "dependencies": {
         "@agentxjs/agent": "workspace:*",
         "@agentxjs/common": "workspace:*",
+        "@agentxjs/persistence": "workspace:*",
         "@agentxjs/types": "workspace:*",
-        "@anthropic-ai/claude-agent-sdk": "^0.1.30",
-        "db0": "^0.3.4",
+        "@anthropic-ai/claude-agent-sdk": "^0.1.76",
         "rxjs": "^7.8.2",
-        "unstorage": "^1.14.4",
       },
     },
     "packages/types": {
       "name": "@agentxjs/types",
-      "version": "1.4.0",
+      "version": "1.5.1",
     },
     "packages/ui": {
       "name": "@agentxjs/ui",
-      "version": "1.4.0",
+      "version": "1.5.1",
       "dependencies": {
         "@agentxjs/common": "workspace:*",
         "@emoji-mart/data": "^1.2.1",
@@ -177,6 +193,8 @@
 
     "@agentxjs/network": ["@agentxjs/network@workspace:packages/network"],
 
+    "@agentxjs/persistence": ["@agentxjs/persistence@workspace:packages/persistence"],
+
     "@agentxjs/portagent": ["@agentxjs/portagent@workspace:apps/portagent"],
 
     "@agentxjs/runtime": ["@agentxjs/runtime@workspace:packages/runtime"],
@@ -190,6 +208,8 @@
     "@ampproject/remapping": ["@ampproject/remapping@2.3.0", "", { "dependencies": { "@jridgewell/gen-mapping": "^0.3.5", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw=="],
 
     "@anthropic-ai/claude-agent-sdk": ["@anthropic-ai/claude-agent-sdk@0.1.76", "", { "optionalDependencies": { "@img/sharp-darwin-arm64": "^0.33.5", "@img/sharp-darwin-x64": "^0.33.5", "@img/sharp-linux-arm": "^0.33.5", "@img/sharp-linux-arm64": "^0.33.5", "@img/sharp-linux-x64": "^0.33.5", "@img/sharp-linuxmusl-arm64": "^0.33.5", "@img/sharp-linuxmusl-x64": "^0.33.5", "@img/sharp-win32-x64": "^0.33.5" }, "peerDependencies": { "zod": "^3.24.1 || ^4.0.0" } }, "sha512-s7RvpXoFaLXLG7A1cJBAPD8ilwOhhc/12fb5mJXRuD561o4FmPtQ+WRfuy9akMmrFRfLsKv8Ornw3ClGAPL2fw=="],
+
+    "@anthropic-ai/claude-code": ["@anthropic-ai/claude-code@2.0.76", "", { "optionalDependencies": { "@img/sharp-darwin-arm64": "^0.33.5", "@img/sharp-darwin-x64": "^0.33.5", "@img/sharp-linux-arm": "^0.33.5", "@img/sharp-linux-arm64": "^0.33.5", "@img/sharp-linux-x64": "^0.33.5", "@img/sharp-linuxmusl-arm64": "^0.33.5", "@img/sharp-linuxmusl-x64": "^0.33.5", "@img/sharp-win32-x64": "^0.33.5" }, "bin": { "claude": "cli.js" } }, "sha512-BVwPez7Pst729gxHZNb7iUdjrn4UAzO49zC+Bxlyf0fMe3SsutxEhKTT16VMs2qInE9xhEBCxajCCa888mFPBg=="],
 
     "@babel/code-frame": ["@babel/code-frame@7.27.1", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.27.1", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg=="],
 

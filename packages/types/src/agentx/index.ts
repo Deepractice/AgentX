@@ -198,6 +198,19 @@ export interface LocalConfig {
   agentxDir?: string;
 
   /**
+   * Runtime environment configuration
+   * For advanced settings like Claude Code executable path
+   */
+  environment?: {
+    /**
+     * Path to Claude Code executable
+     * Required for binary distribution where Claude Code is bundled
+     * @example "/path/to/claude-code/cli.js"
+     */
+    claudeCodePath?: string;
+  };
+
+  /**
    * HTTP server to attach WebSocket to.
    * If provided, WebSocket upgrade will be handled on the same port.
    * The server should handle authentication before upgrading.

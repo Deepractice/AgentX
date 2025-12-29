@@ -8,6 +8,7 @@
       "@agentxjs/runtime",
       "@agentxjs/ui",
       "@agentxjs/portagent",
+      "@agentxjs/persistence",
       "@agentxjs/network",
       "@agentxjs/agent",
       "@agentxjs/types",
