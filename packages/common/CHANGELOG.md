@@ -1,5 +1,12 @@
 # @agentxjs/common
 
+## 1.5.5
+
+### Patch Changes
+
+- 6d6df00: Test workflow_call for Docker build after npm publish
+  - @agentxjs/types@1.5.5
+
 ## 1.5.4
 
 ### Patch Changes
