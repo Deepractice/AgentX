@@ -1,6 +1,6 @@
 {
   "name": "@agentxjs/persistence",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "Multi-backend persistence layer for AgentX - supports memory, SQLite, Redis, MongoDB, and SQL databases",
   "keywords": [
     "agentx",

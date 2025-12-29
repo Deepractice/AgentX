@@ -1,5 +1,11 @@
 # @agentxjs/common
 
+## 1.5.2
+
+### Patch Changes
+
+- @agentxjs/types@1.5.2
+
 ## 1.5.1
 
 ### Patch Changes
