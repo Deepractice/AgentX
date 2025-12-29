@@ -1,5 +1,12 @@
 # @agentxjs/common
 
+## 1.5.4
+
+### Patch Changes
+
+- b15f05a: Test unified release workflow with automated tag and GitHub release creation
+  - @agentxjs/types@1.5.4
+
 ## 1.5.3
 
 ### Patch Changes
