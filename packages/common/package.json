@@ -1,6 +1,6 @@
 {
   "name": "@agentxjs/common",
-  "version": "1.5.7",
+  "version": "1.5.8",
   "description": "Common utilities for AgentX platform - Logger facade and shared infrastructure",
   "keywords": [
     "agentx",

@@ -1,5 +1,18 @@
 # @agentxjs/portagent
 
+## 1.5.8
+
+### Patch Changes
+
+- babf47c: Replace pino with LogTape for bun --compile compatibility
+  - Remove pino and pino-pretty dependencies (worker threads incompatible with bun --compile)
+  - Add @logtape/logtape and @logtape/file (zero dependencies, native Bun support)
+  - Rewrite LoggerFactory using LogTape with rotating file sink
+  - Fix npm publish pattern: use root directory publishing with prepublishOnly
+  - agentxjs@1.5.8
+  - @agentxjs/runtime@1.5.8
+  - @agentxjs/ui@1.5.8
+
 ## 1.5.7
 
 ### Patch Changes
