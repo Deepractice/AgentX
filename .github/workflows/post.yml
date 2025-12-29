@@ -1,7 +1,14 @@
 name: Post Release
 
-# Triggered after changesets publishes packages to npm
 on:
+  # Called by changesets.yml after publish
+  workflow_call:
+    inputs:
+      version:
+        description: "Version to build (without v prefix)"
+        required: true
+        type: string
+  # Keep release trigger for manual releases
   release:
     types: [published]
 
@@ -37,8 +44,13 @@ jobs:
       - name: Extract Version
         id: version
         run: |
-          VERSION=${{ github.event.release.tag_name }}
-          VERSION=${VERSION#v}
+          # Use input version if called via workflow_call, otherwise from release event
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION=${{ github.event.release.tag_name }}
+            VERSION=${VERSION#v}
+          fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Wait for NPM Package Availability
@@ -88,8 +100,12 @@ jobs:
       - name: Extract Version
         id: version
         run: |
-          VERSION=${{ github.event.release.tag_name }}
-          VERSION=${VERSION#v}
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION=${{ github.event.release.tag_name }}
+            VERSION=${VERSION#v}
+          fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Create and Push Multi-arch Manifest

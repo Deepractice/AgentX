@@ -51,14 +51,17 @@ jobs:
 
       - name: Create Unified Release
         if: steps.changesets.outputs.published == 'true'
+        id: release
         run: |
           # Get version from types package (all packages use same version via fixed mode)
           VERSION=$(jq -r '.version' packages/types/package.json)
           TAG="v${VERSION}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
           # Check if tag already exists
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "Tag $TAG already exists, skipping release creation"
+            echo "created=false" >> $GITHUB_OUTPUT
             exit 0
           fi
 
@@ -71,12 +74,13 @@ jobs:
           BODY="## Published Packages\n\n"
           BODY+=$(echo "$PACKAGES" | jq -r '.[] | "- \(.name)@\(.version)"')
 
-          # Create GitHub release (this will trigger post.yml)
+          # Create GitHub release
           gh release create "$TAG" \
             --title "Release $TAG" \
             --notes "$BODY"
 
           echo "Created release $TAG"
+          echo "created=true" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -90,3 +94,16 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Published packages:" >> $GITHUB_STEP_SUMMARY
           echo '${{ steps.changesets.outputs.publishedPackages }}' | jq -r '.[] | "- `\(.name)@\(.version)`"' >> $GITHUB_STEP_SUMMARY
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+      version: ${{ steps.release.outputs.version }}
+
+  # Build Docker images after successful publish
+  docker:
+    name: Build Docker
+    needs: release
+    if: needs.release.outputs.published == 'true'
+    uses: ./.github/workflows/post.yml
+    with:
+      version: ${{ needs.release.outputs.version }}
+    secrets: inherit
