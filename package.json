@@ -21,7 +21,9 @@
     "clean": "turbo clean && rm -rf node_modules",
     "prepare": "lefthook install || true",
     "docs": "typedoc",
-    "docs:watch": "typedoc --watch"
+    "docs:watch": "typedoc --watch",
+    "version": "changeset version",
+    "release": "bun run build && changeset publish"
   },
   "author": "Deepractice",
   "license": "MIT",

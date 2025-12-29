@@ -1,17 +1,15 @@
 /**
  * Bun Build Script for @agentxjs/portagent
  *
+ * Builds standalone binaries for all platforms with bundled Claude Code.
+ * This is an application (not a library), so we always build binaries for distribution.
+ *
  * Usage:
- *   bun run build.ts           # Build ESM modules (default, for npm publish)
- *   bun run build.ts --binary  # Build standalone binaries for all platforms
- *   bun run build.ts --bin     # Same as --binary
+ *   bun run build.ts           # Build binaries for all platforms
  */
 
 import { cp, mkdir, writeFile, rm } from "fs/promises";
 import { join } from "path";
-
-const args = process.argv.slice(2);
-const buildBinary = args.includes("--binary") || args.includes("--bin");
 
 const pkg = await Bun.file("./package.json").json();
 const VERSION = pkg.version;
@@ -42,76 +40,6 @@ const BINARY_EXTERNALS = [
   "unstorage/drivers/mongodb",
   "unstorage/drivers/db0",
 ];
-
-async function buildESM() {
-  console.log("🚀 Building @agentxjs/portagent (ESM-only)\n");
-
-  // Build server
-  console.log("📦 Building server/index...");
-  const serverResult = await Bun.build({
-    entrypoints: ["src/server/index.ts"],
-    outdir,
-    format: "esm",
-    target: "node",
-    sourcemap: "external",
-    minify: false,
-    naming: { entry: "server/index.js" },
-    external: [
-      "agentxjs",
-      "@agentxjs/*",
-      "hono",
-      "@hono/node-server",
-      "pino",
-      "pino-pretty",
-      "jose",
-      "commander",
-      "dotenv",
-    ],
-  });
-
-  // Build CLI
-  console.log("📦 Building cli/index...");
-  const cliResult = await Bun.build({
-    entrypoints: ["src/cli/index.ts"],
-    outdir,
-    format: "esm",
-    target: "node",
-    sourcemap: "external",
-    minify: false,
-    naming: { entry: "cli/index.js" },
-    external: [
-      "agentxjs",
-      "@agentxjs/*",
-      "hono",
-      "@hono/node-server",
-      "pino",
-      "pino-pretty",
-      "jose",
-      "commander",
-      "dotenv",
-    ],
-  });
-
-  // Build frontend
-  await buildFrontend();
-
-  // Check results
-  const results = [serverResult, cliResult];
-  let hasErrors = false;
-  for (const result of results) {
-    if (!result.success) {
-      console.error("❌ Build failed:");
-      for (const log of result.logs) console.error(log);
-      hasErrors = true;
-    }
-  }
-
-  if (hasErrors) process.exit(1);
-
-  console.log(`✅ Server: ${serverResult.outputs.length} files`);
-  console.log(`✅ CLI: ${cliResult.outputs.length} files`);
-  console.log("🎉 ESM build complete!");
-}
 
 async function buildFrontend() {
   console.log("📦 Building client...");
@@ -316,9 +244,5 @@ try {
   console.log(`  cd ${outdir} && npm publish`);
 }
 
-// Main
-if (buildBinary) {
-  await buildBinaries();
-} else {
-  await buildESM();
-}
+// Main - Always build binaries (portagent is an app, not a library)
+await buildBinaries();

@@ -28,6 +28,9 @@ import { createAuthMiddleware, authRoutes } from "./auth";
 import { SQLiteUserRepository } from "./database";
 import { PinoLoggerFactory } from "./logger";
 
+// Global type for compiled binary detection (injected at compile time via --define)
+declare const IS_COMPILED_BINARY: boolean | undefined;
+
 /**
  * Get data directory paths
  * Uses AGENTX_DIR env var, or defaults to ~/.agentx
@@ -105,7 +108,6 @@ async function createApp() {
   });
 
   // Detect if running as compiled binary
-  declare const IS_COMPILED_BINARY: boolean | undefined;
   const isCompiledBinary = typeof IS_COMPILED_BINARY !== "undefined" && IS_COMPILED_BINARY;
 
   // Determine Claude Code path for binary distribution
