@@ -1,5 +1,13 @@
 # agentxjs
 
+## 1.5.10
+
+### Patch Changes
+
+- @agentxjs/network@1.5.10
+- @agentxjs/types@1.5.10
+- @agentxjs/common@1.5.10
+
 ## 1.5.9
 
 ### Patch Changes
