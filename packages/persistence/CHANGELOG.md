@@ -1,5 +1,15 @@
 # @agentxjs/persistence
 
+## 1.5.10
+
+### Patch Changes
+
+- 363d42d: fix(persistence): pass correct path option to bun-sqlite connector
+
+  Fixed SQLite driver incorrectly passing path as `name` instead of `path` to bun-sqlite connector. This caused db0 to use default `.data/` directory in the current working directory, leading to permission errors in Docker containers.
+  - @agentxjs/types@1.5.10
+  - @agentxjs/common@1.5.10
+
 ## 1.5.9
 
 ### Patch Changes
