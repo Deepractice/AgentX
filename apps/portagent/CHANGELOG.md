@@ -1,5 +1,18 @@
 # @agentxjs/portagent
 
+## 1.5.9
+
+### Patch Changes
+
+- ff62365: fix: include unstorage/drivers/db0 in compiled binary
+
+  Fixed startup failure on Windows and Linux where the compiled binary could not find the `unstorage/drivers/db0` module. This module was incorrectly marked as an optional external dependency, but it is actually required for SQLite persistence.
+
+  Fixes #188
+  - agentxjs@1.5.9
+  - @agentxjs/runtime@1.5.9
+  - @agentxjs/ui@1.5.9
+
 ## 1.5.8
 
 ### Patch Changes

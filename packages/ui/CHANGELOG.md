@@ -1,5 +1,12 @@
 # @agentxjs/ui
 
+## 1.5.9
+
+### Patch Changes
+
+- agentxjs@1.5.9
+- @agentxjs/common@1.5.9
+
 ## 1.5.8
 
 ### Patch Changes
