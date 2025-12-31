@@ -41,7 +41,7 @@ export function sqliteDriver(options: SqliteDriverOptions): PersistenceDriver {
       const { createDatabase } = await import("db0");
       const { default: bunSqliteConnector } = await import("db0/connectors/bun-sqlite");
 
-      const database = createDatabase(bunSqliteConnector({ name: options.path }));
+      const database = createDatabase(bunSqliteConnector({ path: options.path }));
 
       return createStorage({
         driver: db0Driver({ database }),
