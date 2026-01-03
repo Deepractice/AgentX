@@ -3,6 +3,9 @@
   "version": "1.5.10",
   "description": "Runtime for AI Agents - Agent execution, SystemBus, Environment, and Repository",
   "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

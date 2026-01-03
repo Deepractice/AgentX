@@ -3,6 +3,9 @@
   "version": "1.5.10",
   "description": "Unified API for AI Agents - Server and Browser",
   "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Deepractice/AgentX.git"
