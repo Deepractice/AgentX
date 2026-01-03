@@ -15,7 +15,7 @@
 - **Subpath Exports** - Import only the driver you need (tree-shaking friendly)
 - **Multiple Backends** - SQLite, Redis, MongoDB, MySQL, PostgreSQL
 - **Zero Config Default** - Memory driver works out of the box
-- **Bun Optimized** - Uses `bun:sqlite` for SQLite driver
+- **Cross-Runtime** - SQLite driver works on both Bun and Node.js 22+
 
 ## Installation
 
@@ -66,6 +66,11 @@ const persistence = await createPersistence(redisDriver({ url: "redis://localhos
 ## Driver Options
 
 ### SQLite
+
+Automatically detects runtime:
+
+- **Bun**: uses `bun:sqlite` (built-in)
+- **Node.js 22+**: uses `node:sqlite` (built-in)
 
 ```typescript
 sqliteDriver({

@@ -3,6 +3,9 @@
   "version": "1.5.10",
   "description": "Type definitions for AgentX ecosystem",
   "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Deepractice/AgentX.git"
