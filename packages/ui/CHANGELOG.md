@@ -1,5 +1,12 @@
 # @agentxjs/ui
 
+## 1.8.1
+
+### Patch Changes
+
+- agentxjs@1.8.1
+- @agentxjs/common@1.8.1
+
 ## 1.8.0
 
 ### Minor Changes
