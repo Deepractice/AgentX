@@ -291,7 +291,6 @@ export class ClaudeEffector implements Effector {
       } catch (error) {
         if (this.isAbortError(error)) {
           logger.debug("Background listener aborted (expected during interrupt)");
-          this.resetState();
         } else {
           logger.error("Background listener error", { error });
           // Emit error to receptor so it can be displayed in chat
@@ -300,6 +299,8 @@ export class ClaudeEffector implements Effector {
             this.receptor.emitError(errorMessage, "runtime_error", this.currentMeta);
           }
         }
+        // Always reset state on any error to prevent memory leaks and stale state
+        this.resetState();
       }
     })();
   }
@@ -317,9 +318,26 @@ export class ClaudeEffector implements Effector {
   }
 
   /**
-   * Reset state after abort
+   * Reset state and cleanup resources
+   *
+   * IMPORTANT: This method must properly terminate the Claude subprocess.
+   * The subprocess listens on promptSubject's async iterable - calling complete()
+   * signals end of input and allows the subprocess to exit gracefully.
    */
   private resetState(): void {
+    logger.debug("Resetting ClaudeEffector state", { agentId: this.config.agentId });
+
+    // 1. Complete the prompt stream first (signals end of input to subprocess)
+    this.promptSubject.complete();
+
+    // 2. Interrupt any ongoing operation
+    if (this.claudeQuery) {
+      this.claudeQuery.interrupt().catch((err) => {
+        logger.debug("SDK interrupt() during reset (may be expected)", { error: err });
+      });
+    }
+
+    // 3. Reset state for potential reuse
     this.isInitialized = false;
     this.claudeQuery = null;
     this.promptSubject = new Subject<SDKUserMessage>();
@@ -327,19 +345,29 @@ export class ClaudeEffector implements Effector {
 
   /**
    * Dispose and cleanup resources
+   *
+   * This method ensures the Claude subprocess is properly terminated.
+   * It must be called when the agent is destroyed to prevent memory leaks.
    */
   dispose(): void {
-    logger.debug("Disposing ClaudeEffector");
+    logger.debug("Disposing ClaudeEffector", { agentId: this.config.agentId });
 
-    // Abort any ongoing request
+    // 1. Interrupt any ongoing SDK operation first
+    if (this.claudeQuery) {
+      this.claudeQuery.interrupt().catch((err) => {
+        logger.debug("SDK interrupt() during dispose (may be expected)", { error: err });
+      });
+    }
+
+    // 2. Abort any pending request
     if (this.currentAbortController) {
       this.currentAbortController.abort();
     }
 
-    // Complete the prompt subject
-    this.promptSubject.complete();
-
-    // Reset state
+    // 3. Complete the prompt stream and reset state
+    // resetState() will complete the promptSubject, signaling subprocess to exit
     this.resetState();
+
+    logger.debug("ClaudeEffector disposed", { agentId: this.config.agentId });
   }
 }

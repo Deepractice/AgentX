@@ -56,6 +56,10 @@ export function buildOptions(
   if (!env.PATH && process.env.PATH) {
     env.PATH = process.env.PATH;
   }
+
+  // Mark process as AgentX environment for identification and debugging
+  env.AGENTX_ENVIRONMENT = "true";
+
   if (context.baseUrl) {
     env.ANTHROPIC_BASE_URL = context.baseUrl;
   }
