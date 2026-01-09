@@ -1,5 +1,12 @@
 # @agentxjs/persistence
 
+## 1.8.0
+
+### Patch Changes
+
+- @agentxjs/types@1.8.0
+- @agentxjs/common@1.8.0
+
 ## 1.7.0
 
 ### Patch Changes

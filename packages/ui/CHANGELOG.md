@@ -1,5 +1,42 @@
 # @agentxjs/ui
 
+## 1.8.0
+
+### Minor Changes
+
+- 7cc4af7: Increase default file upload size limit from 5MB to 100MB
+
+  Increase the default `maxFileSize` in InputPane component from 5MB to 100MB to support larger file uploads. This change addresses user feedback about file size restrictions.
+
+  **Changes**:
+  - InputPane default `maxFileSize`: 5MB → 100MB (104857600 bytes)
+  - Users can still override this value via props if needed
+
+  **Note**: This is a frontend limit. Backend/API limits may still apply and should be configured separately.
+
+  Resolves #173
+
+- 0a309bf: refactor(ui): migrate from custom elements to shadcn/ui components
+  - Replace custom Button, Input, Badge, Popover, ScrollArea with shadcn/ui equivalents
+  - Add new shadcn components: Dialog, Tabs, Sonner (toast)
+  - Update theme to Blue color scheme from shadcn themes
+  - Add conversation rename feature with Dialog component in AgentList
+  - Add edit button in ListPane for triggering rename
+  - Fix hardcoded text-black in MarkdownText component
+  - Fix Storybook react-docgen compatibility with Radix UI
+
+  refactor(portagent): fix WebSocket connection in development mode
+  - Upgrade Vite from v6 to v7.3.1
+  - Work around Vite WebSocket proxy bug by connecting directly to backend in dev mode
+  - Use import.meta.env.DEV to detect development environment
+
+  refactor(network): add debug logging for WebSocket client
+
+### Patch Changes
+
+- agentxjs@1.8.0
+- @agentxjs/common@1.8.0
+
 ## 1.7.0
 
 ### Patch Changes

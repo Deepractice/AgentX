@@ -1,5 +1,14 @@
 # agentxjs
 
+## 1.8.0
+
+### Patch Changes
+
+- Updated dependencies [0a309bf]
+  - @agentxjs/network@1.8.0
+  - @agentxjs/types@1.8.0
+  - @agentxjs/common@1.8.0
+
 ## 1.7.0
 
 ### Minor Changes
