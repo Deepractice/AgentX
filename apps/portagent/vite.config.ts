@@ -23,9 +23,9 @@ export default defineConfig({
         changeOrigin: true,
       },
       "/ws": {
-        target: "http://localhost:5200",
-        changeOrigin: true,
+        target: "ws://localhost:5200",
         ws: true,
+        rewriteWsOrigin: true,
       },
     },
   },

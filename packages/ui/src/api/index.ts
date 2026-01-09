@@ -22,8 +22,11 @@ export * from "~/components/pane";
 // Layout Components (structural)
 export * from "~/components/layout";
 
-// Element Components (atomic UI)
+// Element Components (business UI)
 export * from "~/components/element";
+
+// UI Primitives (shadcn/ui)
+export * from "~/components/ui";
 
 // Mobile Components
 export * from "~/components/mobile";

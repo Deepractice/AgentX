@@ -16,7 +16,7 @@
 import * as React from "react";
 import { MessageSquare, Loader2 } from "lucide-react";
 import type { AgentState } from "agentxjs";
-import { Badge } from "~/components/element/Badge";
+import { Badge } from "~/components/ui";
 import { cn } from "~/utils";
 
 export interface ChatHeaderProps {

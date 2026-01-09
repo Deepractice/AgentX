@@ -1,19 +1,16 @@
-// Element Components - Atomic UI building blocks
+// Element Components - Business UI building blocks
+// Note: Basic UI primitives (Button, Input, Badge, Dialog, etc.) are now in ~/components/ui
+
 export { ActionBar } from "./ActionBar";
 export { AgentLogo } from "./AgentLogo";
 export { AppHeader } from "./AppHeader";
-export { Badge } from "./Badge";
-export { Button } from "./Button";
 export { EmojiPicker } from "./EmojiPicker";
 export type { Emoji, EmojiPickerProps } from "./EmojiPicker";
 export { EmptyState } from "./EmptyState";
 export { ImageAttachment } from "./ImageAttachment";
-export { Input } from "./Input";
 export { ListItem } from "./ListItem";
 export { LoadingState } from "./LoadingState";
 export { PageHeader } from "./PageHeader";
-export { Popover } from "./Popover";
-export { ScrollArea } from "./ScrollArea";
 export { SearchInput } from "./SearchInput";
 export { TabNavigation } from "./TabNavigation";
 export { TimeAgo } from "./TimeAgo";

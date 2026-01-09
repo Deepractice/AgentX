@@ -108,7 +108,7 @@ const markdownComponents = {
       {children}
     </a>
   ),
-  p: ({ children }: any) => <div className="mb-2 last:mb-0 text-black">{children}</div>,
+  p: ({ children }: any) => <div className="mb-2 last:mb-0">{children}</div>,
 };
 
 export interface MarkdownTextProps {

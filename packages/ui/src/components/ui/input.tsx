@@ -1,7 +1,8 @@
 import * as React from "react";
-import { cn } from "~/utils/utils";
 
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+import { cn } from "~/utils/index";
+
+export type InputProps = React.ComponentProps<"input">;
 
 const Input: React.ForwardRefExoticComponent<InputProps & React.RefAttributes<HTMLInputElement>> =
   React.forwardRef<HTMLInputElement, InputProps>(({ className, type, ...props }, ref) => {

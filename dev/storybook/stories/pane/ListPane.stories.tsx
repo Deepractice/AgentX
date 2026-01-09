@@ -1,9 +1,7 @@
 import * as React from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { ListPane } from "@agentxjs/ui";
-import { MessageSquare, File, Folder, User, Clock, Star } from "lucide-react";
-import { Badge } from "~/components/element/Badge";
-import { AgentLogo } from "~/components/element/AgentLogo";
+import { ListPane, Badge, AgentLogo } from "@agentxjs/ui";
+import { MessageSquare, File, Folder, User, Clock, Star, Pencil } from "lucide-react";
 
 const meta: Meta<typeof ListPane> = {
   title: "Pane/ListPane",
@@ -125,7 +123,7 @@ const userItems = [
     ),
     subtitle: <span className="text-xs text-muted-foreground">Online</span>,
     trailing: (
-      <Badge variant="success" className="text-xs">
+      <Badge variant="default" className="text-xs">
         Active
       </Badge>
     ),
@@ -140,7 +138,7 @@ const userItems = [
     ),
     subtitle: <span className="text-xs text-muted-foreground">Away</span>,
     trailing: (
-      <Badge variant="warning" className="text-xs">
+      <Badge variant="secondary" className="text-xs">
         Away
       </Badge>
     ),
@@ -433,6 +431,57 @@ export const NoHeader: Story = {
     docs: {
       description: {
         story: "List without new button, minimal header",
+      },
+    },
+  },
+};
+
+export const WithEditAndDelete: Story = {
+  render: () => {
+    const [selectedId, setSelectedId] = React.useState<string | null>("1");
+    const [listItems, setListItems] = React.useState(conversationItems);
+
+    const handleEdit = (id: string, currentTitle: string) => {
+      const newName = prompt("Enter new name:", currentTitle);
+      if (newName && newName.trim()) {
+        setListItems((prev) =>
+          prev.map((item) => (item.id === id ? { ...item, title: newName.trim() } : item))
+        );
+      }
+    };
+
+    const handleDelete = (id: string) => {
+      setListItems((prev) => prev.filter((item) => item.id !== id));
+      if (selectedId === id) {
+        setSelectedId(null);
+      }
+    };
+
+    return (
+      <div className="h-96 w-72 border border-border rounded-md overflow-hidden">
+        <ListPane
+          title="Conversations"
+          items={listItems}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onNew={() => console.log("New clicked")}
+          emptyState={{
+            icon: <MessageSquare className="w-6 h-6" />,
+            title: "No conversations",
+            description: "Start a new conversation",
+            actionLabel: "New conversation",
+          }}
+        />
+      </div>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "List with both edit (rename) and delete actions. Hover over an item to see the action buttons.",
       },
     },
   },

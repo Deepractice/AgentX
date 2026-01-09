@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "~/utils/utils";
-import { Button, buttonVariants } from "./Button";
+import { Button, buttonVariants } from "~/components/ui";
 import type { VariantProps } from "class-variance-authority";
 
 export interface ActionBarProps extends React.HTMLAttributes<HTMLDivElement> {

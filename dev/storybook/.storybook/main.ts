@@ -13,7 +13,25 @@ const config: StorybookConfig = {
     name: "@storybook/react-vite",
     options: {},
   },
+  typescript: {
+    // Use react-docgen-typescript instead of react-docgen (avoids PrivateName error with Radix UI)
+    reactDocgen: "react-docgen-typescript",
+    reactDocgenTypescriptOptions: {
+      shouldExtractLiteralValuesFromEnum: true,
+      propFilter: (prop) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
+    },
+  },
   viteFinal: async (config) => {
+    // Remove the problematic react-docgen plugin (it can't handle Radix UI's private fields)
+    // This lets react-docgen-typescript handle prop extraction instead
+    if (config.plugins) {
+      config.plugins = config.plugins.filter((plugin) => {
+        if (plugin && typeof plugin === "object" && "name" in plugin) {
+          return plugin.name !== "storybook:react-docgen-plugin";
+        }
+        return true;
+      });
+    }
     // Configure path aliases to point to UI package
     if (config.resolve) {
       config.resolve.alias = {

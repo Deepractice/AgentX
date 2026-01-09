@@ -27,7 +27,7 @@
  */
 
 import * as React from "react";
-import { Plus, Trash2, ChevronsLeft } from "lucide-react";
+import { Plus, Trash2, Pencil, ChevronsLeft } from "lucide-react";
 import { cn } from "~/utils/utils";
 import { ListItem } from "~/components/element/ListItem";
 import { SearchInput } from "~/components/element/SearchInput";
@@ -124,6 +124,10 @@ export interface ListPaneProps {
    */
   onSelect?: (id: string) => void;
   /**
+   * Callback when edit is clicked on an item
+   */
+  onEdit?: (id: string, currentTitle: string) => void;
+  /**
    * Callback when delete is clicked on an item
    */
   onDelete?: (id: string) => void;
@@ -182,6 +186,7 @@ export const ListPane: React.ForwardRefExoticComponent<
         actionLabel: "Create new",
       },
       onSelect,
+      onEdit,
       onDelete,
       onNew,
       renderItemActions,
@@ -202,20 +207,36 @@ export const ListPane: React.ForwardRefExoticComponent<
       );
     }, [items, searchQuery]);
 
-    // Default delete action renderer
+    // Default action buttons renderer
     const defaultRenderActions = (item: ListPaneItem) => {
-      if (!onDelete) return null;
+      if (!onEdit && !onDelete) return null;
       return (
-        <button
-          className="w-6 h-6 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 rounded flex items-center justify-center transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(item.id);
-          }}
-          title="Delete"
-        >
-          <Trash2 className="w-3 h-3 text-red-600 dark:text-red-400" />
-        </button>
+        <div className="flex items-center gap-1">
+          {onEdit && (
+            <button
+              className="w-6 h-6 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 rounded flex items-center justify-center transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(item.id, item.title);
+              }}
+              title="Rename"
+            >
+              <Pencil className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              className="w-6 h-6 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 rounded flex items-center justify-center transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(item.id);
+              }}
+              title="Delete"
+            >
+              <Trash2 className="w-3 h-3 text-red-600 dark:text-red-400" />
+            </button>
+          )}
+        </div>
       );
     };
 

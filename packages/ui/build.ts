@@ -17,7 +17,13 @@ console.log("🚀 Building @agentxjs/ui (ESM-only)\n");
 const dtsResult = await generateDts(entrypoints);
 
 // Files with cva() exports - these can't have explicit types due to VariantProps compatibility
-const cvaExportFiles = ["Button.tsx", "Badge.tsx", "TabNavigation.tsx"];
+const cvaExportFiles = [
+  // shadcn ui components
+  "ui/button.tsx",
+  "ui/badge.tsx",
+  // element components
+  "element/TabNavigation.tsx",
+];
 
 // Filter: allow TS9010 (missing type annotation) for known cva files
 const isCvaRelatedError = (e: (typeof dtsResult.errors)[0]): boolean => {
