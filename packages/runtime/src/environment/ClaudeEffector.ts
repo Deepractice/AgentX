@@ -8,7 +8,8 @@ import type { Effector, SystemBusConsumer } from "@agentxjs/types/runtime/intern
 import type { UserMessage } from "@agentxjs/types/agent";
 import type { EventContext } from "@agentxjs/types/runtime";
 import { query, type SDKUserMessage, type Query } from "@anthropic-ai/claude-agent-sdk";
-import { Subject } from "rxjs";
+import { Subject, Subscription, TimeoutError } from "rxjs";
+import { timeout } from "rxjs/operators";
 import { createLogger } from "@agentxjs/common";
 import { buildOptions, type EnvironmentContext } from "./buildOptions";
 import { buildSDKUserMessage } from "./helpers";
@@ -61,6 +62,11 @@ export class ClaudeEffector implements Effector {
   private isInitialized = false;
   private wasInterrupted = false;
   private currentMeta: ReceptorMeta | null = null;
+
+  /** Subject for tracking pending request - completes when result received */
+  private pendingRequest$: Subject<void> | null = null;
+  /** Subscription for timeout handling */
+  private pendingSubscription: Subscription | null = null;
 
   constructor(config: ClaudeEffectorConfig, receptor: ClaudeReceptor) {
     this.config = config;
@@ -128,17 +134,20 @@ export class ClaudeEffector implements Effector {
 
   /**
    * Send a message to Claude SDK
+   *
+   * Uses RxJS to manage request-response timeout correlation.
+   * The pendingRequest$ Subject is completed when a result is received,
+   * which automatically cancels the timeout subscription.
    */
   private async send(message: UserMessage, meta: ReceptorMeta): Promise<void> {
     this.wasInterrupted = false;
     this.currentAbortController = new AbortController();
     this.currentMeta = meta; // Store for background listener
 
-    const timeout = this.config.timeout ?? DEFAULT_TIMEOUT;
-    const timeoutId = setTimeout(() => {
-      logger.warn("Request timeout", { timeout });
-      this.currentAbortController?.abort(new Error(`Request timeout after ${timeout}ms`));
-    }, timeout);
+    // Clean up previous pending request if any
+    this.cleanupPendingRequest();
+
+    const timeoutMs = this.config.timeout ?? DEFAULT_TIMEOUT;
 
     try {
       await this.initialize(this.currentAbortController);
@@ -149,21 +158,86 @@ export class ClaudeEffector implements Effector {
       logger.debug("Sending message to Claude", {
         content:
           typeof message.content === "string" ? message.content.substring(0, 80) : "[structured]",
-        timeout,
+        timeout: timeoutMs,
         requestId: meta.requestId,
       });
 
+      // Create a new pending request Subject for timeout tracking
+      // This Subject will be completed when result is received in backgroundListener
+      this.pendingRequest$ = new Subject<void>();
+
+      // Subscribe with timeout - RxJS will automatically handle timeout
+      this.pendingSubscription = this.pendingRequest$.pipe(timeout(timeoutMs)).subscribe({
+        complete: () => {
+          logger.debug("Request completed within timeout", { requestId: meta.requestId });
+        },
+        error: (err) => {
+          if (err instanceof TimeoutError) {
+            logger.warn("Request timeout", { timeout: timeoutMs, requestId: meta.requestId });
+            this.handleTimeout(meta);
+          }
+        },
+      });
+
+      // Send message to SDK
       this.promptSubject.next(sdkUserMessage);
 
-      // Process SDK responses
       // Note: We don't await here - background listener handles responses
-      // currentMeta stays set until the next send() call
-    } finally {
-      clearTimeout(timeoutId);
-      this.currentAbortController = null;
-      this.wasInterrupted = false;
-      // Don't clear currentMeta - it's needed by background listener
-      // this.currentMeta = null;
+      // pendingRequest$ will be completed when result is received
+    } catch (error) {
+      // Clean up on initialization error
+      this.cleanupPendingRequest();
+      throw error;
+    }
+  }
+
+  /**
+   * Handle request timeout
+   */
+  private handleTimeout(meta: ReceptorMeta): void {
+    // Interrupt the SDK query
+    if (this.claudeQuery) {
+      logger.debug("Interrupting due to timeout");
+      this.wasInterrupted = true;
+      this.claudeQuery.interrupt().catch((err) => {
+        logger.debug("SDK interrupt() error during timeout (may be expected)", { error: err });
+      });
+    }
+
+    // Emit timeout error to receptor
+    this.receptor.emitError(
+      `Request timeout after ${this.config.timeout ?? DEFAULT_TIMEOUT}ms`,
+      "timeout",
+      meta
+    );
+  }
+
+  /**
+   * Clean up pending request subscription
+   */
+  private cleanupPendingRequest(): void {
+    if (this.pendingSubscription) {
+      this.pendingSubscription.unsubscribe();
+      this.pendingSubscription = null;
+    }
+    if (this.pendingRequest$) {
+      this.pendingRequest$.complete();
+      this.pendingRequest$ = null;
+    }
+  }
+
+  /**
+   * Complete pending request (called when result is received)
+   * This cancels the timeout automatically via RxJS
+   */
+  private completePendingRequest(): void {
+    if (this.pendingRequest$) {
+      this.pendingRequest$.complete();
+      this.pendingRequest$ = null;
+    }
+    if (this.pendingSubscription) {
+      this.pendingSubscription.unsubscribe();
+      this.pendingSubscription = null;
     }
   }
 
@@ -250,6 +324,9 @@ export class ClaudeEffector implements Effector {
 
           // Handle result
           if (sdkMsg.type === "result") {
+            // Complete pending request - this cancels the timeout via RxJS
+            this.completePendingRequest();
+
             const resultMsg = sdkMsg as {
               subtype: string;
               is_error?: boolean;
@@ -289,6 +366,9 @@ export class ClaudeEffector implements Effector {
           }
         }
       } catch (error) {
+        // Clean up pending request on error
+        this.cleanupPendingRequest();
+
         if (this.isAbortError(error)) {
           logger.debug("Background listener aborted (expected during interrupt)");
         } else {
@@ -327,17 +407,20 @@ export class ClaudeEffector implements Effector {
   private resetState(): void {
     logger.debug("Resetting ClaudeEffector state", { agentId: this.config.agentId });
 
-    // 1. Complete the prompt stream first (signals end of input to subprocess)
+    // 1. Clean up pending request (cancel timeout)
+    this.cleanupPendingRequest();
+
+    // 2. Complete the prompt stream first (signals end of input to subprocess)
     this.promptSubject.complete();
 
-    // 2. Interrupt any ongoing operation
+    // 3. Interrupt any ongoing operation
     if (this.claudeQuery) {
       this.claudeQuery.interrupt().catch((err) => {
         logger.debug("SDK interrupt() during reset (may be expected)", { error: err });
       });
     }
 
-    // 3. Reset state for potential reuse
+    // 4. Reset state for potential reuse
     this.isInitialized = false;
     this.claudeQuery = null;
     this.promptSubject = new Subject<SDKUserMessage>();
@@ -352,19 +435,22 @@ export class ClaudeEffector implements Effector {
   dispose(): void {
     logger.debug("Disposing ClaudeEffector", { agentId: this.config.agentId });
 
-    // 1. Interrupt any ongoing SDK operation first
+    // 1. Clean up pending request (cancel timeout)
+    this.cleanupPendingRequest();
+
+    // 2. Interrupt any ongoing SDK operation first
     if (this.claudeQuery) {
       this.claudeQuery.interrupt().catch((err) => {
         logger.debug("SDK interrupt() during dispose (may be expected)", { error: err });
       });
     }
 
-    // 2. Abort any pending request
+    // 3. Abort any pending request
     if (this.currentAbortController) {
       this.currentAbortController.abort();
     }
 
-    // 3. Complete the prompt stream and reset state
+    // 4. Complete the prompt stream and reset state
     // resetState() will complete the promptSubject, signaling subprocess to exit
     this.resetState();
 
