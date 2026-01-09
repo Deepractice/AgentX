@@ -1,5 +1,43 @@
 # @agentxjs/portagent
 
+## 1.6.0
+
+### Minor Changes
+
+- 51eab14: feat(portagent): add PromptX MCP server as default agent
+
+  **Portagent:**
+  - Add `defaultAgent.ts` with PromptX MCP server configuration
+  - Integrate default agent into server startup
+  - Add `ENABLE_PROMPTX` environment variable to control (default: enabled)
+  - Update Dockerfile to install `@promptx/cli` globally
+  - Add multi-stage Dockerfile with `--target local` for development builds
+
+  **Runtime:**
+  - Increase default request timeout from 30s to 10 minutes (600000ms)
+  - Better support for long-running tool executions and code generation
+
+### Patch Changes
+
+- 51eab14: feat(portagent): add multi-stage Dockerfile with local build support
+  - Add `--target local` for building with locally compiled binaries (development/testing)
+  - Add `--target npm` for building from npm registry (production, default)
+  - Auto-detect architecture (x86_64/aarch64) and select correct binary
+  - Copy entire dist directory for local builds to include all resources
+
+- 8f03b12: fix(portagent): remove hardcoded wsUrl to fix Docker WebSocket connection
+
+  Bun compiler inlined `process.env.NODE_ENV !== "production"` as `true` during build, causing wsUrl to always return `ws://localhost:5200/ws` even in production Docker environments. This broke WebSocket connections when accessing from external hosts.
+
+  Solution: Remove wsUrl from server response entirely. Frontend now always uses `window.location.host` to construct WebSocket URL. This works for both development (Vite proxy forwards /ws) and production (same origin).
+
+- Updated dependencies [51eab14]
+- Updated dependencies [51eab14]
+- Updated dependencies [51eab14]
+  - @agentxjs/runtime@1.6.0
+  - agentxjs@1.6.0
+  - @agentxjs/ui@1.6.0
+
 ## 1.5.11
 
 ### Patch Changes
