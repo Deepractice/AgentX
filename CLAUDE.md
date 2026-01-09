@@ -115,6 +115,54 @@ agent.react({
 await agent.receive("Hello!");
 ```
 
+### Remote Mode with Authentication and Context
+
+When connecting to a remote AgentX server, you can provide authentication headers and business context:
+
+```typescript
+import { createAgentX } from "agentxjs";
+
+// Simple static configuration
+const agentx = await createAgentX({
+  serverUrl: "ws://localhost:5200",
+  headers: { Authorization: "Bearer sk-xxx" },
+  context: { userId: "123", tenantId: "abc" },
+});
+
+// Dynamic configuration (evaluated on connect/request)
+const agentx = await createAgentX({
+  serverUrl: "ws://localhost:5200",
+  headers: () => ({ Authorization: `Bearer ${getToken()}` }),
+  context: () => ({
+    userId: getCurrentUser().id,
+    permissions: getUserPermissions(),
+  }),
+});
+
+// Async dynamic configuration
+const agentx = await createAgentX({
+  serverUrl: "ws://localhost:5200",
+  headers: async () => ({ Authorization: `Bearer ${await fetchToken()}` }),
+  context: async () => ({
+    userId: await getUserId(),
+    sessionId: await getSessionId(),
+  }),
+});
+
+// Context is automatically merged into all requests
+// Request-level context takes precedence over global context
+await agentx.request("message_send", {
+  content: "Hello",
+  // This context will be merged with global context
+  context: { traceId: "trace-123" },
+});
+```
+
+**Note**:
+
+- **Headers**: In Node.js, sent during WebSocket handshake. In browsers, sent as first authentication message (WebSocket API limitation).
+- **Context**: Automatically injected into all requests. Useful for passing userId, tenantId, permissions, etc.
+
 ## Coding Standards
 
 **Language**: English for all code, comments, logs, error messages.

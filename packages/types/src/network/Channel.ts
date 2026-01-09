@@ -176,6 +176,18 @@ export interface ChannelClientOptions {
    * Enable debug logging (default: false)
    */
   debug?: boolean;
+
+  /**
+   * Custom headers for WebSocket connection
+   *
+   * - Node.js: Headers are sent during WebSocket handshake
+   * - Browser: Headers are sent in first authentication message (WebSocket API limitation)
+   *
+   * Supports both static values and dynamic functions (sync or async).
+   */
+  headers?:
+    | Record<string, string>
+    | (() => Record<string, string> | Promise<Record<string, string>>);
 }
 
 /**
