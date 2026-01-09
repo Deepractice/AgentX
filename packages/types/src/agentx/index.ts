@@ -256,6 +256,60 @@ export interface RemoteConfig {
    * @example "ws://localhost:5200"
    */
   serverUrl: string;
+
+  /**
+   * Custom headers for WebSocket connection authentication
+   *
+   * - Node.js: Headers are sent during WebSocket handshake
+   * - Browser: Headers are sent in first authentication message (WebSocket API limitation)
+   *
+   * Supports both static values and dynamic functions (sync or async).
+   *
+   * @example
+   * ```typescript
+   * // Static headers
+   * headers: { Authorization: "Bearer sk-xxx" }
+   *
+   * // Dynamic headers (sync)
+   * headers: () => ({ Authorization: `Bearer ${getToken()}` })
+   *
+   * // Dynamic headers (async)
+   * headers: async () => ({ Authorization: `Bearer ${await fetchToken()}` })
+   * ```
+   */
+  headers?:
+    | Record<string, string>
+    | (() => Record<string, string> | Promise<Record<string, string>>);
+
+  /**
+   * Business context injected into all requests
+   *
+   * This context is automatically merged into the `data` field of every request.
+   * Individual requests can override with their own context.
+   *
+   * Supports both static values and dynamic functions (sync or async).
+   *
+   * @example
+   * ```typescript
+   * // Static context
+   * context: { userId: "123", tenantId: "abc" }
+   *
+   * // Dynamic context (sync)
+   * context: () => ({ userId: getCurrentUser().id, permissions: getPermissions() })
+   *
+   * // Dynamic context (async)
+   * context: async () => ({ userId: await getUserId(), sessionId: await getSessionId() })
+   *
+   * // Request-level override
+   * agentx.request("message_send", {
+   *   content: "Hello",
+   *   context: { traceId: "trace-xxx" } // Merged with global context
+   * })
+   * ```
+   */
+  context?:
+    | Record<string, unknown>
+    | (() => Record<string, unknown> | Promise<Record<string, unknown>>);
 }
 
 // ============================================================================

@@ -19,6 +19,9 @@ const isBrowser =
 export class WebSocketClient implements ChannelClient {
   private ws: WebSocket | null = null;
   private serverUrl: string;
+  private headers?:
+    | Record<string, string>
+    | (() => Record<string, string> | Promise<Record<string, string>>);
   private messageHandlers = new Set<(message: string) => void>();
   private openHandlers = new Set<() => void>();
   private closeHandlers = new Set<() => void>();
@@ -32,6 +35,7 @@ export class WebSocketClient implements ChannelClient {
     }
 
     this.serverUrl = options.serverUrl;
+    this.headers = options.headers;
   }
 
   get readyState(): "connecting" | "open" | "closing" | "closed" {
@@ -49,7 +53,21 @@ export class WebSocketClient implements ChannelClient {
     }
 
     const { WebSocket: NodeWebSocket } = await import("ws");
-    this.ws = new NodeWebSocket(this.serverUrl) as unknown as WebSocket;
+
+    // Resolve headers (support static, sync function, and async function)
+    let resolvedHeaders: Record<string, string> | undefined;
+    if (this.headers) {
+      if (typeof this.headers === "function") {
+        resolvedHeaders = await Promise.resolve(this.headers());
+      } else {
+        resolvedHeaders = this.headers;
+      }
+    }
+
+    // Create WebSocket with headers (Node.js ws library supports this)
+    this.ws = new NodeWebSocket(this.serverUrl, {
+      headers: resolvedHeaders,
+    }) as unknown as WebSocket;
 
     return new Promise<void>((resolve, reject) => {
       const onOpen = () => {
@@ -190,6 +208,16 @@ export class BrowserWebSocketClient implements ChannelClient {
       throw new Error("Already connected or connecting");
     }
 
+    // Resolve headers before creating WebSocket (if any)
+    let resolvedHeaders: Record<string, string> | undefined;
+    if (this.options.headers) {
+      if (typeof this.options.headers === "function") {
+        resolvedHeaders = await Promise.resolve(this.options.headers());
+      } else {
+        resolvedHeaders = this.options.headers;
+      }
+    }
+
     if (this.options.autoReconnect) {
       // Use reconnecting-websocket for auto-reconnect
       const ReconnectingWebSocket = (await import("reconnecting-websocket")).default;
@@ -207,13 +235,29 @@ export class BrowserWebSocketClient implements ChannelClient {
     }
 
     return new Promise<void>((resolve, reject) => {
-      const onOpen = () => {
+      const onOpen = async () => {
         if (this.hasConnectedBefore) {
           logger.info("WebSocket reconnected successfully", { serverUrl: this.serverUrl });
         } else {
           logger.info("WebSocket connected", { serverUrl: this.serverUrl });
           this.hasConnectedBefore = true;
         }
+
+        // Browser WebSocket API doesn't support custom headers in handshake
+        // Send authentication message as first message instead
+        if (resolvedHeaders && Object.keys(resolvedHeaders).length > 0) {
+          try {
+            const authMessage = JSON.stringify({
+              type: "auth",
+              headers: resolvedHeaders,
+            });
+            this.ws!.send(authMessage);
+            logger.info("Sent authentication message to server");
+          } catch (error) {
+            logger.error("Failed to send authentication message", { error });
+          }
+        }
+
         for (const handler of this.openHandlers) {
           handler();
         }

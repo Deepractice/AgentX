@@ -160,7 +160,7 @@ export async function createAgentX(config: AgentXConfig): Promise<AgentX> {
         'Please provide { serverUrl: "ws://..." } configuration.'
     );
   }
-  return createRemoteAgentX(config.serverUrl);
+  return createRemoteAgentX(config);
 }
 
 // Also export createRemoteAgentX for explicit usage

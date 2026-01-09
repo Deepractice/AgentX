@@ -9,7 +9,7 @@
  * in browser builds.
  */
 
-import type { AgentX, AgentXConfig, Unsubscribe } from "@agentxjs/types/agentx";
+import type { AgentX, AgentXConfig, RemoteConfig, Unsubscribe } from "@agentxjs/types/agentx";
 import { isRemoteConfig } from "@agentxjs/types/agentx";
 import type {
   CommandEventMap,
@@ -39,7 +39,7 @@ const remoteLogger = createLogger("agentx/RemoteClient");
  */
 export async function createAgentX(config?: AgentXConfig): Promise<AgentX> {
   if (config && isRemoteConfig(config)) {
-    return createRemoteAgentX(config.serverUrl);
+    return createRemoteAgentX(config);
   }
 
   // Dynamic import for tree-shaking in browser builds
@@ -57,15 +57,16 @@ export async function createAgentX(config?: AgentXConfig): Promise<AgentX> {
  * Connects to an AgentX server via WebSocket.
  * Works in both browser and Node.js environments.
  *
- * @param serverUrl - WebSocket server URL
+ * @param config - Remote configuration (serverUrl, headers, context)
  * @returns AgentX instance
  */
-export async function createRemoteAgentX(serverUrl: string): Promise<AgentX> {
+export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> {
   // Use @agentxjs/network for WebSocket client (handles browser/Node.js differences)
   const { createWebSocketClient } = await import("@agentxjs/network");
 
   const client = await createWebSocketClient({
-    serverUrl,
+    serverUrl: config.serverUrl,
+    headers: config.headers,
     autoReconnect: true,
     minReconnectionDelay: 1000,
     maxReconnectionDelay: 10000,
@@ -159,14 +160,48 @@ export async function createRemoteAgentX(serverUrl: string): Promise<AgentX> {
   }
 
   return {
-    request<T extends CommandRequestType>(
+    async request<T extends CommandRequestType>(
       type: T,
       data: RequestDataFor<T>,
       timeout: number = 30000
     ): Promise<ResponseEventFor<T>> {
-      return new Promise((resolve, reject) => {
-        const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 
+      // Resolve and merge context if provided
+      let mergedData = { ...data, requestId };
+      if (config.context) {
+        try {
+          let resolvedContext: Record<string, unknown>;
+          if (typeof config.context === "function") {
+            resolvedContext = await Promise.resolve(config.context());
+          } else {
+            resolvedContext = config.context;
+          }
+
+          // Merge context into data
+          // Request-level context (if present in data) takes precedence
+          mergedData = {
+            ...resolvedContext,
+            ...data,
+            requestId,
+          } as RequestDataFor<T> & { requestId: string };
+
+          remoteLogger.info("Merged context into request", {
+            type,
+            requestId,
+            contextKeys: Object.keys(resolvedContext),
+          });
+        } catch (error) {
+          remoteLogger.error("Failed to resolve context", {
+            type,
+            requestId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          // Continue without context if resolution fails
+        }
+      }
+
+      return new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
           pendingRequests.delete(requestId);
           reject(new Error(`Request timeout: ${type}`));
@@ -181,7 +216,7 @@ export async function createRemoteAgentX(serverUrl: string): Promise<AgentX> {
         const event: SystemEvent = {
           type,
           timestamp: Date.now(),
-          data: { ...data, requestId },
+          data: mergedData,
           source: "command",
           category: "request",
           intent: "request",
