@@ -1,5 +1,15 @@
 # @agentxjs/runtime
 
+## 1.7.0
+
+### Patch Changes
+
+- Updated dependencies [09b990b]
+  - @agentxjs/types@1.7.0
+  - @agentxjs/agent@1.7.0
+  - @agentxjs/common@1.7.0
+  - @agentxjs/persistence@1.7.0
+
 ## 1.6.0
 
 ### Patch Changes
