@@ -156,14 +156,11 @@ async function createApp() {
   // AgentX info endpoint (protected)
   app.use("/agentx/*", authMiddleware);
   app.get("/agentx/info", (c) => {
-    // In development, return full WebSocket URL for Vite proxy
-    const isDev = process.env.NODE_ENV !== "production";
-    const wsUrl = isDev ? `ws://localhost:${PORT}/ws` : undefined;
-
+    // Only return wsPath - frontend uses window.location.host to build full URL
+    // In development, Vite proxy handles WebSocket forwarding
     return c.json({
       version: "0.1.0",
       wsPath: "/ws",
-      wsUrl, // Full URL in dev mode
     });
   });
 

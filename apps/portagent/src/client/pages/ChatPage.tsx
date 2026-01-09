@@ -104,10 +104,10 @@ export function ChatPage() {
         const info = await response.json();
         if (!mounted) return;
 
-        // Use explicit wsUrl from server in dev, or construct from current host in prod
-        const wsUrl =
-          info.wsUrl ||
-          `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}${info.wsPath || "/ws"}`;
+        // Construct WebSocket URL from current host (works for both dev and prod)
+        // In dev: Vite proxy forwards /ws to backend
+        // In prod: Same origin, direct connection
+        const wsUrl = `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}${info.wsPath || "/ws"}`;
 
         // Create AgentX instance in remote mode (WebSocket)
         agentxInstance = await createAgentX({ serverUrl: wsUrl });
