@@ -42,6 +42,7 @@ async function getSqliteConnector(path: string) {
   // Node.js 22+ - use built-in node:sqlite
   const nodeSqlite = globalThis.process?.getBuiltinModule?.("node:sqlite");
   if (nodeSqlite) {
+    // @ts-expect-error - db0 connector types not fully exported
     const { default: nodeSqliteConnector } = await import("db0/connectors/node-sqlite");
     return nodeSqliteConnector({ path });
   }
