@@ -106,7 +106,7 @@ export interface InputPaneProps {
   maxAttachments?: number;
   /**
    * Maximum file size in bytes
-   * @default 5242880 (5MB)
+   * @default 104857600 (100MB)
    */
   maxFileSize?: number;
   /**
@@ -179,7 +179,7 @@ export const InputPane: React.ForwardRefExoticComponent<
       enableEmojiPicker = true,
       enableAttachments = true,
       maxAttachments = 10,
-      maxFileSize = 5 * 1024 * 1024, // 5MB
+      maxFileSize = 100 * 1024 * 1024, // 100MB
       acceptedImageTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"],
       acceptedFileTypes = ["application/pdf"],
       acceptAllFileTypes = true,
