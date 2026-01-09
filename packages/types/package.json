@@ -50,6 +50,10 @@
     "./network": {
       "types": "./dist/src/network/index.d.ts",
       "default": "./dist/src/network/index.js"
+    },
+    "./queue": {
+      "types": "./dist/src/queue/index.d.ts",
+      "default": "./dist/src/queue/index.js"
     }
   },
   "files": [

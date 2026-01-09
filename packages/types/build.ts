@@ -17,6 +17,7 @@ const entrypoints = [
   "src/common/index.ts",
   "src/agentx/index.ts",
   "src/network/index.ts",
+  "src/queue/index.ts",
 ];
 
 const outdir = "./dist";
