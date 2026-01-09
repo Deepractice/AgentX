@@ -18,8 +18,8 @@ import { SDKQueryLifecycle } from "./SDKQueryLifecycle";
 
 const logger = createLogger("environment/ClaudeEffector");
 
-/** Default timeout in milliseconds (30 seconds) */
-const DEFAULT_TIMEOUT = 30_000;
+/** Default timeout in milliseconds (10 minutes) */
+const DEFAULT_TIMEOUT = 600_000;
 
 /**
  * MCP Server Config (SDK Compatible)

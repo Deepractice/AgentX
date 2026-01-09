@@ -27,6 +27,7 @@ import { mkdirSync } from "node:fs";
 import { createAuthMiddleware, authRoutes } from "./auth";
 import { SQLiteUserRepository } from "./database";
 import { LogTapeLoggerFactory } from "./logger";
+import { getDefaultAgent, isPromptXEnabled } from "./defaultAgent";
 
 // Global type for compiled binary detection (injected at compile time via --define)
 declare const IS_COMPILED_BINARY: boolean | undefined;
@@ -132,6 +133,7 @@ async function createApp() {
     agentxDir: paths.dataDir, // Auto-configures storage at {dataDir}/data/agentx.db
     server, // Attach to existing HTTP server
     environment: claudeCodePath ? { claudeCodePath } : undefined,
+    defaultAgent: getDefaultAgent(), // Default agent with PromptX MCP
   });
 
   // Initialize user repository (separate database)
@@ -229,6 +231,7 @@ async function startServer() {
   console.log(`  AgentX DB: ${paths.agentxDbPath}`);
   console.log(`  Logs: ${paths.logsDirPath}`);
   console.log(`  Invite Code: ${INVITE_CODE_REQUIRED ? "required" : "disabled"}`);
+  console.log(`  PromptX MCP: ${isPromptXEnabled() ? "enabled" : "disabled"}`);
 
   console.log(`\nEndpoints:`);
   console.log(`  GET  /health                    - Health check`);

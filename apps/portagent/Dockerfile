@@ -24,6 +24,9 @@ WORKDIR /app
 # Create data directory for node user with proper permissions
 RUN mkdir -p /home/node/.agentx && chown -R node:node /home/node/.agentx
 
+# Install PromptX CLI globally (used as MCP server)
+RUN npm install -g @promptx/cli
+
 # Environment - Defaults
 ENV NODE_ENV=production
 ENV PORT=5200
