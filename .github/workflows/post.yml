@@ -74,6 +74,7 @@ jobs:
         with:
           context: ./apps/portagent
           file: ./apps/portagent/Dockerfile
+          target: npm
           platforms: ${{ matrix.platform }}
           push: true
           tags: |
