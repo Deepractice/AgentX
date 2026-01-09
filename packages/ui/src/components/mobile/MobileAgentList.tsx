@@ -10,7 +10,7 @@
 
 import * as React from "react";
 import type { AgentX } from "agentxjs";
-import { MessageSquare, Plus, Search, Trash2, X } from "lucide-react";
+import { MessageSquare, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { useImages } from "~/hooks";
 import { cn } from "~/utils/utils";
 
@@ -82,9 +82,16 @@ export const MobileAgentList: React.FC<MobileAgentListProps> = ({
   className,
 }) => {
   const [searchQuery, setSearchQuery] = React.useState("");
-  const { images, isLoading, createImage, runImage, deleteImage, refresh } = useImages(agentx, {
-    containerId,
-  });
+  const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [editingName, setEditingName] = React.useState("");
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const { images, isLoading, createImage, runImage, deleteImage, updateImage, refresh } = useImages(
+    agentx,
+    {
+      containerId,
+    }
+  );
 
   // Filter images by search
   const filteredImages = React.useMemo(() => {
@@ -135,6 +142,35 @@ export const MobileAgentList: React.FC<MobileAgentListProps> = ({
     } catch (error) {
       console.error("Failed to delete conversation:", error);
     }
+  };
+
+  // Handle edit - start inline editing
+  const handleEdit = (e: React.MouseEvent, imageId: string, currentName: string) => {
+    e.stopPropagation();
+    setEditingId(imageId);
+    setEditingName(currentName);
+    // Focus input after render
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  // Handle save - save inline edit
+  const handleSave = async (imageId: string) => {
+    if (!editingName.trim()) {
+      setEditingId(null);
+      return;
+    }
+    try {
+      await updateImage(imageId, { name: editingName.trim() });
+    } catch (error) {
+      console.error("Failed to rename conversation:", error);
+    }
+    setEditingId(null);
+  };
+
+  // Handle cancel edit
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingName("");
   };
 
   return (
@@ -214,55 +250,108 @@ export const MobileAgentList: React.FC<MobileAgentListProps> = ({
           </div>
         ) : (
           <div className="py-2">
-            {filteredImages.map((image) => (
-              <button
-                key={image.imageId}
-                type="button"
-                onClick={() => handleSelect(image.imageId)}
-                className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3",
-                  "text-left",
-                  "hover:bg-muted/50 active:bg-muted",
-                  "transition-colors",
-                  selectedId === image.imageId && "bg-muted"
-                )}
-              >
-                {/* Status indicator */}
-                <span
+            {filteredImages.map((image) => {
+              const isEditing = editingId === image.imageId;
+
+              return (
+                <div
+                  key={image.imageId}
                   className={cn(
-                    "w-2 h-2 rounded-full shrink-0",
-                    image.online ? "bg-green-500" : "bg-gray-400"
+                    "w-full flex items-center gap-3 px-4 py-3",
+                    "hover:bg-muted/50 active:bg-muted",
+                    "transition-colors",
+                    selectedId === image.imageId && "bg-muted"
                   )}
-                />
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {image.name || "Untitled"}
-                  </p>
-                  {image.updatedAt && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {formatRelativeTime(image.updatedAt)}
-                    </p>
+                  onClick={() => !isEditing && handleSelect(image.imageId)}
+                >
+                  {/* Status indicator */}
+                  <span
+                    className={cn(
+                      "w-2 h-2 rounded-full shrink-0",
+                      image.online ? "bg-green-500" : "bg-gray-400"
+                    )}
+                  />
+
+                  {/* Content */}
+                  {isEditing ? (
+                    // Inline edit mode
+                    <div className="flex-1 flex items-center gap-2">
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={editingName}
+                        onChange={(e) => setEditingName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleSave(image.imageId);
+                          } else if (e.key === "Escape") {
+                            handleCancelEdit();
+                          }
+                        }}
+                        onBlur={() => handleSave(image.imageId)}
+                        className={cn(
+                          "flex-1 h-8 px-2",
+                          "bg-background border border-input rounded-md",
+                          "text-sm text-foreground",
+                          "focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        )}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                  ) : (
+                    // Normal display mode
+                    <>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {image.name || "Untitled"}
+                        </p>
+                        {image.updatedAt && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {formatRelativeTime(image.updatedAt)}
+                          </p>
+                        )}
+                      </div>
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {/* Edit button */}
+                        <button
+                          type="button"
+                          onClick={(e) => handleEdit(e, image.imageId, image.name || "Untitled")}
+                          className={cn(
+                            "w-8 h-8 flex items-center justify-center",
+                            "rounded-full",
+                            "text-muted-foreground",
+                            "hover:bg-primary/10 hover:text-primary",
+                            "active:bg-primary/20",
+                            "transition-colors"
+                          )}
+                          aria-label="Edit"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        {/* Delete button */}
+                        <button
+                          type="button"
+                          onClick={(e) => handleDelete(e, image.imageId)}
+                          className={cn(
+                            "w-8 h-8 flex items-center justify-center",
+                            "rounded-full",
+                            "text-muted-foreground",
+                            "hover:bg-destructive/10 hover:text-destructive",
+                            "active:bg-destructive/20",
+                            "transition-colors"
+                          )}
+                          aria-label="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </>
                   )}
                 </div>
-                {/* Delete button */}
-                <button
-                  type="button"
-                  onClick={(e) => handleDelete(e, image.imageId)}
-                  className={cn(
-                    "w-8 h-8 flex items-center justify-center",
-                    "rounded-full shrink-0",
-                    "text-muted-foreground",
-                    "hover:bg-destructive/10 hover:text-destructive",
-                    "opacity-0 group-hover:opacity-100",
-                    "transition-all"
-                  )}
-                  aria-label="Delete"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </button>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -27,6 +27,15 @@ import * as React from "react";
 import type { AgentX } from "agentxjs";
 import { MessageSquare, Bot } from "lucide-react";
 import { ListPane, type ListPaneItem } from "~/components/pane";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  Button,
+  Input,
+} from "~/components/ui";
 import { useImages } from "~/hooks";
 import { cn } from "~/utils";
 
@@ -95,9 +104,18 @@ export function AgentList({
   onCollapse,
   className,
 }: AgentListProps): React.ReactElement {
-  const { images, isLoading, createImage, runImage, deleteImage, refresh } = useImages(agentx, {
-    containerId,
-  });
+  const { images, isLoading, createImage, runImage, deleteImage, updateImage, refresh } = useImages(
+    agentx,
+    {
+      containerId,
+    }
+  );
+
+  // Rename dialog state
+  const [renameDialogOpen, setRenameDialogOpen] = React.useState(false);
+  const [editingImageId, setEditingImageId] = React.useState<string | null>(null);
+  const [editingName, setEditingName] = React.useState("");
+  const [isRenaming, setIsRenaming] = React.useState(false);
 
   // Map images to ListPaneItem[]
   const items: ListPaneItem[] = React.useMemo(() => {
@@ -172,28 +190,104 @@ export function AgentList({
     [deleteImage]
   );
 
+  // Handle edit button click - open rename dialog
+  const handleEdit = React.useCallback((imageId: string, currentTitle: string) => {
+    setEditingImageId(imageId);
+    setEditingName(currentTitle);
+    setRenameDialogOpen(true);
+  }, []);
+
+  // Handle rename confirmation
+  const handleRename = React.useCallback(async () => {
+    if (!editingImageId || !editingName.trim()) return;
+
+    setIsRenaming(true);
+    try {
+      await updateImage(editingImageId, { name: editingName.trim() });
+      setRenameDialogOpen(false);
+      setEditingImageId(null);
+      setEditingName("");
+    } catch (error) {
+      console.error("Failed to rename conversation:", error);
+    } finally {
+      setIsRenaming(false);
+    }
+  }, [editingImageId, editingName, updateImage]);
+
+  // Handle dialog close
+  const handleDialogClose = React.useCallback((open: boolean) => {
+    if (!open) {
+      setRenameDialogOpen(false);
+      setEditingImageId(null);
+      setEditingName("");
+    }
+  }, []);
+
+  // Handle Enter key in input
+  const handleKeyDown = React.useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" && !isRenaming) {
+        handleRename();
+      }
+    },
+    [handleRename, isRenaming]
+  );
+
   return (
-    <ListPane
-      title={title}
-      items={items}
-      selectedId={selectedId}
-      isLoading={isLoading}
-      searchable={searchable}
-      searchPlaceholder="Search conversations..."
-      showNewButton
-      newButtonLabel="New conversation"
-      showCollapseButton={showCollapseButton}
-      onCollapse={onCollapse}
-      emptyState={{
-        icon: <MessageSquare className="w-6 h-6" />,
-        title: "No conversations yet",
-        description: "Start a new conversation to begin",
-        actionLabel: "New conversation",
-      }}
-      onSelect={handleSelect}
-      onDelete={handleDelete}
-      onNew={handleNew}
-      className={className}
-    />
+    <>
+      <ListPane
+        title={title}
+        items={items}
+        selectedId={selectedId}
+        isLoading={isLoading}
+        searchable={searchable}
+        searchPlaceholder="Search conversations..."
+        showNewButton
+        newButtonLabel="New conversation"
+        showCollapseButton={showCollapseButton}
+        onCollapse={onCollapse}
+        emptyState={{
+          icon: <MessageSquare className="w-6 h-6" />,
+          title: "No conversations yet",
+          description: "Start a new conversation to begin",
+          actionLabel: "New conversation",
+        }}
+        onSelect={handleSelect}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onNew={handleNew}
+        className={className}
+      />
+
+      {/* Rename Dialog */}
+      <Dialog open={renameDialogOpen} onOpenChange={handleDialogClose}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Rename Conversation</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              value={editingName}
+              onChange={(e) => setEditingName(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Enter conversation name"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => handleDialogClose(false)}
+              disabled={isRenaming}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleRename} disabled={isRenaming || !editingName.trim()}>
+              {isRenaming ? "Saving..." : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

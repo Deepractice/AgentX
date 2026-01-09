@@ -91,8 +91,13 @@ export const MobileInputPane: React.ForwardRefExoticComponent<
         ref={ref}
         className={cn(
           "flex items-end gap-2",
-          "px-4 py-3",
-          "bg-background border-t border-border",
+          "px-4 pt-3",
+          // Safe area bottom padding for iOS/Android
+          "pb-[calc(env(safe-area-inset-bottom,0px)+12px)]",
+          // Floating card effect with top shadow
+          "bg-background/95 backdrop-blur-sm",
+          "shadow-[0_-4px_12px_rgba(0,0,0,0.08)]",
+          "border-t border-border/50",
           "shrink-0",
           className
         )}
@@ -101,8 +106,9 @@ export const MobileInputPane: React.ForwardRefExoticComponent<
         <div
           className={cn(
             "flex-1 flex items-end",
-            "bg-muted/50 rounded-2xl",
-            "border border-border",
+            "bg-card rounded-2xl",
+            "border border-input",
+            "shadow-sm",
             "overflow-hidden"
           )}
         >

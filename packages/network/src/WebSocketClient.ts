@@ -218,9 +218,16 @@ export class BrowserWebSocketClient implements ChannelClient {
       }
     }
 
+    logger.debug("Connecting to WebSocket", {
+      serverUrl: this.serverUrl,
+      autoReconnect: this.options.autoReconnect,
+      connectionTimeout: this.options.connectionTimeout,
+    });
+
     if (this.options.autoReconnect) {
       // Use reconnecting-websocket for auto-reconnect
       const ReconnectingWebSocket = (await import("reconnecting-websocket")).default;
+      logger.debug("Using ReconnectingWebSocket");
       this.ws = new ReconnectingWebSocket(this.serverUrl, [], {
         maxReconnectionDelay: this.options.maxReconnectionDelay,
         minReconnectionDelay: this.options.minReconnectionDelay,
@@ -231,6 +238,7 @@ export class BrowserWebSocketClient implements ChannelClient {
       });
     } else {
       // Use native WebSocket
+      logger.debug("Using native WebSocket");
       this.ws = new WebSocket(this.serverUrl);
     }
 
