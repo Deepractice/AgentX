@@ -1,6 +1,6 @@
 {
   "name": "@agentxjs/types",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "Type definitions for AgentX ecosystem",
   "license": "MIT",
   "engines": {
