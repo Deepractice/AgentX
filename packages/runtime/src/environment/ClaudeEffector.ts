@@ -2,21 +2,21 @@
  * ClaudeEffector - Listens to SystemBus and sends to Claude SDK
  *
  * Subscribes to user_message events on SystemBus and sends to Claude SDK.
+ * Manages request timeout using RxJS.
  */
 
 import type { Effector, SystemBusConsumer } from "@agentxjs/types/runtime/internal";
 import type { UserMessage } from "@agentxjs/types/agent";
 import type { EventContext } from "@agentxjs/types/runtime";
-import { query, type SDKUserMessage, type Query } from "@anthropic-ai/claude-agent-sdk";
+import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import { Subject, Subscription, TimeoutError } from "rxjs";
 import { timeout } from "rxjs/operators";
 import { createLogger } from "@agentxjs/common";
-import { buildOptions, type EnvironmentContext } from "./buildOptions";
 import { buildSDKUserMessage } from "./helpers";
-import { observableToAsyncIterable } from "./observableToAsyncIterable";
 import type { ClaudeReceptor, ReceptorMeta } from "./ClaudeReceptor";
+import { SDKQueryLifecycle } from "./SDKQueryLifecycle";
 
-const logger = createLogger("ecosystem/ClaudeEffector");
+const logger = createLogger("environment/ClaudeEffector");
 
 /** Default timeout in milliseconds (30 seconds) */
 const DEFAULT_TIMEOUT = 30_000;
@@ -51,17 +51,15 @@ export interface ClaudeEffectorConfig {
  * ClaudeEffector - Subscribes to SystemBus and sends to Claude SDK
  *
  * Uses SystemBusConsumer (read-only) because Effector only subscribes to events.
+ * Delegates SDK lifecycle management to SDKQueryLifecycle.
  */
 export class ClaudeEffector implements Effector {
   private readonly config: ClaudeEffectorConfig;
   private readonly receptor: ClaudeReceptor;
+  private readonly queryLifecycle: SDKQueryLifecycle;
 
-  private promptSubject = new Subject<SDKUserMessage>();
-  private currentAbortController: AbortController | null = null;
-  private claudeQuery: Query | null = null;
-  private isInitialized = false;
-  private wasInterrupted = false;
   private currentMeta: ReceptorMeta | null = null;
+  private wasInterrupted = false;
 
   /** Subject for tracking pending request - completes when result received */
   private pendingRequest$: Subject<void> | null = null;
@@ -71,6 +69,27 @@ export class ClaudeEffector implements Effector {
   constructor(config: ClaudeEffectorConfig, receptor: ClaudeReceptor) {
     this.config = config;
     this.receptor = receptor;
+
+    // Create SDK lifecycle with callbacks
+    this.queryLifecycle = new SDKQueryLifecycle(
+      {
+        apiKey: config.apiKey,
+        baseUrl: config.baseUrl,
+        model: config.model,
+        systemPrompt: config.systemPrompt,
+        cwd: config.cwd,
+        resumeSessionId: config.resumeSessionId,
+        mcpServers: config.mcpServers,
+      },
+      {
+        onStreamEvent: (msg) => this.handleStreamEvent(msg),
+        onUserMessage: (msg) => this.handleUserMessage(msg),
+        onResult: (msg) => this.handleResult(msg),
+        onSessionIdCaptured: config.onSessionIdCaptured,
+        onError: (error) => this.handleError(error),
+        onListenerExit: (reason) => this.handleListenerExit(reason),
+      }
+    );
   }
 
   /**
@@ -81,8 +100,7 @@ export class ClaudeEffector implements Effector {
       agentId: this.config.agentId,
     });
 
-    // Listen for user_message events (with requestId and context)
-    // Filter by agentId to only process messages for this agent
+    // Listen for user_message events
     consumer.on("user_message", async (event) => {
       const typedEvent = event as {
         type: string;
@@ -91,13 +109,7 @@ export class ClaudeEffector implements Effector {
         context?: EventContext;
       };
 
-      logger.debug("user_message event received", {
-        eventAgentId: typedEvent.context?.agentId,
-        myAgentId: this.config.agentId,
-        matches: typedEvent.context?.agentId === this.config.agentId,
-      });
-
-      // Filter by agentId - only process messages for this agent
+      // Filter by agentId
       if (typedEvent.context?.agentId !== this.config.agentId) {
         return;
       }
@@ -111,7 +123,6 @@ export class ClaudeEffector implements Effector {
     });
 
     // Listen for interrupt events
-    // Filter by agentId to only process interrupts for this agent
     consumer.on("interrupt", (event) => {
       const typedEvent = event as {
         type: string;
@@ -119,7 +130,7 @@ export class ClaudeEffector implements Effector {
         context?: EventContext;
       };
 
-      // Filter by agentId - only process interrupts for this agent
+      // Filter by agentId
       if (typedEvent.context?.agentId !== this.config.agentId) {
         return;
       }
@@ -136,21 +147,19 @@ export class ClaudeEffector implements Effector {
    * Send a message to Claude SDK
    *
    * Uses RxJS to manage request-response timeout correlation.
-   * The pendingRequest$ Subject is completed when a result is received,
-   * which automatically cancels the timeout subscription.
    */
   private async send(message: UserMessage, meta: ReceptorMeta): Promise<void> {
     this.wasInterrupted = false;
-    this.currentAbortController = new AbortController();
-    this.currentMeta = meta; // Store for background listener
+    this.currentMeta = meta;
 
-    // Clean up previous pending request if any
+    // Clean up previous pending request
     this.cleanupPendingRequest();
 
     const timeoutMs = this.config.timeout ?? DEFAULT_TIMEOUT;
 
     try {
-      await this.initialize(this.currentAbortController);
+      // Initialize SDK if needed
+      await this.queryLifecycle.initialize();
 
       const sessionId = this.config.sessionId || "default";
       const sdkUserMessage = buildSDKUserMessage(message, sessionId);
@@ -162,11 +171,8 @@ export class ClaudeEffector implements Effector {
         requestId: meta.requestId,
       });
 
-      // Create a new pending request Subject for timeout tracking
-      // This Subject will be completed when result is received in backgroundListener
+      // Create pending request with timeout
       this.pendingRequest$ = new Subject<void>();
-
-      // Subscribe with timeout - RxJS will automatically handle timeout
       this.pendingSubscription = this.pendingRequest$.pipe(timeout(timeoutMs)).subscribe({
         complete: () => {
           logger.debug("Request completed within timeout", { requestId: meta.requestId });
@@ -179,32 +185,107 @@ export class ClaudeEffector implements Effector {
         },
       });
 
-      // Send message to SDK
-      this.promptSubject.next(sdkUserMessage);
-
-      // Note: We don't await here - background listener handles responses
-      // pendingRequest$ will be completed when result is received
+      // Send message via lifecycle
+      this.queryLifecycle.send(sdkUserMessage);
     } catch (error) {
-      // Clean up on initialization error
       this.cleanupPendingRequest();
       throw error;
     }
   }
 
   /**
+   * Interrupt current operation
+   */
+  private interrupt(meta?: ReceptorMeta): void {
+    logger.debug("Interrupting Claude query", { requestId: meta?.requestId });
+    this.wasInterrupted = true;
+    if (meta) {
+      this.currentMeta = meta;
+    }
+    this.queryLifecycle.interrupt();
+  }
+
+  /**
+   * Handle stream_event from SDK
+   */
+  private handleStreamEvent(msg: SDKMessage): void {
+    if (this.currentMeta) {
+      this.receptor.feed(msg, this.currentMeta);
+    }
+  }
+
+  /**
+   * Handle user message from SDK (contains tool_result)
+   */
+  private handleUserMessage(msg: SDKMessage): void {
+    if (this.currentMeta) {
+      this.receptor.feedUserMessage(msg, this.currentMeta);
+    }
+  }
+
+  /**
+   * Handle result from SDK
+   */
+  private handleResult(msg: SDKMessage): void {
+    // Complete pending request - cancels timeout
+    this.completePendingRequest();
+
+    const resultMsg = msg as {
+      subtype: string;
+      is_error?: boolean;
+      errors?: string[];
+      error?: { message?: string; type?: string };
+      result?: string;
+    };
+
+    logger.info("SDK result received", {
+      subtype: resultMsg.subtype,
+      isError: resultMsg.is_error,
+      wasInterrupted: this.wasInterrupted,
+    });
+
+    // Handle user interrupt
+    if (resultMsg.subtype === "error_during_execution" && this.wasInterrupted) {
+      this.receptor.emitInterrupted("user_interrupt", this.currentMeta || undefined);
+      return;
+    }
+
+    // Handle SDK errors
+    if (resultMsg.is_error && this.currentMeta) {
+      const errorMessage =
+        resultMsg.error?.message ||
+        resultMsg.errors?.join(", ") ||
+        (typeof resultMsg.result === "string" ? resultMsg.result : null) ||
+        "An error occurred";
+      const errorCode = resultMsg.error?.type || resultMsg.subtype || "api_error";
+      this.receptor.emitError(errorMessage, errorCode, this.currentMeta);
+    }
+  }
+
+  /**
+   * Handle error from SDK lifecycle
+   */
+  private handleError(error: Error): void {
+    this.cleanupPendingRequest();
+    if (this.currentMeta) {
+      this.receptor.emitError(error.message, "runtime_error", this.currentMeta);
+    }
+  }
+
+  /**
+   * Handle listener exit from SDK lifecycle
+   */
+  private handleListenerExit(reason: "normal" | "abort" | "error"): void {
+    logger.debug("SDK listener exited", { reason });
+    this.cleanupPendingRequest();
+  }
+
+  /**
    * Handle request timeout
    */
   private handleTimeout(meta: ReceptorMeta): void {
-    // Interrupt the SDK query
-    if (this.claudeQuery) {
-      logger.debug("Interrupting due to timeout");
-      this.wasInterrupted = true;
-      this.claudeQuery.interrupt().catch((err) => {
-        logger.debug("SDK interrupt() error during timeout (may be expected)", { error: err });
-      });
-    }
-
-    // Emit timeout error to receptor
+    this.wasInterrupted = true;
+    this.queryLifecycle.interrupt();
     this.receptor.emitError(
       `Request timeout after ${this.config.timeout ?? DEFAULT_TIMEOUT}ms`,
       "timeout",
@@ -227,8 +308,7 @@ export class ClaudeEffector implements Effector {
   }
 
   /**
-   * Complete pending request (called when result is received)
-   * This cancels the timeout automatically via RxJS
+   * Complete pending request (cancels timeout)
    */
   private completePendingRequest(): void {
     if (this.pendingRequest$) {
@@ -242,218 +322,12 @@ export class ClaudeEffector implements Effector {
   }
 
   /**
-   * Interrupt current operation
-   */
-  private interrupt(meta?: ReceptorMeta): void {
-    if (this.claudeQuery) {
-      logger.debug("Interrupting Claude query", { requestId: meta?.requestId });
-      this.wasInterrupted = true;
-      // Store meta for interrupted event
-      if (meta) {
-        this.currentMeta = meta;
-      }
-      this.claudeQuery.interrupt().catch((err) => {
-        logger.debug("SDK interrupt() error (may be expected)", { error: err });
-      });
-    }
-  }
-
-  /**
-   * Initialize the Claude SDK query (lazy initialization)
-   */
-  private async initialize(abortController: AbortController): Promise<void> {
-    if (this.isInitialized) return;
-
-    logger.info("Initializing ClaudeEffector");
-
-    const context: EnvironmentContext = {
-      apiKey: this.config.apiKey,
-      baseUrl: this.config.baseUrl,
-      model: this.config.model,
-      systemPrompt: this.config.systemPrompt,
-      cwd: this.config.cwd,
-      resume: this.config.resumeSessionId,
-      mcpServers: this.config.mcpServers,
-    };
-
-    const sdkOptions = buildOptions(context, abortController);
-    const promptStream = observableToAsyncIterable<SDKUserMessage>(this.promptSubject);
-
-    this.claudeQuery = query({
-      prompt: promptStream,
-      options: sdkOptions,
-    });
-
-    this.isInitialized = true;
-
-    // Background listener for SDK responses
-    this.startBackgroundListener();
-
-    logger.info("ClaudeEffector initialized");
-  }
-
-  /**
-   * Start background listener for SDK responses
-   */
-  private startBackgroundListener(): void {
-    (async () => {
-      try {
-        for await (const sdkMsg of this.claudeQuery!) {
-          // Log all SDK messages for debugging
-          logger.debug("SDK message received", {
-            type: sdkMsg.type,
-            subtype: (sdkMsg as { subtype?: string }).subtype,
-            sessionId: sdkMsg.session_id,
-            hasCurrentMeta: !!this.currentMeta,
-          });
-
-          // Forward stream_event to receptor for emission with current meta
-          if (sdkMsg.type === "stream_event" && this.currentMeta) {
-            this.receptor.feed(sdkMsg, this.currentMeta);
-          }
-
-          // Forward user message (contains tool_result) to receptor
-          if (sdkMsg.type === "user" && this.currentMeta) {
-            this.receptor.feedUserMessage(sdkMsg, this.currentMeta);
-          }
-
-          // Capture session ID
-          if (sdkMsg.session_id && this.config.onSessionIdCaptured) {
-            this.config.onSessionIdCaptured(sdkMsg.session_id);
-          }
-
-          // Handle result
-          if (sdkMsg.type === "result") {
-            // Complete pending request - this cancels the timeout via RxJS
-            this.completePendingRequest();
-
-            const resultMsg = sdkMsg as {
-              subtype: string;
-              is_error?: boolean;
-              errors?: string[];
-              error?: { message?: string; type?: string };
-            };
-            // Log full result object for debugging
-            logger.info("SDK result received (full)", {
-              fullResult: JSON.stringify(sdkMsg, null, 2),
-            });
-            logger.info("SDK result received", {
-              subtype: resultMsg.subtype,
-              isError: resultMsg.is_error,
-              errors: resultMsg.errors,
-              wasInterrupted: this.wasInterrupted,
-            });
-
-            // Handle user interrupt
-            if (resultMsg.subtype === "error_during_execution" && this.wasInterrupted) {
-              this.receptor.emitInterrupted("user_interrupt", this.currentMeta || undefined);
-            }
-            // Handle SDK errors (API errors, rate limits, etc.)
-            else if (resultMsg.is_error && this.currentMeta) {
-              const fullResult = sdkMsg as {
-                result?: string;
-                error?: { message?: string; type?: string };
-                errors?: string[];
-              };
-              const errorMessage =
-                fullResult.error?.message ||
-                fullResult.errors?.join(", ") ||
-                (typeof fullResult.result === "string" ? fullResult.result : null) ||
-                "An error occurred";
-              const errorCode = fullResult.error?.type || resultMsg.subtype || "api_error";
-              this.receptor.emitError(errorMessage, errorCode, this.currentMeta);
-            }
-          }
-        }
-      } catch (error) {
-        // Clean up pending request on error
-        this.cleanupPendingRequest();
-
-        if (this.isAbortError(error)) {
-          logger.debug("Background listener aborted (expected during interrupt)");
-        } else {
-          logger.error("Background listener error", { error });
-          // Emit error to receptor so it can be displayed in chat
-          if (this.currentMeta) {
-            const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-            this.receptor.emitError(errorMessage, "runtime_error", this.currentMeta);
-          }
-        }
-        // Always reset state on any error to prevent memory leaks and stale state
-        this.resetState();
-      }
-    })();
-  }
-
-  /**
-   * Check if an error is an abort error
-   */
-  private isAbortError(error: unknown): boolean {
-    if (error instanceof Error) {
-      if (error.name === "AbortError") return true;
-      if (error.message.includes("aborted")) return true;
-      if (error.message.includes("abort")) return true;
-    }
-    return false;
-  }
-
-  /**
-   * Reset state and cleanup resources
-   *
-   * IMPORTANT: This method must properly terminate the Claude subprocess.
-   * The subprocess listens on promptSubject's async iterable - calling complete()
-   * signals end of input and allows the subprocess to exit gracefully.
-   */
-  private resetState(): void {
-    logger.debug("Resetting ClaudeEffector state", { agentId: this.config.agentId });
-
-    // 1. Clean up pending request (cancel timeout)
-    this.cleanupPendingRequest();
-
-    // 2. Complete the prompt stream first (signals end of input to subprocess)
-    this.promptSubject.complete();
-
-    // 3. Interrupt any ongoing operation
-    if (this.claudeQuery) {
-      this.claudeQuery.interrupt().catch((err) => {
-        logger.debug("SDK interrupt() during reset (may be expected)", { error: err });
-      });
-    }
-
-    // 4. Reset state for potential reuse
-    this.isInitialized = false;
-    this.claudeQuery = null;
-    this.promptSubject = new Subject<SDKUserMessage>();
-  }
-
-  /**
-   * Dispose and cleanup resources
-   *
-   * This method ensures the Claude subprocess is properly terminated.
-   * It must be called when the agent is destroyed to prevent memory leaks.
+   * Dispose and cleanup all resources
    */
   dispose(): void {
     logger.debug("Disposing ClaudeEffector", { agentId: this.config.agentId });
-
-    // 1. Clean up pending request (cancel timeout)
     this.cleanupPendingRequest();
-
-    // 2. Interrupt any ongoing SDK operation first
-    if (this.claudeQuery) {
-      this.claudeQuery.interrupt().catch((err) => {
-        logger.debug("SDK interrupt() during dispose (may be expected)", { error: err });
-      });
-    }
-
-    // 3. Abort any pending request
-    if (this.currentAbortController) {
-      this.currentAbortController.abort();
-    }
-
-    // 4. Complete the prompt stream and reset state
-    // resetState() will complete the promptSubject, signaling subprocess to exit
-    this.resetState();
-
+    this.queryLifecycle.dispose();
     logger.debug("ClaudeEffector disposed", { agentId: this.config.agentId });
   }
 }
