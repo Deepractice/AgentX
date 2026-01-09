@@ -8,7 +8,7 @@
 import type { Effector, SystemBusConsumer } from "@agentxjs/types/runtime/internal";
 import type { UserMessage } from "@agentxjs/types/agent";
 import type { EventContext } from "@agentxjs/types/runtime";
-import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import type { SDKMessage, SDKPartialAssistantMessage } from "@anthropic-ai/claude-agent-sdk";
 import { Subject, Subscription, TimeoutError } from "rxjs";
 import { timeout } from "rxjs/operators";
 import { createLogger } from "@agentxjs/common";
@@ -210,7 +210,7 @@ export class ClaudeEffector implements Effector {
    */
   private handleStreamEvent(msg: SDKMessage): void {
     if (this.currentMeta) {
-      this.receptor.feed(msg, this.currentMeta);
+      this.receptor.feed(msg as SDKPartialAssistantMessage, this.currentMeta);
     }
   }
 
@@ -219,7 +219,7 @@ export class ClaudeEffector implements Effector {
    */
   private handleUserMessage(msg: SDKMessage): void {
     if (this.currentMeta) {
-      this.receptor.feedUserMessage(msg, this.currentMeta);
+      this.receptor.feedUserMessage(msg as { message?: { content?: unknown[] } }, this.currentMeta);
     }
   }
 
