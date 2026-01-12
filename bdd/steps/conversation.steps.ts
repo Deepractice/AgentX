@@ -9,6 +9,7 @@ import type { AgentXWorld } from "./world";
 function expect(value: unknown) {
   return {
     toBeDefined: () => assert.ok(value !== undefined && value !== null),
+    toBeUndefined: () => assert.strictEqual(value, undefined),
     toBe: (expected: unknown) => assert.strictEqual(value, expected),
     toBeGreaterThan: (expected: number) => assert.ok((value as number) > expected),
     toBeGreaterThanOrEqual: (expected: number) => assert.ok((value as number) >= expected),
@@ -129,6 +130,14 @@ When(
   async function (this: AgentXWorld, requestType: string, imageIdOrAlias: string) {
     const imageId = this.createdImages.get(imageIdOrAlias) || imageIdOrAlias;
     this.lastResponse = await this.agentx!.request(requestType as never, { imageId } as never);
+  }
+);
+
+// Request with empty object (for container_list_request, etc)
+When(
+  /^I call agentx\.request\("([^"]+)", \{\}\)$/,
+  async function (this: AgentXWorld, requestType: string) {
+    this.lastResponse = await this.agentx!.request(requestType as never, {} as never);
   }
 );
 
