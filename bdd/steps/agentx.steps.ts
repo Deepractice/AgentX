@@ -109,6 +109,7 @@ When("I call agentx.close", async function (this: AgentXWorld) {
 When("I call agentx.dispose", async function (this: AgentXWorld) {
   await this.agentx!.dispose();
   this.agentx = undefined;
+  this.isConnected = false;
 });
 
 Then("the promise should resolve", function (this: AgentXWorld) {
@@ -174,18 +175,8 @@ Given(/^agentx is listening on port (\d+)$/, async function (this: AgentXWorld, 
 });
 
 // ============================================================================
-// Remote Mode - Connection
+// Remote Mode - Connection (uses global test server on port 15300)
 // ============================================================================
-
-Given(
-  /^an AgentX server is running on port (\d+)$/,
-  async function (this: AgentXWorld, port: string) {
-    const { createAgentX } = await import("agentxjs");
-    this.server = await createAgentX();
-    await this.server.listen(parseInt(port, 10));
-    this.usedPorts.push(parseInt(port, 10));
-  }
-);
 
 Given(
   /^a remote AgentX client connected to "([^"]+)"$/,
@@ -236,59 +227,7 @@ Then("my handler should not be called", function (this: AgentXWorld) {
   expect(true).toBe(true);
 });
 
-// ============================================================================
-// Request/Response - Use regex for complex patterns
-// ============================================================================
-
-When(
-  /^I call agentx\.request\("([^"]+)", \{ containerId: "([^"]+)" \}\)$/,
-  async function (this: AgentXWorld, requestType: string, containerId: string) {
-    this.lastResponse = await this.agentx!.request(requestType as never, { containerId } as never);
-  }
-);
-
-When(
-  /^I call agentx\.request\("([^"]+)", \{ containerId: "([^"]+)" \}, (\d+)\)$/,
-  async function (this: AgentXWorld, requestType: string, containerId: string, timeout: string) {
-    try {
-      this.lastResponse = await this.agentx!.request(
-        requestType as never,
-        { containerId } as never,
-        parseInt(timeout, 10)
-      );
-    } catch (error) {
-      this.lastResponse = { type: "error", error } as never;
-    }
-  }
-);
-
-When(
-  /^I call agentx\.request\("([^"]+)", \{\}\)$/,
-  async function (this: AgentXWorld, requestType: string) {
-    this.lastResponse = await this.agentx!.request(requestType as never, {} as never);
-  }
-);
-
-Then(/^I should receive "([^"]+)"$/, function (this: AgentXWorld, responseType: string) {
-  expect(this.lastResponse).toBeDefined();
-  expect(this.lastResponse!.type).toBe(responseType);
-});
-
-Then(
-  /^response\.data\.containerId should be "([^"]+)"$/,
-  function (this: AgentXWorld, containerId: string) {
-    expect((this.lastResponse!.data as { containerId?: string }).containerId).toBe(containerId);
-  }
-);
-
-Then("response.data.error should be undefined", function (this: AgentXWorld) {
-  expect((this.lastResponse!.data as { error?: string }).error).toBeUndefined();
-});
-
-Then("it should throw timeout error", function (this: AgentXWorld) {
-  expect(this.lastResponse).toBeDefined();
-  expect((this.lastResponse as { type: string }).type).toBe("error");
-});
+// Note: Request/Response steps are defined in conversation.steps.ts to avoid duplication
 
 // ============================================================================
 // Reconnection

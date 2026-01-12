@@ -31,6 +31,23 @@ Given(/^container "([^"]+)" exists$/, async function (this: AgentXWorld, contain
   this.createdContainers.push(containerId);
 });
 
+// Generic response assertions
+Then(/^I should receive "([^"]+)"$/, function (this: AgentXWorld, responseType: string) {
+  expect(this.lastResponse).toBeDefined();
+  expect(this.lastResponse!.type).toBe(responseType);
+});
+
+Then(
+  /^response\.data\.containerId should be "([^"]+)"$/,
+  function (this: AgentXWorld, containerId: string) {
+    expect((this.lastResponse!.data as { containerId?: string }).containerId).toBe(containerId);
+  }
+);
+
+Then("response.data.error should be undefined", function (this: AgentXWorld) {
+  expect((this.lastResponse!.data as { error?: string }).error).toBeUndefined();
+});
+
 Then("response.data.exists should be true", function (this: AgentXWorld) {
   expect((this.lastResponse!.data as { exists?: boolean }).exists).toBe(true);
 });

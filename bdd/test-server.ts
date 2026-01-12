@@ -3,21 +3,34 @@
  * BDD Test Server
  *
  * Dedicated WebSocket server for BDD tests.
- * Runs without API key (tests don't call real Claude API).
+ * Loads API key from dev/.env.local if available (for @integration tests).
  */
 
-import { resolve } from "path";
+import { config } from "dotenv";
+import { resolve, join } from "path";
 
 const PORT = 15300;
 const AGENTX_DIR = resolve(import.meta.dir, "../.agentx-test");
 
+// Load environment from bdd/.env.local
+const ENV_PATH = join(import.meta.dir, ".env.local");
+config({ path: ENV_PATH });
+
 async function startTestServer() {
+  const apiKey = process.env.LLM_PROVIDER_KEY;
+  const model = process.env.LLM_PROVIDER_MODEL || "claude-sonnet-4-20250514";
+
   console.log("🧪 Starting BDD Test Server...\n");
   console.log("Configuration:");
   console.log(`  Port: ${PORT}`);
   console.log(`  AgentX Directory: ${AGENTX_DIR}`);
   console.log(`  Storage: SQLite (${AGENTX_DIR}/data/queue.db)`);
-  console.log(`  API Key: None (tests don't call real API)`);
+  console.log(
+    `  API Key: ${apiKey ? apiKey.substring(0, 15) + "..." : "None (skip @integration tests)"}`
+  );
+  if (apiKey) {
+    console.log(`  Model: ${model}`);
+  }
   console.log();
 
   const { createAgentX } = await import("agentxjs");
@@ -25,6 +38,12 @@ async function startTestServer() {
   const agentx = await createAgentX({
     agentxDir: AGENTX_DIR,
     logger: { level: "warn" }, // Quiet for tests
+    llm: apiKey
+      ? {
+          apiKey,
+          model,
+        }
+      : undefined,
   });
 
   // Create default test container

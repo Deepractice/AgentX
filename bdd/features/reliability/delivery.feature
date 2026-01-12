@@ -4,7 +4,7 @@ Feature: Reliable Message Delivery
   The system guarantees no message loss under normal operating conditions.
 
   Background:
-    Given an AgentX server is running on port 15240
+    Given an AgentX server is running on port 15300
     And container "workspace" exists
     And image "chat" exists in container "workspace"
 

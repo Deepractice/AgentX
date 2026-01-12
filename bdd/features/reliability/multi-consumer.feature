@@ -4,7 +4,7 @@ Feature: Multi-Consumer Support
   conversation independently. Each consumer maintains its own read position.
 
   Background:
-    Given an AgentX server is running on port 15230
+    Given an AgentX server is running on port 15300
     And container "workspace" exists
     And image "shared-chat" exists in container "workspace"
 

@@ -4,7 +4,7 @@ Feature: Reconnection and Message Recovery
   that were sent during the disconnection period. No messages should be lost.
 
   Background:
-    Given an AgentX server is running on port 15220
+    Given an AgentX server is running on port 15300
     And a remote AgentX client connected to "ws://localhost:15220"
     And container "workspace" exists
     And image "chat" exists in container "workspace"

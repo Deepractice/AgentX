@@ -161,7 +161,7 @@ Given(
     const { createAgentX } = await import("agentxjs");
 
     // Use server if available, otherwise create new
-    const port = this.usedPorts[0] || 15230;
+    const port = this.usedPorts[0] || 15300;
     const client = await createAgentX({ serverUrl: `ws://localhost:${port}` });
     this.remoteClients.set(clientName, client);
     this.receivedMessages.set(clientName, []);
@@ -263,14 +263,14 @@ When("the server crashes immediately after", async function (this: AgentXWorld) 
 
 When("the server restarts", async function (this: AgentXWorld) {
   const { createAgentX } = await import("agentxjs");
-  const port = this.usedPorts[0] || 15240;
+  const port = this.usedPorts[0] || 15300;
   this.server = await createAgentX();
   await this.server.listen(port);
 });
 
 When("the client reconnects", async function (this: AgentXWorld) {
   const { createAgentX } = await import("agentxjs");
-  const port = this.usedPorts[0] || 15240;
+  const port = this.usedPorts[0] || 15300;
   this.agentx = await createAgentX({ serverUrl: `ws://localhost:${port}` });
   this.isConnected = true;
 });
@@ -382,7 +382,7 @@ When("I refresh the page", async function (this: AgentXWorld) {
 
 When("I reconnect to the server", async function (this: AgentXWorld) {
   const { createAgentX } = await import("agentxjs");
-  const port = this.usedPorts[0] || 15220;
+  const port = this.usedPorts[0] || 15300;
   this.agentx = await createAgentX({ serverUrl: `ws://localhost:${port}` });
   this.isConnected = true;
 });

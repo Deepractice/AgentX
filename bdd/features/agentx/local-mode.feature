@@ -9,6 +9,12 @@ Feature: AgentX Local Mode
     And AgentX should have method "on"
     And AgentX should have method "dispose"
 
+  Scenario: createAgentX with custom LLM config
+    When I call createAgentX with config:
+      | llm.apiKey | sk-test-key              |
+      | llm.model  | claude-sonnet-4-20250514 |
+    Then I should receive an AgentX instance
+
   Scenario: createAgentX with custom agentxDir
     When I call createAgentX with agentxDir "/tmp/agentx-test"
     Then I should receive an AgentX instance

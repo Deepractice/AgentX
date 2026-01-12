@@ -1,0 +1,5 @@
+# Environment
+.env.local
+
+# Test reports
+reports/
