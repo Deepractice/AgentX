@@ -78,27 +78,6 @@ export interface ChannelServer {
   broadcast(message: string): void;
 
   /**
-   * Subscribe a connection to a channel
-   * @param connection - The connection to subscribe
-   * @param channelId - Channel identifier (e.g., sessionId, groupId)
-   */
-  subscribe(connection: ChannelConnection, channelId: string): void;
-
-  /**
-   * Publish a message to all subscribers of a channel
-   * @param channelId - Channel identifier
-   * @param message - Message to send
-   */
-  publish(channelId: string, message: string): void;
-
-  /**
-   * Unsubscribe a connection from a channel
-   * @param connection - The connection to unsubscribe
-   * @param channelId - Channel identifier
-   */
-  unsubscribe(connection: ChannelConnection, channelId: string): void;
-
-  /**
    * Close server and all connections
    */
   close(): Promise<void>;

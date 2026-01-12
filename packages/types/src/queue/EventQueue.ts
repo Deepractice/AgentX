@@ -1,5 +1,39 @@
 import type { QueueEntry } from "./QueueEntry";
-import type { Unsubscribe } from "../network/Channel";
+
+/**
+ * Unsubscribe function type
+ */
+export type Unsubscribe = () => void;
+
+/**
+ * MessageSender - Generic interface for bidirectional message communication
+ *
+ * This abstraction allows Queue to work with any transport layer
+ * (WebSocket, HTTP, etc.) without direct dependency.
+ */
+export interface MessageSender {
+  /**
+   * Unique identifier for this sender/connection
+   */
+  readonly id: string;
+
+  /**
+   * Send a message
+   */
+  send(message: string): void;
+
+  /**
+   * Register message handler
+   * @returns Unsubscribe function
+   */
+  onMessage(handler: (message: string) => void): Unsubscribe;
+
+  /**
+   * Register close handler
+   * @returns Unsubscribe function
+   */
+  onClose(handler: () => void): Unsubscribe;
+}
 
 /**
  * EventQueue - Interface for reliable event delivery queue
@@ -17,11 +51,12 @@ export interface EventQueue {
   append(topic: string, event: unknown): Promise<string>;
 
   /**
-   * Create a new consumer for a topic
+   * Create or update a consumer for a topic
+   * If the consumer already exists, updates the timestamp (reconnection)
+   * @param consumerId - Consumer identifier (clientId from client)
    * @param topic - Topic identifier
-   * @returns Unique consumerId for tracking consumption
    */
-  createConsumer(topic: string): Promise<string>;
+  createConsumer(consumerId: string, topic: string): Promise<void>;
 
   /**
    * Read entries for a consumer from their last position
@@ -66,10 +101,23 @@ export interface EventQueue {
 
   /**
    * Cleanup entries that all consumers have consumed
-   * Deletes entries before MIN(consumer cursors) for each topic
+   * Also cleans up stale consumers based on TTL
    * @returns Number of entries cleaned up
    */
   cleanup(): Promise<number>;
+
+  /**
+   * Handle a connection for queue protocol messages
+   *
+   * Automatically processes:
+   * - queue_subscribe: Create consumer, send history, subscribe to real-time
+   * - queue_ack: Update consumer cursor
+   * - queue_unsubscribe: Remove subscription
+   *
+   * @param sender - Message sender (e.g., WebSocket connection)
+   * @returns Unsubscribe function to cleanup when connection closes
+   */
+  handleConnection(sender: MessageSender): Unsubscribe;
 
   /**
    * Close the queue and release resources

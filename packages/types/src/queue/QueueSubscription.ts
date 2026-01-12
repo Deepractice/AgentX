@@ -10,6 +10,8 @@
 export interface QueueSubscribeRequest {
   type: "queue_subscribe";
   topic: string;
+  /** Client identifier (baseClientId + tabId) */
+  clientId: string;
   /** Resume from this cursor (exclusive) */
   afterCursor?: string;
 }
@@ -20,6 +22,7 @@ export interface QueueSubscribeRequest {
 export interface QueueAckRequest {
   type: "queue_ack";
   topic: string;
+  clientId: string;
   cursor: string;
 }
 
@@ -29,6 +32,7 @@ export interface QueueAckRequest {
 export interface QueueUnsubscribeRequest {
   type: "queue_unsubscribe";
   topic: string;
+  clientId: string;
 }
 
 /**

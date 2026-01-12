@@ -51,6 +51,64 @@ export async function createAgentX(config?: AgentXConfig): Promise<AgentX> {
 // Remote Mode Implementation (Browser & Node.js compatible)
 // ============================================================================
 
+// ============================================================================
+// Client Storage Abstraction (localStorage for browser, in-memory for Node.js)
+// ============================================================================
+
+interface ClientStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+}
+
+// Detect browser environment
+const isBrowser =
+  typeof globalThis !== "undefined" &&
+  typeof (globalThis as any).window !== "undefined" &&
+  typeof (globalThis as any).window.localStorage !== "undefined";
+
+function createClientStorage(): ClientStorage {
+  // Browser environment - use localStorage
+  if (isBrowser) {
+    return (globalThis as any).window.localStorage;
+  }
+
+  // Node.js environment - use in-memory storage
+  const storage = new Map<string, string>();
+  return {
+    getItem: (key: string) => storage.get(key) ?? null,
+    setItem: (key: string, value: string) => storage.set(key, value),
+  };
+}
+
+function generateClientId(storage: ClientStorage): string {
+  // Get or create base client ID (persistent across tabs/sessions)
+  let baseClientId = storage.getItem("agentx:clientId");
+  if (!baseClientId) {
+    baseClientId = `client_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    storage.setItem("agentx:clientId", baseClientId);
+  }
+
+  // Generate tab ID (unique per tab/process)
+  // In browser: use sessionStorage. In Node.js: generate new each time
+  let tabId: string;
+  if (isBrowser && typeof (globalThis as any).window.sessionStorage !== "undefined") {
+    const sessionStorage = (globalThis as any).window.sessionStorage;
+    tabId = sessionStorage.getItem("agentx:tabId") ?? "";
+    if (!tabId) {
+      tabId = `tab_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      sessionStorage.setItem("agentx:tabId", tabId);
+    }
+  } else {
+    tabId = `proc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+  }
+
+  return `${baseClientId}:${tabId}`;
+}
+
+// ============================================================================
+// Remote Mode Implementation (Browser & Node.js compatible)
+// ============================================================================
+
 /**
  * Create AgentX instance in remote mode
  *
@@ -75,6 +133,12 @@ export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> 
     debug: false,
   });
 
+  // Client storage and ID
+  const storage = createClientStorage();
+  const clientId = generateClientId(storage);
+
+  remoteLogger.info("Client initialized", { clientId });
+
   const handlers = new Map<string, Set<(event: SystemEvent) => void>>();
   const pendingRequests = new Map<
     string,
@@ -85,10 +149,99 @@ export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> 
     }
   >();
 
+  // Track subscribed topics
+  const subscribedTopics = new Set<string>();
+
+  // Helper: Subscribe to a topic
+  function subscribeToTopic(topic: string) {
+    if (subscribedTopics.has(topic)) {
+      return; // Already subscribed
+    }
+
+    const cursorKey = `agentx:cursor:${clientId}:${topic}`;
+    const afterCursor = storage.getItem(cursorKey);
+
+    client.send(
+      JSON.stringify({
+        type: "queue_subscribe",
+        topic,
+        clientId,
+        afterCursor,
+      })
+    );
+
+    subscribedTopics.add(topic);
+    remoteLogger.debug("Subscribed to topic", { topic, afterCursor });
+  }
+
+  // Helper: Send ACK
+  function sendAck(topic: string, cursor: string) {
+    client.send(
+      JSON.stringify({
+        type: "queue_ack",
+        topic,
+        clientId,
+        cursor,
+      })
+    );
+
+    // Store cursor
+    const cursorKey = `agentx:cursor:${clientId}:${topic}`;
+    storage.setItem(cursorKey, cursor);
+  }
+
   // Handle incoming messages
   client.onMessage((message: string) => {
     try {
-      const event = JSON.parse(message) as SystemEvent;
+      const parsed = JSON.parse(message);
+
+      // Handle queue_entry messages
+      if (parsed.type === "queue_entry") {
+        const { topic, cursor, event: innerEvent } = parsed;
+
+        // Auto ACK
+        sendAck(topic, cursor);
+
+        // Dispatch the inner event to handlers
+        if (innerEvent && typeof innerEvent === "object") {
+          const event = innerEvent as SystemEvent;
+
+          remoteLogger.debug("Received queue entry", {
+            topic,
+            cursor,
+            eventType: event.type,
+          });
+
+          // Dispatch to type handlers
+          const typeHandlers = handlers.get(event.type);
+          if (typeHandlers) {
+            for (const handler of typeHandlers) {
+              handler(event);
+            }
+          }
+
+          // Dispatch to "*" handlers
+          const allHandlers = handlers.get("*");
+          if (allHandlers) {
+            for (const handler of allHandlers) {
+              handler(event);
+            }
+          }
+        }
+        return;
+      }
+
+      // Handle queue_subscribed confirmation
+      if (parsed.type === "queue_subscribed") {
+        remoteLogger.debug("Subscription confirmed", {
+          topic: parsed.topic,
+          latestCursor: parsed.latestCursor,
+        });
+        return;
+      }
+
+      // Handle regular events (non-queue)
+      const event = parsed as SystemEvent;
 
       remoteLogger.info("Received event", {
         type: event.type,
@@ -149,6 +302,21 @@ export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> 
     remoteLogger.error("WebSocket error", { error: error.message });
   });
 
+  // Re-subscribe to topics on reconnection
+  client.onOpen(() => {
+    if (subscribedTopics.size > 0) {
+      remoteLogger.info("Reconnected, re-subscribing to topics", {
+        topics: Array.from(subscribedTopics),
+      });
+      // Clear and re-subscribe
+      const topics = Array.from(subscribedTopics);
+      subscribedTopics.clear();
+      for (const topic of topics) {
+        subscribeToTopic(topic);
+      }
+    }
+  });
+
   function subscribe(type: string, handler: (event: SystemEvent) => void): Unsubscribe {
     if (!handlers.has(type)) {
       handlers.set(type, new Set());
@@ -201,7 +369,7 @@ export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> 
         }
       }
 
-      return new Promise((resolve, reject) => {
+      const response = await new Promise<ResponseEventFor<T>>((resolve, reject) => {
         const timer = setTimeout(() => {
           pendingRequests.delete(requestId);
           reject(new Error(`Request timeout: ${type}`));
@@ -224,6 +392,20 @@ export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> 
 
         client.send(JSON.stringify(event));
       });
+
+      // Auto-subscribe to session topics on successful session operations
+      const typeStr = type as string;
+      if (
+        (typeStr === "session_get" || typeStr === "session_create") &&
+        response.category === "response"
+      ) {
+        const sessionId = (response.data as any)?.sessionId;
+        if (sessionId) {
+          subscribeToTopic(sessionId);
+        }
+      }
+
+      return response;
     },
 
     on<T extends string>(
@@ -261,6 +443,18 @@ export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> 
     },
 
     async dispose() {
+      // Unsubscribe from all topics
+      for (const topic of subscribedTopics) {
+        client.send(
+          JSON.stringify({
+            type: "queue_unsubscribe",
+            topic,
+            clientId,
+          })
+        );
+      }
+      subscribedTopics.clear();
+
       for (const pending of pendingRequests.values()) {
         clearTimeout(pending.timer);
         pending.reject(new Error("AgentX disposed"));

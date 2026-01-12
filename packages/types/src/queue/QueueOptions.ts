@@ -9,10 +9,18 @@ export interface QueueOptions {
   path: string;
 
   /**
-   * Maximum age of acknowledged entries before cleanup (milliseconds)
-   * @default 3600000 (1 hour)
+   * Consumer inactivity timeout (milliseconds)
+   * Consumers without ACK activity for this duration are considered stale and deleted
+   * @default 86400000 (24 hours)
    */
-  ackRetentionMs?: number;
+  consumerTtlMs?: number;
+
+  /**
+   * Message retention timeout (milliseconds)
+   * Messages older than this are force-deleted regardless of consumer state
+   * @default 172800000 (48 hours)
+   */
+  messageTtlMs?: number;
 
   /**
    * Maximum number of entries per topic before forcing cleanup

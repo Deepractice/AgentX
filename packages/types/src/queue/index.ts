@@ -6,7 +6,7 @@
  * @packageDocumentation
  */
 
-export type { EventQueue } from "./EventQueue";
+export type { EventQueue, MessageSender, Unsubscribe } from "./EventQueue";
 export type { QueueEntry } from "./QueueEntry";
 export type { QueueOptions } from "./QueueOptions";
 export type {

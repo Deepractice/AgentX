@@ -2,11 +2,18 @@
  * SqliteEventQueue - SQLite-based persistent event queue with multi-consumer support
  */
 
-import type { EventQueue, QueueEntry, QueueOptions } from "@agentxjs/types/queue";
-import type { Unsubscribe } from "@agentxjs/types/network";
+import type {
+  EventQueue,
+  QueueEntry,
+  QueueOptions,
+  MessageSender,
+  Unsubscribe,
+  QueueSubscribeRequest,
+  QueueAckRequest,
+  QueueUnsubscribeRequest,
+} from "@agentxjs/types/queue";
 import { createLogger } from "@agentxjs/common";
 import { CursorGenerator } from "./CursorGenerator";
-import { nanoid } from "nanoid";
 
 const logger = createLogger("queue/SqliteEventQueue");
 
@@ -14,7 +21,8 @@ declare const Bun: unknown;
 
 interface ResolvedOptions {
   path: string;
-  ackRetentionMs: number;
+  consumerTtlMs: number;
+  messageTtlMs: number;
   maxEntriesPerTopic: number;
   cleanupIntervalMs: number;
 }
@@ -57,7 +65,8 @@ export class SqliteEventQueue implements EventQueue {
   static async create(options: QueueOptions): Promise<SqliteEventQueue> {
     const resolvedOptions: ResolvedOptions = {
       path: options.path,
-      ackRetentionMs: options.ackRetentionMs ?? 3600000,
+      consumerTtlMs: options.consumerTtlMs ?? 86400000, // 24 hours
+      messageTtlMs: options.messageTtlMs ?? 172800000, // 48 hours
       maxEntriesPerTopic: options.maxEntriesPerTopic ?? 10000,
       cleanupIntervalMs: options.cleanupIntervalMs ?? 300000,
     };
@@ -106,17 +115,22 @@ export class SqliteEventQueue implements EventQueue {
     return cursor;
   }
 
-  async createConsumer(topic: string): Promise<string> {
-    const consumerId = `consumer_${nanoid(12)}`;
+  async createConsumer(consumerId: string, topic: string): Promise<void> {
     const now = Date.now();
 
+    // Use INSERT OR REPLACE to handle reconnection with same clientId
     await this.db.sql`
-      INSERT INTO queue_subscriptions (consumerId, topic, cursor, createdAt, updatedAt)
-      VALUES (${consumerId}, ${topic}, NULL, ${now}, ${now})
+      INSERT OR REPLACE INTO queue_subscriptions (consumerId, topic, cursor, createdAt, updatedAt)
+      VALUES (
+        ${consumerId},
+        ${topic},
+        COALESCE((SELECT cursor FROM queue_subscriptions WHERE consumerId = ${consumerId} AND topic = ${topic}), NULL),
+        COALESCE((SELECT createdAt FROM queue_subscriptions WHERE consumerId = ${consumerId} AND topic = ${topic}), ${now}),
+        ${now}
+      )
     `;
 
-    logger.debug("Consumer created", { consumerId, topic });
-    return consumerId;
+    logger.debug("Consumer created/updated", { consumerId, topic });
   }
 
   async read(consumerId: string, topic: string, limit: number = 100): Promise<QueueEntry[]> {
@@ -214,8 +228,38 @@ export class SqliteEventQueue implements EventQueue {
 
   async cleanup(): Promise<number> {
     let totalCleaned = 0;
+    const now = Date.now();
 
-    // Get all topics
+    // Step 1: Clean up stale consumers (Consumer TTL)
+    const consumerCutoff = now - this.options.consumerTtlMs;
+    const staleConsumersResult = await this.db.sql`
+      DELETE FROM queue_subscriptions
+      WHERE updatedAt < ${consumerCutoff}
+    `;
+    const staleConsumers = staleConsumersResult.changes ?? 0;
+    if (staleConsumers > 0) {
+      logger.debug("Cleaned up stale consumers", {
+        count: staleConsumers,
+        ttlMs: this.options.consumerTtlMs,
+      });
+    }
+
+    // Step 2: Force delete expired messages (Message TTL - ultimate fallback)
+    const messageCutoff = now - this.options.messageTtlMs;
+    const expiredMessagesResult = await this.db.sql`
+      DELETE FROM queue_entries
+      WHERE timestamp < ${messageCutoff}
+    `;
+    const expiredMessages = expiredMessagesResult.changes ?? 0;
+    if (expiredMessages > 0) {
+      logger.debug("Cleaned up expired messages", {
+        count: expiredMessages,
+        ttlMs: this.options.messageTtlMs,
+      });
+      totalCleaned += expiredMessages;
+    }
+
+    // Step 3: Clean up messages based on MIN(cursor) per topic
     const topicsResult = await this.db.sql`
       SELECT DISTINCT topic FROM queue_entries
     `;
@@ -230,22 +274,12 @@ export class SqliteEventQueue implements EventQueue {
       `;
 
       if (cursorsResult.rows.length === 0) {
-        // No consumers, clean up old entries
-        const cutoff = Date.now() - this.options.ackRetentionMs;
-        const orphanedResult = await this.db.sql`
-          DELETE FROM queue_entries
-          WHERE topic = ${topic} AND timestamp < ${cutoff}
-        `;
-        const cleaned = orphanedResult.changes ?? 0;
-        if (cleaned > 0) {
-          logger.debug("Cleaned up orphaned entries", { topic, count: cleaned });
-          totalCleaned += cleaned;
-        }
+        // No active consumers for this topic - messages will be cleaned by TTL
         continue;
       }
 
       // Find MIN cursor (using CursorGenerator.compare)
-      const cursors = cursorsResult.rows.map((r) => r.cursor);
+      const cursors = cursorsResult.rows.map((r: any) => r.cursor);
       let minCursor = cursors[0];
       for (const cursor of cursors) {
         if (CursorGenerator.compare(cursor, minCursor) < 0) {
@@ -271,12 +305,167 @@ export class SqliteEventQueue implements EventQueue {
       }
 
       if (deleted > 0) {
-        logger.debug("Cleaned up entries for topic", { topic, minCursor, count: deleted });
+        logger.debug("Cleaned up consumed entries for topic", { topic, minCursor, count: deleted });
         totalCleaned += deleted;
       }
     }
 
     return totalCleaned;
+  }
+
+  handleConnection(sender: MessageSender): Unsubscribe {
+    const subscriptions = new Map<string, Unsubscribe>();
+
+    // Register message handler for queue protocol messages
+    const unsubscribeMessage = sender.onMessage((message: string) => {
+      try {
+        const parsed = JSON.parse(message);
+
+        if (parsed.type === "queue_subscribe") {
+          this.handleSubscribe(sender, parsed as QueueSubscribeRequest, subscriptions);
+        } else if (parsed.type === "queue_ack") {
+          this.handleAck(parsed as QueueAckRequest);
+        } else if (parsed.type === "queue_unsubscribe") {
+          this.handleUnsubscribe(parsed as QueueUnsubscribeRequest, subscriptions);
+        }
+        // Ignore other message types - not queue protocol
+      } catch {
+        // Ignore parse errors - not a queue protocol message
+      }
+    });
+
+    // Cleanup function
+    const cleanup = () => {
+      // Cleanup all subscriptions for this connection
+      for (const unsubscribe of subscriptions.values()) {
+        unsubscribe();
+      }
+      subscriptions.clear();
+      logger.debug("Connection cleanup completed", { senderId: sender.id });
+    };
+
+    // Register close handler for auto cleanup
+    const unsubscribeClose = sender.onClose(cleanup);
+
+    logger.debug("Connection handler registered", { senderId: sender.id });
+
+    // Return cleanup function
+    return () => {
+      cleanup();
+      unsubscribeMessage();
+      unsubscribeClose();
+    };
+  }
+
+  private async handleSubscribe(
+    sender: MessageSender,
+    request: QueueSubscribeRequest,
+    subscriptions: Map<string, Unsubscribe>
+  ): Promise<void> {
+    const { topic, clientId, afterCursor } = request;
+    const consumerId = clientId;
+
+    // Create or update consumer
+    await this.createConsumer(consumerId, topic);
+
+    // Unsubscribe from previous subscription to same topic (if any)
+    const existingKey = `${consumerId}:${topic}`;
+    subscriptions.get(existingKey)?.();
+
+    // Send historical entries if afterCursor provided (reconnection recovery)
+    // Otherwise send all entries from beginning
+    let missed: QueueEntry[];
+    if (afterCursor) {
+      // Read entries after the provided cursor
+      const cursorResult = await this.db.sql`
+        SELECT cursor, topic, event, timestamp
+        FROM queue_entries
+        WHERE topic = ${topic} AND cursor > ${afterCursor}
+        ORDER BY cursor ASC
+        LIMIT 1000
+      `;
+      missed = cursorResult.rows.map((row: any) => ({
+        cursor: row.cursor,
+        topic: row.topic,
+        event: JSON.parse(row.event),
+        timestamp: row.timestamp,
+      }));
+    } else {
+      // Read all entries for this topic
+      missed = await this.read(consumerId, topic, 1000);
+    }
+
+    // Send missed entries
+    for (const entry of missed) {
+      sender.send(
+        JSON.stringify({
+          type: "queue_entry",
+          topic: entry.topic,
+          cursor: entry.cursor,
+          event: entry.event,
+          timestamp: entry.timestamp,
+        })
+      );
+    }
+
+    // Subscribe to new entries
+    const unsubscribe = this.subscribe(consumerId, topic, (entry) => {
+      sender.send(
+        JSON.stringify({
+          type: "queue_entry",
+          topic: entry.topic,
+          cursor: entry.cursor,
+          event: entry.event,
+          timestamp: entry.timestamp,
+        })
+      );
+    });
+
+    subscriptions.set(existingKey, unsubscribe);
+
+    // Get latest cursor for confirmation
+    const latestEntry = await this.db.sql`
+      SELECT cursor FROM queue_entries
+      WHERE topic = ${topic}
+      ORDER BY cursor DESC
+      LIMIT 1
+    `;
+    const latestCursor = latestEntry.rows.length > 0 ? latestEntry.rows[0].cursor : null;
+
+    // Send confirmation
+    sender.send(
+      JSON.stringify({
+        type: "queue_subscribed",
+        topic,
+        latestCursor,
+      })
+    );
+
+    logger.debug("Client subscribed to queue", {
+      senderId: sender.id,
+      consumerId,
+      topic,
+      afterCursor,
+      missedCount: missed.length,
+    });
+  }
+
+  private async handleAck(request: QueueAckRequest): Promise<void> {
+    const { topic, clientId, cursor } = request;
+    await this.ack(clientId, topic, cursor);
+  }
+
+  private handleUnsubscribe(
+    request: QueueUnsubscribeRequest,
+    subscriptions: Map<string, Unsubscribe>
+  ): void {
+    const { topic, clientId } = request;
+    const key = `${clientId}:${topic}`;
+
+    subscriptions.get(key)?.();
+    subscriptions.delete(key);
+
+    logger.debug("Client unsubscribed from queue", { clientId, topic });
   }
 
   async close(): Promise<void> {

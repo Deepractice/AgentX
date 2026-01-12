@@ -23,13 +23,14 @@ describe("SqliteEventQueue - Multi-consumer", () => {
 
   test("append and read events", async () => {
     const topic = "session-123";
+    const consumerId = "consumer-1";
 
     // Append events
     await queue.append(topic, { seq: 1 });
     await queue.append(topic, { seq: 2 });
 
     // Create consumer and read
-    const consumerId = await queue.createConsumer(topic);
+    await queue.createConsumer(consumerId, topic);
     const entries = await queue.read(consumerId, topic);
 
     expect(entries).toHaveLength(2);
@@ -39,6 +40,8 @@ describe("SqliteEventQueue - Multi-consumer", () => {
 
   test("multiple consumers read independently", async () => {
     const topic = "session-multi";
+    const consumerA = "consumer-a";
+    const consumerB = "consumer-b";
 
     // Append events
     await queue.append(topic, { seq: 1 });
@@ -46,7 +49,7 @@ describe("SqliteEventQueue - Multi-consumer", () => {
     await queue.append(topic, { seq: 3 });
 
     // Consumer A reads all
-    const consumerA = await queue.createConsumer(topic);
+    await queue.createConsumer(consumerA, topic);
     const entriesA1 = await queue.read(consumerA, topic);
     expect(entriesA1).toHaveLength(3);
 
@@ -54,7 +57,7 @@ describe("SqliteEventQueue - Multi-consumer", () => {
     await queue.ack(consumerA, topic, entriesA1[1].cursor);
 
     // Consumer B reads all (independent)
-    const consumerB = await queue.createConsumer(topic);
+    await queue.createConsumer(consumerB, topic);
     const entriesB1 = await queue.read(consumerB, topic);
     expect(entriesB1).toHaveLength(3);
 
@@ -66,10 +69,12 @@ describe("SqliteEventQueue - Multi-consumer", () => {
 
   test("ack updates consumer cursor", async () => {
     const topic = "session-ack";
+    const consumerId = "consumer-ack";
+
     const cursor1 = await queue.append(topic, { seq: 1 });
     const cursor2 = await queue.append(topic, { seq: 2 });
 
-    const consumerId = await queue.createConsumer(topic);
+    await queue.createConsumer(consumerId, topic);
 
     // Initial cursor is null
     let currentCursor = await queue.getConsumerCursor(consumerId, topic);
@@ -88,7 +93,9 @@ describe("SqliteEventQueue - Multi-consumer", () => {
 
   test("subscribe receives new events", async () => {
     const topic = "session-sub";
-    const consumerId = await queue.createConsumer(topic);
+    const consumerId = "consumer-sub";
+
+    await queue.createConsumer(consumerId, topic);
     const received: unknown[] = [];
 
     const unsubscribe = queue.subscribe(consumerId, topic, (entry) => {
@@ -115,6 +122,9 @@ describe("SqliteEventQueue - Multi-consumer", () => {
 
   test("cleanup removes entries consumed by all consumers", async () => {
     const topic = "session-cleanup";
+    const consumerA = "consumer-cleanup-a";
+    const consumerB = "consumer-cleanup-b";
+    const consumerC = "consumer-cleanup-c";
 
     // Append 5 messages
     const cursors = [];
@@ -123,11 +133,11 @@ describe("SqliteEventQueue - Multi-consumer", () => {
     }
 
     // Consumer A consumes up to seq 3
-    const consumerA = await queue.createConsumer(topic);
+    await queue.createConsumer(consumerA, topic);
     await queue.ack(consumerA, topic, cursors[2]);
 
     // Consumer B consumes up to seq 2
-    const consumerB = await queue.createConsumer(topic);
+    await queue.createConsumer(consumerB, topic);
     await queue.ack(consumerB, topic, cursors[1]);
 
     // Cleanup should delete up to cursor[1] (MIN of A and B)
@@ -135,13 +145,15 @@ describe("SqliteEventQueue - Multi-consumer", () => {
     expect(cleaned).toBe(2); // seq 1 and 2
 
     // Verify remaining entries
-    const consumerC = await queue.createConsumer(topic);
+    await queue.createConsumer(consumerC, topic);
     const remaining = await queue.read(consumerC, topic);
     expect(remaining).toHaveLength(3); // seq 3, 4, 5
   });
 
   test("cleanup handles topics with no consumers", async () => {
     const topic = "orphaned-topic";
+    const consumerId = "consumer-orphan";
+
     await queue.append(topic, { data: "orphan1" });
     await queue.append(topic, { data: "orphan2" });
 
@@ -150,18 +162,20 @@ describe("SqliteEventQueue - Multi-consumer", () => {
     expect(cleaned1).toBe(0);
 
     // Create consumer, then delete it
-    const consumerId = await queue.createConsumer(topic);
+    await queue.createConsumer(consumerId, topic);
     await queue.deleteConsumer(consumerId, topic);
 
     // Now topic has no consumers again
     const cleaned2 = await queue.cleanup();
-    // Entries still fresh, won't be cleaned
+    // Entries still fresh, won't be cleaned by TTL
     expect(cleaned2).toBe(0);
   });
 
   test("deleteConsumer removes subscription", async () => {
     const topic = "session-delete";
-    const consumerId = await queue.createConsumer(topic);
+    const consumerId = "consumer-delete";
+
+    await queue.createConsumer(consumerId, topic);
 
     // Consumer exists
     let cursor = await queue.getConsumerCursor(consumerId, topic);
@@ -175,11 +189,14 @@ describe("SqliteEventQueue - Multi-consumer", () => {
   });
 
   test("topics are isolated", async () => {
+    const consumerA = "consumer-topic-a";
+    const consumerB = "consumer-topic-b";
+
     await queue.append("topic-a", { from: "a" });
     await queue.append("topic-b", { from: "b" });
 
-    const consumerA = await queue.createConsumer("topic-a");
-    const consumerB = await queue.createConsumer("topic-b");
+    await queue.createConsumer(consumerA, "topic-a");
+    await queue.createConsumer(consumerB, "topic-b");
 
     const entriesA = await queue.read(consumerA, "topic-a");
     const entriesB = await queue.read(consumerB, "topic-b");
@@ -188,5 +205,33 @@ describe("SqliteEventQueue - Multi-consumer", () => {
     expect(entriesB).toHaveLength(1);
     expect((entriesA[0].event as any).from).toBe("a");
     expect((entriesB[0].event as any).from).toBe("b");
+  });
+
+  test("createConsumer preserves cursor on reconnection", async () => {
+    const topic = "session-reconnect";
+    const clientId = "client-reconnect";
+
+    // First connection
+    await queue.createConsumer(clientId, topic);
+    await queue.append(topic, { seq: 1 });
+    await queue.append(topic, { seq: 2 });
+
+    const entries1 = await queue.read(clientId, topic);
+    expect(entries1).toHaveLength(2);
+
+    // ACK first message
+    await queue.ack(clientId, topic, entries1[0].cursor);
+
+    // "Reconnect" - createConsumer again with same clientId
+    await queue.createConsumer(clientId, topic);
+
+    // Cursor should be preserved
+    const cursor = await queue.getConsumerCursor(clientId, topic);
+    expect(cursor).toBe(entries1[0].cursor);
+
+    // Should only get unread message
+    const entries2 = await queue.read(clientId, topic);
+    expect(entries2).toHaveLength(1);
+    expect((entries2[0].event as any).seq).toBe(2);
   });
 });

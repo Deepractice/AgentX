@@ -7,8 +7,6 @@
 
 import type { AgentX, LocalConfig } from "@agentxjs/types/agentx";
 import type { SystemEvent } from "@agentxjs/types/event";
-import type { ChannelConnection } from "@agentxjs/types/network";
-import type { QueueSubscribeRequest, QueueAckRequest } from "@agentxjs/types/queue";
 import { WebSocketServer } from "@agentxjs/network";
 import { createLogger } from "@agentxjs/common";
 
@@ -53,9 +51,6 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
   const queuePath = join(basePath, "data", "queue.db");
   const eventQueue = await createQueue({ path: queuePath });
 
-  // Track client subscriptions: connectionId -> { topic -> unsubscribe }
-  const clientSubscriptions = new Map<string, Map<string, () => void>>();
-
   const runtime = createRuntime({
     persistence,
     basePath,
@@ -77,106 +72,22 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
     debug: false,
   });
 
-  // Queue protocol handlers
-  async function handleQueueSubscribe(
-    connection: ChannelConnection,
-    request: QueueSubscribeRequest
-  ) {
-    const { topic, afterCursor } = request;
-
-    // Send historical entries if cursor provided (reconnection recovery)
-    if (afterCursor) {
-      const missed = await eventQueue.read(topic, afterCursor, 1000);
-      for (const entry of missed) {
-        connection.send(
-          JSON.stringify({
-            type: "queue_entry",
-            topic: entry.topic,
-            cursor: entry.cursor,
-            event: entry.event,
-            timestamp: entry.timestamp,
-          })
-        );
-      }
-    }
-
-    // Subscribe to new entries
-    const unsubscribe = eventQueue.subscribe(topic, (entry) => {
-      connection.send(
-        JSON.stringify({
-          type: "queue_entry",
-          topic: entry.topic,
-          cursor: entry.cursor,
-          event: entry.event,
-          timestamp: entry.timestamp,
-        })
-      );
-    });
-
-    // Store subscription for cleanup
-    const subs = clientSubscriptions.get(connection.id);
-    if (subs) {
-      // Unsubscribe from previous subscription to same topic
-      subs.get(topic)?.();
-      subs.set(topic, unsubscribe);
-    }
-
-    // Send confirmation with latest cursor
-    const latestCursor = await eventQueue.getLatestCursor(topic);
-    connection.send(
-      JSON.stringify({
-        type: "queue_subscribed",
-        topic,
-        latestCursor,
-      })
-    );
-
-    logger.debug("Client subscribed to queue", {
-      connectionId: connection.id,
-      topic,
-      afterCursor,
-    });
-  }
-
-  async function handleQueueAck(request: QueueAckRequest) {
-    await eventQueue.ack(request.topic, request.cursor);
-  }
-
-  function handleQueueUnsubscribe(connection: ChannelConnection, topic: string) {
-    const subs = clientSubscriptions.get(connection.id);
-    if (subs) {
-      subs.get(topic)?.();
-      subs.delete(topic);
-    }
-    logger.debug("Client unsubscribed from queue", {
-      connectionId: connection.id,
-      topic,
-    });
-  }
-
   // Handle new connections
   wsServer.onConnection((connection) => {
-    // Initialize subscription map for this connection
-    clientSubscriptions.set(connection.id, new Map());
+    // Let queue handle its protocol messages (subscribe/ack/unsubscribe)
+    const cleanupQueue = eventQueue.handleConnection(connection);
 
-    // Forward client messages to runtime
+    // Forward non-queue messages to runtime
     connection.onMessage((message) => {
       try {
         const parsed = JSON.parse(message);
 
-        // Handle queue protocol messages
-        if (parsed.type === "queue_subscribe") {
-          handleQueueSubscribe(connection, parsed as QueueSubscribeRequest);
-          return;
-        }
-
-        if (parsed.type === "queue_ack") {
-          handleQueueAck(parsed as QueueAckRequest);
-          return;
-        }
-
-        if (parsed.type === "queue_unsubscribe") {
-          handleQueueUnsubscribe(connection, parsed.topic);
+        // Skip queue protocol messages (handled by eventQueue.handleConnection)
+        if (
+          parsed.type === "queue_subscribe" ||
+          parsed.type === "queue_ack" ||
+          parsed.type === "queue_unsubscribe"
+        ) {
           return;
         }
 
@@ -192,15 +103,9 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
       }
     });
 
-    // Cleanup subscriptions on disconnect
+    // Cleanup on disconnect
     connection.onClose(() => {
-      const subs = clientSubscriptions.get(connection.id);
-      if (subs) {
-        for (const unsubscribe of subs.values()) {
-          unsubscribe();
-        }
-        clientSubscriptions.delete(connection.id);
-      }
+      cleanupQueue();
     });
   });
 

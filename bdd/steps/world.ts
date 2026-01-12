@@ -29,9 +29,7 @@ export class AgentXWorld extends World {
   remoteClients: Map<string, AgentX> = new Map();
 
   // Created resources (for tracking)
-  createdContainers: string[] = [];
-  createdAgents: Map<string, string> = new Map(); // agentId -> containerId
-  createdImages: Map<string, string> = new Map(); // alias -> imageId
+  createdSessions: string[] = [];
 
   constructor(options: IWorldOptions) {
     super(options);
@@ -62,9 +60,7 @@ export class AgentXWorld extends World {
     // Clear state
     this.lastResponse = undefined;
     this.collectedEvents = [];
-    this.createdContainers = [];
-    this.createdAgents.clear();
-    this.createdImages.clear();
+    this.createdSessions = [];
     this.usedPorts = [];
   }
 
