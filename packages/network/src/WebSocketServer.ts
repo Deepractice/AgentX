@@ -124,6 +124,7 @@ export class WebSocketServer implements ChannelServer {
   private wss: WSS | null = null;
   private connections = new Set<WebSocketConnection>();
   private connectionHandlers = new Set<(connection: ChannelConnection) => void>();
+  private channels = new Map<string, Set<WebSocketConnection>>();
   private options: ChannelServerOptions;
   private attachedToServer = false;
 
@@ -191,6 +192,22 @@ export class WebSocketServer implements ChannelServer {
 
     connection.onClose(() => {
       this.connections.delete(connection);
+
+      // Auto cleanup: remove connection from all channels
+      for (const [channelId, subscribers] of this.channels) {
+        if (subscribers.has(connection)) {
+          subscribers.delete(connection);
+          logger.debug("Auto unsubscribed on close", {
+            connectionId: connection.id,
+            channelId,
+          });
+        }
+        // Remove empty channels
+        if (subscribers.size === 0) {
+          this.channels.delete(channelId);
+        }
+      }
+
       logger.info("Client disconnected", {
         connectionId: connection.id,
         totalConnections: this.connections.size,
@@ -216,6 +233,52 @@ export class WebSocketServer implements ChannelServer {
     }
   }
 
+  subscribe(connection: ChannelConnection, channelId: string): void {
+    if (!this.channels.has(channelId)) {
+      this.channels.set(channelId, new Set());
+    }
+    this.channels.get(channelId)!.add(connection as WebSocketConnection);
+    logger.debug("Connection subscribed to channel", {
+      connectionId: connection.id,
+      channelId,
+      subscriberCount: this.channels.get(channelId)!.size,
+    });
+  }
+
+  publish(channelId: string, message: string): void {
+    const subscribers = this.channels.get(channelId);
+    if (!subscribers || subscribers.size === 0) {
+      logger.debug("No subscribers for channel", { channelId });
+      return;
+    }
+
+    for (const connection of subscribers) {
+      connection.send(message);
+    }
+
+    logger.debug("Published to channel", {
+      channelId,
+      subscriberCount: subscribers.size,
+    });
+  }
+
+  unsubscribe(connection: ChannelConnection, channelId: string): void {
+    const subscribers = this.channels.get(channelId);
+    if (subscribers) {
+      subscribers.delete(connection as WebSocketConnection);
+      logger.debug("Connection unsubscribed from channel", {
+        connectionId: connection.id,
+        channelId,
+        subscriberCount: subscribers.size,
+      });
+
+      // Remove empty channels
+      if (subscribers.size === 0) {
+        this.channels.delete(channelId);
+      }
+    }
+  }
+
   async close(): Promise<void> {
     if (!this.wss) return;
 
@@ -236,5 +299,6 @@ export class WebSocketServer implements ChannelServer {
   async dispose(): Promise<void> {
     await this.close();
     this.connectionHandlers.clear();
+    this.channels.clear();
   }
 }
