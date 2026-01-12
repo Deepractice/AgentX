@@ -228,6 +228,20 @@ export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> 
             eventType: event.type,
           });
 
+          // Check if it's a response to a pending request (BEFORE dispatching to handlers)
+          const requestId = (event.data as { requestId?: string })?.requestId;
+          if (event.category === "response" && requestId && pendingRequests.has(requestId)) {
+            remoteLogger.info("Resolving pending request from queue", {
+              requestId,
+              eventType: event.type,
+            });
+            const pending = pendingRequests.get(requestId)!;
+            clearTimeout(pending.timer);
+            pendingRequests.delete(requestId);
+            pending.resolve(event);
+            return; // Don't dispatch to handlers - request() will handle it
+          }
+
           // Dispatch to type handlers
           const typeHandlers = handlers.get(event.type);
           if (typeHandlers) {

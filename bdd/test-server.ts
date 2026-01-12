@@ -37,7 +37,7 @@ async function startTestServer() {
 
   const agentx = await createAgentX({
     agentxDir: AGENTX_DIR,
-    logger: { level: "warn" }, // Quiet for tests
+    logger: { level: "debug" }, // Show all logs for debugging
     llm: apiKey
       ? {
           apiKey,
