@@ -5,7 +5,7 @@ Feature: Reconnection and Message Recovery
 
   Background:
     Given an AgentX server is running on port 15300
-    And a remote AgentX client connected to "ws://localhost:15220"
+    And a remote AgentX client connected to "ws://localhost:15300"
     And container "workspace" exists
     And image "chat" exists in container "workspace"
 
