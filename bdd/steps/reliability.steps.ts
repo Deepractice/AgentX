@@ -3,8 +3,20 @@
  */
 
 import { Given, When, Then } from "@cucumber/cucumber";
-import { expect } from "bun:test";
+import { strict as assert } from "node:assert";
 import type { AgentXWorld } from "./world";
+
+function expect(value: unknown) {
+  return {
+    toBeDefined: () => assert.ok(value !== undefined && value !== null),
+    toBe: (expected: unknown) => assert.strictEqual(value, expected),
+    toBeGreaterThan: (expected: number) => assert.ok((value as number) > expected),
+    toBeGreaterThanOrEqual: (expected: number) => assert.ok((value as number) >= expected),
+    toBeLessThanOrEqual: (expected: number) => assert.ok((value as number) <= expected),
+    toContain: (item: unknown) => assert.ok((value as unknown[]).includes(item)),
+    toEqual: (expected: unknown) => assert.deepStrictEqual(value, expected),
+  };
+}
 
 // ============================================================================
 // Message Tracking

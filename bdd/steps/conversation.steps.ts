@@ -3,14 +3,25 @@
  */
 
 import { Given, When, Then } from "@cucumber/cucumber";
-import { expect } from "bun:test";
+import { strict as assert } from "node:assert";
 import type { AgentXWorld } from "./world";
+
+function expect(value: unknown) {
+  return {
+    toBeDefined: () => assert.ok(value !== undefined && value !== null),
+    toBe: (expected: unknown) => assert.strictEqual(value, expected),
+    toBeGreaterThan: (expected: number) => assert.ok((value as number) > expected),
+    toBeGreaterThanOrEqual: (expected: number) => assert.ok((value as number) >= expected),
+    toContain: (item: unknown) => assert.ok((value as unknown[]).includes(item)),
+    toBeNull: () => assert.strictEqual(value, null),
+  };
+}
 
 // ============================================================================
 // Container Steps
 // ============================================================================
 
-Given("container {string} exists", async function (this: AgentXWorld, containerId: string) {
+Given(/^container "([^"]+)" exists$/, async function (this: AgentXWorld, containerId: string) {
   if (!this.agentx) {
     const { createAgentX } = await import("agentxjs");
     this.agentx = await createAgentX();
@@ -19,13 +30,6 @@ Given("container {string} exists", async function (this: AgentXWorld, containerI
   await this.agentx.request("container_create_request", { containerId });
   this.createdContainers.push(containerId);
 });
-
-When(
-  "I call agentx.request\\({string}, {{ containerId: {string} }})",
-  async function (this: AgentXWorld, requestType: string, containerId: string) {
-    this.lastResponse = await this.agentx!.request(requestType as never, { containerId } as never);
-  }
-);
 
 Then("response.data.exists should be true", function (this: AgentXWorld) {
   expect((this.lastResponse!.data as { exists?: boolean }).exists).toBe(true);
@@ -36,7 +40,7 @@ Then("response.data.exists should be false", function (this: AgentXWorld) {
 });
 
 Then(
-  "response.data.containerIds should contain {string}",
+  /^response\.data\.containerIds should contain "([^"]+)"$/,
   function (this: AgentXWorld, containerId: string) {
     const containerIds = (this.lastResponse!.data as { containerIds?: string[] }).containerIds;
     expect(containerIds).toContain(containerId);
@@ -48,9 +52,8 @@ Then(
 // ============================================================================
 
 Given(
-  "image {string} exists in container {string}",
+  /^image "([^"]+)" exists in container "([^"]+)"$/,
   async function (this: AgentXWorld, imageAlias: string, containerId: string) {
-    // Ensure container exists
     if (!this.createdContainers.includes(containerId)) {
       await this.agentx!.request("container_create_request", { containerId });
       this.createdContainers.push(containerId);
@@ -69,8 +72,9 @@ Given(
   }
 );
 
+// Request with containerId and config.name
 When(
-  "I call agentx.request\\({string}, {{ containerId: {string}, config: {{ name: {string} }} }})",
+  /^I call agentx\.request\("([^"]+)", \{ containerId: "([^"]+)", config: \{ name: "([^"]+)" \} \}\)$/,
   async function (this: AgentXWorld, requestType: string, containerId: string, name: string) {
     this.lastResponse = await this.agentx!.request(
       requestType as never,
@@ -82,8 +86,9 @@ When(
   }
 );
 
+// Request with containerId and config.name and config.systemPrompt
 When(
-  "I call agentx.request\\({string}, {{ containerId: {string}, config: {{ name: {string}, systemPrompt: {string} }} }})",
+  /^I call agentx\.request\("([^"]+)", \{ containerId: "([^"]+)", config: \{ name: "([^"]+)", systemPrompt: "([^"]+)" \} \}\)$/,
   async function (
     this: AgentXWorld,
     requestType: string,
@@ -101,12 +106,20 @@ When(
   }
 );
 
+// Request with imageId only
 When(
-  "I call agentx.request\\({string}, {{ imageId: {string} }})",
+  /^I call agentx\.request\("([^"]+)", \{ imageId: "([^"]+)" \}\)$/,
   async function (this: AgentXWorld, requestType: string, imageIdOrAlias: string) {
-    // Resolve alias to actual imageId if needed
     const imageId = this.createdImages.get(imageIdOrAlias) || imageIdOrAlias;
     this.lastResponse = await this.agentx!.request(requestType as never, { imageId } as never);
+  }
+);
+
+// Request with containerId only (for image_list_request)
+When(
+  /^I call agentx\.request\("([^"]+)", \{ containerId: "([^"]+)" \}\)$/,
+  async function (this: AgentXWorld, requestType: string, containerId: string) {
+    this.lastResponse = await this.agentx!.request(requestType as never, { containerId } as never);
   }
 );
 
@@ -115,17 +128,20 @@ Then("response.data.record.imageId should be defined", function (this: AgentXWor
   expect(record?.imageId).toBeDefined();
 });
 
-Then("response.data.record.name should be {string}", function (this: AgentXWorld, name: string) {
-  const record = (this.lastResponse!.data as { record?: { name?: string } }).record;
-  expect(record?.name).toBe(name);
-});
+Then(
+  /^response\.data\.record\.name should be "([^"]+)"$/,
+  function (this: AgentXWorld, name: string) {
+    const record = (this.lastResponse!.data as { record?: { name?: string } }).record;
+    expect(record?.name).toBe(name);
+  }
+);
 
 Then("response.data.record should be defined", function (this: AgentXWorld) {
   expect((this.lastResponse!.data as { record?: unknown }).record).toBeDefined();
 });
 
 Then(
-  "response.data.record.imageId should be {string}",
+  /^response\.data\.record\.imageId should be "([^"]+)"$/,
   function (this: AgentXWorld, imageIdOrAlias: string) {
     const imageId = this.createdImages.get(imageIdOrAlias) || imageIdOrAlias;
     const record = (this.lastResponse!.data as { record?: { imageId?: string } }).record;
@@ -134,15 +150,14 @@ Then(
 );
 
 Then(
-  "response.data.records should have length {int}",
-  function (this: AgentXWorld, length: number) {
+  /^response\.data\.records should have length (\d+)$/,
+  function (this: AgentXWorld, length: string) {
     const records = (this.lastResponse!.data as { records?: unknown[] }).records;
-    expect(records?.length).toBe(length);
+    expect(records?.length).toBe(parseInt(length, 10));
   }
 );
 
 Then("the image should be deleted", async function (this: AgentXWorld) {
-  // Verify by trying to get the image
   const imageId = (this.lastResponse!.data as { imageId?: string }).imageId;
   if (imageId) {
     const response = await this.agentx!.request("image_get_request", { imageId });
@@ -154,12 +169,15 @@ Then("the image should be deleted", async function (this: AgentXWorld) {
 // Agent Steps
 // ============================================================================
 
-Given("image {string} has a running agent", async function (this: AgentXWorld, imageAlias: string) {
-  const imageId = this.createdImages.get(imageAlias);
-  if (!imageId) throw new Error(`Image "${imageAlias}" not found`);
+Given(
+  /^image "([^"]+)" has a running agent$/,
+  async function (this: AgentXWorld, imageAlias: string) {
+    const imageId = this.createdImages.get(imageAlias);
+    if (!imageId) throw new Error(`Image "${imageAlias}" not found`);
 
-  await this.agentx!.request("image_run_request", { imageId });
-});
+    await this.agentx!.request("image_run_request", { imageId });
+  }
+);
 
 Then("response.data.agentId should be defined", function (this: AgentXWorld) {
   expect((this.lastResponse!.data as { agentId?: string }).agentId).toBeDefined();
@@ -174,7 +192,6 @@ Then("response.data.reused should be true", function (this: AgentXWorld) {
 });
 
 Then("the agent should be destroyed", async function (this: AgentXWorld) {
-  // Agent destruction is confirmed by the response
   expect(this.lastResponse!.type).toBe("image_stop_response");
 });
 
@@ -191,7 +208,7 @@ Then("the image should still exist", async function (this: AgentXWorld) {
 // ============================================================================
 
 When(
-  "I call agentx.request\\({string}, {{ imageId: {string}, content: {string} }})",
+  /^I call agentx\.request\("([^"]+)", \{ imageId: "([^"]+)", content: "([^"]+)" \}\)$/,
   async function (this: AgentXWorld, requestType: string, imageIdOrAlias: string, content: string) {
     const imageId = this.createdImages.get(imageIdOrAlias) || imageIdOrAlias;
     this.lastResponse = await this.agentx!.request(
@@ -204,14 +221,13 @@ When(
   }
 );
 
-Then("I should receive {string} events", async function (this: AgentXWorld, eventType: string) {
-  // Wait a bit for events to arrive
+Then(/^I should receive "([^"]+)" events$/, async function (this: AgentXWorld, eventType: string) {
   await new Promise((r) => setTimeout(r, 500));
   const events = this.getEventsOfType(eventType);
   expect(events.length).toBeGreaterThan(0);
 });
 
-Then("I should receive {string} event", async function (this: AgentXWorld, eventType: string) {
+Then(/^I should receive "([^"]+)" event$/, async function (this: AgentXWorld, eventType: string) {
   await this.waitForEvent(eventType, 10000);
 });
 
@@ -220,7 +236,7 @@ Then("I should receive {string} event", async function (this: AgentXWorld, event
 // ============================================================================
 
 Then(
-  "I save response.data.record.imageId as {string}",
+  /^I save response\.data\.record\.imageId as "([^"]+)"$/,
   function (this: AgentXWorld, varName: string) {
     const imageId = (this.lastResponse!.data as { record?: { imageId?: string } }).record?.imageId;
     if (imageId) {
@@ -230,8 +246,9 @@ Then(
   }
 );
 
+// Request with saved imageId
 When(
-  'I call agentx.request\\({string}, {{ imageId: "\\${imageId}", content: {string} }})',
+  /^I call agentx\.request\("([^"]+)", \{ imageId: "\$\{imageId\}", content: "([^"]+)" \}\)$/,
   async function (this: AgentXWorld, requestType: string, content: string) {
     const imageId = this.savedValues.get("imageId");
     if (!imageId) throw new Error("imageId not saved");
@@ -247,7 +264,7 @@ When(
 );
 
 When(
-  'I call agentx.request\\({string}, {{ imageId: "\\${imageId}" }})',
+  /^I call agentx\.request\("([^"]+)", \{ imageId: "\$\{imageId\}" \}\)$/,
   async function (this: AgentXWorld, requestType: string) {
     const imageId = this.savedValues.get("imageId");
     if (!imageId) throw new Error("imageId not saved");
@@ -257,10 +274,10 @@ When(
 );
 
 Then(
-  "response.data.messages should have at least {int} item",
-  function (this: AgentXWorld, count: number) {
+  /^response\.data\.messages should have at least (\d+) item$/,
+  function (this: AgentXWorld, count: string) {
     const messages = (this.lastResponse!.data as { messages?: unknown[] }).messages;
-    expect(messages?.length).toBeGreaterThanOrEqual(count);
+    expect(messages?.length).toBeGreaterThanOrEqual(parseInt(count, 10));
   }
 );
 
@@ -269,9 +286,8 @@ Then(
 // ============================================================================
 
 Given(
-  "I am subscribed to events for image {string}",
-  function (this: AgentXWorld, imageAlias: string) {
-    // Subscribe to all relevant event types for this image
+  /^I am subscribed to events for image "([^"]+)"$/,
+  function (this: AgentXWorld, _imageAlias: string) {
     this.subscribeToEvent("text_delta");
     this.subscribeToEvent("message_start");
     this.subscribeToEvent("message_stop");

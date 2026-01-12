@@ -4,7 +4,7 @@ Feature: AgentX Remote Mode
   Remote mode connects to an AgentX server, suitable for browsers and distributed systems.
 
   Background:
-    Given an AgentX server is running on port 15210
+    Given an AgentX server is running on port 15300
 
   # ============================================================================
   # createAgentX({ serverUrl }) - Remote Connection
@@ -64,7 +64,7 @@ Feature: AgentX Remote Mode
 
   Scenario: dispose() disconnects from server
     Given a remote AgentX client connected to "ws://localhost:15210"
-    When I call agentx.dispose()
+    When I call agentx.dispose
     Then the client should be disconnected
 
   # ============================================================================

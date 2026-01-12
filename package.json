@@ -7,7 +7,8 @@
   "workspaces": [
     "packages/*",
     "apps/*",
-    "dev/*"
+    "dev/*",
+    "bdd"
   ],
   "scripts": {
     "dev": "bun dev/dev-manager.ts",
@@ -18,6 +19,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "turbo test",
+    "test:bdd": "bun bdd/test-manager.ts",
     "clean": "turbo clean && rm -rf node_modules",
     "prepare": "lefthook install || true",
     "docs": "typedoc",

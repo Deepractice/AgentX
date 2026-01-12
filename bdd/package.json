@@ -5,17 +5,7 @@
   "description": "BDD contract tests for AgentX API",
   "type": "module",
   "scripts": {
-    "test": "NODE_OPTIONS='--import tsx' cucumber-js",
-    "test:integration": "NODE_OPTIONS='--import tsx' cucumber-js --profile integration",
-    "test:reliability": "NODE_OPTIONS='--import tsx' cucumber-js --profile reliability",
-    "test:all": "NODE_OPTIONS='--import tsx' cucumber-js --profile all",
-    "test:agentx": "NODE_OPTIONS='--import tsx' cucumber-js --profile agentx",
-    "test:conversation": "NODE_OPTIONS='--import tsx' cucumber-js --profile conversation",
-    "test:local": "NODE_OPTIONS='--import tsx' cucumber-js --profile local",
-    "test:remote": "NODE_OPTIONS='--import tsx' cucumber-js --profile remote",
-    "test:reconnect": "NODE_OPTIONS='--import tsx' cucumber-js --profile reconnect",
-    "test:multiconsumer": "NODE_OPTIONS='--import tsx' cucumber-js --profile multiconsumer",
-    "test:delivery": "NODE_OPTIONS='--import tsx' cucumber-js --profile delivery"
+    "test": "NODE_OPTIONS='--import tsx' cucumber-js"
   },
   "devDependencies": {
     "@agentxjs/runtime": "workspace:*",

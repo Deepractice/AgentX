@@ -2,73 +2,53 @@
  * AgentX Step Definitions - Local and Remote mode
  */
 
-import { Given, When, Then } from "@cucumber/cucumber";
-import { expect } from "bun:test";
+import { Given, When, Then, DataTable } from "@cucumber/cucumber";
+import { strict as assert } from "node:assert";
 import type { AgentXWorld } from "./world";
 
+function expect(value: unknown) {
+  return {
+    toBeDefined: () => assert.ok(value !== undefined && value !== null),
+    toBe: (expected: unknown) => assert.strictEqual(value, expected),
+    toBeGreaterThan: (expected: number) => assert.ok((value as number) > expected),
+    toBeUndefined: () => assert.strictEqual(value, undefined),
+  };
+}
+
 // ============================================================================
-// createAgentX() - Instance Creation
+// createAgentX - Instance Creation
 // ============================================================================
 
-When("I call createAgentX()", async function (this: AgentXWorld) {
+When("I call createAgentX", async function (this: AgentXWorld) {
   const { createAgentX } = await import("agentxjs");
   this.agentx = await createAgentX();
 });
 
-When(
-  "I call createAgentX with config:",
-  async function (this: AgentXWorld, dataTable: { rowsHash: () => Record<string, string> }) {
-    const { createAgentX } = await import("agentxjs");
-    const config: Record<string, unknown> = {};
+When("I call createAgentX with config:", async function (this: AgentXWorld, dataTable: DataTable) {
+  const { createAgentX } = await import("agentxjs");
+  const config: Record<string, unknown> = {};
 
-    for (const [key, value] of Object.entries(dataTable.rowsHash())) {
-      // Parse JSON values
-      let parsedValue: unknown = value;
-      if (value.startsWith("{") || value.startsWith("[")) {
-        try {
-          parsedValue = JSON.parse(value);
-        } catch {
-          parsedValue = value;
-        }
+  for (const [key, value] of Object.entries(dataTable.rowsHash())) {
+    let parsedValue: unknown = value;
+    if (value.startsWith("{") || value.startsWith("[")) {
+      try {
+        parsedValue = JSON.parse(value);
+      } catch {
+        parsedValue = value;
       }
-
-      // Handle nested keys like "llm.apiKey"
-      const keys = key.split(".");
-      let current = config;
-      for (let i = 0; i < keys.length - 1; i++) {
-        current[keys[i]] = current[keys[i]] || {};
-        current = current[keys[i]] as Record<string, unknown>;
-      }
-      current[keys[keys.length - 1]] = parsedValue;
     }
 
-    this.agentx = await createAgentX(config as Parameters<typeof createAgentX>[0]);
+    const keys = key.split(".");
+    let current = config;
+    for (let i = 0; i < keys.length - 1; i++) {
+      current[keys[i]] = current[keys[i]] || {};
+      current = current[keys[i]] as Record<string, unknown>;
+    }
+    current[keys[keys.length - 1]] = parsedValue;
   }
-);
 
-When(
-  "I call createAgentX with llm.apiKey {string}",
-  async function (this: AgentXWorld, apiKey: string) {
-    const { createAgentX } = await import("agentxjs");
-    this.agentx = await createAgentX({ llm: { apiKey } });
-  }
-);
-
-When(
-  "I call createAgentX with llm.baseUrl {string}",
-  async function (this: AgentXWorld, baseUrl: string) {
-    const { createAgentX } = await import("agentxjs");
-    this.agentx = await createAgentX({ llm: { baseUrl } });
-  }
-);
-
-When(
-  "I call createAgentX with llm.model {string}",
-  async function (this: AgentXWorld, model: string) {
-    const { createAgentX } = await import("agentxjs");
-    this.agentx = await createAgentX({ llm: { model } });
-  }
-);
+  this.agentx = await createAgentX(config as Parameters<typeof createAgentX>[0]);
+});
 
 When(
   "I call createAgentX with agentxDir {string}",
@@ -109,30 +89,29 @@ Given("an AgentX instance", async function (this: AgentXWorld) {
   this.agentx = await createAgentX();
 });
 
-When("I call agentx.listen\\({int})", async function (this: AgentXWorld, port: number) {
-  await this.agentx!.listen(port);
-  this.usedPorts.push(port);
+When(/^I call agentx\.listen\((\d+)\)$/, async function (this: AgentXWorld, port: string) {
+  await this.agentx!.listen(parseInt(port, 10));
+  this.usedPorts.push(parseInt(port, 10));
 });
 
 When(
-  "I call agentx.listen\\({int}, {string})",
-  async function (this: AgentXWorld, port: number, host: string) {
-    await this.agentx!.listen(port, host);
-    this.usedPorts.push(port);
+  /^I call agentx\.listen\((\d+), "([^"]+)"\)$/,
+  async function (this: AgentXWorld, port: string, host: string) {
+    await this.agentx!.listen(parseInt(port, 10), host);
+    this.usedPorts.push(parseInt(port, 10));
   }
 );
 
-When("I call agentx.close()", async function (this: AgentXWorld) {
+When("I call agentx.close", async function (this: AgentXWorld) {
   await this.agentx!.close();
 });
 
-When("I call agentx.dispose()", async function (this: AgentXWorld) {
+When("I call agentx.dispose", async function (this: AgentXWorld) {
   await this.agentx!.dispose();
   this.agentx = undefined;
 });
 
 Then("the promise should resolve", function (this: AgentXWorld) {
-  // If we got here, the promise resolved
   expect(true).toBe(true);
 });
 
@@ -141,9 +120,8 @@ Then("all resources should be released", function (this: AgentXWorld) {
 });
 
 Then(
-  "the server should be running on port {int}",
-  async function (this: AgentXWorld, port: number) {
-    // Try to connect to verify server is running
+  /^the server should be running on port (\d+)$/,
+  async function (this: AgentXWorld, port: string) {
     const { WebSocket } = await import("ws");
     const ws = new WebSocket(`ws://localhost:${port}`);
 
@@ -159,8 +137,8 @@ Then(
 );
 
 Then(
-  "the server should be running on {string}:{int}",
-  async function (this: AgentXWorld, host: string, port: number) {
+  /^the server should be running on ([^:]+):(\d+)$/,
+  async function (this: AgentXWorld, host: string, port: string) {
     const { WebSocket } = await import("ws");
     const ws = new WebSocket(`ws://${host}:${port}`);
 
@@ -176,7 +154,6 @@ Then(
 );
 
 Then("the server should be stopped", async function (this: AgentXWorld) {
-  // Try to connect - should fail
   const { WebSocket } = await import("ws");
   const port = this.usedPorts[this.usedPorts.length - 1];
   const ws = new WebSocket(`ws://localhost:${port}`);
@@ -191,9 +168,9 @@ Then("the server should be stopped", async function (this: AgentXWorld) {
   });
 });
 
-Given("agentx is listening on port {int}", async function (this: AgentXWorld, port: number) {
-  await this.agentx!.listen(port);
-  this.usedPorts.push(port);
+Given(/^agentx is listening on port (\d+)$/, async function (this: AgentXWorld, port: string) {
+  await this.agentx!.listen(parseInt(port, 10));
+  this.usedPorts.push(parseInt(port, 10));
 });
 
 // ============================================================================
@@ -201,17 +178,17 @@ Given("agentx is listening on port {int}", async function (this: AgentXWorld, po
 // ============================================================================
 
 Given(
-  "an AgentX server is running on port {int}",
-  async function (this: AgentXWorld, port: number) {
+  /^an AgentX server is running on port (\d+)$/,
+  async function (this: AgentXWorld, port: string) {
     const { createAgentX } = await import("agentxjs");
     this.server = await createAgentX();
-    await this.server.listen(port);
-    this.usedPorts.push(port);
+    await this.server.listen(parseInt(port, 10));
+    this.usedPorts.push(parseInt(port, 10));
   }
 );
 
 Given(
-  "a remote AgentX client connected to {string}",
+  /^a remote AgentX client connected to "([^"]+)"$/,
   async function (this: AgentXWorld, serverUrl: string) {
     const { createAgentX } = await import("agentxjs");
     this.agentx = await createAgentX({ serverUrl });
@@ -231,7 +208,7 @@ Then("the client should be disconnected", function (this: AgentXWorld) {
 // Event Subscription
 // ============================================================================
 
-When("I call agentx.on\\({string}, handler)", function (this: AgentXWorld, eventType: string) {
+When(/^I call agentx\.on\("([^"]+)", handler\)$/, function (this: AgentXWorld, eventType: string) {
   const unsubscribe = this.agentx!.on(eventType, (event) => {
     this.collectedEvents.push(event);
   });
@@ -244,7 +221,7 @@ Then("I should receive an Unsubscribe function", function (this: AgentXWorld) {
   expect(typeof handlers[0]).toBe("function");
 });
 
-Given("I am subscribed to {string} events", function (this: AgentXWorld, eventType: string) {
+Given(/^I am subscribed to "([^"]+)" events$/, function (this: AgentXWorld, eventType: string) {
   this.subscribeToEvent(eventType);
 });
 
@@ -256,37 +233,28 @@ When("I call the unsubscribe function", function (this: AgentXWorld) {
 });
 
 Then("my handler should not be called", function (this: AgentXWorld) {
-  // Events collected before unsubscribe should be there, but no new ones
-  // This is verified by checking no new events after the unsubscribe action
   expect(true).toBe(true);
 });
 
 // ============================================================================
-// Request/Response
+// Request/Response - Use regex for complex patterns
 // ============================================================================
 
 When(
-  "I call agentx.request\\({string}, {})\\)",
-  async function (this: AgentXWorld, requestType: string) {
-    this.lastResponse = await this.agentx!.request(requestType as never, {} as never);
-  }
-);
-
-When(
-  "I call agentx.request\\({string}, {{ containerId: {string} }})",
+  /^I call agentx\.request\("([^"]+)", \{ containerId: "([^"]+)" \}\)$/,
   async function (this: AgentXWorld, requestType: string, containerId: string) {
     this.lastResponse = await this.agentx!.request(requestType as never, { containerId } as never);
   }
 );
 
 When(
-  "I call agentx.request\\({string}, {{ containerId: {string} }}, {int})",
-  async function (this: AgentXWorld, requestType: string, containerId: string, timeout: number) {
+  /^I call agentx\.request\("([^"]+)", \{ containerId: "([^"]+)" \}, (\d+)\)$/,
+  async function (this: AgentXWorld, requestType: string, containerId: string, timeout: string) {
     try {
       this.lastResponse = await this.agentx!.request(
         requestType as never,
         { containerId } as never,
-        timeout
+        parseInt(timeout, 10)
       );
     } catch (error) {
       this.lastResponse = { type: "error", error } as never;
@@ -294,13 +262,20 @@ When(
   }
 );
 
-Then("I should receive {string}", function (this: AgentXWorld, responseType: string) {
+When(
+  /^I call agentx\.request\("([^"]+)", \{\}\)$/,
+  async function (this: AgentXWorld, requestType: string) {
+    this.lastResponse = await this.agentx!.request(requestType as never, {} as never);
+  }
+);
+
+Then(/^I should receive "([^"]+)"$/, function (this: AgentXWorld, responseType: string) {
   expect(this.lastResponse).toBeDefined();
   expect(this.lastResponse!.type).toBe(responseType);
 });
 
 Then(
-  "response.data.containerId should be {string}",
+  /^response\.data\.containerId should be "([^"]+)"$/,
   function (this: AgentXWorld, containerId: string) {
     expect((this.lastResponse!.data as { containerId?: string }).containerId).toBe(containerId);
   }
@@ -320,8 +295,6 @@ Then("it should throw timeout error", function (this: AgentXWorld) {
 // ============================================================================
 
 When("the network connection is dropped", async function (this: AgentXWorld) {
-  // Simulate network drop by disposing client
-  // In real tests, this would use network simulation
   this.isConnected = false;
 });
 
@@ -330,16 +303,14 @@ When("the network connection is restored", async function (this: AgentXWorld) {
 });
 
 Then(
-  "the client should reconnect within {int} seconds",
-  async function (this: AgentXWorld, seconds: number) {
-    // Wait for reconnection
-    await new Promise((r) => setTimeout(r, seconds * 1000));
+  /^the client should reconnect within (\d+) seconds$/,
+  async function (this: AgentXWorld, seconds: string) {
+    await new Promise((r) => setTimeout(r, parseInt(seconds, 10) * 1000));
     this.isConnected = true;
   }
 );
 
 Then("the client should reconnect automatically", async function (this: AgentXWorld) {
-  // Auto-reconnect is built into the client
   await new Promise((r) => setTimeout(r, 2000));
   this.isConnected = true;
 });
