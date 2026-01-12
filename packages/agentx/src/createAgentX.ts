@@ -151,11 +151,15 @@ export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> 
 
   // Track subscribed topics
   const subscribedTopics = new Set<string>();
+  const pendingSubscriptions = new Map<
+    string,
+    { resolve: () => void; reject: (err: Error) => void }
+  >();
 
   // Helper: Subscribe to a topic
-  function subscribeToTopic(topic: string) {
+  function subscribeToTopic(topic: string): Promise<void> {
     if (subscribedTopics.has(topic)) {
-      return; // Already subscribed
+      return Promise.resolve(); // Already subscribed
     }
 
     const cursorKey = `agentx:cursor:${clientId}:${topic}`;
@@ -172,6 +176,18 @@ export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> 
 
     subscribedTopics.add(topic);
     remoteLogger.debug("Subscribed to topic", { topic, afterCursor });
+
+    // Return a promise that resolves when subscription is confirmed
+    return new Promise<void>((resolve, reject) => {
+      pendingSubscriptions.set(topic, { resolve, reject });
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        if (pendingSubscriptions.has(topic)) {
+          pendingSubscriptions.delete(topic);
+          reject(new Error(`Subscription timeout: ${topic}`));
+        }
+      }, 5000);
+    });
   }
 
   // Helper: Send ACK
@@ -233,10 +249,18 @@ export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> 
 
       // Handle queue_subscribed confirmation
       if (parsed.type === "queue_subscribed") {
+        const topic = parsed.topic;
         remoteLogger.debug("Subscription confirmed", {
-          topic: parsed.topic,
+          topic,
           latestCursor: parsed.latestCursor,
         });
+
+        // Resolve pending subscription promise
+        const pending = pendingSubscriptions.get(topic);
+        if (pending) {
+          pending.resolve();
+          pendingSubscriptions.delete(topic);
+        }
         return;
       }
 
@@ -326,6 +350,10 @@ export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> 
       handlers.get(type)?.delete(handler);
     };
   }
+
+  // Subscribe to "global" topic on initialization (wait for confirmation)
+  // This ensures we receive responses for global commands (container, image without sessionId)
+  await subscribeToTopic("global");
 
   return {
     async request<T extends CommandRequestType>(
