@@ -42,7 +42,8 @@
   "dependencies": {
     "@agentxjs/common": "workspace:*",
     "@agentxjs/types": "workspace:*",
-    "db0": "^0.2.0"
+    "db0": "^0.2.0",
+    "nanoid": "^5.0.9"
   },
   "publishConfig": {
     "access": "public"

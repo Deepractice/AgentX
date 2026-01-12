@@ -10,7 +10,7 @@ export interface QueueEntry {
   readonly cursor: string;
 
   /**
-   * Topic this entry belongs to (typically sessionId)
+   * Topic this entry belongs to (e.g., sessionId, channelId)
    */
   readonly topic: string;
 
@@ -23,14 +23,4 @@ export interface QueueEntry {
    * Timestamp when the event was appended (Unix milliseconds)
    */
   readonly timestamp: number;
-
-  /**
-   * Whether this entry has been acknowledged
-   */
-  readonly acknowledged: boolean;
-
-  /**
-   * Timestamp when acknowledged (null if not acknowledged)
-   */
-  readonly acknowledgedAt: number | null;
 }

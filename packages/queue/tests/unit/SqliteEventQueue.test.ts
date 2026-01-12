@@ -3,12 +3,11 @@ import { createQueue } from "../../src/createQueue";
 import type { EventQueue } from "@agentxjs/types/queue";
 import { unlinkSync } from "node:fs";
 
-describe("SqliteEventQueue", () => {
+describe("SqliteEventQueue - Multi-consumer", () => {
   let queue: EventQueue;
   let dbPath: string;
 
   beforeEach(async () => {
-    // Use unique temp file for each test to avoid shared state
     dbPath = `/tmp/queue-test-${Date.now()}-${Math.random().toString(36).slice(2)}.db`;
     queue = await createQueue({ path: dbPath });
   });
@@ -18,71 +17,89 @@ describe("SqliteEventQueue", () => {
     try {
       unlinkSync(dbPath);
     } catch {
-      // Ignore cleanup errors
+      // Ignore
     }
   });
 
   test("append and read events", async () => {
     const topic = "session-123";
-    const event1 = { type: "text_delta", data: { text: "Hello" } };
-    const event2 = { type: "text_delta", data: { text: "World" } };
 
-    const cursor1 = await queue.append(topic, event1);
-    const cursor2 = await queue.append(topic, event2);
+    // Append events
+    await queue.append(topic, { seq: 1 });
+    await queue.append(topic, { seq: 2 });
 
-    expect(cursor1).toBeTruthy();
-    expect(cursor2).toBeTruthy();
-    expect(cursor1).not.toBe(cursor2);
+    // Create consumer and read
+    const consumerId = await queue.createConsumer(topic);
+    const entries = await queue.read(consumerId, topic);
 
-    const entries = await queue.read(topic);
     expect(entries).toHaveLength(2);
-    expect(entries[0].event).toEqual(event1);
-    expect(entries[1].event).toEqual(event2);
+    expect((entries[0].event as any).seq).toBe(1);
+    expect((entries[1].event as any).seq).toBe(2);
   });
 
-  test("read after cursor", async () => {
-    const topic = "session-456";
-    const cursor1 = await queue.append(topic, { seq: 1 });
-    const cursor2 = await queue.append(topic, { seq: 2 });
+  test("multiple consumers read independently", async () => {
+    const topic = "session-multi";
+
+    // Append events
+    await queue.append(topic, { seq: 1 });
+    await queue.append(topic, { seq: 2 });
     await queue.append(topic, { seq: 3 });
 
-    // Read after cursor1 should return events 2 and 3
-    const entries = await queue.read(topic, cursor1);
-    expect(entries).toHaveLength(2);
-    expect((entries[0].event as any).seq).toBe(2);
-    expect((entries[1].event as any).seq).toBe(3);
+    // Consumer A reads all
+    const consumerA = await queue.createConsumer(topic);
+    const entriesA1 = await queue.read(consumerA, topic);
+    expect(entriesA1).toHaveLength(3);
 
-    // Read after cursor2 should return only event 3
-    const entries2 = await queue.read(topic, cursor2);
-    expect(entries2).toHaveLength(1);
-    expect((entries2[0].event as any).seq).toBe(3);
+    // Consumer A ACKs up to seq 2
+    await queue.ack(consumerA, topic, entriesA1[1].cursor);
+
+    // Consumer B reads all (independent)
+    const consumerB = await queue.createConsumer(topic);
+    const entriesB1 = await queue.read(consumerB, topic);
+    expect(entriesB1).toHaveLength(3);
+
+    // Consumer A reads again (only gets seq 3)
+    const entriesA2 = await queue.read(consumerA, topic);
+    expect(entriesA2).toHaveLength(1);
+    expect((entriesA2[0].event as any).seq).toBe(3);
   });
 
-  test("acknowledge entries", async () => {
-    const topic = "session-789";
-    const cursor = await queue.append(topic, { data: "test" });
+  test("ack updates consumer cursor", async () => {
+    const topic = "session-ack";
+    const cursor1 = await queue.append(topic, { seq: 1 });
+    const cursor2 = await queue.append(topic, { seq: 2 });
 
-    const beforeAck = await queue.read(topic);
-    expect(beforeAck[0].acknowledged).toBe(false);
-    expect(beforeAck[0].acknowledgedAt).toBeNull();
+    const consumerId = await queue.createConsumer(topic);
 
-    await queue.ack(topic, cursor);
+    // Initial cursor is null
+    let currentCursor = await queue.getConsumerCursor(consumerId, topic);
+    expect(currentCursor).toBeNull();
 
-    const afterAck = await queue.read(topic);
-    expect(afterAck[0].acknowledged).toBe(true);
-    expect(afterAck[0].acknowledgedAt).toBeTypeOf("number");
+    // ACK first message
+    await queue.ack(consumerId, topic, cursor1);
+    currentCursor = await queue.getConsumerCursor(consumerId, topic);
+    expect(currentCursor).toBe(cursor1);
+
+    // ACK second message
+    await queue.ack(consumerId, topic, cursor2);
+    currentCursor = await queue.getConsumerCursor(consumerId, topic);
+    expect(currentCursor).toBe(cursor2);
   });
 
   test("subscribe receives new events", async () => {
     const topic = "session-sub";
+    const consumerId = await queue.createConsumer(topic);
     const received: unknown[] = [];
 
-    const unsubscribe = queue.subscribe(topic, (entry) => {
+    const unsubscribe = queue.subscribe(consumerId, topic, (entry) => {
       received.push(entry.event);
     });
 
     await queue.append(topic, { msg: "first" });
     await queue.append(topic, { msg: "second" });
+
+    // Small delay for async notification
+    await new Promise((r) => setTimeout(r, 10));
 
     expect(received).toHaveLength(2);
     expect((received[0] as any).msg).toBe("first");
@@ -92,64 +109,84 @@ describe("SqliteEventQueue", () => {
 
     // After unsubscribe, new events should not be received
     await queue.append(topic, { msg: "third" });
+    await new Promise((r) => setTimeout(r, 10));
     expect(received).toHaveLength(2);
   });
 
-  test("getLatestCursor returns correct cursor", async () => {
-    const topic = "session-cursor";
+  test("cleanup removes entries consumed by all consumers", async () => {
+    const topic = "session-cleanup";
 
-    // Empty topic
-    const emptyCursor = await queue.getLatestCursor(topic);
-    expect(emptyCursor).toBeNull();
+    // Append 5 messages
+    const cursors = [];
+    for (let i = 1; i <= 5; i++) {
+      cursors.push(await queue.append(topic, { seq: i }));
+    }
 
-    await queue.append(topic, { seq: 1 });
-    const cursor2 = await queue.append(topic, { seq: 2 });
+    // Consumer A consumes up to seq 3
+    const consumerA = await queue.createConsumer(topic);
+    await queue.ack(consumerA, topic, cursors[2]);
 
-    const latestCursor = await queue.getLatestCursor(topic);
-    expect(latestCursor).toBe(cursor2);
+    // Consumer B consumes up to seq 2
+    const consumerB = await queue.createConsumer(topic);
+    await queue.ack(consumerB, topic, cursors[1]);
+
+    // Cleanup should delete up to cursor[1] (MIN of A and B)
+    const cleaned = await queue.cleanup();
+    expect(cleaned).toBe(2); // seq 1 and 2
+
+    // Verify remaining entries
+    const consumerC = await queue.createConsumer(topic);
+    const remaining = await queue.read(consumerC, topic);
+    expect(remaining).toHaveLength(3); // seq 3, 4, 5
+  });
+
+  test("cleanup handles topics with no consumers", async () => {
+    const topic = "orphaned-topic";
+    await queue.append(topic, { data: "orphan1" });
+    await queue.append(topic, { data: "orphan2" });
+
+    // No consumers created, cleanup should not delete (retention not expired)
+    const cleaned1 = await queue.cleanup();
+    expect(cleaned1).toBe(0);
+
+    // Create consumer, then delete it
+    const consumerId = await queue.createConsumer(topic);
+    await queue.deleteConsumer(consumerId, topic);
+
+    // Now topic has no consumers again
+    const cleaned2 = await queue.cleanup();
+    // Entries still fresh, won't be cleaned
+    expect(cleaned2).toBe(0);
+  });
+
+  test("deleteConsumer removes subscription", async () => {
+    const topic = "session-delete";
+    const consumerId = await queue.createConsumer(topic);
+
+    // Consumer exists
+    let cursor = await queue.getConsumerCursor(consumerId, topic);
+    expect(cursor).toBeNull();
+
+    // Delete consumer
+    await queue.deleteConsumer(consumerId, topic);
+
+    // Reading should fail
+    await expect(queue.read(consumerId, topic)).rejects.toThrow("Consumer not found");
   });
 
   test("topics are isolated", async () => {
     await queue.append("topic-a", { from: "a" });
     await queue.append("topic-b", { from: "b" });
 
-    const entriesA = await queue.read("topic-a");
-    const entriesB = await queue.read("topic-b");
+    const consumerA = await queue.createConsumer("topic-a");
+    const consumerB = await queue.createConsumer("topic-b");
+
+    const entriesA = await queue.read(consumerA, "topic-a");
+    const entriesB = await queue.read(consumerB, "topic-b");
 
     expect(entriesA).toHaveLength(1);
     expect(entriesB).toHaveLength(1);
     expect((entriesA[0].event as any).from).toBe("a");
     expect((entriesB[0].event as any).from).toBe("b");
-  });
-
-  test("cleanup removes old acknowledged entries", async () => {
-    const topic = "session-cleanup";
-
-    // Create queue with very short retention using unique path
-    const cleanupDbPath = `/tmp/queue-cleanup-${Date.now()}-${Math.random().toString(36).slice(2)}.db`;
-    const shortRetentionQueue = await createQueue({
-      path: cleanupDbPath,
-      ackRetentionMs: 1, // 1ms retention
-      cleanupIntervalMs: 0, // Disable auto cleanup
-    });
-
-    const cursor = await shortRetentionQueue.append(topic, { data: "old" });
-    await shortRetentionQueue.ack(topic, cursor);
-
-    // Wait a bit for the entry to become old
-    await new Promise((r) => setTimeout(r, 10));
-
-    const cleaned = await shortRetentionQueue.cleanup();
-    expect(cleaned).toBe(1);
-
-    const entries = await shortRetentionQueue.read(topic);
-    expect(entries).toHaveLength(0);
-
-    await shortRetentionQueue.close();
-    try {
-      unlinkSync(cleanupDbPath);
-    } catch {
-      // Ignore
-    }
   });
 });
