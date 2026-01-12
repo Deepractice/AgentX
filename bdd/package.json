@@ -7,13 +7,15 @@
   "scripts": {
     "test": "NODE_OPTIONS='--import tsx' cucumber-js",
     "test:integration": "NODE_OPTIONS='--import tsx' cucumber-js --profile integration",
+    "test:reliability": "NODE_OPTIONS='--import tsx' cucumber-js --profile reliability",
     "test:all": "NODE_OPTIONS='--import tsx' cucumber-js --profile all",
     "test:agentx": "NODE_OPTIONS='--import tsx' cucumber-js --profile agentx",
-    "test:container": "NODE_OPTIONS='--import tsx' cucumber-js --profile container",
-    "test:agent": "NODE_OPTIONS='--import tsx' cucumber-js --profile agent",
-    "test:image": "NODE_OPTIONS='--import tsx' cucumber-js --profile image",
-    "test:events": "NODE_OPTIONS='--import tsx' cucumber-js --profile events",
-    "test:server": "NODE_OPTIONS='--import tsx' cucumber-js --profile server"
+    "test:conversation": "NODE_OPTIONS='--import tsx' cucumber-js --profile conversation",
+    "test:local": "NODE_OPTIONS='--import tsx' cucumber-js --profile local",
+    "test:remote": "NODE_OPTIONS='--import tsx' cucumber-js --profile remote",
+    "test:reconnect": "NODE_OPTIONS='--import tsx' cucumber-js --profile reconnect",
+    "test:multiconsumer": "NODE_OPTIONS='--import tsx' cucumber-js --profile multiconsumer",
+    "test:delivery": "NODE_OPTIONS='--import tsx' cucumber-js --profile delivery"
   },
   "devDependencies": {
     "@agentxjs/runtime": "workspace:*",

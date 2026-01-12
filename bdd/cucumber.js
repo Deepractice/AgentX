@@ -2,8 +2,9 @@
  * Cucumber.js configuration
  *
  * Profiles:
- * - default: All tests (excluding @integration)
+ * - default: Layer 1 tests (excluding @integration, @reliability)
  * - integration: Tests that call real Claude API
+ * - reliability: Layer 2 reliability tests
  * - all: Everything including integration
  */
 
@@ -16,11 +17,14 @@ const common = {
   },
 };
 
+// Default: Layer 1 basic tests
 export default {
   ...common,
-  tags: "not @integration and not @pending",
+  paths: ["features/agentx/**/*.feature", "features/conversation/**/*.feature"],
+  tags: "not @integration and not @pending and not @browser and not @stress",
 };
 
+// Integration: Tests that call real Claude API
 export const integration = {
   ...common,
   tags: "@integration and not @pending",
@@ -29,47 +33,70 @@ export const integration = {
   },
 };
 
+// Reliability: Layer 2 tests (Queue capabilities)
+export const reliability = {
+  ...common,
+  paths: ["features/reliability/**/*.feature"],
+  tags: "not @pending and not @browser and not @stress",
+  worldParameters: {
+    defaultTimeout: 30000,
+  },
+};
+
+// All: Everything including integration
 export const all = {
   ...common,
-  tags: "not @pending",
+  tags: "not @pending and not @browser and not @stress",
   worldParameters: {
     defaultTimeout: 60000,
   },
 };
 
-// Feature-specific profiles
+// Layer 1: AgentX local/remote mode
 export const agentx = {
   ...common,
-  paths: ["features/agentx.feature"],
+  paths: ["features/agentx/**/*.feature"],
   tags: "not @integration and not @pending",
 };
 
-export const container = {
+// Layer 1: Conversation lifecycle
+export const conversation = {
   ...common,
-  paths: ["features/request/container.feature"],
+  paths: ["features/conversation/**/*.feature"],
   tags: "not @integration and not @pending",
 };
 
-export const agent = {
+// Layer 1: Local mode only
+export const local = {
   ...common,
-  paths: ["features/request/agent.feature"],
+  paths: ["features/agentx/local-mode.feature"],
   tags: "not @integration and not @pending",
 };
 
-export const image = {
+// Layer 1: Remote mode only
+export const remote = {
   ...common,
-  paths: ["features/request/image.feature"],
+  paths: ["features/agentx/remote-mode.feature"],
   tags: "not @integration and not @pending",
 };
 
-export const events = {
+// Layer 2: Reconnection tests
+export const reconnect = {
   ...common,
-  paths: ["features/subscribe/events.feature"],
-  tags: "not @integration and not @pending",
+  paths: ["features/reliability/reconnect.feature"],
+  tags: "not @pending and not @browser",
 };
 
-export const server = {
+// Layer 2: Multi-consumer tests
+export const multiconsumer = {
   ...common,
-  paths: ["features/server/listen.feature"],
-  tags: "not @integration and not @pending",
+  paths: ["features/reliability/multi-consumer.feature"],
+  tags: "not @pending and not @browser",
+};
+
+// Layer 2: Delivery guarantee tests
+export const delivery = {
+  ...common,
+  paths: ["features/reliability/delivery.feature"],
+  tags: "not @pending and not @stress",
 };

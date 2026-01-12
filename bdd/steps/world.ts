@@ -10,8 +10,11 @@ import type { SystemEvent } from "@agentxjs/types/event";
  * Custom World with AgentX context
  */
 export class AgentXWorld extends World {
-  // AgentX instance
+  // AgentX instance (server in local mode, client in remote mode)
   agentx?: AgentX;
+
+  // Server instance (for remote mode tests)
+  server?: AgentX;
 
   // Last response from request()
   lastResponse?: SystemEvent;
@@ -25,11 +28,19 @@ export class AgentXWorld extends World {
   // Server ports used in tests (for cleanup)
   usedPorts: number[] = [];
 
-  // Remote client instances
+  // Remote client instances (for multi-client tests)
   remoteClients: Map<string, AgentX> = new Map();
 
   // Created resources (for tracking)
-  createdSessions: string[] = [];
+  createdContainers: string[] = [];
+  createdImages: Map<string, string> = new Map(); // imageId -> containerId
+  savedValues: Map<string, string> = new Map(); // for saving response values
+
+  // Messages received (for reliability tests)
+  receivedMessages: Map<string, string[]> = new Map(); // clientId -> messages
+
+  // Connection state
+  isConnected = false;
 
   constructor(options: IWorldOptions) {
     super(options);
@@ -51,17 +62,27 @@ export class AgentXWorld extends World {
     }
     this.remoteClients.clear();
 
-    // Dispose main AgentX
+    // Dispose main AgentX (client)
     if (this.agentx) {
       await this.agentx.dispose();
       this.agentx = undefined;
     }
 
+    // Dispose server
+    if (this.server) {
+      await this.server.dispose();
+      this.server = undefined;
+    }
+
     // Clear state
     this.lastResponse = undefined;
     this.collectedEvents = [];
-    this.createdSessions = [];
+    this.createdContainers = [];
+    this.createdImages.clear();
+    this.savedValues.clear();
+    this.receivedMessages.clear();
     this.usedPorts = [];
+    this.isConnected = false;
   }
 
   /**
