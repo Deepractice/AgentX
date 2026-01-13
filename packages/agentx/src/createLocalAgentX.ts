@@ -142,7 +142,16 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
     // Core API - delegate to runtime
     request: (type, data, timeout) => runtime.request(type, data, timeout),
 
-    on: (type, handler) => runtime.on(type, handler),
+    on: (type, handler) => {
+      // Filter out internal-only events (broadcastable: false)
+      // Only deliver external events to user handlers
+      return runtime.on(type, (event) => {
+        if ((event as any).broadcastable === false) {
+          return; // Skip internal events
+        }
+        handler(event);
+      });
+    },
 
     onCommand: (type, handler) => runtime.onCommand(type, handler),
 

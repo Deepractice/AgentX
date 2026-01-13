@@ -39,9 +39,24 @@ Then("I should receive events in order:", function (this: AgentXWorld, dataTable
 
 Then(
   /^I should receive exactly (\d+) "([^"]+)" events$/,
-  function (this: AgentXWorld, count: string, eventType: string) {
-    const events = this.collectedEvents.filter((e) => e.type === eventType);
-    expect(events.length).toBe(parseInt(count, 10));
+  async function (this: AgentXWorld, count: string, eventType: string) {
+    // Wait for mock events to arrive (with delays)
+    const expectedCount = parseInt(count, 10);
+    const maxWait = 5000;
+    const start = Date.now();
+
+    while (Date.now() - start < maxWait) {
+      const events = this.collectedEvents.filter((e) => e.type === eventType);
+      if (events.length >= expectedCount) {
+        expect(events.length).toBe(expectedCount);
+        return;
+      }
+      await new Promise((r) => setTimeout(r, 50));
+    }
+
+    // Timeout
+    const actualCount = this.collectedEvents.filter((e) => e.type === eventType).length;
+    expect(actualCount).toBe(expectedCount);
   }
 );
 
