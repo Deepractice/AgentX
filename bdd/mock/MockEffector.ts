@@ -29,13 +29,20 @@ export class MockEffector implements Effector {
   }
 
   connect(consumer: SystemBusConsumer): void {
+    console.log(`[MockEffector] Connected for agent ${this.agentId}`);
+
     // Listen for user_message events
     this.unsubscribe = consumer.on("user_message", async (event) => {
+      console.log(
+        `[MockEffector] Received user_message, agentId: ${event.context?.agentId}, mine: ${this.agentId}`
+      );
+
       // Filter: Only handle messages for this agent
       if (event.context?.agentId !== this.agentId) {
         return;
       }
 
+      console.log(`[MockEffector] Processing message with scenario: ${this.currentScenario}`);
       // Process user message and emit mock response
       await this.handleUserMessage(event);
     });

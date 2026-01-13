@@ -42,8 +42,31 @@ export class AgentXWorld extends World {
   // Connection state
   isConnected = false;
 
+  // Mock environment factory (for @mock tests)
+  mockFactory?: any;
+
   constructor(options: IWorldOptions) {
     super(options);
+  }
+
+  /**
+   * Create AgentX instance with mock environment
+   */
+  async createMockAgentX(): Promise<void> {
+    const { MockEnvironmentFactory } = await import("../mock");
+    this.mockFactory = new MockEnvironmentFactory();
+
+    const { createAgentX } = await import("agentxjs");
+    this.agentx = await createAgentX({
+      environmentFactory: this.mockFactory,
+    });
+  }
+
+  /**
+   * Change mock scenario
+   */
+  setMockScenario(name: string): void {
+    this.mockFactory?.setScenario(name);
   }
 
   /**

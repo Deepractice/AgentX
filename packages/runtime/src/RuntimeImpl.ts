@@ -25,6 +25,7 @@ import type {
   SubscribeOptions,
   Unsubscribe,
   McpServerConfig,
+  EnvironmentFactory,
 } from "@agentxjs/types/runtime/internal";
 import type {
   SystemEvent,
@@ -61,6 +62,7 @@ export class RuntimeImpl implements Runtime {
   private readonly basePath: string;
   private readonly commandHandler: CommandHandler;
   private readonly defaultAgent?: AgentDefinition;
+  private readonly environmentFactory?: EnvironmentFactory;
 
   /** Container registry: containerId -> RuntimeContainer */
   private readonly containerRegistry = new Map<string, RuntimeContainer>();
@@ -71,6 +73,7 @@ export class RuntimeImpl implements Runtime {
     this.llmProvider = config.llmProvider;
     this.basePath = config.basePath;
     this.defaultAgent = config.defaultAgent;
+    this.environmentFactory = config.environmentFactory;
 
     // Create SystemBus
     logger.info("Creating SystemBus");
@@ -493,7 +496,7 @@ export class RuntimeImpl implements Runtime {
       bus: this.bus,
       llmConfig: this.llmConfig,
       basePath: this.basePath,
-      environmentFactory: this.config.environmentFactory,
+      environmentFactory: this.environmentFactory,
       onDisposed: (containerId) => {
         this.containerRegistry.delete(containerId);
       },
