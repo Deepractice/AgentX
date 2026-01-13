@@ -110,10 +110,28 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
     });
   });
 
+  /**
+   * Determine if an event should be enqueued for external delivery
+   *
+   * Internal events (not enqueued):
+   * - source: "environment" → DriveableEvent (raw LLM events for BusDriver)
+   * - intent: "request" → Control events (user_message, interrupt)
+   *
+   * External events (enqueued):
+   * - source: "agent" → Transformed events from BusPresenter
+   * - source: "session" → Session lifecycle
+   * - source: "command" → Request/Response
+   */
+  function shouldEnqueue(event: SystemEvent): boolean {
+    if (event.source === "environment") return false;
+    if (event.intent === "request") return false;
+    return true;
+  }
+
   // Route runtime events through queue for reliable delivery
   runtime.onAny((event) => {
-    // Skip non-broadcastable events (internal events like DriveableEvent)
-    if ((event as any).broadcastable === false) {
+    // Only enqueue external events (internal events are for BusDriver/AgentEngine only)
+    if (!shouldEnqueue(event)) {
       return;
     }
 
@@ -143,11 +161,12 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
     request: (type, data, timeout) => runtime.request(type, data, timeout),
 
     on: (type, handler) => {
-      // Filter out internal-only events (broadcastable: false)
-      // Only deliver external events to user handlers
+      // Local mode filters by event source (not broadcastable)
+      // Only deliver external events (source: agent/session/command)
       return runtime.on(type, (event) => {
-        if ((event as any).broadcastable === false) {
-          return; // Skip internal events
+        // Skip internal events (DriveableEvent, control events)
+        if (!shouldEnqueue(event)) {
+          return;
         }
         handler(event);
       });

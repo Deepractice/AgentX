@@ -105,7 +105,6 @@ export class ClaudeReceptor implements Receptor {
       source: "environment",
       category: "stream",
       intent: "notification",
-      broadcastable: false,
       requestId: eventMeta?.requestId,
       context: eventMeta?.context,
       data: { reason },
@@ -126,7 +125,6 @@ export class ClaudeReceptor implements Receptor {
       source: "environment",
       category: "stream",
       intent: "notification",
-      broadcastable: false,
       requestId: eventMeta?.requestId,
       context: eventMeta?.context,
       data: { message, errorCode },
@@ -160,7 +158,6 @@ export class ClaudeReceptor implements Receptor {
           source: "environment",
           category: "stream",
           intent: "notification",
-          broadcastable: false,
           requestId,
           context,
           data: {
@@ -182,9 +179,9 @@ export class ClaudeReceptor implements Receptor {
     const event = sdkMsg.event;
     const { requestId, context } = this.currentMeta || {};
 
-    // All DriveableEvents are internal-only (broadcastable: false)
+    // All DriveableEvents are internal-only (source: "environment")
     // They are consumed by BusDriver and processed through MealyMachine
-    // BusPresenter will emit the transformed SystemEvents to clients
+    // BusPresenter will emit the transformed SystemEvents to clients (source: "agent")
 
     switch (event.type) {
       case "message_start":
@@ -204,7 +201,6 @@ export class ClaudeReceptor implements Receptor {
           source: "environment",
           category: "stream",
           intent: "notification",
-          broadcastable: false,
           requestId,
           context,
           data: {
@@ -229,7 +225,6 @@ export class ClaudeReceptor implements Receptor {
             source: "environment",
             category: "stream",
             intent: "notification",
-            broadcastable: false,
             index: event.index,
             requestId,
             context,
@@ -245,7 +240,6 @@ export class ClaudeReceptor implements Receptor {
             source: "environment",
             category: "stream",
             intent: "notification",
-            broadcastable: false,
             index: event.index,
             requestId,
             context,
@@ -268,7 +262,6 @@ export class ClaudeReceptor implements Receptor {
             source: "environment",
             category: "stream",
             intent: "notification",
-            broadcastable: false,
             requestId,
             context,
             data: { text: delta.text || "" },
@@ -280,7 +273,6 @@ export class ClaudeReceptor implements Receptor {
             source: "environment",
             category: "stream",
             intent: "notification",
-            broadcastable: false,
             index: this.blockContext.currentBlockIndex,
             requestId,
             context,
@@ -298,7 +290,6 @@ export class ClaudeReceptor implements Receptor {
             source: "environment",
             category: "stream",
             intent: "notification",
-            broadcastable: false,
             index: this.blockContext.currentBlockIndex,
             requestId,
             context,
@@ -311,7 +302,6 @@ export class ClaudeReceptor implements Receptor {
             source: "environment",
             category: "stream",
             intent: "notification",
-            broadcastable: false,
             index: this.blockContext.currentBlockIndex,
             requestId,
             context,
@@ -340,7 +330,6 @@ export class ClaudeReceptor implements Receptor {
           source: "environment",
           category: "stream",
           intent: "notification",
-          broadcastable: false,
           requestId,
           context,
           data: {

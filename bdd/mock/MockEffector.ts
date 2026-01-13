@@ -63,8 +63,8 @@ export class MockEffector implements Effector {
       }
 
       // Emit to SystemBus via Receptor
-      // Set broadcastable: false (like ClaudeReceptor) so events go through MealyMachine
-      // BusPresenter will emit the final transformed events
+      // Use source: "environment" (like ClaudeReceptor) so events go through MealyMachine
+      // BusPresenter will emit the final transformed events (source: "agent")
       this.receptor.emit({
         type: mockEvent.type,
         timestamp: Date.now(),
@@ -73,7 +73,6 @@ export class MockEffector implements Effector {
         category: this.inferCategory(mockEvent.type),
         intent: "notification",
         context: event.context, // Inherit context (agentId, sessionId, etc.)
-        broadcastable: false, // Internal-only, processed by BusDriver → MealyMachine → BusPresenter
       } as SystemEvent);
     }
   }

@@ -130,7 +130,7 @@ class BusPresenter implements AgentPresenter {
     }
 
     // Build complete SystemEvent with full context
-    // All events from BusPresenter are broadcastable (including stream events for frontend)
+    // All events from BusPresenter are external (source: "agent") and will be enqueued
     const systemEvent: SystemEvent = {
       type: output.type,
       timestamp: output.timestamp,

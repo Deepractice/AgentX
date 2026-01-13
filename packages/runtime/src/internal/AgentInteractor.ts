@@ -85,7 +85,7 @@ export class AgentInteractor {
     };
 
     // 4. Emit internal event to Bus (triggers ClaudeEffector)
-    // This event is NOT broadcastable - it's for internal processing only
+    // This event is internal-only (intent: "request") - not enqueued
     this.producer.emit({
       type: "user_message",
       timestamp: Date.now(),
@@ -95,7 +95,6 @@ export class AgentInteractor {
       intent: "request",
       requestId,
       context: eventContext,
-      broadcastable: false, // Internal event for ClaudeEffector
     } as never);
 
     logger.info("user_message event emitted to bus", {
@@ -135,7 +134,6 @@ export class AgentInteractor {
       intent: "request",
       requestId,
       context: eventContext,
-      broadcastable: false,
     } as never);
   }
 }
