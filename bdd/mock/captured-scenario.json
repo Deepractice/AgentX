@@ -1,15 +1,15 @@
 {
   "name": "Captured from real API",
-  "timestamp": "2026-01-13T10:00:20.652Z",
+  "timestamp": "2026-01-13T13:47:37.484Z",
   "events": [
     {
       "type": "message_start",
       "category": "stream",
       "data": {
-        "messageId": "msg_01XpvSJUPpssimykZTFhVBAA",
+        "messageId": "msg_018f3mQzeokmxjuBjgAgSwAJ",
         "model": "claude-haiku-4-5-20251001"
       },
-      "timestamp": 1768298420453
+      "timestamp": 1768312057371
     },
     {
       "type": "text_delta",
@@ -17,7 +17,7 @@
       "data": {
         "text": "Hello,"
       },
-      "timestamp": 1768298420459
+      "timestamp": 1768312057373
     },
     {
       "type": "text_delta",
@@ -25,15 +25,23 @@
       "data": {
         "text": " how"
       },
-      "timestamp": 1768298420509
+      "timestamp": 1768312057414
     },
     {
       "type": "text_delta",
       "category": "stream",
       "data": {
-        "text": " are you doing today?"
+        "text": " are you today"
       },
-      "timestamp": 1768298420520
+      "timestamp": 1768312057415
+    },
+    {
+      "type": "text_delta",
+      "category": "stream",
+      "data": {
+        "text": "?"
+      },
+      "timestamp": 1768312057439
     },
     {
       "type": "message_stop",
@@ -41,24 +49,24 @@
       "data": {
         "stopReason": "end_turn"
       },
-      "timestamp": 1768298420568
+      "timestamp": 1768312057466
     },
     {
       "type": "assistant_message",
       "category": "message",
       "data": {
-        "id": "msg_01XpvSJUPpssimykZTFhVBAA",
+        "id": "msg_018f3mQzeokmxjuBjgAgSwAJ",
         "role": "assistant",
         "subtype": "assistant",
         "content": [
           {
             "type": "text",
-            "text": "Hello, how are you doing today?"
+            "text": "Hello, how are you today?"
           }
         ],
-        "timestamp": 1768298420453
+        "timestamp": 1768312057371
       },
-      "timestamp": 1768298420453
+      "timestamp": 1768312057371
     }
   ]
 }
