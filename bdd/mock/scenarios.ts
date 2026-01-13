@@ -127,4 +127,36 @@ export const SCENARIOS = new Map<string, MockScenario>([
       ],
     },
   ],
+
+  [
+    "ordered-messages",
+    {
+      name: "5 ordered messages for testing delivery order",
+      events: [
+        { type: "message_start", delay: 10 },
+        { type: "text_delta", data: { text: "1" }, delay: 10 },
+        { type: "text_delta", data: { text: "2" }, delay: 10 },
+        { type: "text_delta", data: { text: "3" }, delay: 10 },
+        { type: "text_delta", data: { text: "4" }, delay: 10 },
+        { type: "text_delta", data: { text: "5" }, delay: 10 },
+        { type: "message_stop", delay: 10 },
+      ],
+    },
+  ],
+
+  [
+    "slow-stream",
+    {
+      name: "50 deltas with slower timing for disconnect testing",
+      events: [
+        { type: "message_start", delay: 10 },
+        ...Array.from({ length: 50 }, (_, i) => ({
+          type: "text_delta",
+          data: { text: `chunk-${i + 1} ` },
+          delay: 20, // Slower for disconnect testing
+        })),
+        { type: "message_stop", delay: 10 },
+      ],
+    },
+  ],
 ]);

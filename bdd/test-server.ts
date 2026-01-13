@@ -19,31 +19,36 @@ config({ path: ENV_PATH });
 async function startTestServer() {
   const apiKey = process.env.LLM_PROVIDER_KEY;
   const model = process.env.LLM_PROVIDER_MODEL || "claude-sonnet-4-20250514";
+  const useMock = process.env.MOCK_LLM === "true" || !apiKey;
 
   console.log("🧪 Starting BDD Test Server...\n");
   console.log("Configuration:");
   console.log(`  Port: ${PORT}`);
   console.log(`  AgentX Directory: ${AGENTX_DIR}`);
   console.log(`  Storage: SQLite (${AGENTX_DIR}/data/queue.db)`);
-  console.log(
-    `  API Key: ${apiKey ? apiKey.substring(0, 15) + "..." : "None (skip @integration tests)"}`
-  );
-  if (apiKey) {
+  console.log(`  Mode: ${useMock ? "Mock (fast, predictable)" : "Real API (slow)"}`);
+
+  if (!useMock && apiKey) {
+    console.log(`  API Key: ${apiKey.substring(0, 15)}...`);
     console.log(`  Model: ${model}`);
   }
   console.log();
 
   const { createAgentX } = await import("agentxjs");
 
+  // Setup mock environment if requested
+  let environmentFactory;
+  if (useMock) {
+    const { MockEnvironmentFactory } = await import("./mock");
+    environmentFactory = new MockEnvironmentFactory();
+    console.log("✓ MockEnvironment configured");
+  }
+
   const agentx = await createAgentX({
     agentxDir: AGENTX_DIR,
-    logger: { level: "debug" }, // Show all logs for debugging
-    llm: apiKey
-      ? {
-          apiKey,
-          model,
-        }
-      : undefined,
+    logger: { level: useMock ? "warn" : "debug" }, // Quieter for mock tests
+    llm: !useMock && apiKey ? { apiKey, model } : undefined,
+    environmentFactory,
   });
 
   // Create default test container
