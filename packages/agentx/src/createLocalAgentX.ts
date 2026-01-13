@@ -49,8 +49,7 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
   // Create event queue for reliable delivery
   const { createQueue } = await import("@agentxjs/queue");
   const queuePath = join(basePath, "data", "queue.db");
-  // DEBUG: Set queueEnabled: false to test if Queue logic causes latency
-  const eventQueue = await createQueue({ path: queuePath, queueEnabled: false });
+  const eventQueue = await createQueue({ path: queuePath });
 
   const runtime = createRuntime({
     persistence,
@@ -129,10 +128,23 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
     return true;
   }
 
+  // DEBUG: Set to true to bypass Queue and use direct WebSocket broadcast
+  const BYPASS_QUEUE = false;
+
   // Route runtime events through queue for reliable delivery
   runtime.onAny((event) => {
     // Only enqueue external events (internal events are for BusDriver/AgentEngine only)
     if (!shouldEnqueue(event)) {
+      return;
+    }
+
+    // BYPASS MODE: Direct WebSocket broadcast (like main branch)
+    if (BYPASS_QUEUE) {
+      logger.debug("Broadcasting event (bypass queue)", {
+        type: event.type,
+        category: event.category,
+      });
+      wsServer.broadcast(JSON.stringify(event));
       return;
     }
 

@@ -59,4 +59,9 @@ export interface Environment {
    * Effector - subscribes to SystemBus, acts on external world
    */
   readonly effector: Effector;
+
+  /**
+   * Dispose environment resources
+   */
+  dispose(): void;
 }

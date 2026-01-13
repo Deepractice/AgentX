@@ -4,8 +4,9 @@
  * Enables dependency injection for testing (e.g., MockEnvironment).
  */
 
-import type { Environment } from "./environment";
-import type { ClaudeLLMConfig } from "../llm";
+import type { Environment } from "./environment/Environment";
+import type { ClaudeLLMConfig } from "../LLMProvider";
+import type { McpServerConfig } from "./container/sandbox/mcp";
 
 /**
  * Configuration for creating an Environment
@@ -27,7 +28,7 @@ export interface EnvironmentCreateConfig {
   resumeSessionId?: string;
 
   /** MCP servers configuration */
-  mcpServers?: Record<string, unknown>;
+  mcpServers?: Record<string, McpServerConfig>;
 
   /** Callback when Claude SDK session ID is captured */
   onSessionIdCaptured?: (sessionId: string) => void;

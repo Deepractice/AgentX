@@ -71,6 +71,7 @@ export class SDKQueryLifecycle {
   private claudeQuery: Query | null = null;
   private isInitialized = false;
   private abortController: AbortController | null = null;
+  private capturedSessionId: string | null = null;
 
   constructor(config: SDKQueryConfig, callbacks: SDKQueryCallbacks = {}) {
     this.config = config;
@@ -214,8 +215,13 @@ export class SDKQueryLifecycle {
             sessionId: sdkMsg.session_id,
           });
 
-          // Capture session ID
-          if (sdkMsg.session_id && this.callbacks.onSessionIdCaptured) {
+          // Capture session ID (only once, on first occurrence)
+          if (
+            sdkMsg.session_id &&
+            this.callbacks.onSessionIdCaptured &&
+            this.capturedSessionId !== sdkMsg.session_id
+          ) {
+            this.capturedSessionId = sdkMsg.session_id;
             this.callbacks.onSessionIdCaptured(sdkMsg.session_id);
           }
 

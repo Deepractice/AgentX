@@ -190,6 +190,18 @@ export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> 
     });
   }
 
+  // Cursor storage with debounce to avoid localStorage blocking
+  const pendingCursors = new Map<string, string>();
+  let cursorFlushTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function flushCursors() {
+    for (const [key, cursor] of pendingCursors) {
+      storage.setItem(key, cursor);
+    }
+    pendingCursors.clear();
+    cursorFlushTimer = null;
+  }
+
   // Helper: Send ACK
   function sendAck(topic: string, cursor: string) {
     client.send(
@@ -201,9 +213,13 @@ export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> 
       })
     );
 
-    // Store cursor
+    // Debounced cursor storage - only write to localStorage periodically
     const cursorKey = `agentx:cursor:${clientId}:${topic}`;
-    storage.setItem(cursorKey, cursor);
+    pendingCursors.set(cursorKey, cursor);
+
+    if (!cursorFlushTimer) {
+      cursorFlushTimer = setTimeout(flushCursors, 500); // Flush every 500ms
+    }
   }
 
   // Handle incoming messages
@@ -490,6 +506,12 @@ export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> 
     },
 
     async dispose() {
+      // Flush pending cursors before disposing
+      if (cursorFlushTimer) {
+        clearTimeout(cursorFlushTimer);
+        flushCursors();
+      }
+
       // Unsubscribe from all topics
       for (const topic of subscribedTopics) {
         client.send(

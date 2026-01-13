@@ -56,12 +56,12 @@ import type {
   ImageRepository,
   ImageRecord,
   EnvironmentFactory,
+  Environment,
 } from "@agentxjs/types/runtime/internal";
 import { createAgent } from "@agentxjs/agent";
 import { createLogger } from "@agentxjs/common";
 import { BusDriver } from "./BusDriver";
 import { AgentInteractor } from "./AgentInteractor";
-import { ClaudeEnvironment } from "../environment";
 import { defaultEnvironmentFactory } from "../environment/DefaultEnvironmentFactory";
 
 const logger = createLogger("runtime/RuntimeAgent");
@@ -223,7 +223,7 @@ export class RuntimeAgent implements RuntimeAgentInterface {
   private readonly driver: BusDriver;
   private readonly engine: AgentEngine;
   private readonly producer: SystemBusProducer;
-  private readonly environment: ClaudeEnvironment;
+  private readonly environment: Environment;
   private readonly imageRepository: ImageRepository;
   readonly session: Session;
   readonly config: AgentConfig;

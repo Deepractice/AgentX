@@ -4,8 +4,11 @@
  * Default factory that creates ClaudeEnvironment using the provided LLM config.
  */
 
-import type { EnvironmentFactory, EnvironmentCreateConfig } from "@agentxjs/types/runtime/internal";
-import type { Environment } from "@agentxjs/types/runtime/internal/environment";
+import type {
+  EnvironmentFactory,
+  EnvironmentCreateConfig,
+  Environment,
+} from "@agentxjs/types/runtime/internal";
 import { ClaudeEnvironment } from "./ClaudeEnvironment";
 
 /**
