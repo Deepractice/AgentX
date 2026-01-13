@@ -84,14 +84,8 @@ export class SqliteEventQueue implements EventQueue {
   async append(topic: string, event: unknown): Promise<string> {
     const cursor = this.cursorGen.generate();
     const timestamp = Date.now();
-    const eventJson = JSON.stringify(event);
 
-    await this.db.sql`
-      INSERT INTO queue_entries (cursor, topic, event, timestamp)
-      VALUES (${cursor}, ${topic}, ${eventJson}, ${timestamp})
-    `;
-
-    // Notify in-memory subscribers for this topic
+    // Create entry for notification
     const entry: QueueEntry = {
       cursor,
       topic,
@@ -99,6 +93,8 @@ export class SqliteEventQueue implements EventQueue {
       timestamp,
     };
 
+    // IMPORTANT: Notify subscribers FIRST for real-time streaming
+    // This ensures events are delivered immediately without waiting for DB
     for (const sub of this.subscribers.values()) {
       if (sub.topic === topic) {
         try {
@@ -111,6 +107,13 @@ export class SqliteEventQueue implements EventQueue {
         }
       }
     }
+
+    // Persist to DB AFTER notification (for reconnection recovery)
+    const eventJson = JSON.stringify(event);
+    await this.db.sql`
+      INSERT INTO queue_entries (cursor, topic, event, timestamp)
+      VALUES (${cursor}, ${topic}, ${eventJson}, ${timestamp})
+    `;
 
     return cursor;
   }
@@ -481,6 +484,10 @@ export class SqliteEventQueue implements EventQueue {
  * Initialize database schema
  */
 async function initializeSchema(db: any): Promise<void> {
+  // Enable WAL mode for better concurrent read/write performance
+  // WAL allows readers and writers to operate concurrently
+  await db.exec(`PRAGMA journal_mode=WAL;`);
+
   await db.exec(`
     CREATE TABLE IF NOT EXISTS queue_entries (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
