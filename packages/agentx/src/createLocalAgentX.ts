@@ -7,6 +7,7 @@
 
 import type { AgentX, LocalConfig } from "@agentxjs/types/agentx";
 import type { SystemEvent } from "@agentxjs/types/event";
+import type { Message } from "@agentxjs/types/agent";
 import { WebSocketServer } from "@agentxjs/network";
 import { createLogger } from "@agentxjs/common";
 
@@ -47,9 +48,39 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
   const persistence = await createPersistence(sqliteDriver({ path: storagePath }));
 
   // Create event queue for reliable delivery
+  // onAck callback handles message persistence when client ACKs
   const { createQueue } = await import("@agentxjs/queue");
   const queuePath = join(basePath, "data", "queue.db");
-  const eventQueue = await createQueue({ path: queuePath });
+  const eventQueue = await createQueue({
+    path: queuePath,
+    onAck: (topic, cursor, event) => {
+      // Skip global topic (no session to persist to)
+      if (topic === "global") return;
+
+      // Check if this is a message event that needs persistence
+      const systemEvent = event as SystemEvent;
+      if (systemEvent.category === "message" && systemEvent.data) {
+        const message = systemEvent.data as Message;
+        const sessionId = topic; // topic is sessionId for non-global events
+
+        logger.debug("Persisting message on ACK", {
+          sessionId,
+          cursor,
+          messageType: systemEvent.type,
+          messageId: message.id,
+        });
+
+        // Persist message to session
+        persistence.sessions.addMessage(sessionId, message).catch((err) => {
+          logger.error("Failed to persist message on ACK", {
+            sessionId,
+            cursor,
+            error: (err as Error).message,
+          });
+        });
+      }
+    },
+  });
 
   const runtime = createRuntime({
     persistence,

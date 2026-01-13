@@ -148,12 +148,9 @@ class BusPresenter implements AgentPresenter {
 
     this.producer.emit(systemEvent);
 
-    // Persist Message layer events to session (except user_message)
-    if (category === "message") {
-      this.session.addMessage(data as Message).catch((err) => {
-        logger.error("Failed to persist message", { error: err, messageType: output.type });
-      });
-    }
+    // NOTE: Message persistence is now handled by Queue ACK callback
+    // in createLocalAgentX.ts, not here. This ensures messages are only
+    // persisted after client acknowledges receipt.
   }
 
   /**

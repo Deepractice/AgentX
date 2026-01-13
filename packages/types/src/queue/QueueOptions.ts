@@ -1,4 +1,10 @@
 /**
+ * ACK callback function type
+ * Called when a client acknowledges receipt of an event
+ */
+export type OnAckCallback = (topic: string, cursor: string, event: unknown) => void;
+
+/**
  * QueueOptions - Configuration for EventQueue
  */
 export interface QueueOptions {
@@ -51,4 +57,13 @@ export interface QueueOptions {
    * @default 300000 (5 minutes)
    */
   cleanupIntervalMs?: number;
+
+  /**
+   * Callback when a client acknowledges receipt of an event
+   * Used for ACK-driven persistence (e.g., persist session messages only after client ACK)
+   * @param topic - Topic identifier (e.g., sessionId)
+   * @param cursor - Cursor of acknowledged entry
+   * @param event - The acknowledged event
+   */
+  onAck?: OnAckCallback;
 }

@@ -11,6 +11,7 @@ import type {
   QueueSubscribeRequest,
   QueueAckRequest,
   QueueUnsubscribeRequest,
+  OnAckCallback,
 } from "@agentxjs/types/queue";
 import { createLogger } from "@agentxjs/common";
 import { CursorGenerator } from "./CursorGenerator";
@@ -27,6 +28,7 @@ interface ResolvedOptions {
   messageTtlMs: number;
   maxEntriesPerTopic: number;
   cleanupIntervalMs: number;
+  onAck?: OnAckCallback;
 }
 
 /**
@@ -73,6 +75,7 @@ export class SqliteEventQueue implements EventQueue {
       messageTtlMs: options.messageTtlMs ?? 172800000, // 48 hours
       maxEntriesPerTopic: options.maxEntriesPerTopic ?? 10000,
       cleanupIntervalMs: options.cleanupIntervalMs ?? 300000,
+      onAck: options.onAck,
     };
 
     const { createDatabase } = await import("db0");
@@ -219,6 +222,31 @@ export class SqliteEventQueue implements EventQueue {
     `;
 
     logger.debug("Consumer acknowledged", { consumerId, topic, cursor });
+  }
+
+  /**
+   * Get a single entry by cursor
+   * Used for ACK callback to retrieve the event content
+   */
+  async getEntryByCursor(cursor: string): Promise<QueueEntry | null> {
+    const result = await this.db.sql`
+      SELECT cursor, topic, event, timestamp
+      FROM queue_entries
+      WHERE cursor = ${cursor}
+      LIMIT 1
+    `;
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    const row = result.rows[0];
+    return {
+      cursor: row.cursor,
+      topic: row.topic,
+      event: JSON.parse(row.event),
+      timestamp: row.timestamp,
+    };
   }
 
   subscribe(consumerId: string, topic: string, handler: (entry: QueueEntry) => void): Unsubscribe {
@@ -487,6 +515,22 @@ export class SqliteEventQueue implements EventQueue {
   private async handleAck(request: QueueAckRequest): Promise<void> {
     const { topic, clientId, cursor } = request;
     await this.ack(clientId, topic, cursor);
+
+    // Trigger onAck callback if configured
+    if (this.options.onAck) {
+      const entry = await this.getEntryByCursor(cursor);
+      if (entry) {
+        try {
+          this.options.onAck(topic, cursor, entry.event);
+        } catch (err) {
+          logger.error("onAck callback error", {
+            topic,
+            cursor,
+            error: (err as Error).message,
+          });
+        }
+      }
+    }
   }
 
   private handleUnsubscribe(

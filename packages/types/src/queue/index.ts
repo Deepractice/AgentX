@@ -8,7 +8,7 @@
 
 export type { EventQueue, MessageSender, Unsubscribe } from "./EventQueue";
 export type { QueueEntry } from "./QueueEntry";
-export type { QueueOptions } from "./QueueOptions";
+export type { QueueOptions, OnAckCallback } from "./QueueOptions";
 export type {
   QueueSubscribeRequest,
   QueueAckRequest,
