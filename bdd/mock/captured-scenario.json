@@ -1,0 +1,64 @@
+{
+  "name": "Captured from real API",
+  "timestamp": "2026-01-13T10:00:20.652Z",
+  "events": [
+    {
+      "type": "message_start",
+      "category": "stream",
+      "data": {
+        "messageId": "msg_01XpvSJUPpssimykZTFhVBAA",
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "timestamp": 1768298420453
+    },
+    {
+      "type": "text_delta",
+      "category": "stream",
+      "data": {
+        "text": "Hello,"
+      },
+      "timestamp": 1768298420459
+    },
+    {
+      "type": "text_delta",
+      "category": "stream",
+      "data": {
+        "text": " how"
+      },
+      "timestamp": 1768298420509
+    },
+    {
+      "type": "text_delta",
+      "category": "stream",
+      "data": {
+        "text": " are you doing today?"
+      },
+      "timestamp": 1768298420520
+    },
+    {
+      "type": "message_stop",
+      "category": "stream",
+      "data": {
+        "stopReason": "end_turn"
+      },
+      "timestamp": 1768298420568
+    },
+    {
+      "type": "assistant_message",
+      "category": "message",
+      "data": {
+        "id": "msg_01XpvSJUPpssimykZTFhVBAA",
+        "role": "assistant",
+        "subtype": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Hello, how are you doing today?"
+          }
+        ],
+        "timestamp": 1768298420453
+      },
+      "timestamp": 1768298420453
+    }
+  ]
+}

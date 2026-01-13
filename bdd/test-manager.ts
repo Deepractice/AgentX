@@ -74,7 +74,30 @@ class TestManager {
   async runCucumber(extraArgs: string[] = []) {
     console.log(`${GREEN}[Cucumber]${RESET} Running tests...\n`);
 
-    const args = ["--bun", "../node_modules/.bin/cucumber-js", ...extraArgs];
+    // Check if user is running @integration tests - if so, use integration config
+    const tagsArg = extraArgs.find(
+      (arg, i) => extraArgs[i - 1] === "--tags" || arg.startsWith("--tags=")
+    );
+    const tagsValue = tagsArg?.startsWith("--tags=")
+      ? tagsArg.split("=")[1]
+      : extraArgs[extraArgs.indexOf("--tags") + 1];
+
+    const isIntegrationTest =
+      tagsValue &&
+      (tagsValue.includes("@integration") ||
+        tagsValue.includes("@capture-events") ||
+        tagsValue.includes("@disconnect-recovery") ||
+        tagsValue.includes("@real-api"));
+
+    // Build final args
+    const args = ["--bun", "../node_modules/.bin/cucumber-js"];
+
+    if (isIntegrationTest) {
+      // Use integration config for integration tests
+      args.push("--config", "cucumber.integration.js");
+    }
+
+    args.push(...extraArgs);
 
     const proc = spawn({
       cmd: ["bun", ...args],

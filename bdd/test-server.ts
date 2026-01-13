@@ -18,6 +18,7 @@ config({ path: ENV_PATH });
 
 async function startTestServer() {
   const apiKey = process.env.LLM_PROVIDER_KEY;
+  const baseUrl = process.env.LLM_PROVIDER_URL;
   const model = process.env.LLM_PROVIDER_MODEL || "claude-sonnet-4-20250514";
   const useMock = process.env.MOCK_LLM === "true" || !apiKey;
 
@@ -30,6 +31,7 @@ async function startTestServer() {
 
   if (!useMock && apiKey) {
     console.log(`  API Key: ${apiKey.substring(0, 15)}...`);
+    console.log(`  Base URL: ${baseUrl || "(default)"}`);
     console.log(`  Model: ${model}`);
   }
   console.log();
@@ -47,7 +49,7 @@ async function startTestServer() {
   const agentx = await createAgentX({
     agentxDir: AGENTX_DIR,
     logger: { level: useMock ? "warn" : "debug" }, // Quieter for mock tests
-    llm: !useMock && apiKey ? { apiKey, model } : undefined,
+    llm: !useMock && apiKey ? { apiKey, baseUrl, model } : undefined,
     environmentFactory,
   });
 

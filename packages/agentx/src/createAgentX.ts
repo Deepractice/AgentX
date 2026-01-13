@@ -435,15 +435,20 @@ export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> 
         client.send(JSON.stringify(event));
       });
 
-      // Auto-subscribe to session topics on successful session operations
+      // Auto-subscribe to session topics on successful session/image operations
       const typeStr = type as string;
       if (
-        (typeStr === "session_get" || typeStr === "session_create") &&
+        (typeStr === "session_get" ||
+          typeStr === "session_create" ||
+          typeStr === "image_create_request") &&
         response.category === "response"
       ) {
-        const sessionId = (response.data as any)?.sessionId;
+        // For image_create_response, sessionId is in record.sessionId
+        const sessionId =
+          (response.data as any)?.sessionId || (response.data as any)?.record?.sessionId;
         if (sessionId) {
-          subscribeToTopic(sessionId);
+          // Wait for subscription to be confirmed before returning
+          await subscribeToTopic(sessionId);
         }
       }
 
