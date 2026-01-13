@@ -55,12 +55,14 @@ import type {
   Session,
   ImageRepository,
   ImageRecord,
+  EnvironmentFactory,
 } from "@agentxjs/types/runtime/internal";
 import { createAgent } from "@agentxjs/agent";
 import { createLogger } from "@agentxjs/common";
 import { BusDriver } from "./BusDriver";
 import { AgentInteractor } from "./AgentInteractor";
 import { ClaudeEnvironment } from "../environment";
+import { defaultEnvironmentFactory } from "../environment/DefaultEnvironmentFactory";
 
 const logger = createLogger("runtime/RuntimeAgent");
 
@@ -81,6 +83,8 @@ export interface RuntimeAgentConfig {
   image: ImageRecord;
   /** Image repository for persisting metadata */
   imageRepository: ImageRepository;
+  /** Optional environment factory for dependency injection */
+  environmentFactory?: EnvironmentFactory;
 }
 
 /**
@@ -236,15 +240,15 @@ export class RuntimeAgent implements RuntimeAgentInterface {
     this.config = config.config;
     this.imageRepository = config.imageRepository;
 
-    // Create this agent's own ClaudeEnvironment
+    // Create this agent's own Environment (using factory for DI support)
     // Resume using stored sdkSessionId if available
     // Read systemPrompt and mcpServers from ImageRecord (single source of truth)
     const resumeSessionId = config.image.metadata?.claudeSdkSessionId;
-    this.environment = new ClaudeEnvironment({
+    const factory = config.environmentFactory ?? defaultEnvironmentFactory;
+
+    this.environment = factory.create({
       agentId: this.agentId,
-      apiKey: config.llmConfig.apiKey,
-      baseUrl: config.llmConfig.baseUrl,
-      model: config.llmConfig.model,
+      llmConfig: config.llmConfig,
       systemPrompt: config.image.systemPrompt,
       cwd: config.sandbox.workdir.path,
       resumeSessionId,
@@ -259,8 +263,9 @@ export class RuntimeAgent implements RuntimeAgentInterface {
     this.environment.receptor.connect(config.bus.asProducer());
     this.environment.effector.connect(config.bus.asConsumer());
 
-    logger.info("ClaudeEnvironment created for agent", {
+    logger.info("Environment created for agent", {
       agentId: this.agentId,
+      environmentName: this.environment.name,
       imageId: this.imageId,
       cwd: config.sandbox.workdir.path,
       resumeSessionId: resumeSessionId ?? "none",

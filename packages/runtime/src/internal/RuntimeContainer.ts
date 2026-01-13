@@ -10,7 +10,7 @@
 
 import type { Container, Agent, ClaudeLLMConfig } from "@agentxjs/types/runtime";
 import type { Persistence, ContainerRecord, ImageRecord } from "@agentxjs/types";
-import type { SystemBus } from "@agentxjs/types/runtime/internal";
+import type { SystemBus, EnvironmentFactory } from "@agentxjs/types/runtime/internal";
 import { RuntimeAgent } from "./RuntimeAgent";
 import { RuntimeSession } from "./RuntimeSession";
 import { RuntimeSandbox } from "./RuntimeSandbox";
@@ -27,6 +27,8 @@ export interface RuntimeContainerContext {
   /** LLM configuration for creating agent environments */
   llmConfig: ClaudeLLMConfig;
   basePath: string;
+  /** Optional environment factory for dependency injection (e.g., mock for testing) */
+  environmentFactory?: EnvironmentFactory;
   /** Callback when container is disposed */
   onDisposed?: (containerId: string) => void;
 }
@@ -161,6 +163,7 @@ export class RuntimeContainer implements Container {
       llmConfig: this.context.llmConfig,
       image, // Pass full image record for metadata access
       imageRepository: this.context.persistence.images,
+      environmentFactory: this.context.environmentFactory,
     });
 
     // Register agent and mapping

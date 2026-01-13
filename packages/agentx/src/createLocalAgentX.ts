@@ -62,6 +62,7 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
         model: config.llm?.model,
       }),
     },
+    environmentFactory: config.environmentFactory,
     defaultAgent: config.defaultAgent,
   });
 

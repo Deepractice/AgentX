@@ -59,6 +59,7 @@ import type {
   RequestDataFor,
 } from "~/event/command";
 import type { LogLevel, LoggerFactory } from "~/common/logger";
+import type { EnvironmentFactory } from "~/runtime/internal";
 
 // ============================================================================
 // Configuration - Local Mode
@@ -209,6 +210,21 @@ export interface LocalConfig {
      */
     claudeCodePath?: string;
   };
+
+  /**
+   * Optional environment factory for dependency injection (e.g., mock for testing)
+   * If not provided, ClaudeEnvironment will be created by default
+   *
+   * @example
+   * ```typescript
+   * import { MockEnvironmentFactory } from "./mock";
+   *
+   * const agentx = await createAgentX({
+   *   environmentFactory: new MockEnvironmentFactory(),
+   * });
+   * ```
+   */
+  environmentFactory?: EnvironmentFactory;
 
   /**
    * HTTP server to attach WebSocket to.

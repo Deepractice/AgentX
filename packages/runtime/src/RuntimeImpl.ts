@@ -493,6 +493,7 @@ export class RuntimeImpl implements Runtime {
       bus: this.bus,
       llmConfig: this.llmConfig,
       basePath: this.basePath,
+      environmentFactory: this.config.environmentFactory,
       onDisposed: (containerId) => {
         this.containerRegistry.delete(containerId);
       },

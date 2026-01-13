@@ -4,7 +4,7 @@
 
 import type { Persistence } from "@agentxjs/types";
 import type { Runtime, LLMProvider, ClaudeLLMConfig } from "@agentxjs/types/runtime";
-import type { Environment } from "@agentxjs/types/runtime/internal";
+import type { EnvironmentFactory } from "@agentxjs/types/runtime/internal";
 import type { AgentDefinition } from "@agentxjs/types/agentx";
 import { RuntimeImpl } from "./RuntimeImpl";
 
@@ -29,10 +29,10 @@ export interface RuntimeConfig {
   basePath: string;
 
   /**
-   * Optional custom environment (for testing)
-   * If not provided, ClaudeEnvironment will be created from llmProvider
+   * Optional environment factory for dependency injection (e.g., mock for testing)
+   * If not provided, ClaudeEnvironment will be created by default
    */
-  environment?: Environment;
+  environmentFactory?: EnvironmentFactory;
 
   /**
    * Default agent definition
