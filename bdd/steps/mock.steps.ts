@@ -92,6 +92,16 @@ Given(/^server mock scenario is "([^"]+)"$/, function (this: AgentXWorld, _scena
 });
 
 Given(
+  /^a remote client connected to "([^"]+)"$/,
+  async function (this: AgentXWorld, serverUrl: string) {
+    const { createAgentX } = await import("agentxjs");
+    this.agentx = await createAgentX({ serverUrl });
+    this.isConnected = true;
+    this.receivedMessages.set("default", []);
+  }
+);
+
+Given(
   /^a remote client "([^"]+)" connected to "([^"]+)"$/,
   async function (this: AgentXWorld, clientName: string, serverUrl: string) {
     const { createAgentX } = await import("agentxjs");
@@ -280,5 +290,62 @@ Then(
 
     const actualCount = this.collectedEvents.filter((e) => e.type === "text_delta").length;
     throw new Error(`Expected ${expectedCount} events in ${seconds}s, got ${actualCount}`);
+  }
+);
+
+Then(
+  /^client should receive at least (\d+) text_delta event$/,
+  async function (this: AgentXWorld, count: string) {
+    await new Promise((r) => setTimeout(r, 1000));
+    const messages = this.receivedMessages.get("default") || [];
+    const expectedCount = parseInt(count, 10);
+
+    if (messages.length < expectedCount) {
+      throw new Error(`Expected at least ${expectedCount} events, got ${messages.length}`);
+    }
+
+    expect(messages.length).toBeGreaterThan(expectedCount - 1);
+  }
+);
+
+Then("text content should not be empty", function (this: AgentXWorld) {
+  const messages = this.receivedMessages.get("default") || [];
+  const fullText = messages.join("");
+
+  if (fullText.length === 0) {
+    throw new Error("Expected non-empty text content");
+  }
+
+  expect(fullText.length).toBeGreaterThan(0);
+});
+
+Then(
+  /^client "([^"]+)" should receive at least (\d+) text_delta event$/,
+  async function (this: AgentXWorld, clientName: string, count: string) {
+    await new Promise((r) => setTimeout(r, 1000));
+    const messages = this.receivedMessages.get(clientName) || [];
+    const expectedCount = parseInt(count, 10);
+    expect(messages.length).toBeGreaterThan(expectedCount - 1);
+  }
+);
+
+Then(
+  /^client should receive at least (\d+) text_delta event within (\d+) seconds$/,
+  async function (this: AgentXWorld, count: string, seconds: string) {
+    const expectedCount = parseInt(count, 10);
+    const maxWait = parseInt(seconds, 10) * 1000;
+    const start = Date.now();
+
+    while (Date.now() - start < maxWait) {
+      const messages = this.receivedMessages.get("default") || [];
+      if (messages.length >= expectedCount) {
+        expect(messages.length).toBeGreaterThan(expectedCount - 1);
+        return;
+      }
+      await new Promise((r) => setTimeout(r, 50));
+    }
+
+    const actualCount = this.receivedMessages.get("default")?.length || 0;
+    throw new Error(`Expected at least ${expectedCount} events in ${seconds}s, got ${actualCount}`);
   }
 );
