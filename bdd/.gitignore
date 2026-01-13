@@ -3,3 +3,6 @@
 
 # Test reports
 reports/
+
+# Test data (isolated from production)
+.agentx-test/

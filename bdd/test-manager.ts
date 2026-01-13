@@ -166,18 +166,34 @@ process.on("SIGINT", async () => {
 const command = args[0];
 const cucumberArgs = command === "run" || command === "server" ? args.slice(1) : args;
 
+// Clean test data before running tests
+async function cleanTestData() {
+  const { rm } = await import("fs/promises");
+  const { resolve } = await import("path");
+  const testDataDir = resolve(import.meta.dir, ".agentx-test");
+
+  try {
+    await rm(testDataDir, { recursive: true, force: true });
+    console.log(`${YELLOW}[Manager]${RESET} Cleaned test data: ${testDataDir}\n`);
+  } catch {
+    // Ignore if doesn't exist
+  }
+}
+
 try {
   if (command === "server") {
     // Start server only
+    await cleanTestData();
     await manager.startServer();
     console.log(`${GREEN}[Manager]${RESET} Server running. Press Ctrl+C to stop.\n`);
     await new Promise(() => {}); // Keep alive
   } else if (command === "run") {
-    // Run tests only (assumes server is running)
+    // Run tests only (assumes server is running, don't clean)
     const exitCode = await manager.runCucumber(cucumberArgs);
     process.exit(exitCode);
   } else {
     // Default: Start server + run tests
+    await cleanTestData();
     await manager.startServer();
     const exitCode = await manager.runCucumber(cucumberArgs);
     await manager.shutdown();

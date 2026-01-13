@@ -25,11 +25,18 @@ function expect(value: unknown) {
 Given(/^container "([^"]+)" exists$/, async function (this: AgentXWorld, containerId: string) {
   if (!this.agentx) {
     const { createAgentX } = await import("agentxjs");
-    this.agentx = await createAgentX();
+    const { resolve } = await import("path");
+    const agentxDir = resolve(import.meta.dir, "../.agentx-test");
+    this.agentx = await createAgentX({ agentxDir });
   }
 
-  await this.agentx.request("container_create_request", { containerId });
-  this.createdContainers.push(containerId);
+  // Use unique container ID per scenario for isolation
+  const uniqueContainerId = `${this.scenarioId}_${containerId}`;
+  await this.agentx.request("container_create_request", { containerId: uniqueContainerId });
+  this.createdContainers.push(uniqueContainerId);
+
+  // Save mapping for lookups
+  this.savedValues.set(`container:${containerId}`, uniqueContainerId);
 });
 
 // Generic response assertions
@@ -72,13 +79,19 @@ Then(
 Given(
   /^image "([^"]+)" exists in container "([^"]+)"$/,
   async function (this: AgentXWorld, imageAlias: string, containerId: string) {
-    if (!this.createdContainers.includes(containerId)) {
-      await this.agentx!.request("container_create_request", { containerId });
-      this.createdContainers.push(containerId);
+    // Resolve unique container ID
+    let uniqueContainerId = this.savedValues.get(`container:${containerId}`);
+
+    if (!uniqueContainerId) {
+      // Container doesn't exist yet, create it
+      uniqueContainerId = `${this.scenarioId}_${containerId}`;
+      await this.agentx!.request("container_create_request", { containerId: uniqueContainerId });
+      this.createdContainers.push(uniqueContainerId);
+      this.savedValues.set(`container:${containerId}`, uniqueContainerId);
     }
 
     const response = await this.agentx!.request("image_create_request", {
-      containerId,
+      containerId: uniqueContainerId,
       config: { name: imageAlias },
     });
 
@@ -94,10 +107,13 @@ Given(
 When(
   /^I call agentx\.request\("([^"]+)", \{ containerId: "([^"]+)", config: \{ name: "([^"]+)" \} \}\)$/,
   async function (this: AgentXWorld, requestType: string, containerId: string, name: string) {
+    // Resolve unique container ID
+    const uniqueContainerId = this.savedValues.get(`container:${containerId}`) || containerId;
+
     this.lastResponse = await this.agentx!.request(
       requestType as never,
       {
-        containerId,
+        containerId: uniqueContainerId,
         config: { name },
       } as never
     );
@@ -114,10 +130,13 @@ When(
     name: string,
     systemPrompt: string
   ) {
+    // Resolve unique container ID
+    const uniqueContainerId = this.savedValues.get(`container:${containerId}`) || containerId;
+
     this.lastResponse = await this.agentx!.request(
       requestType as never,
       {
-        containerId,
+        containerId: uniqueContainerId,
         config: { name, systemPrompt },
       } as never
     );
@@ -145,7 +164,15 @@ When(
 When(
   /^I call agentx\.request\("([^"]+)", \{ containerId: "([^"]+)" \}\)$/,
   async function (this: AgentXWorld, requestType: string, containerId: string) {
-    this.lastResponse = await this.agentx!.request(requestType as never, { containerId } as never);
+    // Resolve unique container ID
+    const uniqueContainerId = this.savedValues.get(`container:${containerId}`) || containerId;
+
+    this.lastResponse = await this.agentx!.request(
+      requestType as never,
+      {
+        containerId: uniqueContainerId,
+      } as never
+    );
   }
 );
 
@@ -179,7 +206,18 @@ Then(
   /^response\.data\.records should have length (\d+)$/,
   function (this: AgentXWorld, length: string) {
     const records = (this.lastResponse!.data as { records?: unknown[] }).records;
-    expect(records?.length).toBe(parseInt(length, 10));
+    const actualLength = records?.length || 0;
+    const expectedLength = parseInt(length, 10);
+
+    if (actualLength !== expectedLength) {
+      console.log(`[DEBUG] Expected ${expectedLength} records, got ${actualLength}`);
+      const responseData = this.lastResponse!.data as any;
+      if (responseData.requestId) {
+        console.log(`[DEBUG] Request ID: ${responseData.requestId}`);
+      }
+    }
+
+    expect(actualLength).toBe(expectedLength);
   }
 );
 

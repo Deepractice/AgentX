@@ -45,8 +45,13 @@ export class AgentXWorld extends World {
   // Mock environment factory (for @mock tests)
   mockFactory?: any;
 
+  // Unique ID for this scenario (for data isolation)
+  scenarioId: string;
+
   constructor(options: IWorldOptions) {
     super(options);
+    // Generate unique ID per scenario
+    this.scenarioId = `test_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
   }
 
   /**
