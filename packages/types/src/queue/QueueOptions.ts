@@ -9,6 +9,23 @@ export interface QueueOptions {
   path: string;
 
   /**
+   * Enable persistence to database
+   * When false, Queue acts as pass-through (events notify subscribers but skip DB)
+   * Useful for debugging latency issues or when persistence is not needed
+   * @default true
+   */
+  persistenceEnabled?: boolean;
+
+  /**
+   * Enable queue functionality
+   * When false, Queue becomes a pure filter - events pass through with minimal overhead
+   * No cursor generation, no entry wrapping, just direct subscriber notification
+   * Useful for debugging to isolate if Queue logic itself causes latency
+   * @default true
+   */
+  queueEnabled?: boolean;
+
+  /**
    * Consumer inactivity timeout (milliseconds)
    * Consumers without ACK activity for this duration are considered stale and deleted
    * @default 86400000 (24 hours)

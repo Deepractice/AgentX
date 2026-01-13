@@ -49,7 +49,8 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
   // Create event queue for reliable delivery
   const { createQueue } = await import("@agentxjs/queue");
   const queuePath = join(basePath, "data", "queue.db");
-  const eventQueue = await createQueue({ path: queuePath });
+  // DEBUG: Set queueEnabled: false to test if Queue logic causes latency
+  const eventQueue = await createQueue({ path: queuePath, queueEnabled: false });
 
   const runtime = createRuntime({
     persistence,

@@ -21,6 +21,8 @@ declare const Bun: unknown;
 
 interface ResolvedOptions {
   path: string;
+  queueEnabled: boolean;
+  persistenceEnabled: boolean;
   consumerTtlMs: number;
   messageTtlMs: number;
   maxEntriesPerTopic: number;
@@ -65,6 +67,8 @@ export class SqliteEventQueue implements EventQueue {
   static async create(options: QueueOptions): Promise<SqliteEventQueue> {
     const resolvedOptions: ResolvedOptions = {
       path: options.path,
+      queueEnabled: options.queueEnabled ?? true,
+      persistenceEnabled: options.persistenceEnabled ?? true,
       consumerTtlMs: options.consumerTtlMs ?? 86400000, // 24 hours
       messageTtlMs: options.messageTtlMs ?? 172800000, // 48 hours
       maxEntriesPerTopic: options.maxEntriesPerTopic ?? 10000,
@@ -77,11 +81,35 @@ export class SqliteEventQueue implements EventQueue {
 
     await initializeSchema(db);
 
-    logger.info("SqliteEventQueue created", { path: resolvedOptions.path });
+    logger.info("SqliteEventQueue created", {
+      path: resolvedOptions.path,
+      queueEnabled: resolvedOptions.queueEnabled,
+      persistenceEnabled: resolvedOptions.persistenceEnabled,
+    });
     return new SqliteEventQueue(db, resolvedOptions);
   }
 
   async append(topic: string, event: unknown): Promise<string> {
+    // BYPASS MODE: When queueEnabled is false, just pass event directly to subscribers
+    // No cursor, no entry wrapping, no DB - pure pass-through for latency testing
+    if (!this.options.queueEnabled) {
+      const minimalEntry: QueueEntry = { cursor: "", topic, event, timestamp: 0 };
+      for (const sub of this.subscribers.values()) {
+        if (sub.topic === topic) {
+          try {
+            sub.handler(minimalEntry);
+          } catch (err) {
+            logger.error("Subscriber handler error", {
+              consumerId: sub.consumerId,
+              error: (err as Error).message,
+            });
+          }
+        }
+      }
+      return "";
+    }
+
+    // NORMAL MODE: Full queue functionality
     const cursor = this.cursorGen.generate();
     const timestamp = Date.now();
 
@@ -109,11 +137,14 @@ export class SqliteEventQueue implements EventQueue {
     }
 
     // Persist to DB AFTER notification (for reconnection recovery)
-    const eventJson = JSON.stringify(event);
-    await this.db.sql`
-      INSERT INTO queue_entries (cursor, topic, event, timestamp)
-      VALUES (${cursor}, ${topic}, ${eventJson}, ${timestamp})
-    `;
+    // Skip DB write if persistence is disabled (pass-through mode)
+    if (this.options.persistenceEnabled) {
+      const eventJson = JSON.stringify(event);
+      await this.db.sql`
+        INSERT INTO queue_entries (cursor, topic, event, timestamp)
+        VALUES (${cursor}, ${topic}, ${eventJson}, ${timestamp})
+      `;
+    }
 
     return cursor;
   }
