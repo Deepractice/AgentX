@@ -1,5 +1,33 @@
 # @agentxjs/runtime
 
+## 1.9.0
+
+### Minor Changes
+
+- 8f84a87: Add SDK warmup and UI hook tests
+
+  **Runtime Package**:
+  - Add `warmup()` method to `SDKQueryLifecycle` for pre-initializing Claude SDK
+  - Add `warmup()` method to `ClaudeEffector` and `ClaudeEnvironment`
+  - RuntimeAgent now calls warmup() on construction (fire-and-forget)
+  - Reduces first message latency by starting SDK subprocess early
+
+  **Types Package**:
+  - Add optional `warmup()` method to `Environment` interface
+
+  **UI Package**:
+  - Add happy-dom test setup for React hook testing in Bun
+  - Add useAgent hook tests for event filtering (imageId matching)
+
+### Patch Changes
+
+- Updated dependencies [8f84a87]
+- Updated dependencies [8f84a87]
+  - @agentxjs/common@1.9.0
+  - @agentxjs/persistence@1.9.0
+  - @agentxjs/types@1.9.0
+  - @agentxjs/agent@1.9.0
+
 ## 1.8.1
 
 ### Patch Changes
