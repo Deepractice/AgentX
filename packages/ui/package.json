@@ -36,7 +36,9 @@
     "build": "bun run build.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "bun test",
+    "test:watch": "bun test --watch"
   },
   "dependencies": {
     "@agentxjs/common": "workspace:*",
@@ -64,7 +66,10 @@
     "vaul": "^1.1.2",
     "zustand": "^5.0.2"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@testing-library/react": "16.3.1",
+    "happy-dom": "20.1.0"
+  },
   "peerDependencies": {
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
