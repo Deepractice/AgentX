@@ -130,10 +130,20 @@ export class WebSocketServer implements ChannelServer {
     // Don't close the server if attached to existing HTTP server
     if (!this.attachedToServer) {
       await new Promise<void>((resolve) => {
-        this.wss!.close(() => resolve());
+        // Add timeout to prevent hanging
+        const timeout = setTimeout(() => {
+          logger.warn("WebSocket server close timeout, forcing close");
+          resolve();
+        }, 1000);
+
+        this.wss!.close(() => {
+          clearTimeout(timeout);
+          resolve();
+        });
       });
     }
     this.wss = null;
+    logger.info("WebSocket server closed");
   }
 
   async dispose(): Promise<void> {
