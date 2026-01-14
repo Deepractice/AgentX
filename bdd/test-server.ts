@@ -72,9 +72,21 @@ async function startTestServer() {
   // Graceful shutdown
   const shutdown = async () => {
     console.log("\n🛑 Shutting down test server...");
-    await agentx.dispose();
-    console.log("✅ Test server stopped");
-    process.exit(0);
+
+    // Dispose with timeout protection
+    const disposePromise = agentx.dispose();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Dispose timeout")), 5000)
+    );
+
+    try {
+      await Promise.race([disposePromise, timeoutPromise]);
+      console.log("✅ Test server stopped");
+    } catch (err) {
+      console.error("⚠️ Dispose timeout, forcing exit:", (err as Error).message);
+    } finally {
+      process.exit(0);
+    }
   };
 
   process.on("SIGINT", shutdown);

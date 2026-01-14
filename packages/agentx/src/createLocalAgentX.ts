@@ -282,9 +282,13 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
     },
 
     async dispose() {
-      await eventQueue.close();
+      // Dispose in correct order to avoid "publish to closed queue" warnings:
+      // 1. Stop accepting new connections/requests
       await wsServer.dispose();
+      // 2. Stop runtime (no more events generated)
       await runtime.dispose();
+      // 3. Close queue last (safe to close after no more events)
+      await eventQueue.close();
     },
   };
 }

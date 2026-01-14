@@ -151,7 +151,27 @@ class TestManager {
   async shutdown() {
     if (this.serverProcess) {
       console.log(`\n${YELLOW}[Manager]${RESET} Stopping test server...`);
-      this.serverProcess.kill();
+
+      // Send SIGTERM for graceful shutdown
+      this.serverProcess.kill("SIGTERM");
+
+      // Wait for exit with timeout
+      const exitPromise = this.serverProcess.exited;
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("shutdown timeout")), 5000)
+      );
+
+      try {
+        await Promise.race([exitPromise, timeoutPromise]);
+        console.log(`${YELLOW}[Manager]${RESET} Test server stopped gracefully`);
+      } catch {
+        // Force kill if timeout
+        console.log(`${YELLOW}[Manager]${RESET} Force killing test server...`);
+        this.serverProcess.kill("SIGKILL");
+        await this.serverProcess.exited;
+      }
+
+      this.serverProcess = undefined;
     }
   }
 }
