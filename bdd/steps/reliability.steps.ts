@@ -89,7 +89,10 @@ Given("the network connection was dropped and restored", async function (this: A
 When(
   "server sends message {string} to image {string}",
   async function (this: AgentXWorld, message: string, imageAlias: string) {
-    const imageId = this.savedValues.get(`image:${imageAlias}`) || imageAlias;
+    const imageId = this.createdImages.get(imageAlias);
+    if (!imageId) {
+      throw new Error(`Image "${imageAlias}" not found in createdImages. Did you create it first?`);
+    }
 
     // Send message through AgentX (will be delivered via Queue)
     await this.agentx!.request("message_send_request", {
@@ -105,29 +108,39 @@ When(
 When(
   "server sends messages {string}, {string}, {string} to image {string} in order",
   async function (this: AgentXWorld, msg1: string, msg2: string, msg3: string, imageAlias: string) {
-    const imageId = this.createdImages.get(imageAlias) || imageAlias;
-    const key = `pending:${imageId}`;
-    this.savedValues.set(key, `${msg1},${msg2},${msg3}`);
+    const imageId = this.createdImages.get(imageAlias);
+    if (!imageId) throw new Error(`Image "${imageAlias}" not found`);
+
+    for (const msg of [msg1, msg2, msg3]) {
+      await this.agentx!.request("message_send_request", { imageId, content: msg });
+      await new Promise((r) => setTimeout(r, 50));
+    }
   }
 );
 
 When(
   "server sends {int} messages to image {string}",
   async function (this: AgentXWorld, count: number, imageAlias: string) {
-    const imageId = this.createdImages.get(imageAlias) || imageAlias;
-    const messages = Array.from({ length: count }, (_, i) => `msg-${i + 1}`);
-    const key = `pending:${imageId}`;
-    this.savedValues.set(key, messages.join(","));
+    const imageId = this.createdImages.get(imageAlias);
+    if (!imageId) throw new Error(`Image "${imageAlias}" not found`);
+
+    for (let i = 1; i <= count; i++) {
+      await this.agentx!.request("message_send_request", { imageId, content: `msg-${i}` });
+      await new Promise((r) => setTimeout(r, 10));
+    }
   }
 );
 
 Given(
   "server has sent {int} messages to image {string}",
   async function (this: AgentXWorld, count: number, imageAlias: string) {
-    const imageId = this.createdImages.get(imageAlias) || imageAlias;
-    const messages = Array.from({ length: count }, (_, i) => `msg-${i + 1}`);
-    const key = `sent:${imageId}`;
-    this.savedValues.set(key, messages.join(","));
+    const imageId = this.createdImages.get(imageAlias);
+    if (!imageId) throw new Error(`Image "${imageAlias}" not found`);
+
+    for (let i = 1; i <= count; i++) {
+      await this.agentx!.request("message_send_request", { imageId, content: `msg-${i}` });
+      await new Promise((r) => setTimeout(r, 10));
+    }
   }
 );
 
@@ -142,9 +155,13 @@ When(
     m5: string,
     imageAlias: string
   ) {
-    const imageId = this.createdImages.get(imageAlias) || imageAlias;
-    const key = `pending:${imageId}`;
-    this.savedValues.set(key, `${m1},${m2},${m3},${m4},${m5}`);
+    const imageId = this.createdImages.get(imageAlias);
+    if (!imageId) throw new Error(`Image "${imageAlias}" not found`);
+
+    for (const msg of [m1, m2, m3, m4, m5]) {
+      await this.agentx!.request("message_send_request", { imageId, content: msg });
+      await new Promise((r) => setTimeout(r, 10));
+    }
   }
 );
 
