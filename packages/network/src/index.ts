@@ -1,11 +1,27 @@
 /**
- * @agentxjs/network - Network layer abstraction (Node.js)
+ * @agentxjs/network - Network communication layer
  *
- * Provides WebSocket client/server implementations of Channel interfaces.
+ * Provides WebSocket server and client with reliable message delivery.
  */
 
-export { WebSocketServer } from "./WebSocketServer";
-export { WebSocketClient, createWebSocketClient } from "./WebSocketClient";
+// Server exports
+export { WebSocketServer } from "./server/WebSocketServer";
+export { WebSocketConnection } from "./server/WebSocketConnection";
+
+// Client exports
+export { WebSocketClient } from "./client/WebSocketClient";
+export { BrowserWebSocketClient } from "./client/BrowserWebSocketClient";
+
+// Factory
+export { createWebSocketClient } from "./factory";
+
+// Protocol (for advanced usage)
+export {
+  isReliableWrapper,
+  isAckMessage,
+  type ReliableWrapper,
+  type AckMessage,
+} from "./protocol/reliable-message";
 
 // Re-export types
 export type {
@@ -14,5 +30,6 @@ export type {
   ChannelConnection,
   ChannelClientOptions,
   ChannelServerOptions,
+  SendReliableOptions,
   Unsubscribe,
 } from "@agentxjs/types/network";

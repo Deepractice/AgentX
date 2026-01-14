@@ -19,6 +19,26 @@ export interface MinimalHTTPServer {
 export type Unsubscribe = () => void;
 
 /**
+ * Options for reliable message sending
+ */
+export interface SendReliableOptions {
+  /**
+   * Callback when client acknowledges receipt
+   */
+  onAck?: () => void;
+
+  /**
+   * Timeout in milliseconds (default: 5000)
+   */
+  timeout?: number;
+
+  /**
+   * Callback when ACK times out
+   */
+  onTimeout?: () => void;
+}
+
+/**
  * Channel connection (server-side representation of a client)
  */
 export interface ChannelConnection {
@@ -28,9 +48,23 @@ export interface ChannelConnection {
   readonly id: string;
 
   /**
-   * Send message to this client
+   * Send message to this client (fire-and-forget)
    */
   send(message: string): void;
+
+  /**
+   * Send message with acknowledgment
+   *
+   * The message is wrapped with a unique ID. Client automatically sends ACK
+   * when received. Server triggers onAck callback upon receiving ACK.
+   *
+   * This is handled transparently by the Network layer - clients don't need
+   * to implement any special protocol.
+   *
+   * @param message - Message to send
+   * @param options - ACK options (onAck callback, timeout, etc.)
+   */
+  sendReliable(message: string, options?: SendReliableOptions): void;
 
   /**
    * Register message handler

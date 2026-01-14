@@ -1,5 +1,9 @@
 /**
- * WebSocket Server implementation of ChannelServer
+ * WebSocket Server - Manages WebSocket connections
+ *
+ * Supports:
+ * - Standalone mode (listen on port)
+ * - Attached mode (attach to existing HTTP server)
  */
 
 import type { WebSocket as WS, WebSocketServer as WSS } from "ws";
@@ -11,111 +15,9 @@ import type {
   Unsubscribe,
 } from "@agentxjs/types/network";
 import { createLogger } from "@agentxjs/common";
+import { WebSocketConnection } from "./WebSocketConnection";
 
 const logger = createLogger("network/WebSocketServer");
-
-/**
- * WebSocket connection implementation
- */
-class WebSocketConnection implements ChannelConnection {
-  public readonly id: string;
-  private ws: WS;
-  private messageHandlers = new Set<(message: string) => void>();
-  private closeHandlers = new Set<() => void>();
-  private errorHandlers = new Set<(error: Error) => void>();
-  private heartbeatInterval?: ReturnType<typeof setInterval>;
-  private isAlive = true;
-
-  constructor(ws: WS, options: ChannelServerOptions) {
-    this.ws = ws;
-    this.id = `conn_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-
-    // Setup heartbeat if enabled
-    if (options.heartbeat !== false) {
-      const interval = options.heartbeatInterval || 30000;
-
-      ws.on("pong", () => {
-        this.isAlive = true;
-        logger.debug("Heartbeat pong received", { id: this.id });
-      });
-
-      this.heartbeatInterval = setInterval(() => {
-        if (!this.isAlive) {
-          logger.warn("Client heartbeat timeout, terminating connection", { id: this.id });
-          clearInterval(this.heartbeatInterval);
-          ws.terminate();
-          return;
-        }
-        this.isAlive = false;
-        ws.ping();
-        logger.debug("Heartbeat ping sent", { id: this.id });
-      }, interval);
-    }
-
-    // Setup message handler
-    ws.on("message", (data: Buffer) => {
-      const message = data.toString();
-      for (const handler of this.messageHandlers) {
-        handler(message);
-      }
-    });
-
-    // Setup close handler
-    ws.on("close", () => {
-      if (this.heartbeatInterval) {
-        clearInterval(this.heartbeatInterval);
-      }
-      for (const handler of this.closeHandlers) {
-        handler();
-      }
-    });
-
-    // Setup error handler
-    ws.on("error", (err: Error) => {
-      if (this.heartbeatInterval) {
-        clearInterval(this.heartbeatInterval);
-      }
-      for (const handler of this.errorHandlers) {
-        handler(err);
-      }
-    });
-  }
-
-  send(message: string): void {
-    if (this.ws.readyState === 1) {
-      // WebSocket.OPEN
-      this.ws.send(message);
-    }
-  }
-
-  onMessage(handler: (message: string) => void): Unsubscribe {
-    this.messageHandlers.add(handler);
-    return () => {
-      this.messageHandlers.delete(handler);
-    };
-  }
-
-  onClose(handler: () => void): Unsubscribe {
-    this.closeHandlers.add(handler);
-    return () => {
-      this.closeHandlers.delete(handler);
-    };
-  }
-
-  onError(handler: (error: Error) => void): Unsubscribe {
-    this.errorHandlers.add(handler);
-    return () => {
-      this.errorHandlers.delete(handler);
-    };
-  }
-
-  close(): void {
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-    }
-    this.ws.close();
-  }
-}
 
 /**
  * WebSocket Server

@@ -5,6 +5,7 @@
 export type {
   Unsubscribe,
   MinimalHTTPServer,
+  SendReliableOptions,
   ChannelConnection,
   ChannelServer,
   ChannelClient,

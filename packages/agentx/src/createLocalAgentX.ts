@@ -8,6 +8,7 @@
 import type { AgentX, LocalConfig } from "@agentxjs/types/agentx";
 import type { SystemEvent } from "@agentxjs/types/event";
 import type { Message } from "@agentxjs/types/agent";
+import type { ChannelConnection } from "@agentxjs/types/network";
 import { WebSocketServer } from "@agentxjs/network";
 import { createLogger } from "@agentxjs/common";
 
@@ -47,40 +48,11 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
   const storagePath = join(basePath, "data", "agentx.db");
   const persistence = await createPersistence(sqliteDriver({ path: storagePath }));
 
-  // Create event queue for reliable delivery
-  // onAck callback handles message persistence when client ACKs
+  // Create event queue for storage and reconnection recovery
+  // Note: Queue no longer handles client protocol - Network layer ACK is used instead
   const { createQueue } = await import("@agentxjs/queue");
   const queuePath = join(basePath, "data", "queue.db");
-  const eventQueue = await createQueue({
-    path: queuePath,
-    onAck: (topic, cursor, event) => {
-      // Skip global topic (no session to persist to)
-      if (topic === "global") return;
-
-      // Check if this is a message event that needs persistence
-      const systemEvent = event as SystemEvent;
-      if (systemEvent.category === "message" && systemEvent.data) {
-        const message = systemEvent.data as Message;
-        const sessionId = topic; // topic is sessionId for non-global events
-
-        logger.debug("Persisting message on ACK", {
-          sessionId,
-          cursor,
-          messageType: systemEvent.type,
-          messageId: message.id,
-        });
-
-        // Persist message to session
-        persistence.sessions.addMessage(sessionId, message).catch((err) => {
-          logger.error("Failed to persist message on ACK", {
-            sessionId,
-            cursor,
-            error: (err as Error).message,
-          });
-        });
-      }
-    },
-  });
+  const eventQueue = await createQueue({ path: queuePath });
 
   const runtime = createRuntime({
     persistence,
@@ -104,22 +76,42 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
     debug: false,
   });
 
+  // Track active connections and their subscribed sessions
+  const connections = new Map<
+    string,
+    {
+      connection: ChannelConnection;
+      subscribedSessions: Set<string>;
+    }
+  >();
+
   // Handle new connections
   wsServer.onConnection((connection) => {
-    // Let queue handle its protocol messages (subscribe/ack/unsubscribe)
-    const cleanupQueue = eventQueue.handleConnection(connection);
+    // Track this connection
+    connections.set(connection.id, {
+      connection,
+      subscribedSessions: new Set(["global"]), // Always subscribe to global
+    });
 
-    // Forward non-queue messages to runtime
+    logger.info("Client connected", { connectionId: connection.id });
+
+    // Forward messages to runtime
     connection.onMessage((message) => {
       try {
         const parsed = JSON.parse(message);
 
-        // Skip queue protocol messages (handled by eventQueue.handleConnection)
-        if (
-          parsed.type === "queue_subscribe" ||
-          parsed.type === "queue_ack" ||
-          parsed.type === "queue_unsubscribe"
-        ) {
+        // Handle session subscription request (simplified protocol)
+        if (parsed.type === "subscribe" && parsed.sessionId) {
+          const connState = connections.get(connection.id);
+          if (connState) {
+            connState.subscribedSessions.add(parsed.sessionId);
+            logger.debug("Client subscribed to session", {
+              connectionId: connection.id,
+              sessionId: parsed.sessionId,
+            });
+
+            // TODO: Send historical events from Queue for reconnection recovery
+          }
           return;
         }
 
@@ -137,7 +129,8 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
 
     // Cleanup on disconnect
     connection.onClose(() => {
-      cleanupQueue();
+      connections.delete(connection.id);
+      logger.info("Client disconnected", { connectionId: connection.id });
     });
   });
 
@@ -159,23 +152,34 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
     return true;
   }
 
-  // DEBUG: Set to true to bypass Queue and use direct WebSocket broadcast
-  const BYPASS_QUEUE = false;
+  /**
+   * Persist message to session storage
+   */
+  function persistMessage(event: SystemEvent): void {
+    if (event.category !== "message" || !event.data) return;
 
-  // Route runtime events through queue for reliable delivery
-  runtime.onAny((event) => {
-    // Only enqueue external events (internal events are for BusDriver/AgentEngine only)
-    if (!shouldEnqueue(event)) {
-      return;
-    }
+    const sessionId = (event.context as any)?.sessionId;
+    if (!sessionId) return;
 
-    // BYPASS MODE: Direct WebSocket broadcast (like main branch)
-    if (BYPASS_QUEUE) {
-      logger.debug("Broadcasting event (bypass queue)", {
-        type: event.type,
-        category: event.category,
+    const message = event.data as Message;
+    logger.debug("Persisting message on ACK", {
+      sessionId,
+      messageType: event.type,
+      messageId: message.id,
+    });
+
+    persistence.sessions.addMessage(sessionId, message).catch((err) => {
+      logger.error("Failed to persist message", {
+        sessionId,
+        error: (err as Error).message,
       });
-      wsServer.broadcast(JSON.stringify(event));
+    });
+  }
+
+  // Route runtime events to connected clients via reliable delivery
+  runtime.onAny((event) => {
+    // Only deliver external events (internal events are for BusDriver/AgentEngine only)
+    if (!shouldEnqueue(event)) {
       return;
     }
 
@@ -183,16 +187,37 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
     const topic = (event.context as any)?.sessionId ?? "global";
 
     // Log event for debugging
-    logger.debug("Enqueueing event", {
+    logger.debug("Delivering event", {
       type: event.type,
       category: event.category,
       topic,
     });
 
-    // Append to queue - subscribers will be notified automatically
+    // Store in queue for reconnection recovery
     eventQueue.append(topic, event).catch((err) => {
-      logger.error("Failed to enqueue event", { error: (err as Error).message });
+      logger.error("Failed to store event in queue", { error: (err as Error).message });
     });
+
+    // Send to all connections subscribed to this topic using reliable delivery
+    const message = JSON.stringify(event);
+    for (const [connId, connState] of connections) {
+      if (connState.subscribedSessions.has(topic)) {
+        connState.connection.sendReliable(message, {
+          onAck: () => {
+            // Persist message after client confirms receipt
+            persistMessage(event);
+          },
+          timeout: 10000,
+          onTimeout: () => {
+            logger.warn("ACK timeout for event", {
+              connectionId: connId,
+              eventType: event.type,
+              topic,
+            });
+          },
+        });
+      }
+    }
   });
 
   // If server is provided, attach WebSocket to it immediately
