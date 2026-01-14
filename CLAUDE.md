@@ -56,6 +56,39 @@ bun dev --help        # Show all available services
 # Single package commands
 bun --filter @agentxjs/agent test            # Run tests for one package
 bun --filter @agentxjs/agent test:watch      # Watch mode
+
+# BDD tests
+cd bdd && bun test                           # Run all BDD tests
+cd bdd && bun test --tags @bug               # Run bug reproduction tests
+```
+
+## Bug-Driven Testing
+
+When fixing bugs, follow the **Bug-First Testing** workflow:
+
+1. **Reproduce in BDD**: Create a `.feature` file in `bdd/features/bugs/` to reproduce the bug
+2. **Tag with @bug @wip**: Mark as work-in-progress bug test
+3. **Run and verify failure**: Ensure the test fails as expected
+4. **Fix the code**: Implement the fix
+5. **Verify test passes**: Run the bug test to confirm fix
+6. **Promote if valuable**: Move to appropriate feature directory (e.g., `reliability/`, `conversation/`)
+
+```bash
+# Bug reproduction workflow
+cd bdd
+bun test --tags "@bug and @wip"              # Run WIP bug tests only
+bun test --tags @bug                         # Run all bug tests
+```
+
+**Directory structure**:
+
+```text
+bdd/features/
+├── bugs/                 # Bug reproduction tests (@bug tag)
+│   └── *.feature         # Individual bug scenarios
+├── reliability/          # Reliability tests (reconnect, delivery)
+├── conversation/         # Conversation flow tests
+└── agentx/               # AgentX API tests
 ```
 
 ## Core Architecture

@@ -260,6 +260,13 @@ export class RuntimeAgent implements RuntimeAgentInterface {
     this.environment.receptor.connect(config.bus.asProducer());
     this.environment.effector.connect(config.bus.asConsumer());
 
+    // Warmup environment (fire-and-forget to reduce first message latency)
+    if (this.environment.warmup) {
+      this.environment.warmup().catch((err) => {
+        logger.warn("Environment warmup failed (non-fatal)", { error: err, agentId: this.agentId });
+      });
+    }
+
     logger.info("Environment created for agent", {
       agentId: this.agentId,
       environmentName: this.environment.name,

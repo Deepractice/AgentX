@@ -37,6 +37,15 @@ export class ClaudeEnvironment implements Environment {
   }
 
   /**
+   * Warmup the environment (pre-initialize SDK)
+   *
+   * Call this early to reduce latency for the first user message.
+   */
+  async warmup(): Promise<void> {
+    await this.claudeEffector.warmup();
+  }
+
+  /**
    * Dispose environment resources
    */
   dispose(): void {

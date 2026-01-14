@@ -93,6 +93,16 @@ export class ClaudeEffector implements Effector {
   }
 
   /**
+   * Warmup the SDK (pre-initialize before first message)
+   *
+   * Call this early to reduce latency for the first user message.
+   * Safe to call multiple times.
+   */
+  async warmup(): Promise<void> {
+    await this.queryLifecycle.warmup();
+  }
+
+  /**
    * Connect to SystemBus consumer to subscribe to events
    */
   connect(consumer: SystemBusConsumer): void {

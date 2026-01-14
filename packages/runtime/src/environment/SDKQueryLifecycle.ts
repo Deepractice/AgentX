@@ -86,6 +86,20 @@ export class SDKQueryLifecycle {
   }
 
   /**
+   * Warmup the SDK query (pre-initialize)
+   *
+   * Call this early to start the SDK subprocess before the first message.
+   * This reduces latency for the first user message.
+   *
+   * @returns Promise that resolves when SDK is ready
+   */
+  async warmup(): Promise<void> {
+    logger.info("Warming up SDKQueryLifecycle");
+    await this.initialize();
+    logger.info("SDKQueryLifecycle warmup complete");
+  }
+
+  /**
    * Initialize the SDK query (lazy initialization)
    *
    * Creates the query and starts the background listener.
