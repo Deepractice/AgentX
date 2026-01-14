@@ -3,7 +3,7 @@
  *
  * A traditional MQ implementation:
  * - In-memory pub/sub for real-time delivery (RxJS)
- * - SQLite persistence for recovery guarantee
+ * - SQLite persistence for recovery guarantee (sync writes, fast)
  * - Consumer cursor tracking for at-least-once delivery
  *
  * Decoupled from network protocol - caller decides when to ACK.
@@ -23,8 +23,8 @@ export interface EventQueue {
   /**
    * Publish an event to a topic
    *
-   * - Broadcasts to all subscribers immediately (in-memory)
-   * - Persists to SQLite asynchronously (for recovery)
+   * - Persists to SQLite (sync, fast)
+   * - Broadcasts to all subscribers (in-memory)
    *
    * @param topic - Topic identifier (e.g., sessionId)
    * @param event - Event payload

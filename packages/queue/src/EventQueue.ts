@@ -1,8 +1,8 @@
 /**
  * EventQueue - RxJS-based event queue with SQLite persistence
  *
- * - In-memory pub/sub using RxJS Subject (real-time, fast)
- * - SQLite persistence for recovery guarantee (async, non-blocking)
+ * - In-memory pub/sub using RxJS Subject (real-time)
+ * - SQLite persistence for recovery guarantee (sync, fast)
  * - Consumer cursor tracking for at-least-once delivery
  */
 
@@ -35,6 +35,7 @@ export class EventQueue implements IEventQueue {
   private readonly options: ResolvedOptions;
   private readonly db: Database;
   private cleanupTimer?: ReturnType<typeof setInterval>;
+  private isClosed = false;
 
   private constructor(db: Database, options: ResolvedOptions) {
     this.db = db;
@@ -65,6 +66,11 @@ export class EventQueue implements IEventQueue {
   }
 
   publish(topic: string, event: unknown): string {
+    if (this.isClosed) {
+      logger.warn("Attempted to publish to closed queue", { topic });
+      return "";
+    }
+
     const cursor = this.cursorGen.generate();
     const timestamp = Date.now();
 
@@ -75,11 +81,22 @@ export class EventQueue implements IEventQueue {
       timestamp,
     };
 
-    // 1. Broadcast to subscribers immediately (in-memory, sync)
-    this.subject.next(entry);
+    // 1. Persist to SQLite (sync, fast)
+    try {
+      const eventJson = JSON.stringify(entry.event);
+      this.db
+        .prepare("INSERT INTO queue_entries (cursor, topic, event, timestamp) VALUES (?, ?, ?, ?)")
+        .run(entry.cursor, entry.topic, eventJson, entry.timestamp);
+    } catch (err) {
+      logger.error("Failed to persist entry", {
+        cursor: entry.cursor,
+        topic: entry.topic,
+        error: (err as Error).message,
+      });
+    }
 
-    // 2. Persist asynchronously (non-blocking)
-    this.persistAsync(entry);
+    // 2. Broadcast to subscribers (in-memory)
+    this.subject.next(entry);
 
     return cursor;
   }
@@ -166,35 +183,15 @@ export class EventQueue implements IEventQueue {
   }
 
   async close(): Promise<void> {
+    if (this.isClosed) return;
+    this.isClosed = true;
+
     if (this.cleanupTimer) {
       clearInterval(this.cleanupTimer);
     }
     this.subject.complete();
     this.db.close();
     logger.info("EventQueue closed");
-  }
-
-  /**
-   * Persist entry to SQLite asynchronously
-   */
-  private persistAsync(entry: QueueEntry): void {
-    // Use setImmediate/setTimeout to make it non-blocking
-    setImmediate(() => {
-      try {
-        const eventJson = JSON.stringify(entry.event);
-        this.db
-          .prepare(
-            "INSERT INTO queue_entries (cursor, topic, event, timestamp) VALUES (?, ?, ?, ?)"
-          )
-          .run(entry.cursor, entry.topic, eventJson, entry.timestamp);
-      } catch (err) {
-        logger.error("Failed to persist entry", {
-          cursor: entry.cursor,
-          topic: entry.topic,
-          error: (err as Error).message,
-        });
-      }
-    });
   }
 
   /**
