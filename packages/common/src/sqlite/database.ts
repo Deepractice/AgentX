@@ -6,9 +6,22 @@
  * - Node.js 22+: node:sqlite (built-in)
  */
 
+import { dirname } from "node:path";
+import { mkdirSync, existsSync } from "node:fs";
 import type { Database, Statement, RunResult } from "./types";
 
 declare const Bun: unknown;
+
+/**
+ * Ensure parent directory exists for database file
+ */
+function ensureDir(path: string): void {
+  if (path === ":memory:") return;
+  const dir = dirname(path);
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true });
+  }
+}
 
 /**
  * Detect if running in Bun
@@ -54,6 +67,9 @@ function hasNodeSqlite(): boolean {
  * ```
  */
 export function openDatabase(path: string): Database {
+  // Ensure parent directory exists
+  ensureDir(path);
+
   if (isBun()) {
     return openBunDatabase(path);
   }

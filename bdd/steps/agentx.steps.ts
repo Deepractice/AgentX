@@ -81,15 +81,15 @@ Then("AgentX should have method {string}", function (this: AgentXWorld, method: 
 
 Given("an AgentX instance in local mode", async function (this: AgentXWorld) {
   const { createAgentX } = await import("agentxjs");
-  const { resolve } = await import("path");
-  const agentxDir = resolve(import.meta.dir, "../.agentx-test");
+  const { resolveFromPackage } = await import("@agentxjs/common/path");
+  const agentxDir = resolveFromPackage(import.meta, ".agentx-test");
   this.agentx = await createAgentX({ agentxDir });
 });
 
 Given("an AgentX instance", async function (this: AgentXWorld) {
   const { createAgentX } = await import("agentxjs");
-  const { resolve } = await import("path");
-  const agentxDir = resolve(import.meta.dir, "../.agentx-test");
+  const { resolveFromPackage } = await import("@agentxjs/common/path");
+  const agentxDir = resolveFromPackage(import.meta, ".agentx-test");
   this.agentx = await createAgentX({ agentxDir });
 });
 

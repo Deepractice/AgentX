@@ -53,4 +53,24 @@ if (!sqliteResult.success) {
 }
 
 console.log(`✅ SQLite build: ${sqliteResult.outputs.length} files`);
+
+// Build Path entry (node/bun only)
+const pathResult = await Bun.build({
+  entrypoints: ["src/path/index.ts"],
+  outdir: `${outdir}/path`,
+  format: "esm",
+  target: "node",
+  sourcemap: "external",
+  minify: false,
+  external: ["node:path", "node:url", "node:fs"],
+  plugins: [dts()],
+});
+
+if (!pathResult.success) {
+  console.error("❌ Path build failed:");
+  for (const log of pathResult.logs) console.error(log);
+  process.exit(1);
+}
+
+console.log(`✅ Path build: ${pathResult.outputs.length} files`);
 console.log(`🎉 Build complete!`);
