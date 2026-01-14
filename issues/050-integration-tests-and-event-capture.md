@@ -150,6 +150,7 @@ And events go through Agent → Queue → Client      # ← 端到端
   - 或者用 `--tags "@integration"` 覆盖
 
 - [ ] **运行第一个场景**
+
   ```bash
   MOCK_LLM=false bun test:bdd run features/integration/real-api.feature:12
   ```

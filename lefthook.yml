@@ -29,8 +29,9 @@ pre-push:
       run: bun install --frozen-lockfile
       fail_text: "Lockfile is outdated. Run 'bun install' to update it."
 
-    typecheck:
-      run: bun typecheck
+    # typecheck moved to CI - saves ~10s on every push
+    # typecheck:
+    #   run: bun typecheck
 
     # Optional: enable when you want to run test/build before push
     # CI will catch these issues anyway
