@@ -13,6 +13,7 @@
 
 import { spawn } from "bun";
 import { join } from "path";
+import { getModuleDir } from "@agentxjs/common/path";
 
 const RESET = "\x1b[0m";
 const GREEN = "\x1b[32m";
@@ -27,9 +28,10 @@ class TestManager {
   async startServer() {
     console.log(`${CYAN}[Test Server]${RESET} Starting on port ${TEST_SERVER_PORT}...\n`);
 
+    const moduleDir = getModuleDir(import.meta);
     this.serverProcess = spawn({
       cmd: ["bun", "--bun", "bdd/test-server.ts"],
-      cwd: join(import.meta.dir, ".."),
+      cwd: join(moduleDir, ".."),
       stdout: "pipe",
       stderr: "pipe",
       stdin: "ignore",
@@ -99,9 +101,10 @@ class TestManager {
 
     args.push(...extraArgs);
 
+    const moduleDir = getModuleDir(import.meta);
     const proc = spawn({
       cmd: ["bun", ...args],
-      cwd: join(import.meta.dir),
+      cwd: moduleDir,
       stdout: "pipe",
       stderr: "pipe",
       stdin: "inherit",
@@ -193,7 +196,8 @@ const cucumberArgs = command === "run" || command === "server" ? args.slice(1) :
 async function cleanTestData() {
   const { rm } = await import("fs/promises");
   const { resolve } = await import("path");
-  const testDataDir = resolve(import.meta.dir, ".agentx-test");
+  const moduleDir = getModuleDir(import.meta);
+  const testDataDir = resolve(moduleDir, ".agentx-test");
 
   try {
     await rm(testDataDir, { recursive: true, force: true });

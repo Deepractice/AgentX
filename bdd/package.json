@@ -5,7 +5,9 @@
   "description": "BDD contract tests for AgentX API",
   "type": "module",
   "scripts": {
-    "test": "NODE_OPTIONS='--import tsx' cucumber-js"
+    "test": "bun test-manager.ts",
+    "test:server": "bun test-manager.ts server",
+    "test:run": "NODE_OPTIONS='--import tsx' cucumber-js"
   },
   "devDependencies": {
     "@agentxjs/runtime": "workspace:*",

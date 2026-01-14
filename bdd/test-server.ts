@@ -8,12 +8,14 @@
 
 import { config } from "dotenv";
 import { resolve, join } from "path";
+import { getModuleDir } from "@agentxjs/common/path";
 
 const PORT = 15300;
-const AGENTX_DIR = resolve(import.meta.dir, "../.agentx-test");
+const moduleDir = getModuleDir(import.meta);
+const AGENTX_DIR = resolve(moduleDir, "../.agentx-test");
 
 // Load environment from bdd/.env.local
-const ENV_PATH = join(import.meta.dir, ".env.local");
+const ENV_PATH = join(moduleDir, ".env.local");
 config({ path: ENV_PATH });
 
 async function startTestServer() {
