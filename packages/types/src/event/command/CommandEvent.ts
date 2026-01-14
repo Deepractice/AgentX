@@ -25,6 +25,7 @@
 import type { SystemEvent } from "../base";
 import type { ImageRecord } from "~/runtime/internal/persistence";
 import type { UserContentPart } from "~/agent/message/parts";
+import type { AgentXResponse } from "~/agentx/response";
 
 // ============================================================================
 // Base Types
@@ -43,14 +44,15 @@ interface BaseCommandRequest<T extends string, D = unknown> extends SystemEvent<
 
 /**
  * Base interface for Command response events
+ *
+ * All response data types must extend AgentXResponse to ensure:
+ * - Consistent structure (requestId, error)
+ * - Automatic client-side handling (__subscriptions, etc.)
  */
-interface BaseCommandResponse<T extends string, D = unknown> extends SystemEvent<
-  T,
-  D,
-  "command",
-  "response",
-  "result"
-> {}
+interface BaseCommandResponse<
+  T extends string,
+  D extends AgentXResponse = AgentXResponse,
+> extends SystemEvent<T, D, "command", "response", "result"> {}
 
 // ============================================================================
 // Container Commands
@@ -72,10 +74,8 @@ export interface ContainerCreateRequest extends BaseCommandRequest<
  */
 export interface ContainerCreateResponse extends BaseCommandResponse<
   "container_create_response",
-  {
-    requestId: string;
+  AgentXResponse & {
     containerId: string;
-    error?: string;
   }
 > {}
 
@@ -95,11 +95,9 @@ export interface ContainerGetRequest extends BaseCommandRequest<
  */
 export interface ContainerGetResponse extends BaseCommandResponse<
   "container_get_response",
-  {
-    requestId: string;
+  AgentXResponse & {
     containerId?: string;
     exists: boolean;
-    error?: string;
   }
 > {}
 
@@ -118,10 +116,8 @@ export interface ContainerListRequest extends BaseCommandRequest<
  */
 export interface ContainerListResponse extends BaseCommandResponse<
   "container_list_response",
-  {
-    requestId: string;
+  AgentXResponse & {
     containerIds: string[];
-    error?: string;
   }
 > {}
 
@@ -145,12 +141,10 @@ export interface AgentGetRequest extends BaseCommandRequest<
  */
 export interface AgentGetResponse extends BaseCommandResponse<
   "agent_get_response",
-  {
-    requestId: string;
+  AgentXResponse & {
     agentId?: string;
     containerId?: string;
     exists: boolean;
-    error?: string;
   }
 > {}
 
@@ -170,10 +164,8 @@ export interface AgentListRequest extends BaseCommandRequest<
  */
 export interface AgentListResponse extends BaseCommandResponse<
   "agent_list_response",
-  {
-    requestId: string;
+  AgentXResponse & {
     agents: Array<{ agentId: string; containerId: string; imageId: string }>;
-    error?: string;
   }
 > {}
 
@@ -193,11 +185,9 @@ export interface AgentDestroyRequest extends BaseCommandRequest<
  */
 export interface AgentDestroyResponse extends BaseCommandResponse<
   "agent_destroy_response",
-  {
-    requestId: string;
+  AgentXResponse & {
     agentId: string;
     success: boolean;
-    error?: string;
   }
 > {}
 
@@ -217,10 +207,8 @@ export interface AgentDestroyAllRequest extends BaseCommandRequest<
  */
 export interface AgentDestroyAllResponse extends BaseCommandResponse<
   "agent_destroy_all_response",
-  {
-    requestId: string;
+  AgentXResponse & {
     containerId: string;
-    error?: string;
   }
 > {}
 
@@ -247,11 +235,9 @@ export interface MessageSendRequest extends BaseCommandRequest<
  */
 export interface MessageSendResponse extends BaseCommandResponse<
   "message_send_response",
-  {
-    requestId: string;
+  AgentXResponse & {
     imageId?: string;
     agentId: string;
-    error?: string;
   }
 > {}
 
@@ -275,11 +261,9 @@ export interface AgentInterruptRequest extends BaseCommandRequest<
  */
 export interface AgentInterruptResponse extends BaseCommandResponse<
   "agent_interrupt_response",
-  {
-    requestId: string;
+  AgentXResponse & {
     imageId?: string;
     agentId?: string;
-    error?: string;
   }
 > {}
 
@@ -305,13 +289,14 @@ export interface ImageCreateRequest extends BaseCommandRequest<
 
 /**
  * Response to image creation
+ *
+ * Includes __subscriptions with the new image's sessionId for auto-subscription.
+ * Note: record is optional because it may be undefined on error.
  */
 export interface ImageCreateResponse extends BaseCommandResponse<
   "image_create_response",
-  {
-    requestId: string;
-    record: ImageRecord;
-    error?: string;
+  AgentXResponse & {
+    record?: ImageRecord;
   }
 > {}
 
@@ -331,13 +316,11 @@ export interface ImageRunRequest extends BaseCommandRequest<
  */
 export interface ImageRunResponse extends BaseCommandResponse<
   "image_run_response",
-  {
-    requestId: string;
+  AgentXResponse & {
     imageId: string;
     agentId: string;
     /** true if reusing existing agent, false if newly created */
     reused: boolean;
-    error?: string;
   }
 > {}
 
@@ -357,10 +340,8 @@ export interface ImageStopRequest extends BaseCommandRequest<
  */
 export interface ImageStopResponse extends BaseCommandResponse<
   "image_stop_response",
-  {
-    requestId: string;
+  AgentXResponse & {
     imageId: string;
-    error?: string;
   }
 > {}
 
@@ -381,13 +362,13 @@ export interface ImageUpdateRequest extends BaseCommandRequest<
 
 /**
  * Response to image update
+ *
+ * Note: record is optional because it may be undefined on error.
  */
 export interface ImageUpdateResponse extends BaseCommandResponse<
   "image_update_response",
-  {
-    requestId: string;
-    record: ImageRecord;
-    error?: string;
+  AgentXResponse & {
+    record?: ImageRecord;
   }
 > {}
 
@@ -414,13 +395,13 @@ export interface ImageListItem extends ImageRecord {
 
 /**
  * Response to image list
+ *
+ * Includes __subscriptions with all images' sessionIds for auto-subscription.
  */
 export interface ImageListResponse extends BaseCommandResponse<
   "image_list_response",
-  {
-    requestId: string;
+  AgentXResponse & {
     records: ImageListItem[];
-    error?: string;
   }
 > {}
 
@@ -437,13 +418,13 @@ export interface ImageGetRequest extends BaseCommandRequest<
 
 /**
  * Response to image get
+ *
+ * Includes __subscriptions with the image's sessionId for auto-subscription.
  */
 export interface ImageGetResponse extends BaseCommandResponse<
   "image_get_response",
-  {
-    requestId: string;
+  AgentXResponse & {
     record?: ImageListItem | null;
-    error?: string;
   }
 > {}
 
@@ -463,10 +444,8 @@ export interface ImageDeleteRequest extends BaseCommandRequest<
  */
 export interface ImageDeleteResponse extends BaseCommandResponse<
   "image_delete_response",
-  {
-    requestId: string;
+  AgentXResponse & {
     imageId: string;
-    error?: string;
   }
 > {}
 
@@ -486,8 +465,7 @@ export interface ImageMessagesRequest extends BaseCommandRequest<
  */
 export interface ImageMessagesResponse extends BaseCommandResponse<
   "image_messages_response",
-  {
-    requestId: string;
+  AgentXResponse & {
     imageId: string;
     messages: Array<{
       id: string;
@@ -495,7 +473,6 @@ export interface ImageMessagesResponse extends BaseCommandResponse<
       content: unknown;
       timestamp: number;
     }>;
-    error?: string;
   }
 > {}
 

@@ -59,7 +59,7 @@ import type {
   Environment,
 } from "@agentxjs/types/runtime/internal";
 import { createAgent } from "@agentxjs/agent";
-import { createLogger } from "@agentxjs/common";
+import { createLogger, generateRequestId } from "@agentxjs/common";
 import { BusDriver } from "./BusDriver";
 import { AgentInteractor } from "./AgentInteractor";
 import { defaultEnvironmentFactory } from "../environment/DefaultEnvironmentFactory";
@@ -363,7 +363,7 @@ export class RuntimeAgent implements RuntimeAgentInterface {
     // Use Interactor to handle user input
     // This will: build UserMessage, persist, emit to bus
     // BusDriver will receive DriveableEvents when Claude responds
-    await this.interactor.receive(content, requestId || `req_${Date.now()}`);
+    await this.interactor.receive(content, requestId || generateRequestId());
 
     logger.debug("RuntimeAgent.receive completed", { agentId: this.agentId });
   }

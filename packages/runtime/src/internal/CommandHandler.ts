@@ -14,6 +14,7 @@
 
 import type { SystemBus, McpServerConfig } from "@agentxjs/types/runtime/internal";
 import type { SystemEvent } from "@agentxjs/types/event";
+import type { AgentXResponse } from "@agentxjs/types/agentx";
 import type { Message, UserContentPart } from "@agentxjs/types/agent";
 import { BaseEventHandler } from "./BaseEventHandler";
 import { createLogger } from "@agentxjs/common";
@@ -88,8 +89,11 @@ export interface RuntimeOperations {
 
 /**
  * Helper to create a command response event
+ *
+ * Type constraint ensures all response data extends AgentXResponse,
+ * guaranteeing requestId, error, and __subscriptions fields.
  */
-function createResponse<T extends string, D>(type: T, data: D): SystemEvent {
+function createResponse<T extends string, D extends AgentXResponse>(type: T, data: D): SystemEvent {
   return {
     type,
     timestamp: Date.now(),
@@ -447,6 +451,8 @@ export class CommandHandler extends BaseEventHandler {
         createResponse("image_create_response", {
           requestId,
           record,
+          // Auto-subscribe client to this session for real-time events
+          __subscriptions: [record.sessionId],
         })
       );
     } catch (err) {
@@ -454,7 +460,6 @@ export class CommandHandler extends BaseEventHandler {
       this.bus.emit(
         createResponse("image_create_response", {
           requestId,
-          record: null as unknown as ImageListItemResult,
           error: err instanceof Error ? err.message : String(err),
         })
       );
@@ -536,7 +541,6 @@ export class CommandHandler extends BaseEventHandler {
       this.bus.emit(
         createResponse("image_update_response", {
           requestId,
-          record: null as unknown as ImageListItemResult,
           error: err instanceof Error ? err.message : String(err),
         })
       );
@@ -555,6 +559,8 @@ export class CommandHandler extends BaseEventHandler {
         createResponse("image_list_response", {
           requestId,
           records: images,
+          // Auto-subscribe client to all sessions for real-time events
+          __subscriptions: images.map((img) => img.sessionId),
         })
       );
     } catch (err) {
@@ -581,6 +587,8 @@ export class CommandHandler extends BaseEventHandler {
         createResponse("image_get_response", {
           requestId,
           record: image,
+          // Auto-subscribe client to this session for real-time events
+          __subscriptions: image?.sessionId ? [image.sessionId] : undefined,
         })
       );
     } catch (err) {

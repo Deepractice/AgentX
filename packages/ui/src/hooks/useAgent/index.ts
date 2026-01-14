@@ -44,6 +44,7 @@
 
 import { useReducer, useCallback, useRef, useEffect } from "react";
 import type { AgentX, Message, UserContentPart } from "agentxjs";
+import { isErrorResponse } from "@agentxjs/types/agentx";
 import { createLogger } from "@agentxjs/common";
 import type { UserConversationData, UseAgentResult, UseAgentOptions, UIError } from "./types";
 import { conversationReducer, initialConversationState } from "./conversationReducer";
@@ -96,6 +97,11 @@ export function useAgent(
       .request("image_messages_request", { imageId })
       .then((response) => {
         if (!mounted) return;
+        // Check for error response using unified type guard
+        if (isErrorResponse(response.data)) {
+          logger.warn("Failed to load messages", { imageId, error: response.data.error });
+          return;
+        }
         const data = response.data as unknown as { messages: Message[] };
         if (data.messages && data.messages.length > 0) {
           dispatch({ type: "LOAD_HISTORY", messages: data.messages });

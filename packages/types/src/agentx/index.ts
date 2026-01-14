@@ -484,6 +484,10 @@ export declare function createAgentX(config?: AgentXConfig): Promise<AgentX>;
 
 import type { McpServerConfig } from "~/runtime/internal/container/sandbox/mcp";
 
+// Re-export response types
+export type { AgentXResponse } from "./response";
+export { hasSubscriptions, isErrorResponse } from "./response";
+
 /**
  * AgentDefinition - Static template for defining an Agent
  *

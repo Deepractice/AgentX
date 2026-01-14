@@ -8,7 +8,8 @@
  * at the transport layer. Events are received directly (not wrapped in queue_entry).
  */
 
-import type { AgentX, RemoteConfig, Unsubscribe } from "@agentxjs/types/agentx";
+import type { AgentX, RemoteConfig, Unsubscribe, AgentXResponse } from "@agentxjs/types/agentx";
+import { hasSubscriptions } from "@agentxjs/types/agentx";
 import type {
   CommandEventMap,
   CommandRequestType,
@@ -16,7 +17,7 @@ import type {
   RequestDataFor,
   SystemEvent,
 } from "@agentxjs/types/event";
-import { createLogger } from "@agentxjs/common";
+import { createLogger, generateRequestId } from "@agentxjs/common";
 
 const logger = createLogger("agentx/RemoteClient");
 
@@ -173,7 +174,7 @@ export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> 
       data: RequestDataFor<T>,
       timeout: number = 30000
     ): Promise<ResponseEventFor<T>> {
-      const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      const requestId = generateRequestId();
 
       // Resolve and merge context if provided
       let mergedData = { ...data, requestId };
@@ -233,20 +234,17 @@ export async function createRemoteAgentX(config: RemoteConfig): Promise<AgentX> 
         client.send(JSON.stringify(event));
       });
 
-      // Auto-subscribe to session on successful session/image operations
-      const typeStr = type as string;
-      if (
-        (typeStr === "session_get" ||
-          typeStr === "session_create" ||
-          typeStr === "image_create_request") &&
-        response.category === "response"
-      ) {
-        // For image_create_response, sessionId is in record.sessionId
-        const sessionId =
-          (response.data as any)?.sessionId || (response.data as any)?.record?.sessionId;
-        if (sessionId) {
+      // Handle AgentXResponse extensions (unified approach)
+      // Auto-subscribe to sessions based on __subscriptions field
+      const responseData = response.data as AgentXResponse;
+      if (hasSubscriptions(responseData)) {
+        for (const sessionId of responseData.__subscriptions) {
           subscribeToSession(sessionId);
         }
+        logger.debug("Auto-subscribed to sessions from response", {
+          type,
+          sessionIds: responseData.__subscriptions,
+        });
       }
 
       return response;

@@ -41,6 +41,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { AgentX, ImageListItem } from "agentxjs";
+import { isErrorResponse } from "@agentxjs/types/agentx";
 import { createLogger } from "@agentxjs/common";
 
 const logger = createLogger("ui/useImages");
@@ -154,8 +155,8 @@ export function useImages(agentx: AgentX | null, options: UseImagesOptions = {})
 
     try {
       const response = await agentx.request("image_list_request", { containerId });
-      if (response.data.error) {
-        throw new Error(response.data.error);
+      if (isErrorResponse(response.data)) {
+        throw new Error(response.data.error!);
       }
       const records = response.data.records ?? [];
       setImages(records);

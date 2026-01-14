@@ -1,14 +1,9 @@
-// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
-
-exports[`AgentX Types Contract > should maintain stable exports 1`] = `
-{
-  "createAgentX": "undefined",
-  "defineAgent": "undefined",
-}
-`;
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
 exports[`AgentX Types Contract should maintain stable exports 1`] = `
 {
+  "hasSubscriptions": "function(1 args)",
+  "isErrorResponse": "function(1 args)",
   "isLocalConfig": "function(1 args)",
   "isRemoteConfig": "function(1 args)",
 }

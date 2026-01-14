@@ -21,7 +21,7 @@ import type {
   CommandRequestResponseMap,
 } from "@agentxjs/types/event";
 import { Subject } from "rxjs";
-import { createLogger } from "@agentxjs/common";
+import { createLogger, generateRequestId } from "@agentxjs/common";
 
 const logger = createLogger("runtime/SystemBusImpl");
 
@@ -139,7 +139,7 @@ export class SystemBusImpl implements SystemBus {
     timeout: number = 30000
   ): Promise<ResponseEventFor<T>> {
     return new Promise((resolve, reject) => {
-      const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      const requestId = generateRequestId();
 
       // Get response type from request type
       const responseType = type.replace("_request", "_response") as CommandRequestResponseMap[T];
