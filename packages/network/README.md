@@ -1,13 +1,13 @@
 # @agentxjs/network
 
-Network channel abstraction for AgentX - WebSocket-based client-server communication with channel support.
+WebSocket communication layer for AgentX with reliable message delivery.
 
 ## Features
 
-- **Transport-agnostic interfaces** - Can be implemented with WebSocket, HTTP/2, gRPC, etc.
-- **Channel-based routing** - Publish/subscribe to specific channels (e.g., sessions, groups)
-- **Connection management** - Auto cleanup on disconnect, heartbeat support
-- **Cross-platform** - Node.js and browser support
+- **Reliable Message Delivery** - ACK-based confirmation with timeout handling
+- **Cross-Platform Client** - Node.js and Browser support with auto-reconnect
+- **Heartbeat** - Connection health monitoring via ping/pong
+- **Modular Design** - Separate protocol, server, and client modules
 
 ## Installation
 
@@ -15,11 +15,9 @@ Network channel abstraction for AgentX - WebSocket-based client-server communica
 bun add @agentxjs/network
 ```
 
-## API
+## Quick Start
 
-### ChannelServer
-
-Server-side interface for accepting connections and managing channels.
+### Server
 
 ```typescript
 import { WebSocketServer } from "@agentxjs/network";
@@ -29,114 +27,200 @@ const server = new WebSocketServer({
   heartbeatInterval: 30000,
 });
 
-await server.listen(5200);
-```
-
-#### Methods
-
-**Connection Management**
-
-- `listen(port: number, host?: string): Promise<void>` - Start listening on a port
-- `attach(server: HTTPServer, path?: string): void` - Attach to existing HTTP server
-- `onConnection(handler: (connection: ChannelConnection) => void): Unsubscribe` - Register connection handler
-- `close(): Promise<void>` - Close server and all connections
-- `dispose(): Promise<void>` - Dispose resources
-
-**Broadcasting**
-
-- `broadcast(message: string): void` - Send to all connected clients
-
-**Channel Support**
-
-- `subscribe(connection: ChannelConnection, channelId: string): void` - Subscribe connection to a channel
-- `publish(channelId: string, message: string): void` - Publish message to channel subscribers
-- `unsubscribe(connection: ChannelConnection, channelId: string): void` - Unsubscribe connection from channel
-
-### ChannelConnection
-
-Client connection representation with unique ID.
-
-```typescript
-interface ChannelConnection {
-  readonly id: string; // Unique connection ID
-
-  send(message: string): void;
-  onMessage(handler: (message: string) => void): Unsubscribe;
-  onClose(handler: () => void): Unsubscribe;
-  onError(handler: (error: Error) => void): Unsubscribe;
-  close(): void;
-}
-```
-
-## Usage Examples
-
-### Basic Server
-
-```typescript
-import { WebSocketServer } from "@agentxjs/network";
-
-const server = new WebSocketServer();
-
 server.onConnection((connection) => {
   console.log("Client connected:", connection.id);
 
   connection.onMessage((message) => {
     console.log("Received:", message);
-    connection.send("Echo: " + message);
   });
 
-  connection.onClose(() => {
-    console.log("Client disconnected:", connection.id);
+  // Send with delivery confirmation
+  connection.sendReliable(JSON.stringify({ type: "welcome" }), {
+    onAck: () => console.log("Client received the message"),
+    timeout: 5000,
+    onTimeout: () => console.log("Client did not acknowledge"),
   });
 });
 
 await server.listen(5200);
 ```
 
-### Channel-based Pub/Sub
+### Client (Node.js)
 
 ```typescript
-const server = new WebSocketServer();
+import { createWebSocketClient } from "@agentxjs/network";
 
-server.onConnection((connection) => {
-  connection.onMessage((message) => {
-    const { type, channelId, data } = JSON.parse(message);
-
-    if (type === "subscribe") {
-      // Subscribe to a channel (e.g., sessionId, groupId)
-      server.subscribe(connection, channelId);
-      console.log(`${connection.id} subscribed to ${channelId}`);
-    }
-
-    if (type === "unsubscribe") {
-      server.unsubscribe(connection, channelId);
-    }
-  });
+const client = await createWebSocketClient({
+  serverUrl: "ws://localhost:5200",
 });
 
-// Publish to specific channel
-server.publish(
-  "session-123",
-  JSON.stringify({
-    type: "message",
-    content: "Hello",
-  })
-);
-// Only connections subscribed to "session-123" will receive this
+client.onMessage((message) => {
+  console.log("Received:", message);
+  // ACK is sent automatically for reliable messages
+});
+
+client.send(JSON.stringify({ type: "hello" }));
 ```
 
-### Auto Cleanup
-
-Connections are automatically unsubscribed from all channels when disconnected:
+### Client (Browser)
 
 ```typescript
-server.onConnection((connection) => {
-  server.subscribe(connection, "channel-1");
-  server.subscribe(connection, "channel-2");
+import { createWebSocketClient } from "@agentxjs/network";
 
-  // When connection closes, automatically unsubscribed from both channels
+const client = await createWebSocketClient({
+  serverUrl: "ws://localhost:5200",
+  autoReconnect: true,
+  maxReconnectionDelay: 10000,
+});
+
+client.onMessage((message) => {
+  console.log("Received:", message);
+});
+
+client.onClose(() => {
+  console.log("Disconnected, will auto-reconnect...");
 });
 ```
+
+## API Reference
+
+### WebSocketServer
+
+```typescript
+import { WebSocketServer } from "@agentxjs/network";
+
+const server = new WebSocketServer(options?: ChannelServerOptions);
+```
+
+**Options:**
+
+| Option              | Type      | Default | Description                |
+| ------------------- | --------- | ------- | -------------------------- |
+| `heartbeat`         | `boolean` | `true`  | Enable ping/pong heartbeat |
+| `heartbeatInterval` | `number`  | `30000` | Heartbeat interval in ms   |
+
+**Methods:**
+
+| Method                      | Description                    |
+| --------------------------- | ------------------------------ |
+| `listen(port, host?)`       | Start standalone server        |
+| `attach(httpServer, path?)` | Attach to existing HTTP server |
+| `onConnection(handler)`     | Register connection handler    |
+| `broadcast(message)`        | Send to all connections        |
+| `close()`                   | Close all connections          |
+| `dispose()`                 | Release all resources          |
+
+### WebSocketConnection
+
+Server-side representation of a client connection.
+
+```typescript
+interface ChannelConnection {
+  readonly id: string;
+
+  // Basic send (fire-and-forget)
+  send(message: string): void;
+
+  // Reliable send with ACK
+  sendReliable(message: string, options?: SendReliableOptions): void;
+
+  // Event handlers
+  onMessage(handler: (message: string) => void): Unsubscribe;
+  onClose(handler: () => void): Unsubscribe;
+  onError(handler: (error: Error) => void): Unsubscribe;
+
+  close(): void;
+}
+```
+
+**SendReliableOptions:**
+
+```typescript
+interface SendReliableOptions {
+  onAck?: () => void; // Called when client acknowledges
+  timeout?: number; // ACK timeout in ms (default: 5000)
+  onTimeout?: () => void; // Called if ACK times out
+}
+```
+
+### WebSocketClient
+
+```typescript
+import { createWebSocketClient } from "@agentxjs/network";
+
+const client = await createWebSocketClient(options: ChannelClientOptions);
+```
+
+**Options:**
+
+| Option                 | Type                 | Default          | Description                   |
+| ---------------------- | -------------------- | ---------------- | ----------------------------- |
+| `serverUrl`            | `string`             | required         | WebSocket server URL          |
+| `autoReconnect`        | `boolean`            | `true` (browser) | Auto-reconnect on disconnect  |
+| `minReconnectionDelay` | `number`             | `1000`           | Min delay between reconnects  |
+| `maxReconnectionDelay` | `number`             | `10000`          | Max delay between reconnects  |
+| `maxRetries`           | `number`             | `Infinity`       | Max reconnection attempts     |
+| `connectionTimeout`    | `number`             | `4000`           | Connection timeout in ms      |
+| `headers`              | `object \| function` | -                | Custom headers (Node.js only) |
+
+**Methods:**
+
+| Method               | Description              |
+| -------------------- | ------------------------ |
+| `send(message)`      | Send message to server   |
+| `onMessage(handler)` | Handle incoming messages |
+| `onOpen(handler)`    | Handle connection open   |
+| `onClose(handler)`   | Handle connection close  |
+| `onError(handler)`   | Handle errors            |
+| `close()`            | Close connection         |
+| `dispose()`          | Release all resources    |
+
+## Reliable Message Protocol
+
+The `sendReliable()` method provides guaranteed message delivery:
+
+```
+Server                              Client
+   │                                   │
+   │  ──── { __msgId, __payload } ──►  │
+   │                                   │
+   │  ◄──── { __ack: msgId } ────────  │
+   │                                   │
+   ▼ onAck() called                    ▼
+```
+
+**How it works:**
+
+1. Server wraps message with unique `__msgId`
+2. Client receives, extracts payload, auto-sends `__ack`
+3. Server receives ACK, triggers `onAck` callback
+4. If no ACK within timeout, triggers `onTimeout`
+
+**Use cases:**
+
+- Persist data only after client confirms receipt
+- Track message delivery status
+- Implement at-least-once delivery semantics
+
+## Architecture
+
+```
+@agentxjs/network
+├── protocol/
+│   └── reliable-message.ts    # ACK protocol types
+│
+├── server/
+│   ├── WebSocketConnection.ts # Connection with sendReliable
+│   └── WebSocketServer.ts     # Server management
+│
+├── client/
+│   ├── WebSocketClient.ts     # Node.js client
+│   └── BrowserWebSocketClient.ts # Browser client with reconnect
+│
+└── factory.ts                 # createWebSocketClient
+```
+
+## Examples
 
 ### Attach to HTTP Server
 
@@ -154,60 +238,56 @@ wsServer.attach(httpServer, "/ws");
 httpServer.listen(5200);
 ```
 
-## Channel Semantics
+### Custom Headers (Node.js)
 
-### Channel Identifier
+```typescript
+const client = await createWebSocketClient({
+  serverUrl: "ws://localhost:5200",
+  headers: {
+    Authorization: "Bearer token123",
+  },
+});
 
-A `channelId` is an arbitrary string identifying a logical channel:
-
-- Single chat: `channelId = sessionId`
-- Group chat: `channelId = groupId`
-- System notifications: `channelId = "system"`
-- Custom: any string
-
-### Multiple Subscriptions
-
-- A connection can subscribe to multiple channels
-- Multiple connections can subscribe to the same channel
-- Duplicate subscriptions are idempotent (Set-based)
-
-### Lifecycle
-
-```
-subscribe(conn, channelId)
-    ↓
-channels[channelId] = Set(conn, ...)
-    ↓
-publish(channelId, msg) → send to all in Set
-    ↓
-conn.close() → auto unsubscribe from all channels
+// Or dynamic headers
+const client = await createWebSocketClient({
+  serverUrl: "ws://localhost:5200",
+  headers: async () => ({
+    Authorization: `Bearer ${await getToken()}`,
+  }),
+});
 ```
 
-## Architecture
+### Reliable Delivery with Persistence
 
+```typescript
+server.onConnection((connection) => {
+  // Only persist after client confirms receipt
+  connection.sendReliable(JSON.stringify(event), {
+    onAck: () => {
+      database.save(event);
+      console.log("Event persisted after client ACK");
+    },
+    timeout: 10000,
+    onTimeout: () => {
+      console.log("Client did not acknowledge, will retry...");
+    },
+  });
+});
 ```
-┌─────────────────────────────────────┐
-│  ChannelServer (Interface)          │
-│  - Transport-agnostic abstraction   │
-└─────────────────────────────────────┘
-                ↓ implements
-┌─────────────────────────────────────┐
-│  WebSocketServer                    │
-│  - connections: Set<Connection>     │
-│  - channels: Map<channelId, Set>    │
-│                                     │
-│  subscribe(conn, channelId)         │
-│  publish(channelId, message)        │
-│  unsubscribe(conn, channelId)       │
-└─────────────────────────────────────┘
-                ↓ uses
-┌─────────────────────────────────────┐
-│  WebSocketConnection                │
-│  - Wraps ws.WebSocket               │
-│  - Heartbeat support                │
-│  - Event handlers (message/close)   │
-└─────────────────────────────────────┘
+
+## Testing
+
+```bash
+bun test
 ```
+
+52 tests covering:
+
+- Protocol type guards
+- Connection send/sendReliable
+- ACK handling and timeouts
+- Server lifecycle
+- Client auto-ACK
 
 ## License
 
