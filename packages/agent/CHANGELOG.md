@@ -1,5 +1,14 @@
 # @agentxjs/agent
 
+## 1.9.0
+
+### Patch Changes
+
+- Updated dependencies [8f84a87]
+- Updated dependencies [8f84a87]
+  - @agentxjs/common@1.9.0
+  - @agentxjs/types@1.9.0
+
 ## 1.8.1
 
 ### Patch Changes
