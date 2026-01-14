@@ -89,12 +89,16 @@ Given("the network connection was dropped and restored", async function (this: A
 When(
   "server sends message {string} to image {string}",
   async function (this: AgentXWorld, message: string, imageAlias: string) {
-    // In real implementation, this would use the server to send a message
-    // For now, we simulate by adding to a pending messages list
-    const imageId = this.createdImages.get(imageAlias) || imageAlias;
-    const key = `pending:${imageId}`;
-    const pending = this.savedValues.get(key) || "";
-    this.savedValues.set(key, pending ? `${pending},${message}` : message);
+    const imageId = this.savedValues.get(`image:${imageAlias}`) || imageAlias;
+
+    // Send message through AgentX (will be delivered via Queue)
+    await this.agentx!.request("message_send_request", {
+      imageId,
+      content: message,
+    });
+
+    // Wait a bit for message to be delivered
+    await new Promise((r) => setTimeout(r, 100));
   }
 );
 
@@ -151,17 +155,23 @@ When(
 Then("I should receive message {string}", function (this: AgentXWorld, message: string) {
   const clientId = "default";
   const messages = this.receivedMessages.get(clientId) || [];
-  messages.push(message);
-  this.receivedMessages.set(clientId, messages);
-  expect(messages).toContain(message);
+  const found = messages.some((m) => m.includes(message));
+  if (!found) {
+    console.log("DEBUG: Expected message:", message);
+    console.log("DEBUG: Actual messages:", messages);
+  }
+  expect(found).toBe(true);
 });
 
 Then("the client should receive message {string}", function (this: AgentXWorld, message: string) {
   const clientId = "default";
   const messages = this.receivedMessages.get(clientId) || [];
-  messages.push(message);
-  this.receivedMessages.set(clientId, messages);
-  expect(messages).toContain(message);
+  const found = messages.some((m) => m.includes(message));
+  if (!found) {
+    console.log("DEBUG: Expected message:", message);
+    console.log("DEBUG: Actual messages:", messages);
+  }
+  expect(found).toBe(true);
 });
 
 Then("I should NOT receive message {string} again", function (this: AgentXWorld, message: string) {

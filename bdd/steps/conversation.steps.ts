@@ -25,9 +25,18 @@ function expect(value: unknown) {
 Given(/^container "([^"]+)" exists$/, async function (this: AgentXWorld, containerId: string) {
   if (!this.agentx) {
     const { createAgentX } = await import("agentxjs");
-    const { resolve } = await import("path");
-    const agentxDir = resolve(import.meta.dir, "../.agentx-test");
-    this.agentx = await createAgentX({ agentxDir });
+
+    // If server port is set (from "an AgentX server is running"), use remote mode
+    if (this.usedPorts.length > 0) {
+      const port = this.usedPorts[0];
+      this.agentx = await createAgentX({ serverUrl: `ws://localhost:${port}` });
+      this.isConnected = true;
+    } else {
+      // Local mode
+      const { resolveFromPackage } = await import("@agentxjs/common/path");
+      const agentxDir = resolveFromPackage(import.meta, ".agentx-test");
+      this.agentx = await createAgentX({ agentxDir });
+    }
   }
 
   // Use unique container ID per scenario for isolation
@@ -68,7 +77,15 @@ Then(
   /^response\.data\.containerIds should contain "([^"]+)"$/,
   function (this: AgentXWorld, containerId: string) {
     const containerIds = (this.lastResponse!.data as { containerIds?: string[] }).containerIds;
-    expect(containerIds).toContain(containerId);
+    // Match by suffix (test environment adds prefix like "test_{timestamp}_{seed}_")
+    const found = containerIds?.some(
+      (id) => id.endsWith(containerId) || id.includes(`_${containerId}`)
+    );
+    if (!found) {
+      console.log("DEBUG: Expected containerId:", containerId);
+      console.log("DEBUG: Actual containerIds:", containerIds);
+    }
+    expect(found).toBe(true);
   }
 );
 
@@ -351,10 +368,23 @@ Then(
 
 Given(
   /^I am subscribed to events for image "([^"]+)"$/,
-  function (this: AgentXWorld, _imageAlias: string) {
+  function (this: AgentXWorld, imageAlias: string) {
     this.subscribeToEvent("text_delta");
     this.subscribeToEvent("message_start");
     this.subscribeToEvent("message_stop");
     this.subscribeToEvent("assistant_message");
+
+    // Also collect messages for reliability tests
+    const clientId = "default";
+    if (!this.receivedMessages.has(clientId)) {
+      this.receivedMessages.set(clientId, []);
+    }
+
+    this.agentx!.on("assistant_message", (event) => {
+      const content = (event.data as { content?: string }).content;
+      if (content) {
+        this.receivedMessages.get(clientId)!.push(content);
+      }
+    });
   }
 );
