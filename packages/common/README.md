@@ -224,6 +224,109 @@ console.log(get("user:1")); // { name: "Alice", age: 30 }
 
 ---
 
+## Path Utilities
+
+Cross-runtime path helpers that work in both Bun and Node.js.
+
+### Quick Start
+
+```typescript
+import {
+  getModuleDir,
+  getPackageRoot,
+  getMonorepoRoot,
+  resolveFromRoot,
+  resolveFromPackage,
+} from "@agentxjs/common/path";
+
+// Current module directory
+const __dirname = getModuleDir(import.meta);
+// e.g., /Users/sean/AgentX/packages/queue/src
+
+// Package root (where package.json is)
+const pkgRoot = getPackageRoot(import.meta);
+// e.g., /Users/sean/AgentX/packages/queue
+
+// Monorepo root
+const root = getMonorepoRoot(import.meta);
+// e.g., /Users/sean/AgentX
+
+// Resolve from monorepo root
+const dataDir = resolveFromRoot(import.meta, "data", "logs");
+// e.g., /Users/sean/AgentX/data/logs
+
+// Resolve from package root
+const testsDir = resolveFromPackage(import.meta, "tests", "fixtures");
+// e.g., /Users/sean/AgentX/packages/queue/tests/fixtures
+```
+
+### API
+
+#### `getModuleDir(meta: ImportMeta): string`
+
+Get the directory of the current module.
+
+```typescript
+const __dirname = getModuleDir(import.meta);
+```
+
+**Compatibility:**
+
+- Bun: uses `import.meta.dir`
+- Node.js: converts `import.meta.url` to path
+
+#### `getPackageRoot(meta: ImportMeta): string`
+
+Get the package root directory (walks up to find `package.json`).
+
+```typescript
+const pkgRoot = getPackageRoot(import.meta);
+```
+
+#### `getMonorepoRoot(meta: ImportMeta): string`
+
+Get the monorepo root directory (walks up to find lock files).
+
+```typescript
+const root = getMonorepoRoot(import.meta);
+```
+
+**Detects:**
+
+- `pnpm-workspace.yaml` (pnpm monorepo)
+- `bun.lock` (bun workspace)
+- `package-lock.json` (npm workspace)
+- `yarn.lock` (yarn workspace)
+
+#### `resolveFromRoot(meta: ImportMeta, ...paths: string[]): string`
+
+Resolve a path relative to the monorepo root.
+
+```typescript
+const configPath = resolveFromRoot(import.meta, "config", "settings.json");
+```
+
+#### `resolveFromPackage(meta: ImportMeta, ...paths: string[]): string`
+
+Resolve a path relative to the package root.
+
+```typescript
+const testData = resolveFromPackage(import.meta, "tests", "fixtures", "data.json");
+```
+
+### Example: Test Fixtures
+
+```typescript
+import { resolveFromPackage } from "@agentxjs/common/path";
+import { readFileSync } from "node:fs";
+
+// Load test fixture from current package
+const fixturePath = resolveFromPackage(import.meta, "tests", "fixtures", "sample.json");
+const data = JSON.parse(readFileSync(fixturePath, "utf-8"));
+```
+
+---
+
 ## Built-in Implementations
 
 ### ConsoleLogger
