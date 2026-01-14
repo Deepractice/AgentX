@@ -1,126 +1,84 @@
+/**
+ * EventQueue - Reliable event delivery with persistence guarantee
+ *
+ * A traditional MQ implementation:
+ * - In-memory pub/sub for real-time delivery (RxJS)
+ * - SQLite persistence for recovery guarantee
+ * - Consumer cursor tracking for at-least-once delivery
+ *
+ * Decoupled from network protocol - caller decides when to ACK.
+ */
+
 import type { QueueEntry } from "./QueueEntry";
 
 /**
- * Unsubscribe function type
+ * Unsubscribe function
  */
 export type Unsubscribe = () => void;
 
 /**
- * MessageSender - Generic interface for bidirectional message communication
- *
- * This abstraction allows Queue to work with any transport layer
- * (WebSocket, HTTP, etc.) without direct dependency.
- */
-export interface MessageSender {
-  /**
-   * Unique identifier for this sender/connection
-   */
-  readonly id: string;
-
-  /**
-   * Send a message
-   */
-  send(message: string): void;
-
-  /**
-   * Register message handler
-   * @returns Unsubscribe function
-   */
-  onMessage(handler: (message: string) => void): Unsubscribe;
-
-  /**
-   * Register close handler
-   * @returns Unsubscribe function
-   */
-  onClose(handler: () => void): Unsubscribe;
-}
-
-/**
- * EventQueue - Interface for reliable event delivery queue
- *
- * Standard MQ with multi-consumer broadcast support.
- * Each consumer independently tracks their consumption progress.
+ * EventQueue interface
  */
 export interface EventQueue {
   /**
-   * Append an event to a topic
-   * @param topic - Topic identifier (e.g., sessionId, channelId)
-   * @param event - Event to append
-   * @returns Cursor for the appended entry
+   * Publish an event to a topic
+   *
+   * - Broadcasts to all subscribers immediately (in-memory)
+   * - Persists to SQLite asynchronously (for recovery)
+   *
+   * @param topic - Topic identifier (e.g., sessionId)
+   * @param event - Event payload
+   * @returns Cursor of the published entry
    */
-  append(topic: string, event: unknown): Promise<string>;
+  publish(topic: string, event: unknown): string;
 
   /**
-   * Create or update a consumer for a topic
-   * If the consumer already exists, updates the timestamp (reconnection)
-   * @param consumerId - Consumer identifier (clientId from client)
+   * Subscribe to real-time events on a topic
+   *
+   * Receives events published after subscription.
+   * For historical events, use recover() first.
+   *
    * @param topic - Topic identifier
+   * @param handler - Callback for each event entry
+   * @returns Unsubscribe function
    */
-  createConsumer(consumerId: string, topic: string): Promise<void>;
+  subscribe(topic: string, handler: (entry: QueueEntry) => void): Unsubscribe;
 
   /**
-   * Read entries for a consumer from their last position
-   * @param consumerId - Consumer identifier
+   * Acknowledge consumption (update consumer cursor)
+   *
+   * Call this after successfully processing an event.
+   * The cursor position is persisted for recovery.
+   *
+   * @param consumerId - Consumer identifier (e.g., connectionId)
    * @param topic - Topic identifier
-   * @param limit - Maximum number of entries to return (default: 100)
-   * @returns Array of queue entries after consumer's cursor
-   */
-  read(consumerId: string, topic: string, limit?: number): Promise<QueueEntry[]>;
-
-  /**
-   * Acknowledge consumption (updates consumer's cursor position)
-   * @param consumerId - Consumer identifier
-   * @param topic - Topic identifier
-   * @param cursor - Cursor of last consumed entry
+   * @param cursor - Cursor of the consumed entry
    */
   ack(consumerId: string, topic: string, cursor: string): Promise<void>;
 
   /**
-   * Subscribe to real-time events for a consumer
-   * @param consumerId - Consumer identifier
-   * @param topic - Topic identifier
-   * @param handler - Callback for new entries
-   * @returns Unsubscribe function
-   */
-  subscribe(consumerId: string, topic: string, handler: (entry: QueueEntry) => void): Unsubscribe;
-
-  /**
    * Get consumer's current cursor position
+   *
    * @param consumerId - Consumer identifier
    * @param topic - Topic identifier
-   * @returns Consumer's cursor or null if not exists
+   * @returns Cursor or null if consumer not found
    */
-  getConsumerCursor(consumerId: string, topic: string): Promise<string | null>;
+  getCursor(consumerId: string, topic: string): Promise<string | null>;
 
   /**
-   * Delete a consumer subscription
-   * @param consumerId - Consumer identifier
+   * Recover historical events from persistence
+   *
+   * Used for reconnection recovery - fetches events after a cursor.
+   *
    * @param topic - Topic identifier
+   * @param afterCursor - Start cursor (exclusive), omit for all history
+   * @param limit - Maximum entries to return (default: 1000)
+   * @returns Array of event entries
    */
-  deleteConsumer(consumerId: string, topic: string): Promise<void>;
+  recover(topic: string, afterCursor?: string, limit?: number): Promise<QueueEntry[]>;
 
   /**
-   * Cleanup entries that all consumers have consumed
-   * Also cleans up stale consumers based on TTL
-   * @returns Number of entries cleaned up
-   */
-  cleanup(): Promise<number>;
-
-  /**
-   * Handle a connection for queue protocol messages
-   *
-   * Automatically processes:
-   * - queue_subscribe: Create consumer, send history, subscribe to real-time
-   * - queue_ack: Update consumer cursor
-   * - queue_unsubscribe: Remove subscription
-   *
-   * @param sender - Message sender (e.g., WebSocket connection)
-   * @returns Unsubscribe function to cleanup when connection closes
-   */
-  handleConnection(sender: MessageSender): Unsubscribe;
-
-  /**
-   * Close the queue and release resources
+   * Close the event queue and release resources
    */
   close(): Promise<void>;
 }

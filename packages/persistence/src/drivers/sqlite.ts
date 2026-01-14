@@ -1,7 +1,7 @@
 /**
  * SQLite Driver - SQLite database storage
  *
- * Uses db0 with automatic runtime detection:
+ * Uses @agentxjs/common SQLite abstraction with automatic runtime detection:
  * - Bun: uses bun:sqlite (built-in)
  * - Node.js 22+: uses node:sqlite (built-in)
  *
@@ -16,10 +16,9 @@
  * ```
  */
 
-import { createStorage, type Storage } from "unstorage";
+import { createStorage, type Storage, type Driver } from "unstorage";
+import { openDatabase, type Database } from "@agentxjs/common/sqlite";
 import type { PersistenceDriver } from "../Persistence";
-
-declare const Bun: unknown;
 
 export interface SqliteDriverOptions {
   /**
@@ -30,23 +29,68 @@ export interface SqliteDriverOptions {
 }
 
 /**
- * Detect runtime and return appropriate SQLite connector
+ * Create a custom unstorage driver using our SQLite abstraction
  */
-async function getSqliteConnector(path: string) {
-  // Bun runtime - use bun:sqlite
-  if (typeof Bun !== "undefined") {
-    const { default: bunSqliteConnector } = await import("db0/connectors/bun-sqlite");
-    return bunSqliteConnector({ path });
-  }
+function createSqliteUnstorageDriver(db: Database): Driver {
+  // Initialize schema
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS kv_storage (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_kv_key ON kv_storage(key);
+  `);
 
-  // Node.js 22+ - use built-in node:sqlite
-  const nodeSqlite = globalThis.process?.getBuiltinModule?.("node:sqlite");
-  if (nodeSqlite) {
-    const { default: nodeSqliteConnector } = await import("db0/connectors/node-sqlite");
-    return nodeSqliteConnector({ path });
-  }
+  return {
+    name: "agentx-sqlite",
 
-  throw new Error("No SQLite driver available. Requires Bun runtime or Node.js 22+.");
+    hasItem(key: string): boolean {
+      const row = db.prepare("SELECT 1 FROM kv_storage WHERE key = ?").get(key);
+      return row !== undefined;
+    },
+
+    getItem(key: string): string | null {
+      const row = db.prepare("SELECT value FROM kv_storage WHERE key = ?").get(key) as
+        | { value: string }
+        | undefined;
+      return row?.value ?? null;
+    },
+
+    setItem(key: string, value: string): void {
+      const now = Date.now();
+      const existing = db.prepare("SELECT 1 FROM kv_storage WHERE key = ?").get(key);
+      if (existing) {
+        db.prepare("UPDATE kv_storage SET value = ?, updated_at = ? WHERE key = ?").run(
+          value,
+          now,
+          key
+        );
+      } else {
+        db.prepare(
+          "INSERT INTO kv_storage (key, value, created_at, updated_at) VALUES (?, ?, ?, ?)"
+        ).run(key, value, now, now);
+      }
+    },
+
+    removeItem(key: string): void {
+      db.prepare("DELETE FROM kv_storage WHERE key = ?").run(key);
+    },
+
+    getKeys(): string[] {
+      const rows = db.prepare("SELECT key FROM kv_storage").all() as { key: string }[];
+      return rows.map((r) => r.key);
+    },
+
+    clear(): void {
+      db.exec("DELETE FROM kv_storage");
+    },
+
+    dispose(): void {
+      db.close();
+    },
+  };
 }
 
 /**
@@ -57,16 +101,10 @@ async function getSqliteConnector(path: string) {
 export function sqliteDriver(options: SqliteDriverOptions): PersistenceDriver {
   return {
     async createStorage(): Promise<Storage> {
-      // Dynamic imports to avoid bundling when not used
-      const { default: db0Driver } = await import("unstorage/drivers/db0");
-      const { createDatabase } = await import("db0");
+      const db = openDatabase(options.path);
+      const driver = createSqliteUnstorageDriver(db);
 
-      const connector = await getSqliteConnector(options.path);
-      const database = createDatabase(connector);
-
-      return createStorage({
-        driver: db0Driver({ database }),
-      });
+      return createStorage({ driver });
     },
   };
 }

@@ -6,14 +6,6 @@
  * @packageDocumentation
  */
 
-export type { EventQueue, MessageSender, Unsubscribe } from "./EventQueue";
+export type { EventQueue, Unsubscribe } from "./EventQueue";
 export type { QueueEntry } from "./QueueEntry";
-export type { QueueOptions, OnAckCallback } from "./QueueOptions";
-export type {
-  QueueSubscribeRequest,
-  QueueAckRequest,
-  QueueUnsubscribeRequest,
-  QueueEntryMessage,
-  QueueSubscribedMessage,
-  QueueMessage,
-} from "./QueueSubscription";
+export type { QueueOptions } from "./QueueOptions";

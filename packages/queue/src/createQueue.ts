@@ -2,8 +2,8 @@
  * Factory function to create EventQueue
  */
 
-import type { EventQueue, QueueOptions } from "@agentxjs/types/queue";
-import { SqliteEventQueue } from "./SqliteEventQueue";
+import type { EventQueue as IEventQueue, QueueOptions } from "@agentxjs/types/queue";
+import { EventQueue } from "./EventQueue";
 
 /**
  * Create an EventQueue instance
@@ -15,17 +15,24 @@ import { SqliteEventQueue } from "./SqliteEventQueue";
  * ```typescript
  * import { createQueue } from "@agentxjs/queue";
  *
- * // Production: persistent SQLite
- * const queue = await createQueue({
- *   path: "./data/queue.db",
+ * const queue = createQueue({ path: "./data/queue.db" });
+ *
+ * // Subscribe to events
+ * queue.subscribe("session-123", (entry) => {
+ *   console.log("Received:", entry.event);
  * });
  *
- * // Testing: in-memory SQLite
- * const queue = await createQueue({
- *   path: ":memory:",
- * });
+ * // Publish events
+ * const cursor = queue.publish("session-123", { type: "message", text: "hello" });
+ *
+ * // ACK after processing
+ * await queue.ack("client-1", "session-123", cursor);
+ *
+ * // Recover on reconnection
+ * const lastCursor = await queue.getCursor("client-1", "session-123");
+ * const missed = await queue.recover("session-123", lastCursor);
  * ```
  */
-export async function createQueue(options: QueueOptions): Promise<EventQueue> {
-  return SqliteEventQueue.create(options);
+export function createQueue(options: QueueOptions): IEventQueue {
+  return EventQueue.create(options);
 }

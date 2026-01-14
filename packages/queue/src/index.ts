@@ -1,7 +1,7 @@
 /**
  * @agentxjs/queue - Reliable event delivery queue for AgentX
  *
- * Provides persistent event queuing with cursor support for reconnection recovery.
+ * RxJS-based in-memory pub/sub with SQLite persistence for recovery.
  *
  * @packageDocumentation
  */
@@ -9,5 +9,5 @@
 export { createQueue } from "./createQueue";
 export { CursorGenerator } from "./CursorGenerator";
 
-// Re-export types for convenience
-export type { EventQueue, QueueEntry, QueueOptions, QueueMessage } from "@agentxjs/types/queue";
+// Re-export types
+export type { EventQueue, QueueEntry, QueueOptions, Unsubscribe } from "@agentxjs/types/queue";

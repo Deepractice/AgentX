@@ -39,3 +39,6 @@ export {
   setLoggerFactory,
   createLogger,
 } from "./logger";
+
+// Note: SQLite abstraction is exported separately via "@agentxjs/common/sqlite"
+// to keep the main entry browser-compatible

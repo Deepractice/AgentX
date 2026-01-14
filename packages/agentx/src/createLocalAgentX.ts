@@ -48,11 +48,11 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
   const storagePath = join(basePath, "data", "agentx.db");
   const persistence = await createPersistence(sqliteDriver({ path: storagePath }));
 
-  // Create event queue for storage and reconnection recovery
-  // Note: Queue no longer handles client protocol - Network layer ACK is used instead
+  // Create event queue for pub/sub and reconnection recovery
+  // Queue is decoupled from network protocol - we hook Network ACK to Queue ACK
   const { createQueue } = await import("@agentxjs/queue");
   const queuePath = join(basePath, "data", "queue.db");
-  const eventQueue = await createQueue({ path: queuePath });
+  const eventQueue = createQueue({ path: queuePath });
 
   const runtime = createRuntime({
     persistence,
@@ -85,15 +85,61 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
     }
   >();
 
+  // Subscribe to queue topics and deliver to clients
+  // This is set up per-connection when client subscribes to a session
+  function subscribeConnectionToTopic(connectionId: string, topic: string): void {
+    const connState = connections.get(connectionId);
+    if (!connState) return;
+
+    // Already subscribed?
+    if (connState.subscribedSessions.has(topic)) return;
+    connState.subscribedSessions.add(topic);
+
+    // Subscribe to queue for this topic
+    const unsubscribe = eventQueue.subscribe(topic, (entry) => {
+      const event = entry.event as SystemEvent;
+      const message = JSON.stringify(event);
+
+      connState.connection.sendReliable(message, {
+        onAck: () => {
+          // Hook: Network ACK → Queue ACK
+          eventQueue.ack(connectionId, topic, entry.cursor).catch((err) => {
+            logger.error("Failed to ack", { error: (err as Error).message });
+          });
+          // Persist message after client confirms receipt
+          persistMessage(event);
+        },
+        timeout: 10000,
+        onTimeout: () => {
+          logger.warn("ACK timeout for event", {
+            connectionId,
+            eventType: event.type,
+            topic,
+          });
+        },
+      });
+    });
+
+    // Cleanup on disconnect
+    connState.connection.onClose(() => {
+      unsubscribe();
+    });
+
+    logger.debug("Connection subscribed to queue topic", { connectionId, topic });
+  }
+
   // Handle new connections
   wsServer.onConnection((connection) => {
     // Track this connection
     connections.set(connection.id, {
       connection,
-      subscribedSessions: new Set(["global"]), // Always subscribe to global
+      subscribedSessions: new Set(),
     });
 
     logger.info("Client connected", { connectionId: connection.id });
+
+    // Subscribe to global topic by default
+    subscribeConnectionToTopic(connection.id, "global");
 
     // Forward messages to runtime
     connection.onMessage((message) => {
@@ -102,15 +148,21 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
 
         // Handle session subscription request (simplified protocol)
         if (parsed.type === "subscribe" && parsed.sessionId) {
-          const connState = connections.get(connection.id);
-          if (connState) {
-            connState.subscribedSessions.add(parsed.sessionId);
-            logger.debug("Client subscribed to session", {
-              connectionId: connection.id,
-              sessionId: parsed.sessionId,
-            });
+          subscribeConnectionToTopic(connection.id, parsed.sessionId);
 
-            // TODO: Send historical events from Queue for reconnection recovery
+          // Send historical events for reconnection recovery
+          const lastCursor = parsed.afterCursor;
+          if (lastCursor) {
+            eventQueue
+              .recover(parsed.sessionId, lastCursor)
+              .then((entries) => {
+                for (const entry of entries) {
+                  connection.send(JSON.stringify(entry.event));
+                }
+              })
+              .catch((err) => {
+                logger.error("Failed to recover history", { error: (err as Error).message });
+              });
           }
           return;
         }
@@ -176,7 +228,7 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
     });
   }
 
-  // Route runtime events to connected clients via reliable delivery
+  // Route runtime events to Queue for pub/sub
   runtime.onAny((event) => {
     // Only deliver external events (internal events are for BusDriver/AgentEngine only)
     if (!shouldEnqueue(event)) {
@@ -186,38 +238,8 @@ export async function createLocalAgentX(config: LocalConfig): Promise<AgentX> {
     // Determine topic from event context (sessionId or "global")
     const topic = (event.context as any)?.sessionId ?? "global";
 
-    // Log event for debugging
-    logger.debug("Delivering event", {
-      type: event.type,
-      category: event.category,
-      topic,
-    });
-
-    // Store in queue for reconnection recovery
-    eventQueue.append(topic, event).catch((err) => {
-      logger.error("Failed to store event in queue", { error: (err as Error).message });
-    });
-
-    // Send to all connections subscribed to this topic using reliable delivery
-    const message = JSON.stringify(event);
-    for (const [connId, connState] of connections) {
-      if (connState.subscribedSessions.has(topic)) {
-        connState.connection.sendReliable(message, {
-          onAck: () => {
-            // Persist message after client confirms receipt
-            persistMessage(event);
-          },
-          timeout: 10000,
-          onTimeout: () => {
-            logger.warn("ACK timeout for event", {
-              connectionId: connId,
-              eventType: event.type,
-              topic,
-            });
-          },
-        });
-      }
-    }
+    // Publish to queue (broadcasts to subscribers + persists async)
+    eventQueue.publish(topic, event);
   });
 
   // If server is provided, attach WebSocket to it immediately

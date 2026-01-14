@@ -67,14 +67,6 @@
     "@agentxjs/types": "workspace:*",
     "unstorage": "^1.14.4"
   },
-  "peerDependencies": {
-    "db0": "^0.2.0"
-  },
-  "peerDependenciesMeta": {
-    "db0": {
-      "optional": true
-    }
-  },
   "publishConfig": {
     "access": "public"
   }

@@ -1,32 +1,56 @@
 /**
  * Bun Build Script for @agentxjs/common
  * ESM-only modern build
+ *
+ * - Main entry (logger): browser compatible
+ * - SQLite entry: node/bun only
  */
 
 import { dts } from "bun-dts";
 
-const entrypoints = ["src/index.ts"];
 const outdir = "./dist";
 
 await Bun.$`rm -rf ${outdir}`;
 
 console.log("🚀 Building @agentxjs/common (ESM-only)\n");
 
-const result = await Bun.build({
-  entrypoints,
+// Build main entry (browser compatible)
+const mainResult = await Bun.build({
+  entrypoints: ["src/index.ts"],
   outdir,
   format: "esm",
   target: "browser",
   sourcemap: "external",
   minify: false,
+  external: ["./sqlite", "./sqlite/index"],
   plugins: [dts()],
 });
 
-if (!result.success) {
-  console.error("❌ Build failed:");
-  for (const log of result.logs) console.error(log);
+if (!mainResult.success) {
+  console.error("❌ Main build failed:");
+  for (const log of mainResult.logs) console.error(log);
   process.exit(1);
 }
 
-console.log(`✅ ESM build: ${result.outputs.length} files`);
+console.log(`✅ Main build: ${mainResult.outputs.length} files`);
+
+// Build SQLite entry (node/bun only)
+const sqliteResult = await Bun.build({
+  entrypoints: ["src/sqlite/index.ts"],
+  outdir: `${outdir}/sqlite`,
+  format: "esm",
+  target: "node",
+  sourcemap: "external",
+  minify: false,
+  external: ["bun:sqlite", "node:sqlite"],
+  plugins: [dts()],
+});
+
+if (!sqliteResult.success) {
+  console.error("❌ SQLite build failed:");
+  for (const log of sqliteResult.logs) console.error(log);
+  process.exit(1);
+}
+
+console.log(`✅ SQLite build: ${sqliteResult.outputs.length} files`);
 console.log(`🎉 Build complete!`);
