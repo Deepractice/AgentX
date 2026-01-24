@@ -1,14 +1,14 @@
-# 架构设计
+# Architecture Design
 
-本文档介绍 Portagent 的系统架构、数据模型和 API 设计。
+This document describes Portagent's system architecture, data models, and API design.
 
-## 系统架构
+## System Architecture
 
-### 整体架构图
+### Overall Architecture Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                           浏览器                                      │
+│                           Browser                                    │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                  │
 │  │  LoginPage  │  │ RegisterPage │  │  ChatPage   │                  │
 │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘                  │
@@ -71,52 +71,52 @@
                     └─────────────────────┘
 ```
 
-### 三层架构
+### Three-Layer Architecture
 
-| 层         | 组件                 | 职责                         |
-| ---------- | -------------------- | ---------------------------- |
-| **表示层** | React 前端           | 用户界面、认证状态管理       |
-| **业务层** | Hono Server + AgentX | HTTP 路由、认证、Agent 管理  |
-| **数据层** | SQLite               | 用户数据、会话数据、事件存储 |
+| Layer            | Components           | Responsibilities                                |
+| ---------------- | -------------------- | ----------------------------------------------- |
+| **Presentation** | React Frontend       | User interface, authentication state management |
+| **Business**     | Hono Server + AgentX | HTTP routing, authentication, Agent management  |
+| **Data**         | SQLite               | User data, session data, event storage          |
 
 ---
 
-## 服务端架构
+## Server Architecture
 
-### 核心模块
+### Core Modules
 
 ```
 src/server/
-├── index.ts           # 服务器入口，路由配置
-├── main.ts            # 开发入口（加载 .env）
-├── auth.ts            # 认证模块（JWT、邀请码）
-├── logger.ts          # 日志模块（LogTape 适配）
-├── defaultAgent.ts    # 默认 Agent 配置
+├── index.ts           # Server entry, route configuration
+├── main.ts            # Development entry (loads .env)
+├── auth.ts            # Authentication module (JWT, invitation code)
+├── logger.ts          # Logging module (LogTape adapter)
+├── defaultAgent.ts    # Default Agent configuration
 ├── database/
-│   ├── index.ts       # 数据库导出
-│   └── SQLiteUserRepository.ts  # 用户数据访问
+│   ├── index.ts       # Database exports
+│   └── SQLiteUserRepository.ts  # User data access
 └── user/
-    ├── types.ts       # 用户类型定义
-    ├── UserRepository.ts  # 用户仓库接口
-    └── index.ts       # 用户模块导出
+    ├── types.ts       # User type definitions
+    ├── UserRepository.ts  # User repository interface
+    └── index.ts       # User module exports
 ```
 
-### 请求处理流程
+### Request Processing Flow
 
 ```
 HTTP Request
      │
      ▼
 ┌─────────────┐
-│    CORS     │  允许跨域请求
+│    CORS     │  Allow cross-origin requests
 └─────┬───────┘
       │
       ▼
 ┌─────────────────────────────────────────────────┐
-│                    路由分发                       │
+│                    Route Dispatch                │
 ├──────────────┬──────────────┬───────────────────┤
 │   /health    │  /api/auth/* │    /agentx/*      │
-│   (公开)      │   (公开)      │  (需要认证)        │
+│   (public)   │   (public)   │  (auth required)  │
 └──────────────┴──────┬───────┴────────┬──────────┘
                       │                │
                       ▼                ▼
@@ -130,25 +130,25 @@ HTTP Request
                                 └──────────────┘
 ```
 
-### WebSocket 处理
+### WebSocket Handling
 
-WebSocket 连接由 AgentX 在 `/ws` 路径处理：
+WebSocket connections are handled by AgentX at the `/ws` path:
 
 ```typescript
 const agentx = await createAgentX({
   llm: { apiKey, baseUrl, model },
-  server, // HTTP server 实例
-  // WebSocket 自动在 /ws 路径启用
+  server, // HTTP server instance
+  // WebSocket automatically enabled at /ws path
 });
 ```
 
 ---
 
-## User-Container 关系模型
+## User-Container Relationship Model
 
-### 概念
+### Concept
 
-每个用户拥有专属的 Container，Container 是 Agent 的隔离边界。
+Each user owns a dedicated Container, which serves as the isolation boundary for Agents.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -157,31 +157,30 @@ const agentx = await createAgentX({
 │  │              Container (user-uuid-xxx)             │  │
 │  │  ┌─────────┐  ┌─────────┐  ┌─────────┐           │  │
 │  │  │  Image  │  │  Image  │  │  Image  │           │  │
-│  │  │  (助手)  │  │ (代码)   │  │ (翻译)  │           │  │
+│  │  │(Assistant)│ │ (Coder) │  │(Translator)│        │  │
 │  │  └────┬────┘  └────┬────┘  └────┬────┘           │  │
 │  │       │            │            │                 │  │
 │  │  ┌────▼────┐  ┌────▼────┐  ┌────▼────┐           │  │
 │  │  │ Session │  │ Session │  │ Session │           │  │
-│  │  │  (会话)  │  │  (会话)  │  │  (会话)  │           │  │
 │  │  └─────────┘  └─────────┘  └─────────┘           │  │
 │  └───────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 数据流
+### Data Flow
 
-1. **注册时**: 创建 User 记录 → 创建 Container → 关联 `containerId`
-2. **登录后**: 返回 `containerId` 给前端
-3. **创建会话**: 前端使用 `containerId` 创建 Image/Session
+1. **On Registration**: Create User record -> Create Container -> Associate `containerId`
+2. **After Login**: Return `containerId` to frontend
+3. **Create Session**: Frontend uses `containerId` to create Image/Session
 
-### 代码实现
+### Code Implementation
 
 ```typescript
-// 注册时创建 Container
+// Create Container on registration
 const containerId = `user-${crypto.randomUUID()}`;
 const containerRes = await agentx.request("container_create_request", { containerId });
 
-// 创建用户时关联 Container
+// Associate Container when creating user
 const user = await userRepository.createUser({
   username,
   password,
@@ -192,22 +191,22 @@ const user = await userRepository.createUser({
 
 ---
 
-## 数据库 Schema
+## Database Schema
 
-### portagent.db（用户数据）
+### portagent.db (User Data)
 
 ```sql
 CREATE TABLE users (
   userId TEXT PRIMARY KEY,            -- UUID
-  username TEXT UNIQUE NOT NULL,      -- 登录用户名
-  email TEXT UNIQUE NOT NULL,         -- 邮箱
-  passwordHash TEXT NOT NULL,         -- bcrypt 哈希
-  containerId TEXT NOT NULL,          -- 关联的 Container ID
-  displayName TEXT,                   -- 显示名称
-  avatar TEXT,                        -- 头像 URL
-  isActive INTEGER NOT NULL DEFAULT 1,-- 账户状态
-  createdAt INTEGER NOT NULL,         -- 创建时间戳
-  updatedAt INTEGER NOT NULL          -- 更新时间戳
+  username TEXT UNIQUE NOT NULL,      -- Login username
+  email TEXT UNIQUE NOT NULL,         -- Email
+  passwordHash TEXT NOT NULL,         -- bcrypt hash
+  containerId TEXT NOT NULL,          -- Associated Container ID
+  displayName TEXT,                   -- Display name
+  avatar TEXT,                        -- Avatar URL
+  isActive INTEGER NOT NULL DEFAULT 1,-- Account status
+  createdAt INTEGER NOT NULL,         -- Creation timestamp
+  updatedAt INTEGER NOT NULL          -- Update timestamp
 );
 
 CREATE INDEX idx_users_username ON users(username);
@@ -215,38 +214,38 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_containerId ON users(containerId);
 ```
 
-### agentx.db（AgentX 数据）
+### agentx.db (AgentX Data)
 
-由 AgentX 管理，包含：
+Managed by AgentX, contains:
 
-- `containers` - 容器记录
-- `images` - 镜像记录
-- `sessions` - 会话记录
-- `messages` - 消息记录
+- `containers` - Container records
+- `images` - Image records
+- `sessions` - Session records
+- `messages` - Message records
 
 ---
 
-## API 端点
+## API Endpoints
 
-### 公开端点
+### Public Endpoints
 
-| 方法 | 路径                 | 说明                   |
-| ---- | -------------------- | ---------------------- |
-| GET  | `/health`            | 健康检查               |
-| GET  | `/api/auth/config`   | 获取认证配置           |
-| POST | `/api/auth/register` | 用户注册               |
-| POST | `/api/auth/login`    | 用户登录               |
-| POST | `/api/auth/logout`   | 用户登出（客户端操作） |
+| Method | Path                 | Description                         |
+| ------ | -------------------- | ----------------------------------- |
+| GET    | `/health`            | Health check                        |
+| GET    | `/api/auth/config`   | Get authentication configuration    |
+| POST   | `/api/auth/register` | User registration                   |
+| POST   | `/api/auth/login`    | User login                          |
+| POST   | `/api/auth/logout`   | User logout (client-side operation) |
 
-### 受保护端点
+### Protected Endpoints
 
-| 方法 | 路径               | 说明           |
-| ---- | ------------------ | -------------- |
-| GET  | `/api/auth/verify` | 验证 Token     |
-| GET  | `/agentx/info`     | 获取平台信息   |
-| WS   | `/ws`              | WebSocket 连接 |
+| Method | Path               | Description          |
+| ------ | ------------------ | -------------------- |
+| GET    | `/api/auth/verify` | Verify Token         |
+| GET    | `/agentx/info`     | Get platform info    |
+| WS     | `/ws`              | WebSocket connection |
 
-### 健康检查
+### Health Check
 
 ```
 GET /health
@@ -258,7 +257,7 @@ Response:
 }
 ```
 
-### 认证配置
+### Authentication Configuration
 
 ```
 GET /api/auth/config
@@ -269,7 +268,7 @@ Response:
 }
 ```
 
-### 平台信息
+### Platform Info
 
 ```
 GET /agentx/info
@@ -284,20 +283,20 @@ Response:
 
 ---
 
-## WebSocket 协议
+## WebSocket Protocol
 
-### 连接
+### Connection
 
 ```javascript
 const token = getAuthToken();
 const ws = new WebSocket(`ws://localhost:5200/ws?token=${token}`);
 ```
 
-### 消息格式
+### Message Format
 
-AgentX 使用 JSON-RPC 风格的消息格式：
+AgentX uses JSON-RPC style message format:
 
-**请求**:
+**Request**:
 
 ```json
 {
@@ -310,7 +309,7 @@ AgentX 使用 JSON-RPC 风格的消息格式：
 }
 ```
 
-**响应**:
+**Response**:
 
 ```json
 {
@@ -322,7 +321,7 @@ AgentX 使用 JSON-RPC 风格的消息格式：
 }
 ```
 
-**事件**:
+**Event**:
 
 ```json
 {
@@ -337,37 +336,37 @@ AgentX 使用 JSON-RPC 风格的消息格式：
 }
 ```
 
-### 事件类型
+### Event Types
 
-| 事件类型           | 说明         |
-| ------------------ | ------------ |
-| `message_start`    | 消息开始     |
-| `text_delta`       | 文本增量     |
-| `tool_use_start`   | 工具调用开始 |
-| `tool_result`      | 工具结果     |
-| `message_stop`     | 消息结束     |
-| `conversation_end` | 对话结束     |
+| Event Type         | Description      |
+| ------------------ | ---------------- |
+| `message_start`    | Message start    |
+| `text_delta`       | Text delta       |
+| `tool_use_start`   | Tool call start  |
+| `tool_result`      | Tool result      |
+| `message_stop`     | Message end      |
+| `conversation_end` | Conversation end |
 
 ---
 
-## 前端架构
+## Frontend Architecture
 
-### 组件结构
+### Component Structure
 
 ```
 src/client/
-├── main.tsx           # 应用入口
-├── App.tsx            # 路由配置
-├── input.css          # Tailwind 入口
+├── main.tsx           # Application entry
+├── App.tsx            # Route configuration
+├── input.css          # Tailwind entry
 ├── hooks/
-│   └── useAuth.tsx    # 认证 Hook
+│   └── useAuth.tsx    # Authentication Hook
 └── pages/
-    ├── LoginPage.tsx  # 登录页
-    ├── RegisterPage.tsx  # 注册页
-    └── ChatPage.tsx   # 聊天页（主界面）
+    ├── LoginPage.tsx  # Login page
+    ├── RegisterPage.tsx  # Registration page
+    └── ChatPage.tsx   # Chat page (main interface)
 ```
 
-### 路由设计
+### Route Design
 
 ```typescript
 <Routes>
@@ -379,7 +378,7 @@ src/client/
 </Routes>
 ```
 
-### 认证上下文
+### Authentication Context
 
 ```typescript
 interface AuthContextType {
@@ -393,9 +392,9 @@ interface AuthContextType {
 }
 ```
 
-### UI 组件
+### UI Components
 
-ChatPage 使用 `@agentxjs/ui` 的 `ResponsiveStudio` 组件：
+ChatPage uses the `ResponsiveStudio` component from `@agentxjs/ui`:
 
 ```typescript
 <ResponsiveStudio agentx={agentx} containerId={user.containerId} />
@@ -403,11 +402,11 @@ ChatPage 使用 `@agentxjs/ui` 的 `ResponsiveStudio` 组件：
 
 ---
 
-## 日志架构
+## Logging Architecture
 
-### LogTape 集成
+### LogTape Integration
 
-Portagent 使用 LogTape 作为日志后端：
+Portagent uses LogTape as the logging backend:
 
 ```typescript
 const loggerFactory = new LogTapeLoggerFactory({
@@ -417,80 +416,81 @@ const loggerFactory = new LogTapeLoggerFactory({
 });
 ```
 
-### 日志输出
+### Log Output
 
-- **控制台**: 格式化输出（开发环境）
-- **文件**: 轮转日志（生产环境）
-  - 最大 10MB 每文件
-  - 保留 7 个文件
+- **Console**: Formatted output (development environment)
+- **File**: Rotating logs (production environment)
+  - Maximum 10MB per file
+  - Retain 7 files
 
-### 日志级别映射
+### Log Level Mapping
 
-| AgentX 级别 | LogTape 级别 |
-| ----------- | ------------ |
-| debug       | debug        |
-| info        | info         |
-| warn        | warning      |
-| error       | error        |
+| AgentX Level | LogTape Level |
+| ------------ | ------------- |
+| debug        | debug         |
+| info         | info          |
+| warn         | warning       |
+| error        | error         |
 
 ---
 
-## 构建产物
+## Build Artifacts
 
-### 目录结构
+### Directory Structure
 
 ```
 dist/
-├── bin/                      # 平台二进制
+├── bin/                      # Platform binaries
 │   ├── portagent-darwin-arm64
 │   ├── portagent-darwin-x64
 │   ├── portagent-linux-x64
 │   ├── portagent-linux-arm64
 │   └── portagent-windows-x64.exe
-├── public/                   # 静态资源
+├── public/                   # Static assets
 │   ├── index.html
 │   ├── favicon.svg
 │   └── assets/
 │       ├── main-[hash].js
 │       └── styles.css
 ├── claude-code/              # Claude Code SDK
-└── cli.js                    # CLI 入口
+└── cli.js                    # CLI entry
 ```
 
-### 构建流程
+### Build Process
 
-1. **前端构建**: Bun 打包 React 应用
-2. **CSS 生成**: PostCSS + Tailwind
-3. **二进制构建**: Bun --compile 生成各平台二进制
-4. **Claude Code 打包**: 复制 SDK 到 dist
+1. **Frontend Build**: Bun bundles React application
+2. **CSS Generation**: PostCSS + Tailwind generates styles
+3. **Generate index.html**: Inject bundled JS filename
+4. **Binary Build**: Bun --compile generates platform binaries
+5. **Claude Code Packaging**: Copy SDK to dist
 
 ---
 
-## 扩展点
+## Extension Points
 
-### 自定义 Agent
+### Custom Agent
 
-修改 `src/server/defaultAgent.ts`：
+Modify `src/server/defaultAgent.ts`:
 
 ```typescript
 export const defaultAgent: AgentDefinition = {
   name: "CustomAssistant",
   systemPrompt: "Your custom system prompt",
   mcpServers: {
-    // 添加自定义 MCP 服务器
+    // Add custom MCP servers
   },
 };
 ```
 
-### 添加路由
+### Add Routes
 
-在 `src/server/index.ts` 中：
+In `src/server/index.ts`:
 
 ```typescript
-// 公开路由
+// Public route
 app.get("/api/custom", (c) => c.json({ data: "custom" }));
 
-// 受保护路由
+// Protected route
 app.use("/api/protected/*", authMiddleware);
 app.get("/api/protected/data", (c) => {
   const userId = c.get("userId");
@@ -500,7 +500,7 @@ app.get("/api/protected/data", (c) => {
 
 ---
 
-## 下一步
+## Next Steps
 
-- 查看 [开发指南](./development.md) 了解本地开发
-- 查看 [运维指南](./operations.md) 了解生产运维
+- See [Development Guide](./development.md) for local development
+- See [Operations Guide](./operations.md) for production operations

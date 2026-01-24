@@ -1,12 +1,12 @@
-# 部署指南
+# Deployment Guide
 
-本文档介绍 Portagent 的各种部署方式。
+This document describes various deployment methods for Portagent.
 
-## Docker 部署（推荐）
+## Docker Deployment (Recommended)
 
-Docker 是生产环境推荐的部署方式，提供一致的运行环境和简单的管理。
+Docker is the recommended deployment method for production environments, providing consistent runtime and simple management.
 
-### 快速启动
+### Quick Start
 
 ```bash
 docker run -d \
@@ -18,7 +18,7 @@ docker run -d \
   deepracticexs/portagent:latest
 ```
 
-### 生产环境配置
+### Production Configuration
 
 ```bash
 docker run -d \
@@ -35,27 +35,27 @@ docker run -d \
   deepracticexs/portagent:0.1.9
 ```
 
-### 镜像版本
+### Image Versions
 
 ```bash
-# 最新版本
+# Latest version
 docker pull deepracticexs/portagent:latest
 
-# 指定版本（推荐生产环境）
+# Specific version (recommended for production)
 docker pull deepracticexs/portagent:0.1.9
 
-# 支持的架构: linux/amd64, linux/arm64
+# Supported architectures: linux/amd64, linux/arm64
 ```
 
 ---
 
-## Docker Compose 部署
+## Docker Compose Deployment
 
-适合需要与其他服务一起编排的场景。
+Suitable for scenarios that require orchestration with other services.
 
-### 创建配置文件
+### Create Configuration Files
 
-创建 `.env` 文件：
+Create `.env` file:
 
 ```env
 LLM_PROVIDER_KEY=sk-ant-xxxxx
@@ -66,7 +66,7 @@ INVITE_CODE_REQUIRED=false
 LOG_LEVEL=info
 ```
 
-创建 `docker-compose.yml`：
+Create `docker-compose.yml`:
 
 ```yaml
 services:
@@ -93,13 +93,13 @@ services:
       retries: 3
 ```
 
-### 启动服务
+### Start Service
 
 ```bash
 docker compose up -d
 ```
 
-### 查看日志
+### View Logs
 
 ```bash
 docker compose logs -f portagent
@@ -107,28 +107,28 @@ docker compose logs -f portagent
 
 ---
 
-## npm 全局安装
+## npm Global Installation
 
-适合已有 Node.js 环境的服务器。
+Suitable for servers with existing Node.js environments.
 
-### 安装
+### Installation
 
 ```bash
 npm install -g @agentxjs/portagent
 ```
 
-### 运行
+### Run
 
 ```bash
-# 设置环境变量
+# Set environment variables
 export LLM_PROVIDER_KEY=sk-ant-xxxxx
 export LLM_PROVIDER_URL=https://api.anthropic.com
 
-# 启动服务
+# Start service
 portagent
 ```
 
-### 使用 CLI 参数
+### Using CLI Parameters
 
 ```bash
 portagent \
@@ -139,7 +139,7 @@ portagent \
   --jwt-secret your-secure-secret
 ```
 
-### 使用环境文件
+### Using Environment File
 
 ```bash
 portagent --env-file /path/to/.env
@@ -147,9 +147,9 @@ portagent --env-file /path/to/.env
 
 ---
 
-## npx 快速体验
+## npx Quick Trial
 
-无需安装，直接运行（适合快速测试）：
+Run without installation (suitable for quick testing):
 
 ```bash
 LLM_PROVIDER_KEY=sk-ant-xxxxx npx @agentxjs/portagent
@@ -157,23 +157,23 @@ LLM_PROVIDER_KEY=sk-ant-xxxxx npx @agentxjs/portagent
 
 ---
 
-## 本地构建 Docker 镜像
+## Building Docker Image Locally
 
-如果需要自定义构建：
+For custom builds:
 
 ```bash
-# 克隆仓库
+# Clone repository
 git clone https://github.com/Deepractice/AgentX.git
 cd AgentX
 
-# 安装依赖并构建
+# Install dependencies and build
 bun install
 bun build
 
-# 构建 Docker 镜像
+# Build Docker image
 docker build -t portagent:local -f apps/portagent/Dockerfile .
 
-# 运行本地构建的镜像
+# Run locally built image
 docker run -d \
   --name portagent \
   -p 5200:5200 \
@@ -183,11 +183,11 @@ docker run -d \
 
 ---
 
-## 反向代理配置
+## Reverse Proxy Configuration
 
-生产环境建议使用反向代理提供 HTTPS 支持。
+Production environments should use a reverse proxy to provide HTTPS support.
 
-### Nginx 配置
+### Nginx Configuration
 
 ```nginx
 server {
@@ -197,7 +197,7 @@ server {
     ssl_certificate /path/to/cert.pem;
     ssl_certificate_key /path/to/key.pem;
 
-    # 安全头
+    # Security headers
     add_header X-Frame-Options DENY;
     add_header X-Content-Type-Options nosniff;
     add_header X-XSS-Protection "1; mode=block";
@@ -206,24 +206,24 @@ server {
         proxy_pass http://localhost:5200;
         proxy_http_version 1.1;
 
-        # WebSocket 支持
+        # WebSocket support
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
 
-        # 传递真实 IP
+        # Pass real IP
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        # 超时设置（适合长连接）
+        # Timeout settings (suitable for long connections)
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 3600s;
     }
 }
 
-# HTTP 重定向到 HTTPS
+# HTTP redirect to HTTPS
 server {
     listen 80;
     server_name portagent.example.com;
@@ -231,7 +231,7 @@ server {
 }
 ```
 
-### Caddy 配置
+### Caddy Configuration
 
 ```caddyfile
 portagent.example.com {
@@ -239,17 +239,17 @@ portagent.example.com {
 }
 ```
 
-Caddy 会自动处理 HTTPS 证书和 WebSocket 代理。
+Caddy automatically handles HTTPS certificates and WebSocket proxying.
 
 ---
 
-## systemd 服务配置
+## systemd Service Configuration
 
-在 Linux 服务器上使用 systemd 管理服务。
+Use systemd to manage the service on Linux servers.
 
-### 创建服务文件
+### Create Service File
 
-创建 `/etc/systemd/system/portagent.service`：
+Create `/etc/systemd/system/portagent.service`:
 
 ```ini
 [Unit]
@@ -273,9 +273,9 @@ RestartSec=10
 WantedBy=multi-user.target
 ```
 
-### 创建环境文件
+### Create Environment File
 
-创建 `/etc/portagent/env`：
+Create `/etc/portagent/env`:
 
 ```env
 LLM_PROVIDER_KEY=sk-ant-xxxxx
@@ -284,7 +284,7 @@ JWT_SECRET=your-secure-secret
 INVITE_CODE_REQUIRED=true
 ```
 
-### 启动服务
+### Start Service
 
 ```bash
 sudo systemctl daemon-reload
@@ -295,50 +295,50 @@ sudo systemctl status portagent
 
 ---
 
-## 安全建议
+## Security Recommendations
 
-### 1. API 密钥保护
+### 1. API Key Protection
 
-- 不要将 `LLM_PROVIDER_KEY` 暴露在代码或日志中
-- 使用环境变量或 secrets 管理工具
-- 定期轮换 API 密钥
+- Do not expose `LLM_PROVIDER_KEY` in code or logs
+- Use environment variables or secrets management tools
+- Rotate API keys regularly
 
-### 2. JWT 密钥管理
+### 2. JWT Key Management
 
-- 使用强随机密钥（至少 32 字符）
-- 在容器重启间保持一致
-- 生产环境不要使用自动生成的密钥
+- Use strong random keys (at least 32 characters)
+- Keep consistent across container restarts
+- Do not use auto-generated keys in production
 
 ```bash
-# 生成安全的 JWT 密钥
+# Generate secure JWT key
 openssl rand -base64 32
 ```
 
-### 3. 邀请码控制
+### 3. Invitation Code Control
 
-- 生产环境建议启用邀请码
-- 定期更新邀请码（每日自动更换）
+- Enable invitation codes in production
+- Update invitation codes regularly (automatically changes daily)
 
-### 4. 网络安全
+### 4. Network Security
 
-- 使用 HTTPS（通过反向代理）
-- 限制直接访问 5200 端口
-- 配置防火墙规则
+- Use HTTPS (via reverse proxy)
+- Restrict direct access to port 5200
+- Configure firewall rules
 
-### 5. 容器安全
+### 5. Container Security
 
-- 容器以非 root 用户 `node` 运行
-- 挂载卷需要正确的权限
+- Container runs as non-root user `node`
+- Mounted volumes require correct permissions
 
 ```bash
-# 修复权限问题
+# Fix permission issues
 sudo chown -R 1000:1000 ./data
 ```
 
 ---
 
-## 下一步
+## Next Steps
 
-- 查看 [配置参考](./configuration.md) 了解完整配置项
-- 查看 [运维指南](./operations.md) 了解日常运维操作
-- 查看 [故障排查](./troubleshooting.md) 解决部署问题
+- See [Configuration Reference](./configuration.md) for complete configuration options
+- See [Operations Guide](./operations.md) for daily operations
+- See [Troubleshooting](./troubleshooting.md) for deployment issues

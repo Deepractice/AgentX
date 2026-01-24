@@ -1,22 +1,22 @@
-# 认证系统
+# Authentication System
 
-本文档详细介绍 Portagent 的认证机制，包括 JWT 认证和邀请码系统。
+This document provides detailed information about Portagent's authentication mechanism, including JWT authentication and invitation code system.
 
-## 认证概述
+## Authentication Overview
 
-Portagent 使用 JWT（JSON Web Token）进行用户认证：
+Portagent uses JWT (JSON Web Token) for user authentication:
 
-1. 用户注册/登录后获取 JWT Token
-2. 后续请求携带 Token 进行身份验证
-3. Token 有效期为 7 天
+1. Users receive a JWT Token after registration/login
+2. Subsequent requests carry the Token for identity verification
+3. Token validity period is 7 days
 
 ---
 
-## JWT 认证机制
+## JWT Authentication Mechanism
 
-### Token 结构
+### Token Structure
 
-Portagent 使用 HS256 算法签名的 JWT：
+Portagent uses JWT signed with HS256 algorithm:
 
 ```json
 {
@@ -24,81 +24,81 @@ Portagent 使用 HS256 算法签名的 JWT：
     "alg": "HS256"
   },
   "payload": {
-    "sub": "user-uuid", // 用户 ID
-    "iat": 1704067200, // 签发时间
-    "exp": 1704672000 // 过期时间（7 天后）
+    "sub": "user-uuid", // User ID
+    "iat": 1704067200, // Issued at
+    "exp": 1704672000 // Expires (7 days later)
   }
 }
 ```
 
-### Token 生命周期
+### Token Lifecycle
 
-| 阶段   | 说明                             |
-| ------ | -------------------------------- |
-| 签发   | 注册或登录成功后返回             |
-| 有效期 | 7 天                             |
-| 验证   | 每次请求验证签名和有效期         |
-| 刷新   | 目前无自动刷新，过期后需重新登录 |
+| Phase      | Description                                         |
+| ---------- | --------------------------------------------------- |
+| Issuance   | Returned after successful registration or login     |
+| Validity   | 7 days                                              |
+| Validation | Verify signature and expiration on each request     |
+| Refresh    | No auto-refresh; re-login required after expiration |
 
-### HTTP 认证
+### HTTP Authentication
 
-在请求头中携带 Token：
+Carry the Token in request headers:
 
 ```http
 Authorization: Bearer <token>
 ```
 
-示例：
+Example:
 
 ```bash
 curl -X GET http://localhost:5200/api/auth/verify \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
-### WebSocket 认证
+### WebSocket Authentication
 
-WebSocket 不支持自定义请求头，通过查询参数传递 Token：
+WebSocket doesn't support custom headers, so Token is passed via query parameter:
 
 ```
 ws://localhost:5200/ws?token=<token>
 ```
 
-### JWT 密钥配置
+### JWT Key Configuration
 
-**生产环境必须配置固定的 JWT_SECRET**：
+**Production environments must configure a fixed JWT_SECRET**:
 
 ```bash
-# 生成安全密钥
+# Generate secure key
 openssl rand -base64 32
 
-# 设置环境变量
+# Set environment variable
 export JWT_SECRET=your-secure-random-secret-at-least-32-chars
 ```
 
-如果不设置 `JWT_SECRET`：
+If `JWT_SECRET` is not set:
 
-- 系统会自动生成随机密钥
-- 每次重启后所有用户需要重新登录
-- 不适合生产环境
+- System automatically generates a random key
+- All users need to re-login after each restart
+- Not suitable for production environments
 
 ---
 
-## 邀请码系统
+## Invitation Code System
 
-Portagent 使用基于时间的邀请码控制用户注册。
+Portagent uses time-based invitation codes to control user registration.
 
-### 工作原理
+### How It Works
 
-邀请码是**当天 00:00:01 的 Unix 时间戳（秒）**：
+The invitation code is the **Unix timestamp (in seconds) of 00:00:01 on the current day**:
 
-1. 每天午夜自动更换
-2. 基于服务器时区计算
-3. Docker 容器默认使用 UTC 时区
+1. Automatically changes at midnight each day
+2. Calculated based on server timezone
+3. Docker containers default to UTC timezone
 
-### 启用邀请码
+### Enable Invitation Code
 
 ```bash
-# 环境变量
+# Environment variable
 INVITE_CODE_REQUIRED=true
 
 # Docker
@@ -108,32 +108,32 @@ docker run -e INVITE_CODE_REQUIRED=true ...
 portagent --invite-code-required
 ```
 
-### 计算邀请码
+### Calculate Invitation Code
 
 #### Linux/macOS
 
 ```bash
-# 服务器本地时区
+# Server local timezone
 date -d "today 00:00:01" +%s
 
-# UTC 时区（Docker 默认）
+# UTC timezone (Docker default)
 TZ=UTC date -d "today 00:00:01" +%s
 ```
 
-macOS 语法：
+macOS syntax:
 
 ```bash
-# 服务器本地时区
+# Server local timezone
 date -j -f "%Y-%m-%d %H:%M:%S" "$(date +%Y-%m-%d) 00:00:01" "+%s"
 
-# UTC 时区
+# UTC timezone
 TZ=UTC date -j -f "%Y-%m-%d %H:%M:%S" "$(TZ=UTC date +%Y-%m-%d) 00:00:01" "+%s"
 ```
 
 #### JavaScript/Node.js
 
 ```javascript
-// 服务器本地时区
+// Server local timezone
 const now = new Date();
 const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 1);
 const inviteCode = Math.floor(todayStart.getTime() / 1000);
@@ -141,7 +141,7 @@ console.log(inviteCode);
 ```
 
 ```javascript
-// UTC 时区
+// UTC timezone
 const now = new Date();
 const utcTodayStart = new Date(
   Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 1)
@@ -155,42 +155,42 @@ console.log(inviteCode);
 ```python
 from datetime import datetime, timezone
 
-# 服务器本地时区
+# Server local timezone
 now = datetime.now()
 today_start = now.replace(hour=0, minute=0, second=1, microsecond=0)
 invite_code = int(today_start.timestamp())
 print(invite_code)
 
-# UTC 时区
+# UTC timezone
 now_utc = datetime.now(timezone.utc)
 utc_today_start = now_utc.replace(hour=0, minute=0, second=1, microsecond=0)
 invite_code = int(utc_today_start.timestamp())
 print(invite_code)
 ```
 
-### 时区注意事项
+### Timezone Considerations
 
-**Docker 容器默认运行在 UTC 时区**。
+**Docker containers run in UTC timezone by default**.
 
-示例（假设当前北京时间 2025-01-15 10:00）：
+Example (assuming current Beijing time is 2025-01-15 10:00):
 
-| 时区         | 日期             | 邀请码                                 |
-| ------------ | ---------------- | -------------------------------------- |
-| UTC          | 2025-01-15 02:00 | `1736899201` (2025-01-15 00:00:01 UTC) |
-| 北京 (UTC+8) | 2025-01-15 10:00 | `1736870401` (2025-01-15 00:00:01 CST) |
+| Timezone        | Date             | Invitation Code                        |
+| --------------- | ---------------- | -------------------------------------- |
+| UTC             | 2025-01-15 02:00 | `1736899201` (2025-01-15 00:00:01 UTC) |
+| Beijing (UTC+8) | 2025-01-15 10:00 | `1736870401` (2025-01-15 00:00:01 CST) |
 
-如果客户端和服务器时区不同，确保按服务器时区计算邀请码。
+If client and server are in different timezones, ensure the invitation code is calculated using the server timezone.
 
-### 验证逻辑
+### Validation Logic
 
-服务器端验证代码：
+Server-side validation code:
 
 ```typescript
 function isValidInviteCode(code: string): boolean {
   const timestamp = parseInt(code, 10);
   if (isNaN(timestamp)) return false;
 
-  // 获取服务器时区的今天 00:00:01
+  // Get today 00:00:01 in server timezone
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 1);
   const expectedTimestamp = Math.floor(todayStart.getTime() / 1000);
@@ -201,27 +201,27 @@ function isValidInviteCode(code: string): boolean {
 
 ---
 
-## 用户注册流程
+## User Registration Flow
 
-### API 端点
+### API Endpoint
 
 ```
 POST /api/auth/register
 ```
 
-### 请求格式
+### Request Format
 
 ```json
 {
-  "username": "john", // 必需，至少 3 字符
-  "password": "secret123", // 必需，至少 6 字符
-  "inviteCode": "1736899201", // 启用时必需
-  "email": "john@example.com", // 可选
-  "displayName": "John Doe" // 可选
+  "username": "john", // Required, at least 3 characters
+  "password": "secret123", // Required, at least 6 characters
+  "inviteCode": "1736899201", // Required when enabled
+  "email": "john@example.com", // Optional
+  "displayName": "John Doe" // Optional
 }
 ```
 
-### 成功响应
+### Success Response
 
 ```json
 {
@@ -238,26 +238,26 @@ POST /api/auth/register
 }
 ```
 
-### 错误响应
+### Error Responses
 
 ```json
-// 用户名已存在
+// Username already exists
 { "error": "Username 'john' already exists" }
 
-// 邮箱已存在
+// Email already exists
 { "error": "Email 'john@example.com' already exists" }
 
-// 无效邀请码
+// Invalid invitation code
 { "error": "Invalid invite code" }
 
-// 用户名太短
+// Username too short
 { "error": "Username must be at least 3 characters" }
 
-// 密码太短
+// Password too short
 { "error": "Password must be at least 6 characters" }
 ```
 
-### 示例
+### Example
 
 ```bash
 curl -X POST http://localhost:5200/api/auth/register \
@@ -273,24 +273,24 @@ curl -X POST http://localhost:5200/api/auth/register \
 
 ---
 
-## 用户登录流程
+## User Login Flow
 
-### API 端点
+### API Endpoint
 
 ```
 POST /api/auth/login
 ```
 
-### 请求格式
+### Request Format
 
 ```json
 {
-  "usernameOrEmail": "john", // 用户名或邮箱
+  "usernameOrEmail": "john", // Username or email
   "password": "secret123"
 }
 ```
 
-### 成功响应
+### Success Response
 
 ```json
 {
@@ -307,13 +307,13 @@ POST /api/auth/login
 }
 ```
 
-### 错误响应
+### Error Response
 
 ```json
 { "error": "Invalid credentials" }
 ```
 
-### 示例
+### Example
 
 ```bash
 curl -X POST http://localhost:5200/api/auth/login \
@@ -326,22 +326,22 @@ curl -X POST http://localhost:5200/api/auth/login \
 
 ---
 
-## Token 验证
+## Token Verification
 
-### API 端点
+### API Endpoint
 
 ```
 GET /api/auth/verify
 ```
 
-### 请求
+### Request
 
 ```bash
 curl -X GET http://localhost:5200/api/auth/verify \
   -H "Authorization: Bearer <token>"
 ```
 
-### 成功响应
+### Success Response
 
 ```json
 {
@@ -357,7 +357,7 @@ curl -X GET http://localhost:5200/api/auth/verify \
 }
 ```
 
-### 失败响应
+### Failure Response
 
 ```json
 { "valid": false }
@@ -365,15 +365,15 @@ curl -X GET http://localhost:5200/api/auth/verify \
 
 ---
 
-## 认证配置查询
+## Authentication Configuration Query
 
-获取服务器认证配置（公开接口）：
+Get server authentication configuration (public endpoint):
 
 ```
 GET /api/auth/config
 ```
 
-响应：
+Response:
 
 ```json
 {
@@ -381,13 +381,13 @@ GET /api/auth/config
 }
 ```
 
-前端可根据此配置决定是否显示邀请码输入框。
+The frontend can use this configuration to decide whether to display the invitation code input field.
 
 ---
 
-## 用户数据模型
+## User Data Model
 
-### 数据库表结构
+### Database Table Structure
 
 ```sql
 CREATE TABLE users (
@@ -404,33 +404,33 @@ CREATE TABLE users (
 );
 ```
 
-### 用户与容器关系
+### User-Container Relationship
 
-- 每个用户注册时自动创建专属 Container
-- `containerId` 格式：`user-{uuid}`
-- 用户的所有会话和 Agent 都在此 Container 中
+- Each user automatically gets a dedicated Container upon registration
+- `containerId` format: `user-{uuid}`
+- All user sessions and Agents are within this Container
 
-### 密码存储
+### Password Storage
 
-- 使用 bcrypt 算法哈希
-- cost factor: 10
+- Uses bcrypt algorithm for hashing
+- Cost factor: 10
 
 ---
 
-## 前端认证流程
+## Frontend Authentication Flow
 
-### 存储
+### Storage
 
-Token 和用户信息存储在 localStorage：
+Token and user information are stored in localStorage:
 
 ```javascript
 localStorage.setItem("portagent_token", token);
 localStorage.setItem("portagent_user", JSON.stringify(user));
 ```
 
-### 初始化检查
+### Initialization Check
 
-页面加载时验证存储的 Token：
+Validate stored Token on page load:
 
 ```javascript
 const storedToken = localStorage.getItem("portagent_token");
@@ -439,7 +439,7 @@ if (storedToken) {
     headers: { Authorization: `Bearer ${storedToken}` },
   });
   if (!result.ok) {
-    // Token 无效，清除并跳转登录页
+    // Token invalid, clear and redirect to login
     localStorage.removeItem("portagent_token");
     localStorage.removeItem("portagent_user");
     navigate("/login");
@@ -447,9 +447,9 @@ if (storedToken) {
 }
 ```
 
-### 登出
+### Logout
 
-登出是客户端操作：
+Logout is a client-side operation:
 
 ```javascript
 function logout() {
@@ -461,35 +461,35 @@ function logout() {
 
 ---
 
-## 安全建议
+## Security Recommendations
 
-### 1. JWT 密钥安全
+### 1. JWT Key Security
 
 ```bash
-# 使用强随机密钥
+# Use strong random key
 JWT_SECRET=$(openssl rand -base64 32)
 
-# 不要硬编码在代码中
-# 使用环境变量或 secrets 管理
+# Do not hardcode in source code
+# Use environment variables or secrets management
 ```
 
 ### 2. HTTPS
 
-生产环境必须使用 HTTPS，防止 Token 被窃取。
+Production environments must use HTTPS to prevent Token theft.
 
-### 3. Token 存储
+### 3. Token Storage
 
-- 使用 localStorage（当前实现）
-- 考虑使用 httpOnly cookie 增强安全性
+- Using localStorage (current implementation)
+- Consider using httpOnly cookies for enhanced security
 
-### 4. 邀请码分发
+### 4. Invitation Code Distribution
 
-- 通过安全渠道分发邀请码
-- 每日自动更换增加安全性
+- Distribute invitation codes through secure channels
+- Daily automatic rotation increases security
 
 ---
 
-## 下一步
+## Next Steps
 
-- 查看 [架构设计](./architecture.md) 了解认证中间件实现
-- 查看 [故障排查](./troubleshooting.md) 解决认证问题
+- See [Architecture Design](./architecture.md) for authentication middleware implementation
+- See [Troubleshooting](./troubleshooting.md) for authentication issues

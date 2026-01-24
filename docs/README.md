@@ -111,6 +111,14 @@ agentxjs               Unified API (local/remote)
 3. `packages/common.md` - Shared infrastructure
 4. Package README files in `packages/*/README.md`
 
+### Production Deployment Path
+
+1. `portagent/index.md` - Overview and quick start
+2. `portagent/deployment.md` - Docker and npm deployment
+3. `portagent/configuration.md` - Environment variables and CLI options
+4. `portagent/authentication.md` - JWT and invite code system
+5. `portagent/operations.md` - Backup, logging, monitoring
+
 ## Quick Links
 
 - **[Quick Start](./getting-started/quickstart.md)** - Get started in 5 minutes

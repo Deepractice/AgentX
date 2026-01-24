@@ -1,64 +1,64 @@
-# 运维指南
+# Operations Guide
 
-本文档介绍 Portagent 的日常运维操作，包括数据管理、日志、监控和备份。
+This document describes daily operations for Portagent, including data management, logging, monitoring, and backup.
 
-## 数据目录结构
+## Data Directory Structure
 
-默认数据目录为 `~/.agentx`（Docker 中为 `/home/node/.agentx`）：
+Default data directory is `~/.agentx` (or `/home/node/.agentx` in Docker):
 
 ```
 {AGENTX_DIR}/
 ├── data/
-│   ├── agentx.db      # AgentX 数据（容器、镜像、会话、消息）
-│   └── portagent.db   # 用户认证数据
+│   ├── agentx.db      # AgentX data (containers, images, sessions, messages)
+│   └── portagent.db   # User authentication data
 └── logs/
-    └── portagent.log  # 应用日志
+    └── portagent.log  # Application logs
 ```
 
-### 数据文件说明
+### Data File Description
 
-| 文件            | 说明                 | 大小估计              |
-| --------------- | -------------------- | --------------------- |
-| `agentx.db`     | Agent 会话和消息历史 | 随使用增长            |
-| `portagent.db`  | 用户账户信息         | 通常较小              |
-| `portagent.log` | 应用运行日志         | 最大 70MB（7 x 10MB） |
+| File            | Description                        | Size Estimate       |
+| --------------- | ---------------------------------- | ------------------- |
+| `agentx.db`     | Agent sessions and message history | Grows with usage    |
+| `portagent.db`  | User account information           | Usually small       |
+| `portagent.log` | Application runtime logs           | Max 70MB (7 x 10MB) |
 
 ---
 
-## 数据备份
+## Data Backup
 
-### 手动备份
+### Manual Backup
 
-#### 停机备份
+#### Offline Backup
 
 ```bash
-# 停止服务
+# Stop service
 docker stop portagent
 
-# 备份数据目录
+# Backup data directory
 cp -r ./data ./backup-$(date +%Y%m%d)
 
-# 启动服务
+# Start service
 docker start portagent
 ```
 
-#### 在线备份（SQLite）
+#### Online Backup (SQLite)
 
-使用 SQLite 备份命令，无需停机：
+Use SQLite backup command, no downtime required:
 
 ```bash
-# Docker 环境
+# Docker environment
 docker exec portagent sqlite3 /home/node/.agentx/data/agentx.db ".backup /home/node/.agentx/data/agentx-backup.db"
 docker exec portagent sqlite3 /home/node/.agentx/data/portagent.db ".backup /home/node/.agentx/data/portagent-backup.db"
 
-# 复制到主机
+# Copy to host
 docker cp portagent:/home/node/.agentx/data/agentx-backup.db ./
 docker cp portagent:/home/node/.agentx/data/portagent-backup.db ./
 ```
 
-### 自动备份脚本
+### Automated Backup Script
 
-创建 `backup.sh`：
+Create `backup.sh`:
 
 ```bash
 #!/bin/bash
@@ -67,123 +67,123 @@ BACKUP_DIR="/var/backups/portagent"
 DATA_DIR="/var/lib/portagent/data"
 RETENTION_DAYS=30
 
-# 创建备份目录
+# Create backup directory
 mkdir -p "$BACKUP_DIR"
 
-# 生成备份文件名
+# Generate backup filename
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
-# 备份数据库
+# Backup databases
 sqlite3 "$DATA_DIR/agentx.db" ".backup $BACKUP_DIR/agentx-$TIMESTAMP.db"
 sqlite3 "$DATA_DIR/portagent.db" ".backup $BACKUP_DIR/portagent-$TIMESTAMP.db"
 
-# 压缩备份
+# Compress backup
 tar -czf "$BACKUP_DIR/backup-$TIMESTAMP.tar.gz" \
   "$BACKUP_DIR/agentx-$TIMESTAMP.db" \
   "$BACKUP_DIR/portagent-$TIMESTAMP.db"
 
-# 删除临时文件
+# Delete temporary files
 rm "$BACKUP_DIR/agentx-$TIMESTAMP.db" "$BACKUP_DIR/portagent-$TIMESTAMP.db"
 
-# 清理旧备份
+# Clean old backups
 find "$BACKUP_DIR" -name "backup-*.tar.gz" -mtime +$RETENTION_DAYS -delete
 
 echo "Backup completed: $BACKUP_DIR/backup-$TIMESTAMP.tar.gz"
 ```
 
-配置 cron 定时备份：
+Configure cron for scheduled backup:
 
 ```bash
-# 每天凌晨 2 点备份
+# Daily backup at 2 AM
 0 2 * * * /path/to/backup.sh >> /var/log/portagent-backup.log 2>&1
 ```
 
-### 数据恢复
+### Data Recovery
 
 ```bash
-# 停止服务
+# Stop service
 docker stop portagent
 
-# 解压备份
+# Extract backup
 tar -xzf backup-20250115_020000.tar.gz
 
-# 恢复数据库
+# Restore databases
 cp agentx-20250115_020000.db /var/lib/portagent/data/agentx.db
 cp portagent-20250115_020000.db /var/lib/portagent/data/portagent.db
 
-# 修复权限
+# Fix permissions
 chown -R 1000:1000 /var/lib/portagent/data
 
-# 启动服务
+# Start service
 docker start portagent
 ```
 
 ---
 
-## 日志管理
+## Log Management
 
-### 日志配置
+### Log Configuration
 
-日志级别通过 `LOG_LEVEL` 环境变量配置：
+Log level is configured via `LOG_LEVEL` environment variable:
 
-| 级别    | 说明         | 适用场景         |
-| ------- | ------------ | ---------------- |
-| `debug` | 详细调试信息 | 开发和问题排查   |
-| `info`  | 常规运行信息 | 生产环境（默认） |
-| `warn`  | 警告信息     | 生产环境         |
-| `error` | 仅错误信息   | 最小化日志       |
+| Level   | Description         | Use Case                        |
+| ------- | ------------------- | ------------------------------- |
+| `debug` | Detailed debug info | Development and troubleshooting |
+| `info`  | Normal runtime info | Production (default)            |
+| `warn`  | Warning messages    | Production                      |
+| `error` | Error messages only | Minimal logging                 |
 
-### 日志轮转
+### Log Rotation
 
-Portagent 使用 LogTape 自动轮转日志：
+Portagent uses LogTape for automatic log rotation:
 
-- **单文件最大**: 10MB
-- **保留文件数**: 7 个
-- **总最大容量**: 约 70MB
+- **Max file size**: 10MB
+- **Files retained**: 7
+- **Total max capacity**: ~70MB
 
-### 查看日志
+### View Logs
 
-#### Docker 环境
+#### Docker Environment
 
 ```bash
-# 查看实时日志
+# View real-time logs
 docker logs -f portagent
 
-# 查看最近 100 行
+# View last 100 lines
 docker logs --tail 100 portagent
 
-# 查看文件日志
+# View file logs
 docker exec portagent cat /home/node/.agentx/logs/portagent.log
 
-# 实时跟踪文件日志
+# Follow file logs in real-time
 docker exec portagent tail -f /home/node/.agentx/logs/portagent.log
 ```
 
-#### systemd 环境
+#### systemd Environment
 
 ```bash
-# 查看服务日志
+# View service logs
 journalctl -u portagent -f
 
-# 查看最近日志
+# View recent logs
 journalctl -u portagent --since "1 hour ago"
 ```
 
-### 日志分析
+### Log Analysis
 
-#### 统计请求数
+#### Count Requests
 
 ```bash
 grep "POST /api/auth/login" portagent.log | wc -l
 ```
 
-#### 查找错误
+#### Find Errors
 
 ```bash
 grep -i "error" portagent.log
 ```
 
-#### 按时间筛选
+#### Filter by Time
 
 ```bash
 grep "2025-01-15" portagent.log
@@ -191,38 +191,38 @@ grep "2025-01-15" portagent.log
 
 ---
 
-## 健康检查
+## Health Checks
 
-### 内置健康检查
+### Built-in Health Check
 
 ```bash
-# 使用 curl
+# Using curl
 curl http://localhost:5200/health
 
-# 响应
+# Response
 {"status":"ok","timestamp":1736899200000}
 ```
 
-### Docker 健康检查
+### Docker Health Check
 
-Docker 镜像已配置健康检查：
+The Docker image has configured health checks:
 
 ```dockerfile
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:5200/health || exit 1
 ```
 
-查看健康状态：
+View health status:
 
 ```bash
 docker inspect --format='{{.State.Health.Status}}' portagent
 ```
 
-### 外部监控
+### External Monitoring
 
 #### Prometheus
 
-创建监控端点（需要自行添加）：
+Create monitoring endpoint (needs to be added):
 
 ```typescript
 app.get("/metrics", (c) => {
@@ -241,120 +241,120 @@ portagent_users_total ${userCount}
 
 #### UptimeRobot / Pingdom
 
-配置 HTTP 检查：
+Configure HTTP check:
 
 - URL: `https://your-domain.com/health`
-- 期望响应: 包含 `"status":"ok"`
-- 检查间隔: 5 分钟
+- Expected response: Contains `"status":"ok"`
+- Check interval: 5 minutes
 
 ---
 
-## 性能监控
+## Performance Monitoring
 
-### 资源使用
+### Resource Usage
 
 ```bash
-# Docker 资源使用
+# Docker resource usage
 docker stats portagent
 
-# 输出示例
+# Example output
 CONTAINER   CPU %   MEM USAGE / LIMIT     MEM %   NET I/O       BLOCK I/O
 portagent   2.5%    256MiB / 2GiB         12.5%   10MB / 5MB    50MB / 20MB
 ```
 
-### 数据库大小
+### Database Size
 
 ```bash
-# 查看数据库大小
+# View database sizes
 docker exec portagent ls -lh /home/node/.agentx/data/
 
-# 输出示例
+# Example output
 total 12M
 -rw-r--r-- 1 node node  8.0M Jan 15 10:00 agentx.db
 -rw-r--r-- 1 node node  512K Jan 15 10:00 portagent.db
 ```
 
-### 连接数
+### Connection Count
 
 ```bash
-# 查看网络连接
+# View network connections
 docker exec portagent ss -tuln | grep 5200
 ```
 
 ---
 
-## 数据库维护
+## Database Maintenance
 
-### SQLite 优化
+### SQLite Optimization
 
-定期执行 VACUUM 优化数据库：
+Periodically run VACUUM to optimize database:
 
 ```bash
-# Docker 环境
+# Docker environment
 docker exec portagent sqlite3 /home/node/.agentx/data/agentx.db "VACUUM;"
 docker exec portagent sqlite3 /home/node/.agentx/data/portagent.db "VACUUM;"
 ```
 
-### 完整性检查
+### Integrity Check
 
 ```bash
-# 检查数据库完整性
+# Check database integrity
 docker exec portagent sqlite3 /home/node/.agentx/data/agentx.db "PRAGMA integrity_check;"
 ```
 
-### 统计信息
+### Statistics
 
 ```bash
-# 查看表统计
+# View table statistics
 docker exec portagent sqlite3 /home/node/.agentx/data/portagent.db "SELECT COUNT(*) FROM users;"
 docker exec portagent sqlite3 /home/node/.agentx/data/agentx.db "SELECT COUNT(*) FROM images;"
 ```
 
 ---
 
-## 用户管理
+## User Management
 
-### 查看用户列表
+### View User List
 
 ```bash
 docker exec portagent sqlite3 /home/node/.agentx/data/portagent.db \
   "SELECT userId, username, email, datetime(createdAt/1000, 'unixepoch') FROM users;"
 ```
 
-### 禁用用户
+### Disable User
 
 ```bash
 docker exec portagent sqlite3 /home/node/.agentx/data/portagent.db \
   "UPDATE users SET isActive = 0 WHERE username = 'baduser';"
 ```
 
-### 删除用户
+### Delete User
 
 ```bash
-# 获取用户的 containerId
+# Get user's containerId
 docker exec portagent sqlite3 /home/node/.agentx/data/portagent.db \
   "SELECT containerId FROM users WHERE username = 'targetuser';"
 
-# 删除用户记录
+# Delete user record
 docker exec portagent sqlite3 /home/node/.agentx/data/portagent.db \
   "DELETE FROM users WHERE username = 'targetuser';"
 
-# 注意：相关的 Container 数据需要单独清理
+# Note: Related Container data needs to be cleaned separately
 ```
 
 ---
 
-## 安全加固
+## Security Hardening
 
-### 文件权限
+### File Permissions
 
 ```bash
-# 确保数据目录权限正确
+# Ensure correct data directory permissions
 chmod 700 /var/lib/portagent
 chmod 600 /var/lib/portagent/data/*.db
 ```
 
-### 网络隔离
+### Network Isolation
 
 ```yaml
 # docker-compose.yml
@@ -362,7 +362,7 @@ services:
   portagent:
     networks:
       - internal
-    # 只暴露给反向代理
+    # Only expose to reverse proxy
     expose:
       - "5200"
 
@@ -379,7 +379,7 @@ networks:
   external:
 ```
 
-### 限制资源
+### Resource Limits
 
 ```yaml
 services:
@@ -396,63 +396,63 @@ services:
 
 ---
 
-## 故障恢复
+## Disaster Recovery
 
-### 服务无法启动
+### Service Won't Start
 
-1. 检查日志
+1. Check logs
 
 ```bash
 docker logs portagent
 ```
 
-2. 检查环境变量
+2. Check environment variables
 
 ```bash
 docker inspect portagent | grep -A 20 "Env"
 ```
 
-3. 检查数据库完整性
+3. Check database integrity
 
 ```bash
 sqlite3 /var/lib/portagent/data/portagent.db "PRAGMA integrity_check;"
 ```
 
-### 数据库损坏
+### Database Corruption
 
-1. 停止服务
-2. 尝试恢复
+1. Stop service
+2. Attempt recovery
 
 ```bash
 sqlite3 /var/lib/portagent/data/portagent.db ".recover" | sqlite3 /var/lib/portagent/data/portagent-recovered.db
 ```
 
-3. 如果无法恢复，从备份还原
+3. If recovery fails, restore from backup
 
-### WebSocket 连接问题
+### WebSocket Connection Issues
 
-1. 检查反向代理 WebSocket 配置
-2. 检查防火墙规则
-3. 查看客户端控制台错误
+1. Check reverse proxy WebSocket configuration
+2. Check firewall rules
+3. Check client console errors
 
 ---
 
-## 版本升级
+## Version Upgrade
 
-### Docker 升级
+### Docker Upgrade
 
 ```bash
-# 备份数据
+# Backup data
 ./backup.sh
 
-# 拉取新版本
+# Pull new version
 docker pull deepracticexs/portagent:1.0.0
 
-# 停止旧容器
+# Stop old container
 docker stop portagent
 docker rm portagent
 
-# 启动新容器
+# Start new container
 docker run -d \
   --name portagent \
   -p 5200:5200 \
@@ -460,51 +460,51 @@ docker run -d \
   -v /var/lib/portagent:/home/node/.agentx \
   deepracticexs/portagent:1.0.0
 
-# 验证
+# Verify
 curl http://localhost:5200/health
 ```
 
-### Docker Compose 升级
+### Docker Compose Upgrade
 
 ```bash
-# 备份数据
+# Backup data
 ./backup.sh
 
-# 更新镜像标签
-# 编辑 docker-compose.yml 中的 image 版本
+# Update image tag
+# Edit image version in docker-compose.yml
 
-# 重新创建容器
+# Recreate container
 docker compose up -d
 
-# 验证
+# Verify
 docker compose logs -f
 ```
 
-### npm 升级
+### npm Upgrade
 
 ```bash
-# 更新全局包
+# Update global package
 npm update -g @agentxjs/portagent
 
-# 验证版本
+# Verify version
 portagent --version
 ```
 
 ---
 
-## 监控告警
+## Monitoring Alerts
 
-### 推荐监控项
+### Recommended Metrics
 
-| 指标     | 阈值          | 说明           |
-| -------- | ------------- | -------------- |
-| 健康检查 | 连续 3 次失败 | 服务不可用     |
-| 内存使用 | > 80%         | 可能需要扩容   |
-| 磁盘使用 | > 90%         | 需要清理或扩容 |
-| 响应时间 | > 5s          | 性能问题       |
-| 错误率   | > 5%          | 需要排查       |
+| Metric        | Threshold              | Description              |
+| ------------- | ---------------------- | ------------------------ |
+| Health check  | 3 consecutive failures | Service unavailable      |
+| Memory usage  | > 80%                  | May need scaling         |
+| Disk usage    | > 90%                  | Needs cleanup or scaling |
+| Response time | > 5s                   | Performance issue        |
+| Error rate    | > 5%                   | Needs investigation      |
 
-### 告警脚本示例
+### Alert Script Example
 
 ```bash
 #!/bin/bash
@@ -521,7 +521,7 @@ fi
 
 ---
 
-## 下一步
+## Next Steps
 
-- 查看 [故障排查](./troubleshooting.md) 解决常见问题
-- 查看 [架构设计](./architecture.md) 了解系统内部
+- See [Troubleshooting](./troubleshooting.md) for common issues
+- See [Architecture Design](./architecture.md) for system internals

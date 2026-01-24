@@ -1,17 +1,17 @@
-# 故障排查
+# Troubleshooting
 
-本文档汇总 Portagent 常见问题及解决方案。
+This document summarizes common issues and solutions for Portagent.
 
-## 启动问题
+## Startup Issues
 
 ### "LLM_PROVIDER_KEY is required"
 
-**原因**: 未设置 Anthropic API 密钥。
+**Cause**: Anthropic API key is not set.
 
-**解决方案**:
+**Solution**:
 
 ```bash
-# 环境变量
+# Environment variable
 export LLM_PROVIDER_KEY=sk-ant-api03-xxxxx
 
 # Docker
@@ -21,142 +21,142 @@ docker run -e LLM_PROVIDER_KEY=sk-ant-api03-xxxxx ...
 portagent --api-key sk-ant-api03-xxxxx
 ```
 
-### 服务启动后立即退出
+### Service Exits Immediately After Start
 
-**排查步骤**:
+**Troubleshooting Steps**:
 
-1. 查看日志
+1. Check logs
 
 ```bash
 docker logs portagent
 ```
 
-2. 常见原因：
-   - API 密钥无效
-   - 端口被占用
-   - 数据目录权限问题
+2. Common causes:
+   - Invalid API key
+   - Port is occupied
+   - Data directory permission issues
 
-3. 检查端口占用
+3. Check port occupation
 
 ```bash
 lsof -i :5200
-# 或
+# or
 netstat -tuln | grep 5200
 ```
 
-4. 检查目录权限
+4. Check directory permissions
 
 ```bash
 ls -la /var/lib/portagent
 ```
 
-### Permission denied 错误
+### Permission denied Error
 
-**原因**: Docker 容器以 `node` 用户运行，挂载卷权限不匹配。
+**Cause**: Docker container runs as `node` user, mounted volume permissions don't match.
 
-**解决方案**:
+**Solution**:
 
 ```bash
-# 修改目录所有者（node 用户 UID 为 1000）
+# Change directory owner (node user UID is 1000)
 sudo chown -R 1000:1000 ./data
 
-# 或设置宽松权限
+# Or set permissive permissions
 chmod -R 777 ./data
 ```
 
 ---
 
-## 认证问题
+## Authentication Issues
 
 ### "Invalid invite code"
 
-**原因**: 邀请码不正确或时区不匹配。
+**Cause**: Invitation code is incorrect or timezone mismatch.
 
-**排查步骤**:
+**Troubleshooting Steps**:
 
-1. 确认邀请码已启用
+1. Confirm invitation code is enabled
 
 ```bash
-# 检查环境变量
+# Check environment variable
 echo $INVITE_CODE_REQUIRED
 ```
 
-2. 计算正确的邀请码
+2. Calculate correct invitation code
 
 ```bash
-# Docker 容器使用 UTC 时区
+# Docker containers use UTC timezone
 TZ=UTC date -d "today 00:00:01" +%s
 ```
 
-3. 如果是测试环境，禁用邀请码
+3. If testing, disable invitation code
 
 ```bash
 docker run -e INVITE_CODE_REQUIRED=false ...
 ```
 
-**时区说明**:
+**Timezone Notes**:
 
-- Docker 容器默认使用 UTC
-- 邀请码基于服务器时区计算
-- 确保计算邀请码时使用正确时区
+- Docker containers default to UTC
+- Invitation code is calculated based on server timezone
+- Ensure you use the correct timezone when calculating invitation code
 
 ### "Invalid credentials"
 
-**原因**: 用户名/密码错误或用户不存在。
+**Cause**: Username/password is wrong or user doesn't exist.
 
-**排查步骤**:
+**Troubleshooting Steps**:
 
-1. 确认用户存在
+1. Confirm user exists
 
 ```bash
 docker exec portagent sqlite3 /home/node/.agentx/data/portagent.db \
   "SELECT username FROM users WHERE username = 'targetuser';"
 ```
 
-2. 检查用户是否被禁用
+2. Check if user is disabled
 
 ```bash
 docker exec portagent sqlite3 /home/node/.agentx/data/portagent.db \
   "SELECT isActive FROM users WHERE username = 'targetuser';"
 ```
 
-3. 重置密码（需要直接操作数据库）
+3. Reset password (requires database operation)
 
 ```bash
-# 生成新密码哈希需要编写脚本，建议删除用户后重新注册
+# Generating new password hash requires a script, recommend deleting user and re-registering
 ```
 
-### Token 验证失败
+### Token Verification Failed
 
-**原因**: Token 过期或 JWT_SECRET 变化。
+**Cause**: Token expired or JWT_SECRET changed.
 
-**排查步骤**:
+**Troubleshooting Steps**:
 
-1. Token 过期
-   - Token 有效期 7 天
-   - 需要重新登录
+1. Token expired
+   - Token validity is 7 days
+   - Need to re-login
 
-2. JWT_SECRET 变化
-   - 容器重启后使用了新的自动生成密钥
-   - 解决：设置固定的 `JWT_SECRET`
+2. JWT_SECRET changed
+   - Container restart used new auto-generated key
+   - Solution: Set fixed `JWT_SECRET`
 
 ```bash
 docker run -e JWT_SECRET=your-fixed-secret ...
 ```
 
-### 所有用户需要重新登录
+### All Users Need to Re-login
 
-**原因**: 未设置固定的 `JWT_SECRET`，重启后自动生成了新密钥。
+**Cause**: Fixed `JWT_SECRET` not set, new key auto-generated after restart.
 
-**解决方案**:
+**Solution**:
 
-1. 生成固定密钥
+1. Generate fixed key
 
 ```bash
 openssl rand -base64 32
 ```
 
-2. 配置环境变量
+2. Configure environment variable
 
 ```bash
 export JWT_SECRET=your-generated-secret
@@ -164,22 +164,22 @@ export JWT_SECRET=your-generated-secret
 
 ---
 
-## WebSocket 问题
+## WebSocket Issues
 
-### 无法建立 WebSocket 连接
+### Cannot Establish WebSocket Connection
 
-**排查步骤**:
+**Troubleshooting Steps**:
 
-1. 检查 Token 是否正确传递
+1. Check if Token is passed correctly
 
 ```javascript
-// 正确的连接方式
+// Correct connection method
 const ws = new WebSocket(`ws://localhost:5200/ws?token=${token}`);
 ```
 
-2. 检查反向代理配置
+2. Check reverse proxy configuration
 
-Nginx 需要正确配置 WebSocket：
+Nginx needs proper WebSocket configuration:
 
 ```nginx
 location / {
@@ -190,39 +190,39 @@ location / {
 }
 ```
 
-3. 检查防火墙
+3. Check firewall
 
 ```bash
-# 确保 5200 端口开放
+# Ensure port 5200 is open
 sudo ufw allow 5200
 ```
 
-### WebSocket 连接频繁断开
+### WebSocket Connection Frequently Disconnects
 
-**可能原因**:
+**Possible Causes**:
 
-1. 反向代理超时设置过短
+1. Reverse proxy timeout too short
 
 ```nginx
 location / {
-    proxy_read_timeout 3600s;  # 增加超时时间
+    proxy_read_timeout 3600s;  # Increase timeout
     proxy_send_timeout 60s;
 }
 ```
 
-2. 网络不稳定
-   - 检查网络连接
-   - 考虑使用心跳保活
+2. Network instability
+   - Check network connection
+   - Consider using heartbeat keepalive
 
-3. 服务器资源不足
-   - 检查 CPU 和内存使用率
-   - 考虑扩容
+3. Insufficient server resources
+   - Check CPU and memory usage
+   - Consider scaling up
 
-### 消息发送后无响应
+### No Response After Sending Message
 
-**排查步骤**:
+**Troubleshooting Steps**:
 
-1. 检查 Claude API 连接
+1. Check Claude API connection
 
 ```bash
 curl -H "x-api-key: sk-ant-xxx" \
@@ -230,9 +230,9 @@ curl -H "x-api-key: sk-ant-xxx" \
   https://api.anthropic.com/v1/models
 ```
 
-2. 检查 API 密钥余额
+2. Check API key balance
 
-3. 查看服务器日志
+3. View server logs
 
 ```bash
 docker logs -f portagent
@@ -240,21 +240,21 @@ docker logs -f portagent
 
 ---
 
-## 数据库问题
+## Database Issues
 
 ### "database is locked"
 
-**原因**: 多个进程同时访问 SQLite 数据库。
+**Cause**: Multiple processes accessing SQLite database simultaneously.
 
-**解决方案**:
+**Solution**:
 
-1. 确保只有一个 Portagent 实例运行
+1. Ensure only one Portagent instance is running
 
 ```bash
 docker ps | grep portagent
 ```
 
-2. 停止所有实例后重启
+2. Stop all instances and restart
 
 ```bash
 docker stop portagent
@@ -262,70 +262,70 @@ docker rm portagent
 docker run ...
 ```
 
-### 数据库损坏
+### Database Corruption
 
-**症状**: 服务启动失败，日志显示 SQLite 错误。
+**Symptoms**: Service fails to start, logs show SQLite errors.
 
-**排查步骤**:
+**Troubleshooting Steps**:
 
-1. 检查完整性
+1. Check integrity
 
 ```bash
 sqlite3 /var/lib/portagent/data/portagent.db "PRAGMA integrity_check;"
 ```
 
-2. 尝试恢复
+2. Attempt recovery
 
 ```bash
 sqlite3 /var/lib/portagent/data/portagent.db ".recover" | \
   sqlite3 /var/lib/portagent/data/portagent-recovered.db
 ```
 
-3. 从备份恢复
+3. Restore from backup
 
 ```bash
 cp /var/backups/portagent/portagent-backup.db /var/lib/portagent/data/portagent.db
 ```
 
-### 磁盘空间不足
+### Insufficient Disk Space
 
-**症状**: 写入失败，日志显示 "disk full" 或 "no space left"。
+**Symptoms**: Write failures, logs show "disk full" or "no space left".
 
-**解决方案**:
+**Solution**:
 
-1. 检查磁盘使用
+1. Check disk usage
 
 ```bash
 df -h
 ```
 
-2. 清理日志文件
+2. Clean log files
 
 ```bash
 # Docker
 docker exec portagent rm /home/node/.agentx/logs/*.log.*
 
-# 或限制 Docker 日志大小
+# Or limit Docker log size
 docker run --log-opt max-size=10m --log-opt max-file=3 ...
 ```
 
-3. 清理旧数据
+3. Clean old data
 
 ```bash
-# 清理旧会话（谨慎操作）
+# Clean old sessions (use with caution)
 sqlite3 /var/lib/portagent/data/agentx.db \
   "DELETE FROM messages WHERE timestamp < strftime('%s', 'now', '-30 days') * 1000;"
 ```
 
 ---
 
-## 性能问题
+## Performance Issues
 
-### 响应缓慢
+### Slow Response
 
-**排查步骤**:
+**Troubleshooting Steps**:
 
-1. 检查 Claude API 延迟
+1. Check Claude API latency
 
 ```bash
 time curl -X POST https://api.anthropic.com/v1/messages \
@@ -335,56 +335,56 @@ time curl -X POST https://api.anthropic.com/v1/messages \
   -d '{"model":"claude-sonnet-4-20250514","max_tokens":100,"messages":[{"role":"user","content":"Hi"}]}'
 ```
 
-2. 检查服务器资源
+2. Check server resources
 
 ```bash
 docker stats portagent
 ```
 
-3. 检查网络延迟
+3. Check network latency
 
 ```bash
 ping api.anthropic.com
 ```
 
-### 内存使用过高
+### High Memory Usage
 
-**可能原因**:
+**Possible Causes**:
 
-1. 会话数据积累
-2. 日志缓冲区
-3. 内存泄漏
+1. Session data accumulation
+2. Log buffer
+3. Memory leak
 
-**解决方案**:
+**Solution**:
 
-1. 限制内存使用
+1. Limit memory usage
 
 ```bash
 docker run --memory=2g --memory-swap=2g ...
 ```
 
-2. 定期重启服务（临时方案）
+2. Periodic service restart (temporary solution)
 
 ```bash
 docker restart portagent
 ```
 
-### CPU 使用率高
+### High CPU Usage
 
-**可能原因**:
+**Possible Causes**:
 
-1. 大量并发请求
-2. 日志写入频繁
+1. High concurrent requests
+2. Frequent log writes
 
-**解决方案**:
+**Solution**:
 
-1. 限制 CPU
+1. Limit CPU
 
 ```bash
 docker run --cpus=2 ...
 ```
 
-2. 降低日志级别
+2. Lower log level
 
 ```bash
 docker run -e LOG_LEVEL=warn ...
@@ -392,109 +392,109 @@ docker run -e LOG_LEVEL=warn ...
 
 ---
 
-## 网络问题
+## Network Issues
 
-### 无法访问 Claude API
+### Cannot Access Claude API
 
-**排查步骤**:
+**Troubleshooting Steps**:
 
-1. 测试连接
+1. Test connection
 
 ```bash
 curl -I https://api.anthropic.com
 ```
 
-2. 检查 DNS
+2. Check DNS
 
 ```bash
 nslookup api.anthropic.com
 ```
 
-3. 检查代理设置
+3. Check proxy settings
 
 ```bash
-# 如果需要代理
+# If proxy needed
 docker run -e HTTP_PROXY=http://proxy:8080 ...
 ```
 
-### 端口被占用
+### Port Occupied
 
-**解决方案**:
+**Solution**:
 
-1. 查找占用进程
+1. Find occupying process
 
 ```bash
 lsof -i :5200
 ```
 
-2. 使用其他端口
+2. Use different port
 
 ```bash
 docker run -p 5201:5200 ...
-# 或
+# or
 portagent --port 5201
 ```
 
 ---
 
-## 前端问题
+## Frontend Issues
 
-### 页面空白
+### Blank Page
 
-**排查步骤**:
+**Troubleshooting Steps**:
 
-1. 检查浏览器控制台错误
-2. 确认静态文件正确构建
+1. Check browser console for errors
+2. Confirm static files are built correctly
 
 ```bash
 ls dist/public/
 ```
 
-3. 检查 index.html 是否正确
+3. Check if index.html is correct
 
-### 无法登录/注册
+### Cannot Login/Register
 
-**排查步骤**:
+**Troubleshooting Steps**:
 
-1. 检查网络请求（浏览器开发者工具）
-2. 查看服务器响应
-3. 确认 CORS 配置
+1. Check network requests (browser developer tools)
+2. View server response
+3. Confirm CORS configuration
 
-### 样式丢失
+### Missing Styles
 
-**原因**: CSS 文件未正确构建或加载。
+**Cause**: CSS file not built or loaded correctly.
 
-**解决方案**:
+**Solution**:
 
 ```bash
-# 重新构建
+# Rebuild
 cd apps/portagent
 bun run build
 ```
 
 ---
 
-## Docker 问题
+## Docker Issues
 
-### 镜像拉取失败
+### Image Pull Failed
 
 ```bash
-# 使用镜像加速
+# Use mirror acceleration
 docker pull registry.cn-hangzhou.aliyuncs.com/deepractice/portagent:latest
 ```
 
-### 容器无法访问网络
+### Container Cannot Access Network
 
 ```bash
-# 检查网络配置
+# Check network configuration
 docker network ls
 docker inspect portagent | grep -A 20 NetworkSettings
 ```
 
-### 日志过大
+### Logs Too Large
 
 ```bash
-# 限制日志大小
+# Limit log size
 docker run \
   --log-driver json-file \
   --log-opt max-size=10m \
@@ -504,25 +504,25 @@ docker run \
 
 ---
 
-## 日志分析
+## Log Analysis
 
-### 常见错误日志
+### Common Error Logs
 
-| 日志内容                              | 含义            | 解决方案      |
-| ------------------------------------- | --------------- | ------------- |
-| `Error: LLM_PROVIDER_KEY is required` | 未设置 API 密钥 | 设置环境变量  |
-| `Invalid API key`                     | API 密钥无效    | 检查密钥格式  |
-| `SQLITE_BUSY`                         | 数据库锁定      | 确保单实例    |
-| `ECONNREFUSED`                        | 连接被拒绝      | 检查网络      |
-| `ETIMEDOUT`                           | 连接超时        | 检查网络/代理 |
+| Log Content                           | Meaning            | Solution                 |
+| ------------------------------------- | ------------------ | ------------------------ |
+| `Error: LLM_PROVIDER_KEY is required` | API key not set    | Set environment variable |
+| `Invalid API key`                     | API key invalid    | Check key format         |
+| `SQLITE_BUSY`                         | Database locked    | Ensure single instance   |
+| `ECONNREFUSED`                        | Connection refused | Check network            |
+| `ETIMEDOUT`                           | Connection timeout | Check network/proxy      |
 
-### 启用调试日志
+### Enable Debug Logs
 
 ```bash
 docker run -e LOG_LEVEL=debug ...
 ```
 
-### 导出日志分析
+### Export Logs for Analysis
 
 ```bash
 docker logs portagent > portagent.log 2>&1
@@ -531,65 +531,65 @@ grep -i error portagent.log
 
 ---
 
-## 获取帮助
+## Getting Help
 
-### 收集诊断信息
+### Collect Diagnostic Information
 
-报告问题时，请提供：
+When reporting issues, please provide:
 
-1. 版本信息
+1. Version information
 
 ```bash
 portagent --version
 docker inspect deepracticexs/portagent:latest | grep -i version
 ```
 
-2. 环境信息
+2. Environment information
 
 ```bash
 uname -a
 docker version
 ```
 
-3. 相关日志
+3. Related logs
 
 ```bash
 docker logs --tail 100 portagent
 ```
 
-4. 配置（隐藏敏感信息）
+4. Configuration (hide sensitive information)
 
 ```bash
-# 不要暴露 API 密钥
+# Do not expose API key
 env | grep -E "^(PORT|LOG_LEVEL|INVITE)"
 ```
 
-### 常用命令速查
+### Quick Command Reference
 
 ```bash
-# 查看日志
+# View logs
 docker logs -f portagent
 
-# 进入容器
+# Enter container
 docker exec -it portagent sh
 
-# 检查健康
+# Health check
 curl http://localhost:5200/health
 
-# 检查数据库
+# Check database
 docker exec portagent sqlite3 /home/node/.agentx/data/portagent.db ".tables"
 
-# 重启服务
+# Restart service
 docker restart portagent
 
-# 完全重建
+# Complete rebuild
 docker stop portagent && docker rm portagent && docker run ...
 ```
 
 ---
 
-## 相关文档
+## Related Documentation
 
-- [部署指南](./deployment.md) - 正确的部署方式
-- [配置参考](./configuration.md) - 配置选项详解
-- [运维指南](./operations.md) - 日常运维操作
+- [Deployment Guide](./deployment.md) - Proper deployment methods
+- [Configuration Reference](./configuration.md) - Configuration options explained
+- [Operations Guide](./operations.md) - Daily operations

@@ -1,147 +1,147 @@
-# 配置参考
+# Configuration Reference
 
-本文档详细说明 Portagent 的所有配置选项。
+This document provides detailed information about all configuration options for Portagent.
 
-## 环境变量
+## Environment Variables
 
-### 必需配置
+### Required Configuration
 
-| 变量               | 说明               | 示例                 |
-| ------------------ | ------------------ | -------------------- |
-| `LLM_PROVIDER_KEY` | Anthropic API 密钥 | `sk-ant-api03-xxxxx` |
+| Variable           | Description       | Example              |
+| ------------------ | ----------------- | -------------------- |
+| `LLM_PROVIDER_KEY` | Anthropic API key | `sk-ant-api03-xxxxx` |
 
-### LLM 配置
+### LLM Configuration
 
-| 变量                 | 默认值                      | 说明               |
-| -------------------- | --------------------------- | ------------------ |
-| `LLM_PROVIDER_URL`   | `https://api.anthropic.com` | API 基础 URL       |
-| `LLM_PROVIDER_MODEL` | `claude-sonnet-4-20250514`  | 使用的 Claude 模型 |
+| Variable             | Default                     | Description         |
+| -------------------- | --------------------------- | ------------------- |
+| `LLM_PROVIDER_URL`   | `https://api.anthropic.com` | API base URL        |
+| `LLM_PROVIDER_MODEL` | `claude-sonnet-4-20250514`  | Claude model to use |
 
-**可用模型**:
+**Available Models**:
 
-- `claude-sonnet-4-20250514` - 推荐，平衡性能和成本
-- `claude-opus-4-20250514` - 最强能力
-- `claude-haiku-4-5-20251001` - 最快响应
+- `claude-sonnet-4-20250514` - Recommended, balanced performance and cost
+- `claude-opus-4-20250514` - Strongest capabilities
+- `claude-haiku-4-5-20251001` - Fastest response
 
-### 服务器配置
+### Server Configuration
 
-| 变量         | 默认值       | 说明                                    |
-| ------------ | ------------ | --------------------------------------- |
-| `PORT`       | `5200`       | HTTP/WebSocket 服务端口                 |
-| `AGENTX_DIR` | `~/.agentx`  | 数据目录路径                            |
-| `NODE_ENV`   | `production` | 运行环境 (`production` / `development`) |
+| Variable     | Default      | Description                                        |
+| ------------ | ------------ | -------------------------------------------------- |
+| `PORT`       | `5200`       | HTTP/WebSocket service port                        |
+| `AGENTX_DIR` | `~/.agentx`  | Data directory path                                |
+| `NODE_ENV`   | `production` | Runtime environment (`production` / `development`) |
 
-### 认证配置
+### Authentication Configuration
 
-| 变量                   | 默认值   | 说明               |
-| ---------------------- | -------- | ------------------ |
-| `JWT_SECRET`           | 自动生成 | JWT 签名密钥       |
-| `INVITE_CODE_REQUIRED` | `false`  | 是否要求邀请码注册 |
+| Variable               | Default        | Description                                          |
+| ---------------------- | -------------- | ---------------------------------------------------- |
+| `JWT_SECRET`           | Auto-generated | JWT signing key                                      |
+| `INVITE_CODE_REQUIRED` | `false`        | Whether invitation code is required for registration |
 
-**重要**: 生产环境应该设置固定的 `JWT_SECRET`，否则每次重启后所有用户需要重新登录。
+**Important**: Production environments should set a fixed `JWT_SECRET`, otherwise all users will need to re-login after each restart.
 
-### 日志配置
+### Logging Configuration
 
-| 变量        | 默认值 | 说明     |
-| ----------- | ------ | -------- |
-| `LOG_LEVEL` | `info` | 日志级别 |
+| Variable    | Default | Description |
+| ----------- | ------- | ----------- |
+| `LOG_LEVEL` | `info`  | Log level   |
 
-**日志级别**:
+**Log Levels**:
 
-- `debug` - 详细调试信息
-- `info` - 常规运行信息
-- `warn` - 警告信息
-- `error` - 仅错误信息
+- `debug` - Detailed debug information
+- `info` - Normal runtime information
+- `warn` - Warning messages
+- `error` - Error messages only
 
-### MCP 集成配置
+### MCP Integration Configuration
 
-| 变量             | 默认值 | 说明                        |
-| ---------------- | ------ | --------------------------- |
-| `ENABLE_PROMPTX` | `true` | 是否启用 PromptX MCP 服务器 |
+| Variable         | Default | Description                          |
+| ---------------- | ------- | ------------------------------------ |
+| `ENABLE_PROMPTX` | `true`  | Whether to enable PromptX MCP server |
 
-设置 `ENABLE_PROMPTX=false` 禁用 PromptX 集成。
+Set `ENABLE_PROMPTX=false` to disable PromptX integration.
 
 ---
 
-## CLI 参数
+## CLI Parameters
 
-通过命令行参数配置 Portagent：
+Configure Portagent via command line parameters:
 
 ```bash
 portagent [options]
 ```
 
-### 可用参数
+### Available Parameters
 
-| 参数                    | 简写 | 说明         | 示例                                |
-| ----------------------- | ---- | ------------ | ----------------------------------- |
-| `--port <port>`         | `-p` | 服务端口     | `--port 3000`                       |
-| `--data-dir <path>`     | `-d` | 数据目录     | `--data-dir /var/lib/portagent`     |
-| `--env-file <path>`     | `-e` | 环境文件路径 | `--env-file .env.prod`              |
-| `--jwt-secret <secret>` | -    | JWT 密钥     | `--jwt-secret xxx`                  |
-| `--api-key <key>`       | -    | API 密钥     | `--api-key sk-ant-xxx`              |
-| `--api-url <url>`       | -    | API 基础 URL | `--api-url https://api.example.com` |
-| `--model <model>`       | -    | 模型名称     | `--model claude-sonnet-4-20250514`  |
-| `--help`                | `-h` | 显示帮助     | `--help`                            |
-| `--version`             | `-V` | 显示版本     | `--version`                         |
+| Parameter               | Short | Description           | Example                             |
+| ----------------------- | ----- | --------------------- | ----------------------------------- |
+| `--port <port>`         | `-p`  | Service port          | `--port 3000`                       |
+| `--data-dir <path>`     | `-d`  | Data directory        | `--data-dir /var/lib/portagent`     |
+| `--env-file <path>`     | `-e`  | Environment file path | `--env-file .env.prod`              |
+| `--jwt-secret <secret>` | -     | JWT key               | `--jwt-secret xxx`                  |
+| `--api-key <key>`       | -     | API key               | `--api-key sk-ant-xxx`              |
+| `--api-url <url>`       | -     | API base URL          | `--api-url https://api.example.com` |
+| `--model <model>`       | -     | Model name            | `--model claude-sonnet-4-20250514`  |
+| `--help`                | `-h`  | Show help             | `--help`                            |
+| `--version`             | `-V`  | Show version          | `--version`                         |
 
-### 优先级
+### Priority
 
-CLI 参数 > 环境变量 > 默认值
+CLI parameters > Environment variables > Default values
 
-### 示例
+### Examples
 
 ```bash
-# 使用 CLI 参数启动
+# Start with CLI parameters
 portagent --port 3000 --data-dir /data/portagent --api-key sk-ant-xxx
 
-# 加载自定义环境文件
+# Load custom environment file
 portagent --env-file /etc/portagent/.env.production
 
-# 覆盖环境文件中的设置
+# Override settings from environment file
 portagent --env-file .env --port 8080
 ```
 
 ---
 
-## 环境文件
+## Environment Files
 
-Portagent 按以下顺序加载环境文件：
+Portagent loads environment files in the following order:
 
-1. `--env-file` 指定的文件（如果提供）
-2. 当前目录的 `.env.local`
-3. 当前目录的 `.env`
+1. File specified by `--env-file` (if provided)
+2. `.env.local` in current directory
+3. `.env` in current directory
 
-### 示例 .env 文件
+### Example .env File
 
 ```env
-# LLM 配置
+# LLM Configuration
 LLM_PROVIDER_KEY=sk-ant-api03-xxxxx
 LLM_PROVIDER_URL=https://api.anthropic.com
 LLM_PROVIDER_MODEL=claude-sonnet-4-20250514
 
-# 服务器配置
+# Server Configuration
 PORT=5200
 AGENTX_DIR=/var/lib/portagent
 
-# 认证配置
+# Authentication Configuration
 JWT_SECRET=your-secure-random-secret-at-least-32-chars
 INVITE_CODE_REQUIRED=true
 
-# 日志配置
+# Logging Configuration
 LOG_LEVEL=info
 
-# MCP 配置
+# MCP Configuration
 ENABLE_PROMPTX=true
 ```
 
 ---
 
-## Docker 环境变量
+## Docker Environment Variables
 
-### 基础镜像预设
+### Base Image Presets
 
-Docker 镜像预设以下环境变量：
+The Docker image presets the following environment variables:
 
 ```dockerfile
 ENV NODE_ENV=production
@@ -150,7 +150,7 @@ ENV LOG_LEVEL=info
 ENV AGENTX_DIR=/home/node/.agentx
 ```
 
-### 运行时覆盖
+### Runtime Override
 
 ```bash
 docker run -d \
@@ -161,7 +161,7 @@ docker run -d \
   deepracticexs/portagent:latest
 ```
 
-### Docker Compose 配置
+### Docker Compose Configuration
 
 ```yaml
 services:
@@ -179,36 +179,36 @@ services:
 
 ---
 
-## PromptX MCP 集成
+## PromptX MCP Integration
 
-Portagent 默认集成 PromptX MCP 服务器，提供提示词管理功能。
+Portagent integrates PromptX MCP server by default, providing prompt management functionality.
 
-### 启用/禁用
+### Enable/Disable
 
 ```bash
-# 启用（默认）
+# Enable (default)
 ENABLE_PROMPTX=true portagent
 
-# 禁用
+# Disable
 ENABLE_PROMPTX=false portagent
 ```
 
-### Docker 镜像中的 PromptX
+### PromptX in Docker Image
 
-Docker 镜像已预装 PromptX CLI：
+The Docker image comes with PromptX CLI pre-installed:
 
 ```dockerfile
 RUN npm install -g @promptx/cli
 ```
 
-### 默认 Agent 配置
+### Default Agent Configuration
 
-启用 PromptX 时，默认 Agent 配置为：
+When PromptX is enabled, the default Agent is configured as:
 
 ```typescript
 {
   name: "Assistant",
-  systemPrompt: "...", // 预设的欢迎语
+  systemPrompt: "...", // Preset welcome message
   mcpServers: {
     promptx: {
       command: "promptx",
@@ -218,7 +218,7 @@ RUN npm install -g @promptx/cli
 }
 ```
 
-禁用 PromptX 时：
+When PromptX is disabled:
 
 ```typescript
 {
@@ -229,52 +229,52 @@ RUN npm install -g @promptx/cli
 
 ---
 
-## 数据目录结构
+## Data Directory Structure
 
-配置 `AGENTX_DIR` 后，目录结构如下：
+After configuring `AGENTX_DIR`, the directory structure is as follows:
 
 ```
 {AGENTX_DIR}/
 ├── data/
-│   ├── agentx.db      # AgentX 数据（容器、镜像、会话）
-│   └── portagent.db   # 用户认证数据
+│   ├── agentx.db      # AgentX data (containers, images, sessions)
+│   └── portagent.db   # User authentication data
 └── logs/
-    └── portagent.log  # 应用日志
+    └── portagent.log  # Application logs
 ```
 
-### 默认位置
+### Default Locations
 
-- **主机**: `~/.agentx/`
+- **Host**: `~/.agentx/`
 - **Docker**: `/home/node/.agentx/`
 
 ---
 
-## 模型选择指南
+## Model Selection Guide
 
-| 模型                        | 速度 | 能力 | 成本 | 适用场景           |
-| --------------------------- | ---- | ---- | ---- | ------------------ |
-| `claude-haiku-4-5-20251001` | 最快 | 一般 | 最低 | 简单对话、快速响应 |
-| `claude-sonnet-4-20250514`  | 适中 | 强   | 中等 | 通用场景（推荐）   |
-| `claude-opus-4-20250514`    | 较慢 | 最强 | 最高 | 复杂推理、代码生成 |
+| Model                       | Speed   | Capability | Cost    | Use Cases                             |
+| --------------------------- | ------- | ---------- | ------- | ------------------------------------- |
+| `claude-haiku-4-5-20251001` | Fastest | Basic      | Lowest  | Simple conversations, quick responses |
+| `claude-sonnet-4-20250514`  | Medium  | Strong     | Medium  | General use (recommended)             |
+| `claude-opus-4-20250514`    | Slower  | Strongest  | Highest | Complex reasoning, code generation    |
 
-### 配置示例
+### Configuration Examples
 
 ```bash
-# 快速响应场景
+# Quick response scenarios
 LLM_PROVIDER_MODEL=claude-haiku-4-5-20251001
 
-# 通用场景（默认）
+# General scenarios (default)
 LLM_PROVIDER_MODEL=claude-sonnet-4-20250514
 
-# 高质量输出场景
+# High-quality output scenarios
 LLM_PROVIDER_MODEL=claude-opus-4-20250514
 ```
 
 ---
 
-## 配置验证
+## Configuration Validation
 
-启动时，Portagent 会输出当前配置：
+On startup, Portagent outputs the current configuration:
 
 ```
   ____            _                         _
@@ -299,8 +299,8 @@ Configuration:
 
 ---
 
-## 下一步
+## Next Steps
 
-- 查看 [认证系统](./authentication.md) 了解 JWT 和邀请码机制
-- 查看 [架构设计](./architecture.md) 了解系统内部结构
-- 查看 [故障排查](./troubleshooting.md) 解决配置问题
+- See [Authentication System](./authentication.md) for JWT and invitation code mechanism
+- See [Architecture Design](./architecture.md) for system internals
+- See [Troubleshooting](./troubleshooting.md) for configuration issues

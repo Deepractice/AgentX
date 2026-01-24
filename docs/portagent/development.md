@@ -1,37 +1,37 @@
-# 开发指南
+# Development Guide
 
-本文档介绍如何搭建 Portagent 本地开发环境和自定义开发。
+This document describes how to set up the Portagent local development environment and custom development.
 
-## 环境要求
+## Environment Requirements
 
 - **Node.js**: 20+
-- **Bun**: 1.0+（包管理和构建）
-- **Git**: 版本控制
+- **Bun**: 1.0+ (package management and build)
+- **Git**: Version control
 
-## 快速开始
+## Quick Start
 
-### 1. 克隆仓库
+### 1. Clone Repository
 
 ```bash
 git clone https://github.com/Deepractice/AgentX.git
 cd AgentX
 ```
 
-### 2. 安装依赖
+### 2. Install Dependencies
 
 ```bash
 bun install
 ```
 
-### 3. 构建所有包
+### 3. Build All Packages
 
 ```bash
 bun build
 ```
 
-### 4. 配置环境变量
+### 4. Configure Environment Variables
 
-在 `apps/portagent` 目录创建 `.env.local`：
+Create `.env.local` in the `apps/portagent` directory:
 
 ```env
 LLM_PROVIDER_KEY=sk-ant-api03-xxxxx
@@ -41,52 +41,52 @@ LOG_LEVEL=debug
 INVITE_CODE_REQUIRED=false
 ```
 
-### 5. 启动开发服务器
+### 5. Start Development Server
 
 ```bash
 cd apps/portagent
 bun dev
 ```
 
-服务器启动后访问 <http://localhost:5200>。
+After the server starts, visit <http://localhost:5200>.
 
 ---
 
-## 项目结构
+## Project Structure
 
 ```
 apps/portagent/
 ├── src/
-│   ├── client/                # 前端代码
-│   │   ├── main.tsx          # 应用入口
-│   │   ├── App.tsx           # 路由配置
-│   │   ├── input.css         # Tailwind 入口
+│   ├── client/                # Frontend code
+│   │   ├── main.tsx          # Application entry
+│   │   ├── App.tsx           # Route configuration
+│   │   ├── input.css         # Tailwind entry
 │   │   ├── hooks/
-│   │   │   └── useAuth.tsx   # 认证 Hook
+│   │   │   └── useAuth.tsx   # Authentication Hook
 │   │   └── pages/
 │   │       ├── LoginPage.tsx
 │   │       ├── RegisterPage.tsx
 │   │       └── ChatPage.tsx
 │   │
-│   ├── server/                # 后端代码
-│   │   ├── index.ts          # 服务器主入口
-│   │   ├── main.ts           # 开发入口
-│   │   ├── auth.ts           # 认证模块
-│   │   ├── logger.ts         # 日志模块
-│   │   ├── defaultAgent.ts   # 默认 Agent
+│   ├── server/                # Backend code
+│   │   ├── index.ts          # Server main entry
+│   │   ├── main.ts           # Development entry
+│   │   ├── auth.ts           # Authentication module
+│   │   ├── logger.ts         # Logging module
+│   │   ├── defaultAgent.ts   # Default Agent
 │   │   ├── database/
 │   │   │   └── SQLiteUserRepository.ts
 │   │   └── user/
 │   │       ├── types.ts
 │   │       └── UserRepository.ts
 │   │
-│   └── cli/                   # CLI 入口
+│   └── cli/                   # CLI entry
 │       └── index.ts
 │
-├── public/                    # 静态资源
+├── public/                    # Static assets
 │   └── favicon.svg
 │
-├── build.ts                   # 构建脚本
+├── build.ts                   # Build script
 ├── package.json
 ├── tsconfig.json
 ├── tailwind.config.js
@@ -97,73 +97,73 @@ apps/portagent/
 
 ---
 
-## 开发模式
+## Development Modes
 
-### 后端开发
+### Backend Development
 
-后端使用 Bun 直接运行 TypeScript：
+Backend runs TypeScript directly with Bun:
 
 ```bash
 cd apps/portagent
 bun run src/server/main.ts
 ```
 
-`main.ts` 会自动加载 `.env.local` 和 `.env`。
+`main.ts` automatically loads `.env.local` and `.env`.
 
-### 前端开发
+### Frontend Development
 
-前端使用 Vite 开发服务器：
+Frontend uses Vite development server:
 
 ```bash
 cd apps/portagent
 bun run dev:client
 ```
 
-Vite 开发服务器运行在 5173 端口，自动代理 API 请求到后端。
+Vite development server runs on port 5173, automatically proxying API requests to the backend.
 
-### 同时开发前后端
+### Developing Frontend and Backend Together
 
-推荐使用两个终端：
+Recommended to use two terminals:
 
 ```bash
-# 终端 1: 后端
+# Terminal 1: Backend
 cd apps/portagent && bun run src/server/main.ts
 
-# 终端 2: 前端
+# Terminal 2: Frontend
 cd apps/portagent && bun run dev:client
 ```
 
-或使用 monorepo 根目录的 dev 命令：
+Or use the dev command from monorepo root:
 
 ```bash
-# 从仓库根目录
+# From repository root
 bun dev portagent
 ```
 
 ---
 
-## 构建流程
+## Build Process
 
-### 开发构建
+### Development Build
 
 ```bash
 cd apps/portagent
 bun run build
 ```
 
-### 构建产物
+### Build Artifacts
 
-构建脚本 (`build.ts`) 执行以下步骤：
+The build script (`build.ts`) performs the following steps:
 
-1. **清理**: 删除 `dist` 目录
-2. **前端构建**: Bun 打包 React 应用到 `dist/public`
-3. **CSS 生成**: PostCSS + Tailwind 生成样式
-4. **生成 index.html**: 注入打包后的 JS 文件名
-5. **二进制构建**: 为各平台编译二进制
+1. **Clean**: Delete `dist` directory
+2. **Frontend Build**: Bun bundles React application to `dist/public`
+3. **CSS Generation**: PostCSS + Tailwind generates styles
+4. **Generate index.html**: Inject bundled JS filename
+5. **Binary Build**: Compile binaries for each platform
 
-### 构建平台
+### Build Platforms
 
-| 平台        | 二进制文件                  |
+| Platform    | Binary File                 |
 | ----------- | --------------------------- |
 | macOS ARM64 | `portagent-darwin-arm64`    |
 | macOS x64   | `portagent-darwin-x64`      |
@@ -171,36 +171,36 @@ bun run build
 | Linux ARM64 | `portagent-linux-arm64`     |
 | Windows x64 | `portagent-windows-x64.exe` |
 
-### 测试本地构建
+### Test Local Build
 
 ```bash
-# 使用 CLI 入口
+# Use CLI entry
 node dist/cli.js --help
 
-# 直接运行二进制（macOS ARM64 示例）
+# Run binary directly (macOS ARM64 example)
 ./dist/bin/portagent-darwin-arm64 --help
 ```
 
 ---
 
-## 代码规范
+## Code Standards
 
 ### TypeScript
 
-- 使用 ESM 模块 (`"type": "module"`)
-- 启用严格模式
-- 导入使用 `.js` 扩展名
+- Use ESM modules (`"type": "module"`)
+- Enable strict mode
+- Imports use `.js` extension
 
-### 命名约定
+### Naming Conventions
 
-- **文件**: camelCase（`authRoutes.ts`）
-- **组件**: PascalCase（`LoginPage.tsx`）
-- **函数**: camelCase（`createToken`）
-- **常量**: UPPER_SNAKE_CASE（`TOKEN_EXPIRY`）
+- **Files**: camelCase (`authRoutes.ts`)
+- **Components**: PascalCase (`LoginPage.tsx`)
+- **Functions**: camelCase (`createToken`)
+- **Constants**: UPPER_SNAKE_CASE (`TOKEN_EXPIRY`)
 
-### 日志
+### Logging
 
-使用 AgentX logger，不要直接使用 `console.*`：
+Use AgentX logger, do not use `console.*` directly:
 
 ```typescript
 import { createLogger } from "@agentxjs/common";
@@ -211,19 +211,19 @@ logger.info("User logged in", { userId });
 
 ---
 
-## 添加新功能
+## Adding New Features
 
-### 添加 API 端点
+### Add API Endpoint
 
-在 `src/server/index.ts` 中：
+In `src/server/index.ts`:
 
 ```typescript
-// 公开端点
+// Public endpoint
 app.get("/api/public/endpoint", (c) => {
   return c.json({ data: "public" });
 });
 
-// 受保护端点
+// Protected endpoint
 app.use("/api/private/*", authMiddleware);
 app.get("/api/private/endpoint", (c) => {
   const userId = c.get("userId");
@@ -231,9 +231,9 @@ app.get("/api/private/endpoint", (c) => {
 });
 ```
 
-### 添加前端页面
+### Add Frontend Page
 
-1. 创建页面组件 `src/client/pages/NewPage.tsx`：
+1. Create page component `src/client/pages/NewPage.tsx`:
 
 ```typescript
 export function NewPage() {
@@ -241,27 +241,27 @@ export function NewPage() {
 }
 ```
 
-2. 添加路由 `src/client/App.tsx`：
+2. Add route in `src/client/App.tsx`:
 
 ```typescript
 import { NewPage } from "./pages/NewPage";
 
 <Routes>
-  {/* ... 其他路由 */}
+  {/* ... other routes */}
   <Route path="/new" element={<ProtectedRoute><NewPage /></ProtectedRoute>} />
 </Routes>
 ```
 
-### 修改默认 Agent
+### Modify Default Agent
 
-编辑 `src/server/defaultAgent.ts`：
+Edit `src/server/defaultAgent.ts`:
 
 ```typescript
 export const defaultAgent: AgentDefinition = {
   name: "CustomAssistant",
-  systemPrompt: `你的自定义系统提示...`,
+  systemPrompt: `Your custom system prompt...`,
   mcpServers: {
-    // 添加 MCP 服务器
+    // Add MCP servers
     myMcp: {
       command: "my-mcp-server",
       args: ["--config", "/path/to/config"],
@@ -270,39 +270,39 @@ export const defaultAgent: AgentDefinition = {
 };
 ```
 
-### 添加用户字段
+### Add User Fields
 
-1. 更新类型定义 `src/server/user/types.ts`：
+1. Update type definitions in `src/server/user/types.ts`:
 
 ```typescript
 export interface UserRecord {
-  // ... 现有字段
+  // ... existing fields
   newField?: string;
 }
 ```
 
-2. 更新数据库 Schema `src/server/database/SQLiteUserRepository.ts`：
+2. Update database schema in `src/server/database/SQLiteUserRepository.ts`:
 
 ```typescript
 private initDatabase(): void {
   this.db.exec(`
     CREATE TABLE IF NOT EXISTS users (
-      -- ... 现有字段
+      -- ... existing fields
       newField TEXT
     );
   `);
 }
 ```
 
-3. 更新相关方法。
+3. Update related methods.
 
 ---
 
-## 调试
+## Debugging
 
-### 后端调试
+### Backend Debugging
 
-使用 VS Code 调试配置：
+Use VS Code debug configuration:
 
 ```json
 {
@@ -319,17 +319,17 @@ private initDatabase(): void {
 }
 ```
 
-### 前端调试
+### Frontend Debugging
 
-使用浏览器开发者工具：
+Use browser developer tools:
 
-1. 打开 <http://localhost:5173>（Vite 开发服务器）
-2. F12 打开开发者工具
-3. Sources 面板设置断点
+1. Open <http://localhost:5173> (Vite development server)
+2. Press F12 to open developer tools
+3. Set breakpoints in Sources panel
 
-### 日志调试
+### Log Debugging
 
-设置 `LOG_LEVEL=debug` 查看详细日志：
+Set `LOG_LEVEL=debug` to view detailed logs:
 
 ```bash
 LOG_LEVEL=debug bun run src/server/main.ts
@@ -337,26 +337,26 @@ LOG_LEVEL=debug bun run src/server/main.ts
 
 ---
 
-## 测试
+## Testing
 
-### 运行测试
+### Run Tests
 
 ```bash
-# 从仓库根目录
+# From repository root
 bun test
 
-# 只测试 portagent
+# Test only portagent
 bun --filter @agentxjs/portagent test
 ```
 
-### 类型检查
+### Type Checking
 
 ```bash
 cd apps/portagent
 bun run typecheck
 ```
 
-### 代码检查
+### Code Linting
 
 ```bash
 cd apps/portagent
@@ -365,16 +365,16 @@ bun run lint
 
 ---
 
-## Docker 本地构建
+## Docker Local Build
 
-### 构建镜像
+### Build Image
 
 ```bash
-# 从仓库根目录
+# From repository root
 docker build -t portagent:local -f apps/portagent/Dockerfile .
 ```
 
-### 运行本地镜像
+### Run Local Image
 
 ```bash
 docker run -d \
@@ -384,33 +384,33 @@ docker run -d \
   portagent:local
 ```
 
-### 使用本地构建的二进制
+### Use Locally Built Binary
 
 ```bash
-# 先构建
+# Build first
 cd apps/portagent && bun run build
 
-# 使用 local target
+# Use local target
 docker build --target local -t portagent:local-bin -f apps/portagent/Dockerfile .
 ```
 
 ---
 
-## 发布流程
+## Release Process
 
-### 创建 Changeset
+### Create Changeset
 
 ```bash
 bunx changeset
 ```
 
-选择包和版本类型：
+Select package and version type:
 
-- `patch`: 修复 bug
-- `minor`: 新功能
-- `major`: 破坏性变更（尽量避免）
+- `patch`: Bug fixes
+- `minor`: New features
+- `major`: Breaking changes (avoid if possible)
 
-### 提交变更
+### Commit Changes
 
 ```bash
 git add .changeset/
@@ -418,54 +418,54 @@ git commit -m "chore: add changeset"
 git push
 ```
 
-### CI 自动发布
+### CI Auto Release
 
-PR 合并后，CI 会自动：
+After PR merge, CI will automatically:
 
-1. 更新版本号
-2. 构建包
-3. 发布到 npm
-4. 构建并推送 Docker 镜像
+1. Update version numbers
+2. Build packages
+3. Publish to npm
+4. Build and push Docker image
 
 ---
 
-## 常见问题
+## Common Issues
 
-### 依赖安装失败
+### Dependency Installation Failure
 
 ```bash
-# 清理并重新安装
+# Clean and reinstall
 rm -rf node_modules
 bun install
 ```
 
-### 构建失败
+### Build Failure
 
 ```bash
-# 清理构建产物
+# Clean build artifacts
 bun clean
 
-# 重新构建
+# Rebuild
 bun build
 ```
 
-### 类型错误
+### Type Errors
 
 ```bash
-# 检查类型
+# Check types
 bun run typecheck
 
-# 可能需要重新构建依赖包
+# May need to rebuild dependent packages
 cd ../.. && bun build
 ```
 
-### 前端热重载不工作
+### Frontend Hot Reload Not Working
 
-确保 Vite 配置正确，检查 `vite.config.ts`。
+Ensure Vite is configured correctly, check `vite.config.ts`.
 
 ---
 
-## 下一步
+## Next Steps
 
-- 查看 [架构设计](./architecture.md) 了解代码结构
-- 查看 [运维指南](./operations.md) 了解生产部署
+- See [Architecture Design](./architecture.md) for code structure
+- See [Operations Guide](./operations.md) for production deployment
