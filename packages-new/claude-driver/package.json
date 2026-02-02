@@ -1,0 +1,13 @@
+{
+  "name": "@agentxjs/claude-driver",
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@agentxjs/core": "workspace:*",
+    "@anthropic-ai/claude-agent-sdk": "^0.0.34",
+    "rxjs": "^7.8.2"
+  }
+}
