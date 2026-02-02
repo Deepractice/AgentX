@@ -77,7 +77,7 @@ export function isStopReason(value: string): value is StopReason {
  * Base interface for all LLM stream events (DriveableEvent)
  *
  * All DriveableEvents have:
- * - source: "environment" (from external LLM)
+ * - source: "driver" (from LLM Driver)
  * - category: "stream" (streaming output)
  * - intent: "notification" (informational, no action needed)
  * - requestId: correlation with the original request
@@ -86,7 +86,7 @@ export function isStopReason(value: string): value is StopReason {
 interface BaseStreamEvent<T extends string, D = unknown> extends SystemEvent<
   T,
   D,
-  "environment",
+  "driver",
   "stream",
   "notification"
 > {
@@ -296,7 +296,7 @@ export function isDriveableEvent(event: {
   source?: string;
   category?: string;
 }): event is DriveableEvent {
-  return event.source === "environment" && event.category === "stream";
+  return event.source === "driver" && event.category === "stream";
 }
 
 // ============================================================================
@@ -309,7 +309,7 @@ export function isDriveableEvent(event: {
 interface BaseConnectionEvent<T extends string, D = unknown> extends SystemEvent<
   T,
   D,
-  "environment",
+  "driver",
   "connection",
   "notification"
 > {}
@@ -366,7 +366,7 @@ export function isConnectionEvent(event: {
   source?: string;
   category?: string;
 }): event is ConnectionEvent {
-  return event.source === "environment" && event.category === "connection";
+  return event.source === "driver" && event.category === "connection";
 }
 
 /**
@@ -428,7 +428,7 @@ export interface SystemError extends SystemEvent<
      */
     details?: unknown;
   },
-  "agent" | "container" | "environment" | "session" | "sandbox" | "command",
+  "agent" | "container" | "driver" | "session" | "sandbox" | "command",
   "error",
   "notification"
 > {}

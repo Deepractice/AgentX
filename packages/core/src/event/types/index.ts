@@ -10,8 +10,8 @@ export * from "./base";
 // Bus interfaces (EventBus, EventProducer, EventConsumer)
 export * from "./bus";
 
-// Environment events (DriveableEvent, ConnectionEvent, StopReason, ErrorEvent)
-export * from "./environment";
+// Driver events (DriveableEvent, ConnectionEvent, StopReason, ErrorEvent)
+export * from "./driver";
 
 // Agent events (stream, state, message, turn)
 export * from "./agent";

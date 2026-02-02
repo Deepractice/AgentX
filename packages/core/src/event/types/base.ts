@@ -56,7 +56,7 @@ export interface BusEvent<T extends string = string, D = unknown> {
  * Event source - where the event originated
  */
 export type EventSource =
-  | "environment" // External world (Claude API, Network)
+  | "driver" // LLM Driver (Claude API, etc.)
   | "agent" // Agent internal
   | "session" // Session operations
   | "container" // Container operations

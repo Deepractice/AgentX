@@ -12,7 +12,7 @@ import type {
   ErrorMessage,
 } from "../../agent/types";
 import type { SystemEvent, EventContext } from "./base";
-import type { StopReason } from "./environment";
+import type { StopReason } from "./driver";
 
 // ============================================================================
 // Agent Event Categories and Base Types

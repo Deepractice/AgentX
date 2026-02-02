@@ -6,15 +6,20 @@
     ".": "./src/index.ts",
     "./common": "./src/common/index.ts",
     "./agent": "./src/agent/index.ts",
-    "./agent/types": "./src/agent/types.ts",
     "./driver": "./src/driver/index.ts",
     "./event": "./src/event/index.ts",
-    "./event/types": "./src/event/types.ts",
     "./mq": "./src/mq/index.ts",
     "./persistence": "./src/persistence/index.ts",
     "./network": "./src/network/index.ts"
   },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
   "dependencies": {
     "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
   }
 }

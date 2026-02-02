@@ -43,6 +43,7 @@ import type {
 import { MealyMachine } from "./engine/MealyMachine";
 import { AgentStateMachine } from "./AgentStateMachine";
 import { createLogger } from "../common";
+import { isDriveableEvent } from "../event";
 
 const logger = createLogger("agent/AgentEngine");
 
@@ -85,6 +86,12 @@ class DefaultSource implements AgentSource {
     // Subscribe to each StreamEvent type
     for (const type of STREAM_EVENT_TYPES) {
       const unsub = this.bus.on(type, (event: unknown) => {
+        // Only process DriveableEvents (source: "driver", category: "stream")
+        // This prevents circular processing of AgentOutput events
+        if (!isDriveableEvent(event as { source?: string; category?: string })) {
+          return;
+        }
+
         // Filter by agentId if present in context
         const e = event as { context?: { agentId?: string } };
         if (e.context?.agentId && e.context.agentId !== this.agentId) {

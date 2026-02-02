@@ -5,9 +5,16 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
   "dependencies": {
     "@agentxjs/core": "workspace:*",
-    "@anthropic-ai/claude-agent-sdk": "^0.0.34",
+    "@anthropic-ai/claude-agent-sdk": "^0.2.29",
     "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
   }
 }
