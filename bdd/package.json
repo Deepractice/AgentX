@@ -5,13 +5,21 @@
   "description": "BDD contract tests for AgentX API",
   "type": "module",
   "scripts": {
-    "test": "bun test-manager.ts",
-    "test:server": "bun test-manager.ts server",
-    "test:run": "NODE_OPTIONS='--import tsx' cucumber-js"
+    "test": "NODE_OPTIONS='--import tsx' cucumber-js",
+    "test:container": "NODE_OPTIONS='--import tsx' cucumber-js --tags @container",
+    "test:image": "NODE_OPTIONS='--import tsx' cucumber-js --tags @image",
+    "test:agent": "NODE_OPTIONS='--import tsx' cucumber-js --tags @agent",
+    "test:message": "NODE_OPTIONS='--import tsx' cucumber-js --tags @message",
+    "test:event": "NODE_OPTIONS='--import tsx' cucumber-js --tags @event",
+    "test:agentx": "NODE_OPTIONS='--import tsx' cucumber-js --tags @agentx",
+    "test:journey": "NODE_OPTIONS='--import tsx' cucumber-js --tags @journey",
+    "test:developer": "NODE_OPTIONS='--import tsx' cucumber-js --tags @developer",
+    "test:operator": "NODE_OPTIONS='--import tsx' cucumber-js --tags @operator"
   },
   "devDependencies": {
-    "@agentxjs/runtime": "workspace:*",
-    "@agentxjs/types": "workspace:*",
+    "@agentxjs/core": "workspace:*",
+    "@agentxjs/node-provider": "workspace:*",
+    "@agentxjs/server": "workspace:*",
     "@cucumber/cucumber": "^11.2.0",
     "@types/node": "^24.9.2",
     "@types/ws": "^8.5.10",

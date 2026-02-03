@@ -84,22 +84,21 @@ export class RemoteClient implements AgentX {
       return;
     }
 
+    const url = this.config.serverUrl;
+
+    // Create WebSocket
+    let ws: WebSocket;
+    if (isBrowser()) {
+      // Browser WebSocket
+      ws = new WebSocket(url);
+    } else {
+      // Node.js WebSocket - use dynamic import for ESM compatibility
+      const { default: WS } = await import("ws");
+      ws = new WS(url) as unknown as WebSocket;
+    }
+    this.ws = ws;
+
     return new Promise((resolve, reject) => {
-      const url = this.config.serverUrl;
-
-      // Create WebSocket
-      if (isBrowser()) {
-        // Browser WebSocket
-        this.ws = new WebSocket(url);
-      } else {
-        // Node.js WebSocket
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const WS = require("ws");
-        this.ws = new WS(url) as WebSocket;
-      }
-
-      const ws = this.ws;
-
       ws.onopen = async () => {
         this._connected = true;
         logger.info("Connected to server", { url });
@@ -158,6 +157,7 @@ export class RemoteClient implements AgentX {
   private handleMessage(data: string): void {
     try {
       const event = JSON.parse(data) as BusEvent;
+      console.log("[RemoteClient] Received message:", event.type, JSON.stringify(event.data));
 
       // Handle ACK messages
       if (event.type === "__ack") {

@@ -71,7 +71,9 @@ When(
  */
 When("I call listContainers", async function (this: AgentXWorld) {
   assert.ok(this.agentx, "AgentX client not initialized");
-  this.lastResponse = await this.agentx.listContainers();
+  const response = await this.agentx.listContainers();
+  console.log("[DEBUG] listContainers response:", JSON.stringify(response, null, 2));
+  this.lastResponse = response;
 });
 
 // ============================================================================
