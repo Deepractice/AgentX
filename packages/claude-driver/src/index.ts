@@ -5,25 +5,47 @@
  *
  * Provides Driver implementation for connecting AgentX to Claude SDK.
  *
+ * Key Design:
+ * - Clear input/output boundary (for recording/playback)
+ * - receive() returns AsyncIterable<DriverStreamEvent>
+ * - Single session communication
+ *
  * Usage:
  * ```typescript
- * import { createClaudeDriverFactory } from "@agentxjs/claude-driver";
+ * import { createClaudeDriver } from "@agentxjs/claude-driver";
  *
- * const factory = createClaudeDriverFactory();
- * const driver = factory.createDriver({
- *   agentId: "agent-1",
- *   config: {
- *     apiKey: process.env.ANTHROPIC_API_KEY,
- *     model: "claude-sonnet-4-20250514",
- *   },
+ * const driver = createClaudeDriver({
+ *   apiKey: process.env.ANTHROPIC_API_KEY!,
+ *   agentId: "my-agent",
+ *   systemPrompt: "You are helpful",
  * });
  *
- * // Connect to EventBus
- * driver.connect(bus.asConsumer(), bus.asProducer());
+ * await driver.initialize();
+ *
+ * for await (const event of driver.receive({ content: "Hello" })) {
+ *   if (event.type === "text_delta") {
+ *     process.stdout.write(event.data.text);
+ *   }
+ * }
+ *
+ * await driver.dispose();
  * ```
  */
 
-export { ClaudeDriver, ClaudeDriverFactory, createClaudeDriverFactory } from "./ClaudeDriver";
+// Main exports
+export { ClaudeDriver, createClaudeDriver } from "./ClaudeDriver";
+
+// Re-export types from core for convenience
+export type {
+  Driver,
+  DriverConfig,
+  DriverState,
+  CreateDriver,
+  DriverStreamEvent,
+  StopReason,
+} from "@agentxjs/core/driver";
+
+// Internal utilities (for advanced usage)
 export {
   SDKQueryLifecycle,
   type SDKQueryCallbacks,

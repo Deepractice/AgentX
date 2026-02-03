@@ -13,20 +13,23 @@
  *   apiKey: process.env.DEEPRACTICE_API_KEY,
  * });
  *
- * // Has fixture → playback
+ * // Has fixture → playback (MockDriver)
  * // No fixture → call API, record, save, return MockDriver
  * const driver = await devtools.driver("hello-test", {
  *   message: "Hello!",
  * });
  *
- * driver.connect(consumer, producer);
+ * await driver.initialize();
+ * for await (const event of driver.receive(userMessage)) {
+ *   console.log(event);
+ * }
  * ```
  *
  * ## Low-level APIs
  *
  * ```typescript
  * // MockDriver - playback
- * import { MockDriver } from "@agentxjs/devtools";
+ * import { MockDriver, createMockDriver } from "@agentxjs/devtools";
  * const driver = new MockDriver({ fixture: myFixture });
  *
  * // RecordingDriver - capture
@@ -39,8 +42,7 @@
 export { Devtools, createDevtools, type DevtoolsConfig, type DriverOptions } from "./Devtools";
 
 // Mock Driver (low-level)
-export { MockDriver } from "./mock/MockDriver";
-export { MockDriverFactory, createMockDriverFactory } from "./mock/MockDriverFactory";
+export { MockDriver, createMockDriver } from "./mock/MockDriver";
 
 // Recording Driver (low-level)
 export {

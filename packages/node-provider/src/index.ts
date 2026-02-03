@@ -9,19 +9,19 @@
  * // Function style (recommended)
  * import { createServer } from "@agentxjs/server";
  * import { nodeProvider } from "@agentxjs/node-provider";
- * import { createClaudeDriverFactory } from "@agentxjs/claude-driver";
+ * import { createClaudeDriver } from "@agentxjs/claude-driver";
  *
  * const server = await createServer({
  *   provider: nodeProvider({
  *     dataPath: "./data",
- *     driverFactory: createClaudeDriverFactory(),
+ *     createDriver: createClaudeDriver,
  *   }),
  * });
  * ```
  */
 
 import type { AgentXProvider } from "@agentxjs/core/runtime";
-import type { DriverFactory } from "@agentxjs/core/driver";
+import type { CreateDriver } from "@agentxjs/core/driver";
 import type { LogLevel } from "commonxjs/logger";
 import { setLoggerFactory } from "commonxjs/logger";
 import { EventBusImpl } from "@agentxjs/core/event";
@@ -41,10 +41,10 @@ export interface NodeProviderOptions {
   dataPath?: string;
 
   /**
-   * LLM Driver Factory - creates Driver per Agent
+   * LLM Driver factory function - creates Driver per Agent
    * Required for running agents
    */
-  driverFactory?: DriverFactory;
+  createDriver?: CreateDriver;
 
   /**
    * Directory for log files
@@ -123,22 +123,19 @@ export async function createNodeProvider(
   // Create event bus
   const eventBus = new EventBusImpl();
 
-  // Create placeholder factory if not provided
-  const driverFactory: DriverFactory = options.driverFactory ?? {
-    name: "placeholder",
-    createDriver: () => {
-      throw new Error(
-        "DriverFactory not configured. Please provide a driverFactory in NodeProviderOptions."
-      );
-    },
-  };
+  // Create placeholder driver factory if not provided
+  const createDriver: CreateDriver = options.createDriver ?? (() => {
+    throw new Error(
+      "createDriver not configured. Please provide a createDriver function in NodeProviderOptions."
+    );
+  });
 
   return {
     containerRepository: persistence.containers,
     imageRepository: persistence.images,
     sessionRepository: persistence.sessions,
     workspaceProvider,
-    driverFactory,
+    createDriver,
     eventBus,
   };
 }

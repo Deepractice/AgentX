@@ -67,7 +67,7 @@ export interface SDKQueryConfig {
  */
 export class SDKQueryLifecycle {
   private readonly config: SDKQueryConfig;
-  private readonly callbacks: SDKQueryCallbacks;
+  private _callbacks: SDKQueryCallbacks;
 
   private promptSubject = new Subject<SDKUserMessage>();
   private claudeQuery: Query | null = null;
@@ -77,7 +77,24 @@ export class SDKQueryLifecycle {
 
   constructor(config: SDKQueryConfig, callbacks: SDKQueryCallbacks = {}) {
     this.config = config;
-    this.callbacks = callbacks;
+    this._callbacks = callbacks;
+  }
+
+  /**
+   * Get current callbacks (for reading/modification)
+   */
+  get callbacks(): SDKQueryCallbacks {
+    return this._callbacks;
+  }
+
+  /**
+   * Update callbacks
+   *
+   * Allows changing callbacks after initialization.
+   * Useful for per-turn callback setup.
+   */
+  setCallbacks(callbacks: Partial<SDKQueryCallbacks>): void {
+    this._callbacks = { ...this._callbacks, ...callbacks };
   }
 
   /**
@@ -235,21 +252,21 @@ export class SDKQueryLifecycle {
           // Capture session ID (only once, on first occurrence)
           if (
             sdkMsg.session_id &&
-            this.callbacks.onSessionIdCaptured &&
+            this._callbacks.onSessionIdCaptured &&
             this.capturedSessionId !== sdkMsg.session_id
           ) {
             this.capturedSessionId = sdkMsg.session_id;
-            this.callbacks.onSessionIdCaptured(sdkMsg.session_id);
+            this._callbacks.onSessionIdCaptured(sdkMsg.session_id);
           }
 
           // Forward stream_event
           if (sdkMsg.type === "stream_event") {
-            this.callbacks.onStreamEvent?.(sdkMsg);
+            this._callbacks.onStreamEvent?.(sdkMsg);
           }
 
           // Forward user message (contains tool_result)
           if (sdkMsg.type === "user") {
-            this.callbacks.onUserMessage?.(sdkMsg);
+            this._callbacks.onUserMessage?.(sdkMsg);
           }
 
           // Handle result
@@ -258,20 +275,20 @@ export class SDKQueryLifecycle {
               subtype: (sdkMsg as { subtype?: string }).subtype,
               is_error: (sdkMsg as { is_error?: boolean }).is_error,
             });
-            this.callbacks.onResult?.(sdkMsg);
+            this._callbacks.onResult?.(sdkMsg);
           }
         }
 
         // Normal exit
-        this.callbacks.onListenerExit?.("normal");
+        this._callbacks.onListenerExit?.("normal");
       } catch (error) {
         if (this.isAbortError(error)) {
           logger.debug("Background listener aborted (expected during interrupt)");
-          this.callbacks.onListenerExit?.("abort");
+          this._callbacks.onListenerExit?.("abort");
         } else {
           logger.error("Background listener error", { error });
-          this.callbacks.onError?.(error instanceof Error ? error : new Error(String(error)));
-          this.callbacks.onListenerExit?.("error");
+          this._callbacks.onError?.(error instanceof Error ? error : new Error(String(error)));
+          this._callbacks.onListenerExit?.("error");
         }
 
         // Always reset state on any error

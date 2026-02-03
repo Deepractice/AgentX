@@ -6,24 +6,37 @@
  *
  * Usage:
  * ```typescript
- * // Wrap the real Claude driver
- * const realDriver = claudeFactory.createDriver(options);
- * const recorder = createRecordingDriver({
+ * import { createClaudeDriver } from "@agentxjs/claude-driver";
+ * import { RecordingDriver } from "@agentxjs/devtools/recorder";
+ *
+ * // Create real driver
+ * const realDriver = createClaudeDriver(config);
+ *
+ * // Wrap with recorder
+ * const recorder = new RecordingDriver({
  *   driver: realDriver,
  *   name: "my-scenario",
  *   description: "User asks about weather",
  * });
  *
- * // Use recorder like a normal driver
- * recorder.connect(consumer, producer);
+ * await recorder.initialize();
  *
- * // After conversation, save the fixture
+ * // Use like a normal driver - events are recorded
+ * for await (const event of recorder.receive({ content: "Hello" })) {
+ *   console.log(event);
+ * }
+ *
+ * // Save the fixture
  * await recorder.saveFixture("./fixtures/my-scenario.json");
  * ```
  */
 
-import type { Driver } from "@agentxjs/core/driver";
-import type { EventConsumer, EventProducer, DriveableEvent } from "@agentxjs/core/event";
+import type {
+  Driver,
+  DriverState,
+  DriverStreamEvent,
+} from "@agentxjs/core/driver";
+import type { UserMessage } from "@agentxjs/core/agent";
 import type { Fixture, FixtureEvent } from "../types";
 import { createLogger } from "commonxjs/logger";
 
@@ -53,12 +66,15 @@ export interface RecordingDriverOptions {
  * Recorded event with timing
  */
 interface RecordedEvent {
-  event: DriveableEvent;
+  event: DriverStreamEvent;
   timestamp: number;
 }
 
 /**
  * RecordingDriver - Records events from a real driver
+ *
+ * Implements the new Driver interface by wrapping a real driver
+ * and intercepting events from receive().
  */
 export class RecordingDriver implements Driver {
   readonly name = "RecordingDriver";
@@ -69,7 +85,6 @@ export class RecordingDriver implements Driver {
 
   private recordedEvents: RecordedEvent[] = [];
   private recordingStartTime: number = 0;
-  private isRecording = false;
 
   constructor(options: RecordingDriverOptions) {
     this.realDriver = options.driver;
@@ -79,75 +94,83 @@ export class RecordingDriver implements Driver {
     logger.info("RecordingDriver created", { name: this.fixtureName });
   }
 
-  /**
-   * Connect to EventBus (wraps real driver's connect)
-   */
-  connect(consumer: EventConsumer, producer: EventProducer): void {
-    // Create a recording producer that intercepts all events
-    const recordingProducer: EventProducer = {
-      emit: (event) => {
-        // Record the event
-        this.recordEvent(event as DriveableEvent);
-        // Forward to the real producer
-        producer.emit(event);
-      },
-      emitBatch: (events) => {
-        // Record all events
-        for (const event of events) {
-          this.recordEvent(event as DriveableEvent);
-        }
-        // Forward to the real producer
-        producer.emitBatch(events);
-      },
-      emitCommand: (type, data) => {
-        // Commands are not recorded (they're requests, not events)
-        producer.emitCommand(type, data);
-      },
-    };
+  // ============================================================================
+  // Driver Interface Properties (delegate to real driver)
+  // ============================================================================
 
-    // Connect the real driver with our recording producer
-    this.realDriver.connect(consumer, recordingProducer);
+  get sessionId(): string | null {
+    return this.realDriver.sessionId;
+  }
 
-    // Start recording
+  get state(): DriverState {
+    return this.realDriver.state;
+  }
+
+  // ============================================================================
+  // Lifecycle Methods (delegate to real driver)
+  // ============================================================================
+
+  async initialize(): Promise<void> {
+    await this.realDriver.initialize();
     this.recordingStartTime = Date.now();
-    this.isRecording = true;
     this.recordedEvents = [];
-
-    logger.info("RecordingDriver connected, recording started", {
+    logger.info("RecordingDriver initialized, recording started", {
       name: this.fixtureName,
     });
   }
 
-  /**
-   * Disconnect (wraps real driver's disconnect)
-   */
-  disconnect(): void {
-    this.isRecording = false;
-    this.realDriver.disconnect();
-    logger.info("RecordingDriver disconnected", {
-      name: this.fixtureName,
-      eventsRecorded: this.recordedEvents.length,
-    });
-  }
-
-  /**
-   * Dispose (wraps real driver's dispose)
-   */
-  dispose(): void {
-    this.isRecording = false;
-    this.realDriver.dispose();
+  async dispose(): Promise<void> {
+    await this.realDriver.dispose();
     logger.info("RecordingDriver disposed", {
       name: this.fixtureName,
       eventsRecorded: this.recordedEvents.length,
     });
   }
 
+  // ============================================================================
+  // Core Methods
+  // ============================================================================
+
+  /**
+   * Receive a user message and return stream of events
+   *
+   * Wraps the real driver's receive() and records all events.
+   */
+  async *receive(message: UserMessage): AsyncIterable<DriverStreamEvent> {
+    logger.debug("RecordingDriver receiving message", {
+      name: this.fixtureName,
+    });
+
+    // Call the real driver and intercept events
+    for await (const event of this.realDriver.receive(message)) {
+      // Record the event
+      this.recordEvent(event);
+
+      // Pass through to caller
+      yield event;
+    }
+
+    logger.debug("RecordingDriver receive completed", {
+      name: this.fixtureName,
+      eventsRecorded: this.recordedEvents.length,
+    });
+  }
+
+  /**
+   * Interrupt current operation (delegate to real driver)
+   */
+  interrupt(): void {
+    this.realDriver.interrupt();
+  }
+
+  // ============================================================================
+  // Recording Methods
+  // ============================================================================
+
   /**
    * Record an event
    */
-  private recordEvent(event: DriveableEvent): void {
-    if (!this.isRecording) return;
-
+  private recordEvent(event: DriverStreamEvent): void {
     this.recordedEvents.push({
       event,
       timestamp: Date.now(),
@@ -174,7 +197,6 @@ export class RecordingDriver implements Driver {
         type: recorded.event.type,
         delay: Math.max(0, delay),
         data: recorded.event.data,
-        index: (recorded.event as DriveableEvent & { index?: number }).index,
       });
     }
 

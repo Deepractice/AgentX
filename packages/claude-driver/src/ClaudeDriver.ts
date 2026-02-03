@@ -1,292 +1,469 @@
 /**
  * ClaudeDriver - Claude SDK Driver Implementation
  *
- * Implements the Driver interface to bridge EventBus and Claude SDK:
- * - Subscribes to user_message events from EventBus
- * - Sends messages to Claude SDK
- * - Emits DriveableEvent (StreamEvent) to EventBus
+ * Implements the new Driver interface with clear input/output boundaries:
+ * - receive(message) returns AsyncIterable<DriverStreamEvent>
+ * - No EventBus dependency
+ * - Single session communication
  *
  * ```
- *                         EventBus
- *                        ↗        ↘
- *         subscribe     │          │     emit
- *         user_message  │          │     DriveableEvent
- *              ↓        │          │      ↑
- *         ┌─────────────────────────────────────┐
- *         │           ClaudeDriver               │
- *         │                                      │
- *         │   user_message ───► SDK ───► Stream  │
- *         │                                      │
- *         └─────────────────────────────────────┘
- *                              │
- *                              ▼
- *                       Claude SDK
+ *         UserMessage
+ *              │
+ *              ▼
+ *     ┌─────────────────┐
+ *     │   ClaudeDriver   │
+ *     │                  │
+ *     │   receive()      │──► AsyncIterable<DriverStreamEvent>
+ *     │       │          │
+ *     │       ▼          │
+ *     │   SDK Query      │
+ *     └─────────────────┘
+ *              │
+ *              ▼
+ *        Claude SDK
  * ```
  */
 
 import type {
   Driver,
   DriverConfig,
-  CreateDriverOptions,
-  DriverFactory,
+  DriverState,
+  DriverStreamEvent,
+  StopReason,
 } from "@agentxjs/core/driver";
-import type { EventConsumer, EventProducer, BusEvent, DriveableEvent } from "@agentxjs/core/event";
 import type { UserMessage } from "@agentxjs/core/agent";
 import type { SDKMessage, SDKPartialAssistantMessage } from "@anthropic-ai/claude-agent-sdk";
-import { Subject, Subscription, TimeoutError } from "rxjs";
-import { timeout } from "rxjs/operators";
+import { Subject } from "rxjs";
 import { createLogger } from "commonxjs/logger";
 import { buildSDKUserMessage } from "./helpers";
 import { SDKQueryLifecycle } from "./SDKQueryLifecycle";
 
 const logger = createLogger("claude-driver/ClaudeDriver");
 
-/** Default timeout in milliseconds (10 minutes) */
-const DEFAULT_TIMEOUT = 600_000;
-
-/**
- * Event context for correlation
- */
-interface EventContext {
-  agentId?: string;
-  sessionId?: string;
-  containerId?: string;
-  imageId?: string;
-  turnId?: string;
-  correlationId?: string;
-}
-
-/**
- * Metadata for tracking requests
- */
-interface RequestMeta {
-  requestId: string;
-  context: EventContext;
-}
-
-/**
- * Context for tracking content block state across events
- */
-interface ContentBlockContext {
-  currentBlockType: "text" | "tool_use" | null;
-  currentBlockIndex: number;
-  currentToolId: string | null;
-  currentToolName: string | null;
-  lastStopReason: string | null;
-  lastStopSequence: string | null;
-}
-
 /**
  * ClaudeDriver - Driver implementation for Claude SDK
+ *
+ * Implements the new Driver interface:
+ * - receive() returns AsyncIterable<DriverStreamEvent>
+ * - Clear input/output boundaries for recording/playback
+ * - Single session communication
  */
 export class ClaudeDriver implements Driver {
   readonly name = "ClaudeDriver";
 
-  private readonly agentId: string;
+  private _sessionId: string | null = null;
+  private _state: DriverState = "idle";
+
   private readonly config: DriverConfig;
-  private readonly queryLifecycle: SDKQueryLifecycle;
+  private queryLifecycle: SDKQueryLifecycle | null = null;
 
-  private producer: EventProducer | null = null;
-  private unsubscribes: (() => void)[] = [];
+  // For interrupt handling
+  private currentTurnSubject: Subject<DriverStreamEvent> | null = null;
 
-  private currentMeta: RequestMeta | null = null;
-  private wasInterrupted = false;
-
-  /** Subject for tracking pending request - completes when result received */
-  private pendingRequest$: Subject<void> | null = null;
-  /** Subscription for timeout handling */
-  private pendingSubscription: Subscription | null = null;
-
-  /** Context for tracking content block state */
-  private blockContext: ContentBlockContext = {
-    currentBlockType: null,
-    currentBlockIndex: 0,
-    currentToolId: null,
-    currentToolName: null,
-    lastStopReason: null,
-    lastStopSequence: null,
-  };
-
-  constructor(options: CreateDriverOptions) {
-    this.agentId = options.agentId;
-    this.config = options.config;
-
-    // Create SDK lifecycle with callbacks
-    this.queryLifecycle = new SDKQueryLifecycle(
-      {
-        apiKey: options.config.apiKey,
-        baseUrl: options.config.baseUrl,
-        model: options.config.model,
-        systemPrompt: options.config.systemPrompt,
-        cwd: options.config.cwd,
-        resumeSessionId: options.resumeSessionId,
-        mcpServers: options.config.mcpServers,
-      },
-      {
-        onStreamEvent: (msg) => this.handleStreamEvent(msg),
-        onUserMessage: (msg) => this.handleUserMessage(msg),
-        onResult: (msg) => this.handleResult(msg),
-        onSessionIdCaptured: options.onSessionIdCaptured,
-        onError: (error) => this.handleError(error),
-        onListenerExit: (reason) => this.handleListenerExit(reason),
-      }
-    );
+  constructor(config: DriverConfig) {
+    this.config = config;
   }
 
-  /**
-   * Connect to EventBus
-   */
-  connect(consumer: EventConsumer, producer: EventProducer): void {
-    this.producer = producer;
+  // ============================================================================
+  // Driver Interface Properties
+  // ============================================================================
 
-    logger.debug("ClaudeDriver connected to EventBus", { agentId: this.agentId });
-
-    // Subscribe to user_message events
-    const unsubUserMessage = consumer.on("user_message", async (evt: BusEvent) => {
-      const typedEvent = evt as BusEvent & {
-        data: UserMessage;
-        requestId?: string;
-        context?: EventContext;
-      };
-
-      // Filter by agentId
-      if (typedEvent.context?.agentId !== this.agentId) {
-        return;
-      }
-
-      const message = typedEvent.data;
-      const meta: RequestMeta = {
-        requestId: typedEvent.requestId || `req_${Date.now()}`,
-        context: typedEvent.context || {},
-      };
-      await this.send(message, meta);
-    });
-    this.unsubscribes.push(unsubUserMessage);
-
-    // Subscribe to interrupt events
-    const unsubInterrupt = consumer.on("interrupt_request", (evt: BusEvent) => {
-      const typedEvent = evt as BusEvent & {
-        requestId?: string;
-        context?: EventContext;
-      };
-
-      // Filter by agentId
-      if (typedEvent.context?.agentId !== this.agentId) {
-        return;
-      }
-
-      const meta: RequestMeta = {
-        requestId: typedEvent.requestId || "",
-        context: typedEvent.context || {},
-      };
-      this.interrupt(meta);
-    });
-    this.unsubscribes.push(unsubInterrupt);
+  get sessionId(): string | null {
+    return this._sessionId;
   }
 
+  get state(): DriverState {
+    return this._state;
+  }
+
+  // ============================================================================
+  // Lifecycle Methods
+  // ============================================================================
+
   /**
-   * Disconnect from EventBus
+   * Initialize the Driver
+   *
+   * Starts SDK subprocess and MCP servers.
+   * Must be called before receive().
    */
-  disconnect(): void {
-    for (const unsub of this.unsubscribes) {
-      unsub();
+  async initialize(): Promise<void> {
+    if (this._state !== "idle") {
+      throw new Error(`Cannot initialize: Driver is in "${this._state}" state`);
     }
-    this.unsubscribes = [];
-    this.producer = null;
-    logger.debug("ClaudeDriver disconnected from EventBus", { agentId: this.agentId });
+
+    logger.info("Initializing ClaudeDriver", { agentId: this.config.agentId });
+
+    // SDKQueryLifecycle will be created lazily on first receive()
+    // This allows configuration to be validated early without starting subprocess
+
+    logger.info("ClaudeDriver initialized");
   }
 
   /**
-   * Dispose driver resources
+   * Dispose and cleanup resources
+   *
+   * Stops SDK subprocess and MCP servers.
+   * Driver cannot be used after dispose().
    */
-  dispose(): void {
-    logger.debug("Disposing ClaudeDriver", { agentId: this.agentId });
-    this.disconnect();
-    this.cleanupPendingRequest();
-    this.queryLifecycle.dispose();
-    logger.debug("ClaudeDriver disposed", { agentId: this.agentId });
+  async dispose(): Promise<void> {
+    if (this._state === "disposed") {
+      return;
+    }
+
+    logger.info("Disposing ClaudeDriver", { agentId: this.config.agentId });
+
+    // Complete any pending turn
+    if (this.currentTurnSubject) {
+      this.currentTurnSubject.complete();
+      this.currentTurnSubject = null;
+    }
+
+    // Dispose SDK lifecycle
+    if (this.queryLifecycle) {
+      this.queryLifecycle.dispose();
+      this.queryLifecycle = null;
+    }
+
+    this._state = "disposed";
+    logger.info("ClaudeDriver disposed");
   }
 
+  // ============================================================================
+  // Core Methods
+  // ============================================================================
+
   /**
-   * Send a message to Claude SDK
+   * Receive a user message and return stream of events
+   *
+   * This is the main method for communication.
+   * Returns an AsyncIterable that yields DriverStreamEvent.
+   *
+   * @param message - User message to send
+   * @returns AsyncIterable of stream events
    */
-  private async send(message: UserMessage, meta: RequestMeta): Promise<void> {
-    this.wasInterrupted = false;
-    this.currentMeta = meta;
+  async *receive(message: UserMessage): AsyncIterable<DriverStreamEvent> {
+    if (this._state === "disposed") {
+      throw new Error("Cannot receive: Driver is disposed");
+    }
 
-    // Clean up previous pending request
-    this.cleanupPendingRequest();
+    if (this._state === "active") {
+      throw new Error("Cannot receive: Driver is already processing a message");
+    }
 
-    const timeoutMs = this.config.timeout ?? DEFAULT_TIMEOUT;
+    this._state = "active";
 
     try {
-      // Initialize SDK if needed
-      await this.queryLifecycle.initialize();
+      // Ensure SDK lifecycle is initialized
+      await this.ensureLifecycle();
 
-      const sessionId = meta.context.sessionId || "default";
-      const sdkUserMessage = buildSDKUserMessage(message, sessionId);
+      // Create Subject for this turn's events
+      const turnSubject = new Subject<DriverStreamEvent>();
+      this.currentTurnSubject = turnSubject;
+
+      // Track completion
+      let isComplete = false;
+      let turnError: Error | null = null;
+
+      // Setup callbacks to convert SDK events to DriverStreamEvent
+      this.setupTurnCallbacks(turnSubject, () => {
+        isComplete = true;
+      }, (error) => {
+        turnError = error;
+        isComplete = true;
+      });
+
+      // Build and send SDK message
+      const sessionId = this._sessionId || "default";
+      const sdkMessage = buildSDKUserMessage(message, sessionId);
 
       logger.debug("Sending message to Claude", {
-        content:
-          typeof message.content === "string" ? message.content.substring(0, 80) : "[structured]",
-        timeout: timeoutMs,
-        requestId: meta.requestId,
+        content: typeof message.content === "string"
+          ? message.content.substring(0, 80)
+          : "[structured]",
+        agentId: this.config.agentId,
       });
 
-      // Create pending request with timeout
-      this.pendingRequest$ = new Subject<void>();
-      this.pendingSubscription = this.pendingRequest$.pipe(timeout(timeoutMs)).subscribe({
-        complete: () => {
-          logger.debug("Request completed within timeout", { requestId: meta.requestId });
-        },
-        error: (err) => {
-          if (err instanceof TimeoutError) {
-            logger.warn("Request timeout", { timeout: timeoutMs, requestId: meta.requestId });
-            this.handleTimeout(meta);
-          }
-        },
-      });
+      this.queryLifecycle!.send(sdkMessage);
 
-      // Send message via lifecycle
-      this.queryLifecycle.send(sdkUserMessage);
-    } catch (error) {
-      this.cleanupPendingRequest();
-      throw error;
+      // Yield events from Subject
+      yield* this.yieldFromSubject(turnSubject, () => isComplete, () => turnError);
+
+    } finally {
+      this._state = "idle";
+      this.currentTurnSubject = null;
     }
   }
 
   /**
    * Interrupt current operation
+   *
+   * Stops the current receive() operation gracefully.
+   * The AsyncIterable will emit an "interrupted" event and complete.
    */
-  private interrupt(meta?: RequestMeta): void {
-    logger.debug("Interrupting Claude query", { requestId: meta?.requestId });
-    this.wasInterrupted = true;
-    if (meta) {
-      this.currentMeta = meta;
+  interrupt(): void {
+    if (this._state !== "active") {
+      logger.debug("Interrupt called but no active operation");
+      return;
     }
-    this.queryLifecycle.interrupt();
+
+    logger.debug("Interrupting ClaudeDriver");
+
+    // Emit interrupted event
+    if (this.currentTurnSubject) {
+      this.currentTurnSubject.next({
+        type: "interrupted",
+        timestamp: Date.now(),
+        data: { reason: "user" },
+      });
+      this.currentTurnSubject.complete();
+    }
+
+    // Interrupt SDK
+    if (this.queryLifecycle) {
+      this.queryLifecycle.interrupt();
+    }
+  }
+
+  // ============================================================================
+  // Private Methods
+  // ============================================================================
+
+  /**
+   * Ensure SDK lifecycle is initialized
+   */
+  private async ensureLifecycle(): Promise<void> {
+    if (this.queryLifecycle && this.queryLifecycle.initialized) {
+      return;
+    }
+
+    // Create new lifecycle
+    this.queryLifecycle = new SDKQueryLifecycle(
+      {
+        apiKey: this.config.apiKey,
+        baseUrl: this.config.baseUrl,
+        model: this.config.model,
+        systemPrompt: this.config.systemPrompt,
+        cwd: this.config.cwd,
+        resumeSessionId: this.config.resumeSessionId,
+        mcpServers: this.config.mcpServers,
+      },
+      {
+        onSessionIdCaptured: (sessionId) => {
+          this._sessionId = sessionId;
+          this.config.onSessionIdCaptured?.(sessionId);
+        },
+      }
+    );
+
+    await this.queryLifecycle.initialize();
   }
 
   /**
-   * Handle stream_event from SDK
+   * Setup callbacks for a single turn
    */
-  private handleStreamEvent(msg: SDKMessage): void {
-    if (this.currentMeta) {
-      this.processStreamEvent(msg as SDKPartialAssistantMessage);
+  private setupTurnCallbacks(
+    subject: Subject<DriverStreamEvent>,
+    onComplete: () => void,
+    onError: (error: Error) => void
+  ): void {
+    if (!this.queryLifecycle) return;
+
+    // Context for tracking content block state
+    const blockContext = {
+      currentBlockType: null as "text" | "tool_use" | null,
+      currentToolId: null as string | null,
+      currentToolName: null as string | null,
+      lastStopReason: null as string | null,
+      accumulatedToolInput: "" as string,
+    };
+
+    // Update lifecycle callbacks for this turn
+    this.queryLifecycle.setCallbacks({
+      onStreamEvent: (msg: SDKMessage) => {
+        const event = this.convertStreamEvent(msg as SDKPartialAssistantMessage, blockContext);
+        if (event) {
+          subject.next(event);
+        }
+      },
+
+      onUserMessage: (msg: SDKMessage) => {
+        const events = this.convertUserMessage(msg);
+        for (const event of events) {
+          subject.next(event);
+        }
+      },
+
+      onResult: (msg: SDKMessage) => {
+        const resultMsg = msg as { is_error?: boolean; error?: { message?: string } };
+
+        if (resultMsg.is_error) {
+          subject.next({
+            type: "error",
+            timestamp: Date.now(),
+            data: {
+              message: resultMsg.error?.message || "Unknown error",
+              errorCode: "sdk_error",
+            },
+          });
+        }
+
+        subject.complete();
+        onComplete();
+      },
+
+      onError: (error: Error) => {
+        subject.next({
+          type: "error",
+          timestamp: Date.now(),
+          data: {
+            message: error.message,
+            errorCode: "runtime_error",
+          },
+        });
+        subject.complete();
+        onError(error);
+      },
+    });
+  }
+
+  /**
+   * Convert SDK stream_event to DriverStreamEvent
+   */
+  private convertStreamEvent(
+    sdkMsg: SDKPartialAssistantMessage,
+    blockContext: {
+      currentBlockType: "text" | "tool_use" | null;
+      currentToolId: string | null;
+      currentToolName: string | null;
+      lastStopReason: string | null;
+      accumulatedToolInput: string;
+    }
+  ): DriverStreamEvent | null {
+    const event = sdkMsg.event;
+    const timestamp = Date.now();
+
+    switch (event.type) {
+      case "message_start":
+        return {
+          type: "message_start",
+          timestamp,
+          data: {
+            messageId: event.message.id,
+            model: event.message.model,
+          },
+        };
+
+      case "content_block_start": {
+        const contentBlock = event.content_block as { type: string; id?: string; name?: string };
+
+        if (contentBlock.type === "text") {
+          blockContext.currentBlockType = "text";
+          // text_content_block_start is internal, don't emit
+          return null;
+        } else if (contentBlock.type === "tool_use") {
+          blockContext.currentBlockType = "tool_use";
+          blockContext.currentToolId = contentBlock.id || null;
+          blockContext.currentToolName = contentBlock.name || null;
+          blockContext.accumulatedToolInput = "";
+          return {
+            type: "tool_use_start",
+            timestamp,
+            data: {
+              toolCallId: contentBlock.id || "",
+              toolName: contentBlock.name || "",
+            },
+          };
+        }
+        return null;
+      }
+
+      case "content_block_delta": {
+        const delta = event.delta as { type: string; text?: string; partial_json?: string };
+
+        if (delta.type === "text_delta") {
+          return {
+            type: "text_delta",
+            timestamp,
+            data: { text: delta.text || "" },
+          };
+        } else if (delta.type === "input_json_delta") {
+          blockContext.accumulatedToolInput += delta.partial_json || "";
+          return {
+            type: "input_json_delta",
+            timestamp,
+            data: { partialJson: delta.partial_json || "" },
+          };
+        }
+        return null;
+      }
+
+      case "content_block_stop":
+        if (blockContext.currentBlockType === "tool_use" && blockContext.currentToolId) {
+          // Parse accumulated JSON
+          let input: Record<string, unknown> = {};
+          try {
+            if (blockContext.accumulatedToolInput) {
+              input = JSON.parse(blockContext.accumulatedToolInput);
+            }
+          } catch {
+            logger.warn("Failed to parse tool input JSON", {
+              input: blockContext.accumulatedToolInput,
+            });
+          }
+
+          const event: DriverStreamEvent = {
+            type: "tool_use_stop",
+            timestamp,
+            data: {
+              toolCallId: blockContext.currentToolId,
+              toolName: blockContext.currentToolName || "",
+              input,
+            },
+          };
+
+          // Reset block context
+          blockContext.currentBlockType = null;
+          blockContext.currentToolId = null;
+          blockContext.currentToolName = null;
+          blockContext.accumulatedToolInput = "";
+
+          return event;
+        }
+        // Reset for text blocks too
+        blockContext.currentBlockType = null;
+        return null;
+
+      case "message_delta": {
+        const msgDelta = event.delta as { stop_reason?: string };
+        if (msgDelta.stop_reason) {
+          blockContext.lastStopReason = msgDelta.stop_reason;
+        }
+        return null;
+      }
+
+      case "message_stop":
+        return {
+          type: "message_stop",
+          timestamp,
+          data: {
+            stopReason: this.mapStopReason(blockContext.lastStopReason),
+          },
+        };
+
+      default:
+        return null;
     }
   }
 
   /**
-   * Handle user message from SDK (contains tool_result)
+   * Convert SDK user message (contains tool_result)
    */
-  private handleUserMessage(msg: SDKMessage): void {
-    if (!this.currentMeta) return;
-
-    const { requestId, context } = this.currentMeta;
+  private convertUserMessage(msg: SDKMessage): DriverStreamEvent[] {
+    const events: DriverStreamEvent[] = [];
     const sdkMsg = msg as { message?: { content?: unknown[] } };
 
     if (!sdkMsg.message || !Array.isArray(sdkMsg.message.content)) {
-      return;
+      return events;
     }
 
     for (const block of sdkMsg.message.content) {
@@ -297,362 +474,125 @@ export class ClaudeDriver implements Driver {
           is_error?: boolean;
         };
 
-        this.emitToBus({
+        events.push({
           type: "tool_result",
           timestamp: Date.now(),
-          source: "driver",
-          category: "stream",
-          intent: "notification",
-          requestId,
-          context,
           data: {
-            toolUseId: toolResultBlock.tool_use_id,
+            toolCallId: toolResultBlock.tool_use_id,
             result: toolResultBlock.content,
-            isError: toolResultBlock.is_error || false,
+            isError: toolResultBlock.is_error,
           },
         });
       }
     }
+
+    return events;
   }
 
   /**
-   * Handle result from SDK
+   * Map SDK stop reason to our StopReason type
    */
-  private handleResult(msg: SDKMessage): void {
-    // Complete pending request - cancels timeout
-    this.completePendingRequest();
-
-    const resultMsg = msg as {
-      subtype: string;
-      is_error?: boolean;
-      errors?: string[];
-      error?: { message?: string; type?: string };
-      result?: string;
-    };
-
-    logger.info("SDK result received", {
-      subtype: resultMsg.subtype,
-      isError: resultMsg.is_error,
-      wasInterrupted: this.wasInterrupted,
-    });
-
-    // Handle user interrupt
-    if (resultMsg.subtype === "error_during_execution" && this.wasInterrupted) {
-      this.emitInterrupted("user_interrupt");
-      return;
-    }
-
-    // Handle SDK errors
-    if (resultMsg.is_error && this.currentMeta) {
-      const errorMessage =
-        resultMsg.error?.message ||
-        resultMsg.errors?.join(", ") ||
-        (typeof resultMsg.result === "string" ? resultMsg.result : null) ||
-        "An error occurred";
-      const errorCode = resultMsg.error?.type || resultMsg.subtype || "api_error";
-      this.emitError(errorMessage, errorCode);
+  private mapStopReason(sdkReason: string | null): StopReason {
+    switch (sdkReason) {
+      case "end_turn":
+        return "end_turn";
+      case "max_tokens":
+        return "max_tokens";
+      case "tool_use":
+        return "tool_use";
+      case "stop_sequence":
+        return "stop_sequence";
+      default:
+        return "other";
     }
   }
 
   /**
-   * Handle error from SDK lifecycle
+   * Yield events from Subject as AsyncIterable
    */
-  private handleError(error: Error): void {
-    this.cleanupPendingRequest();
-    if (this.currentMeta) {
-      this.emitError(error.message, "runtime_error");
-    }
-  }
+  private async *yieldFromSubject(
+    subject: Subject<DriverStreamEvent>,
+    _isComplete: () => boolean,
+    getError: () => Error | null
+  ): AsyncIterable<DriverStreamEvent> {
+    const queue: DriverStreamEvent[] = [];
+    let resolve: ((value: IteratorResult<DriverStreamEvent>) => void) | null = null;
+    let done = false;
 
-  /**
-   * Handle listener exit from SDK lifecycle
-   */
-  private handleListenerExit(reason: "normal" | "abort" | "error"): void {
-    logger.debug("SDK listener exited", { reason });
-    this.cleanupPendingRequest();
-  }
-
-  /**
-   * Handle request timeout
-   */
-  private handleTimeout(_meta: RequestMeta): void {
-    this.wasInterrupted = true;
-    this.queryLifecycle.interrupt();
-    this.emitError(`Request timeout after ${this.config.timeout ?? DEFAULT_TIMEOUT}ms`, "timeout");
-  }
-
-  /**
-   * Process stream_event from SDK and emit corresponding DriveableEvent
-   */
-  private processStreamEvent(sdkMsg: SDKPartialAssistantMessage): void {
-    const event = sdkMsg.event;
-    const { requestId, context } = this.currentMeta || {};
-
-    switch (event.type) {
-      case "message_start":
-        // Reset context on new message
-        this.blockContext = {
-          currentBlockType: null,
-          currentBlockIndex: 0,
-          currentToolId: null,
-          currentToolName: null,
-          lastStopReason: null,
-          lastStopSequence: null,
-        };
-
-        this.emitToBus({
-          type: "message_start",
-          timestamp: Date.now(),
-          source: "driver",
-          category: "stream",
-          intent: "notification",
-          requestId,
-          context,
-          data: {
-            message: {
-              id: event.message.id,
-              model: event.message.model,
-            },
-          },
-        });
-        break;
-
-      case "content_block_start": {
-        const contentBlock = event.content_block as { type: string; id?: string; name?: string };
-        this.blockContext.currentBlockIndex = event.index;
-
-        if (contentBlock.type === "text") {
-          this.blockContext.currentBlockType = "text";
-          this.emitToBus({
-            type: "text_content_block_start",
-            timestamp: Date.now(),
-            source: "driver",
-            category: "stream",
-            intent: "notification",
-            index: event.index,
-            requestId,
-            context,
-            data: {},
-          });
-        } else if (contentBlock.type === "tool_use") {
-          this.blockContext.currentBlockType = "tool_use";
-          this.blockContext.currentToolId = contentBlock.id || null;
-          this.blockContext.currentToolName = contentBlock.name || null;
-          this.emitToBus({
-            type: "tool_use_content_block_start",
-            timestamp: Date.now(),
-            source: "driver",
-            category: "stream",
-            intent: "notification",
-            index: event.index,
-            requestId,
-            context,
-            data: {
-              id: contentBlock.id || "",
-              name: contentBlock.name || "",
-            },
-          });
-        }
-        break;
-      }
-
-      case "content_block_delta": {
-        const delta = event.delta as { type: string; text?: string; partial_json?: string };
-
-        if (delta.type === "text_delta") {
-          this.emitToBus({
-            type: "text_delta",
-            timestamp: Date.now(),
-            source: "driver",
-            category: "stream",
-            intent: "notification",
-            requestId,
-            context,
-            data: { text: delta.text || "" },
-          });
-        } else if (delta.type === "input_json_delta") {
-          this.emitToBus({
-            type: "input_json_delta",
-            timestamp: Date.now(),
-            source: "driver",
-            category: "stream",
-            intent: "notification",
-            index: this.blockContext.currentBlockIndex,
-            requestId,
-            context,
-            data: { partialJson: delta.partial_json || "" },
-          });
-        }
-        break;
-      }
-
-      case "content_block_stop":
-        if (this.blockContext.currentBlockType === "tool_use" && this.blockContext.currentToolId) {
-          this.emitToBus({
-            type: "tool_use_content_block_stop",
-            timestamp: Date.now(),
-            source: "driver",
-            category: "stream",
-            intent: "notification",
-            index: this.blockContext.currentBlockIndex,
-            requestId,
-            context,
-            data: {},
-          });
+    const subscription = subject.subscribe({
+      next: (value) => {
+        if (resolve) {
+          resolve({ value, done: false });
+          resolve = null;
         } else {
-          this.emitToBus({
-            type: "text_content_block_stop",
-            timestamp: Date.now(),
-            source: "driver",
-            category: "stream",
-            intent: "notification",
-            index: this.blockContext.currentBlockIndex,
-            requestId,
-            context,
-            data: {},
+          queue.push(value);
+        }
+      },
+      complete: () => {
+        done = true;
+        if (resolve) {
+          resolve({ value: undefined as unknown as DriverStreamEvent, done: true });
+          resolve = null;
+        }
+      },
+      error: (_err) => {
+        done = true;
+        // Error is handled via getError()
+      },
+    });
+
+    try {
+      while (!done || queue.length > 0) {
+        const error = getError();
+        if (error) {
+          throw error;
+        }
+
+        if (queue.length > 0) {
+          yield queue.shift()!;
+        } else if (!done) {
+          const result = await new Promise<IteratorResult<DriverStreamEvent>>((res) => {
+            resolve = res;
           });
-        }
-        // Reset current block type after stop
-        this.blockContext.currentBlockType = null;
-        this.blockContext.currentToolId = null;
-        this.blockContext.currentToolName = null;
-        break;
 
-      case "message_delta": {
-        const msgDelta = event.delta as { stop_reason?: string; stop_sequence?: string };
-        if (msgDelta.stop_reason) {
-          this.blockContext.lastStopReason = msgDelta.stop_reason;
-          this.blockContext.lastStopSequence = msgDelta.stop_sequence || null;
+          if (!result.done) {
+            yield result.value;
+          }
         }
-        break;
       }
-
-      case "message_stop":
-        this.emitToBus({
-          type: "message_stop",
-          timestamp: Date.now(),
-          source: "driver",
-          category: "stream",
-          intent: "notification",
-          requestId,
-          context,
-          data: {
-            stopReason: (this.blockContext.lastStopReason || "end_turn") as
-              | "end_turn"
-              | "max_tokens"
-              | "tool_use"
-              | "stop_sequence"
-              | "content_filter"
-              | "error"
-              | "other",
-            stopSequence: this.blockContext.lastStopSequence ?? undefined,
-          },
-        });
-        // Reset after emitting
-        this.blockContext.lastStopReason = null;
-        this.blockContext.lastStopSequence = null;
-        break;
-    }
-  }
-
-  /**
-   * Emit interrupted event
-   */
-  private emitInterrupted(reason: "user_interrupt" | "timeout" | "error" | "system"): void {
-    this.emitToBus({
-      type: "interrupted",
-      timestamp: Date.now(),
-      source: "driver",
-      category: "stream",
-      intent: "notification",
-      requestId: this.currentMeta?.requestId,
-      context: this.currentMeta?.context,
-      data: { reason },
-    });
-  }
-
-  /**
-   * Emit error_received event
-   */
-  private emitError(message: string, errorCode?: string): void {
-    this.emitToBus({
-      type: "error_received",
-      timestamp: Date.now(),
-      source: "driver",
-      category: "stream",
-      intent: "notification",
-      requestId: this.currentMeta?.requestId,
-      context: this.currentMeta?.context,
-      data: { message, errorCode },
-    });
-  }
-
-  /**
-   * Emit event to EventBus
-   */
-  private emitToBus(event: DriveableEvent): void {
-    if (this.producer) {
-      this.producer.emit(event);
-    }
-  }
-
-  /**
-   * Clean up pending request subscription
-   */
-  private cleanupPendingRequest(): void {
-    if (this.pendingSubscription) {
-      this.pendingSubscription.unsubscribe();
-      this.pendingSubscription = null;
-    }
-    if (this.pendingRequest$) {
-      this.pendingRequest$.complete();
-      this.pendingRequest$ = null;
-    }
-  }
-
-  /**
-   * Complete pending request (cancels timeout)
-   */
-  private completePendingRequest(): void {
-    if (this.pendingRequest$) {
-      this.pendingRequest$.complete();
-      this.pendingRequest$ = null;
-    }
-    if (this.pendingSubscription) {
-      this.pendingSubscription.unsubscribe();
-      this.pendingSubscription = null;
+    } finally {
+      subscription.unsubscribe();
     }
   }
 }
 
 /**
- * ClaudeDriverFactory - Factory for creating ClaudeDriver instances
+ * CreateDriver function for ClaudeDriver
+ *
+ * Factory function that creates a ClaudeDriver instance.
+ * Conforms to the CreateDriver type from @agentxjs/core/driver.
+ *
+ * @example
+ * ```typescript
+ * import { createClaudeDriver } from "@agentxjs/claude-driver";
+ *
+ * const driver = createClaudeDriver({
+ *   apiKey: process.env.ANTHROPIC_API_KEY!,
+ *   agentId: "my-agent",
+ *   systemPrompt: "You are helpful",
+ * });
+ *
+ * await driver.initialize();
+ *
+ * for await (const event of driver.receive({ content: "Hello" })) {
+ *   if (event.type === "text_delta") {
+ *     process.stdout.write(event.data.text);
+ *   }
+ * }
+ *
+ * await driver.dispose();
+ * ```
  */
-export class ClaudeDriverFactory implements DriverFactory {
-  readonly name = "ClaudeDriverFactory";
-
-  /**
-   * Create a ClaudeDriver instance
-   */
-  createDriver(options: CreateDriverOptions): Driver {
-    return new ClaudeDriver(options);
-  }
-
-  /**
-   * Warmup the driver (pre-validate config)
-   */
-  async warmup(config: DriverConfig): Promise<void> {
-    // Validate API key
-    if (!config.apiKey) {
-      throw new Error("API key is required");
-    }
-    logger.info("ClaudeDriverFactory warmup complete");
-  }
-}
-
-/**
- * Create a ClaudeDriverFactory instance
- */
-export function createClaudeDriverFactory(): DriverFactory {
-  return new ClaudeDriverFactory();
+export function createClaudeDriver(config: DriverConfig): Driver {
+  return new ClaudeDriver(config);
 }

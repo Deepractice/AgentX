@@ -3,6 +3,11 @@
  *
  * Integrates all components to provide agent lifecycle management.
  * Uses Provider dependencies to coordinate Session, Image, Container, etc.
+ *
+ * New Design:
+ * - Driver.receive() returns AsyncIterable<DriverStreamEvent>
+ * - Runtime processes events and emits to EventBus
+ * - No more EventBus-based communication with Driver
  */
 
 import { createLogger } from "commonxjs/logger";
@@ -15,9 +20,9 @@ import type {
   Subscription,
   AgentLifecycle,
 } from "./types";
-import type { UserContentPart } from "../agent/types";
+import type { UserContentPart, UserMessage } from "../agent/types";
 import type { BusEvent } from "../event/types";
-import type { Driver, DriverConfig } from "../driver/types";
+import type { Driver, DriverConfig, DriverStreamEvent } from "../driver/types";
 
 const logger = createLogger("runtime/AgentXRuntime");
 
@@ -29,6 +34,8 @@ interface AgentState {
   lifecycle: AgentLifecycle;
   subscriptions: Set<() => void>;
   driver: Driver;
+  /** Flag to track if a receive operation is in progress */
+  isReceiving: boolean;
 }
 
 /**
@@ -43,31 +50,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
 
   constructor(provider: AgentXProvider) {
     this.provider = provider;
-    this.setupDriverSubscription();
     logger.info("AgentXRuntime initialized");
-  }
-
-  /**
-   * Setup subscription to driver events
-   */
-  private setupDriverSubscription(): void {
-    // Subscribe to user_message events and forward to driver
-    this.provider.eventBus.on("user_message", async (event) => {
-      const context = (event as BusEvent & { context?: { agentId?: string } }).context;
-      if (!context?.agentId) return;
-
-      const state = this.agents.get(context.agentId);
-      if (!state || state.lifecycle !== "running") {
-        logger.warn("Received user_message for non-running agent", {
-          agentId: context.agentId,
-          lifecycle: state?.lifecycle,
-        });
-        return;
-      }
-
-      // Driver will handle the message and emit response events
-      logger.debug("Forwarding user_message to driver", { agentId: context.agentId });
-    });
   }
 
   // ==================== Agent Lifecycle ====================
@@ -103,27 +86,26 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     });
     await workspace.initialize();
 
-    // Create driver for this agent
+    // Create driver config
     const driverConfig: DriverConfig = {
       apiKey: process.env.ANTHROPIC_API_KEY ?? "",
       baseUrl: process.env.ANTHROPIC_BASE_URL,
+      agentId,
       systemPrompt: imageRecord.systemPrompt,
       cwd: workspace.path,
       mcpServers: imageRecord.mcpServers,
-    };
-
-    const driver = this.provider.driverFactory.createDriver({
-      agentId,
-      config: driverConfig,
-      resumeSessionId: imageRecord.metadata?.claudeSdkSessionId,
-      onSessionIdCaptured: async (claudeSdkSessionId) => {
+      resumeSessionId: imageRecord.metadata?.claudeSdkSessionId as string | undefined,
+      onSessionIdCaptured: async (claudeSdkSessionId: string) => {
         // Persist SDK session ID for resume
         await this.provider.imageRepository.updateMetadata(imageId, { claudeSdkSessionId });
       },
-    });
+    };
 
-    // Connect driver to EventBus
-    driver.connect(this.provider.eventBus.asConsumer(), this.provider.eventBus.asProducer());
+    // Create driver using the new CreateDriver function
+    const driver = this.provider.createDriver(driverConfig);
+
+    // Initialize driver
+    await driver.initialize();
 
     // Create runtime agent
     const agent: RuntimeAgent = {
@@ -142,6 +124,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       lifecycle: "running",
       subscriptions: new Set(),
       driver,
+      isReceiving: false,
     };
     this.agents.set(agentId, state);
 
@@ -257,9 +240,8 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       throw new Error(`Agent not found: ${agentId}`);
     }
 
-    // Disconnect and dispose driver
-    state.driver.disconnect();
-    state.driver.dispose();
+    // Dispose driver (new interface, no disconnect needed)
+    await state.driver.dispose();
 
     // Cleanup subscriptions
     for (const unsub of state.subscriptions) {
@@ -307,13 +289,17 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       throw new Error(`Cannot send message to ${state.lifecycle} agent: ${agentId}`);
     }
 
+    if (state.isReceiving) {
+      throw new Error(`Agent ${agentId} is already processing a message`);
+    }
+
     const actualRequestId = requestId ?? this.generateRequestId();
 
     // Build user message
-    const userMessage = {
+    const userMessage: UserMessage = {
       id: this.generateMessageId(),
-      role: "user" as const,
-      subtype: "user" as const,
+      role: "user",
+      subtype: "user",
       content,
       timestamp: Date.now(),
     };
@@ -321,22 +307,8 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     // Persist to session
     await this.provider.sessionRepository.addMessage(state.agent.sessionId, userMessage);
 
-    // Emit user_message event to trigger driver
-    this.provider.eventBus.emit({
-      type: "user_message",
-      timestamp: Date.now(),
-      source: "runtime",
-      category: "message",
-      intent: "request",
-      requestId: actualRequestId,
-      data: userMessage,
-      context: {
-        agentId,
-        imageId: state.agent.imageId,
-        containerId: state.agent.containerId,
-        sessionId: state.agent.sessionId,
-      },
-    } as BusEvent);
+    // Emit user_message event (for external subscribers)
+    this.emitEvent(state, "user_message", userMessage, actualRequestId);
 
     logger.debug("User message sent", {
       agentId,
@@ -344,6 +316,31 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       contentPreview:
         typeof content === "string" ? content.substring(0, 50) : `[${content.length} parts]`,
     });
+
+    // Mark as receiving
+    state.isReceiving = true;
+
+    try {
+      // Call driver.receive() and process the AsyncIterable
+      for await (const event of state.driver.receive(userMessage)) {
+        // Convert DriverStreamEvent to BusEvent and emit
+        this.handleDriverEvent(state, event, actualRequestId);
+      }
+    } catch (error) {
+      // Emit error event
+      this.emitEvent(
+        state,
+        "error_received",
+        {
+          message: error instanceof Error ? error.message : String(error),
+          errorCode: "runtime_error",
+        },
+        actualRequestId
+      );
+      throw error;
+    } finally {
+      state.isReceiving = false;
+    }
   }
 
   interrupt(agentId: string, requestId?: string): void {
@@ -352,22 +349,16 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       throw new Error(`Agent not found: ${agentId}`);
     }
 
-    // Emit interrupt event
-    this.provider.eventBus.emit({
-      type: "interrupt",
-      timestamp: Date.now(),
-      source: "runtime",
-      category: "action",
-      intent: "request",
-      requestId,
-      data: { agentId },
-      context: {
-        agentId,
-        imageId: state.agent.imageId,
-        containerId: state.agent.containerId,
-        sessionId: state.agent.sessionId,
-      },
-    } as BusEvent);
+    // Call driver.interrupt() directly
+    state.driver.interrupt();
+
+    // Emit interrupt event (for external subscribers)
+    this.emitEvent(
+      state,
+      "interrupt",
+      { agentId },
+      requestId ?? this.generateRequestId()
+    );
 
     logger.debug("Interrupt sent", { agentId, requestId });
   }
@@ -433,6 +424,55 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
   }
 
   // ==================== Private Helpers ====================
+
+  /**
+   * Handle a single DriverStreamEvent
+   */
+  private handleDriverEvent(
+    state: AgentState,
+    event: DriverStreamEvent,
+    requestId: string
+  ): void {
+    // Map DriverStreamEvent to BusEvent and emit
+    this.emitEvent(state, event.type, event.data, requestId);
+  }
+
+  /**
+   * Emit an event to the EventBus
+   */
+  private emitEvent(
+    state: AgentState,
+    type: string,
+    data: unknown,
+    requestId: string
+  ): void {
+    this.provider.eventBus.emit({
+      type,
+      timestamp: Date.now(),
+      source: "runtime",
+      category: this.categorizeEvent(type),
+      intent: "notification",
+      requestId,
+      data,
+      context: {
+        agentId: state.agent.agentId,
+        imageId: state.agent.imageId,
+        containerId: state.agent.containerId,
+        sessionId: state.agent.sessionId,
+      },
+    } as BusEvent);
+  }
+
+  /**
+   * Categorize event type
+   */
+  private categorizeEvent(type: string): string {
+    if (type.includes("message")) return "message";
+    if (type.includes("tool")) return "tool";
+    if (type.includes("error") || type.includes("interrupted")) return "error";
+    if (type.includes("delta")) return "stream";
+    return "stream";
+  }
 
   private generateAgentId(): string {
     const timestamp = Date.now().toString(36);

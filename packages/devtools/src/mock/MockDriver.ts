@@ -1,20 +1,33 @@
 /**
  * MockDriver - Mock Driver for Testing
  *
- * Plays back recorded fixtures when receiving user_message events.
+ * Plays back recorded fixtures when receiving messages.
+ * Implements the new Driver interface with receive() returning AsyncIterable.
  *
  * Usage:
  * ```typescript
  * const driver = new MockDriver({
- *   agentId: "agent-1",
  *   fixture: "simple-reply",
  * });
- * driver.connect(consumer, producer);
+ *
+ * await driver.initialize();
+ *
+ * for await (const event of driver.receive({ content: "Hello" })) {
+ *   if (event.type === "text_delta") {
+ *     console.log(event.data.text);
+ *   }
+ * }
+ *
+ * await driver.dispose();
  * ```
  */
 
-import type { Driver, CreateDriverOptions } from "@agentxjs/core/driver";
-import type { EventConsumer, EventProducer, BusEvent, DriveableEvent } from "@agentxjs/core/event";
+import type {
+  Driver,
+  DriverConfig,
+  DriverState,
+  DriverStreamEvent,
+} from "@agentxjs/core/driver";
 import type { UserMessage } from "@agentxjs/core/agent";
 import type { Fixture, FixtureEvent, MockDriverOptions } from "../types";
 import { BUILTIN_FIXTURES } from "../../fixtures";
@@ -23,99 +36,192 @@ import { createLogger } from "commonxjs/logger";
 const logger = createLogger("devtools/MockDriver");
 
 /**
- * Event context for correlation
- */
-interface EventContext {
-  agentId?: string;
-  sessionId?: string;
-  containerId?: string;
-  imageId?: string;
-}
-
-/**
  * MockDriver - Playback driver for testing
+ *
+ * Implements the new Driver interface:
+ * - receive() returns AsyncIterable<DriverStreamEvent>
+ * - Clear input/output boundaries for testing
  */
 export class MockDriver implements Driver {
   readonly name = "MockDriver";
 
-  private agentId: string;
+  private _sessionId: string | null = null;
+  private _state: DriverState = "idle";
+
+  private readonly config: DriverConfig | null;
   private readonly options: MockDriverOptions;
   private readonly fixtures: Map<string, Fixture>;
   private currentFixture: Fixture;
 
-  private producer: EventProducer | null = null;
-  private unsubscribes: (() => void)[] = [];
-  private isPlaying = false;
+  // For interrupt handling
+  private isInterrupted = false;
 
   /**
    * Create a MockDriver
    *
-   * Simple mode:
-   *   new MockDriver({ fixture: myFixture })
-   *
-   * Factory mode:
-   *   new MockDriver(driverOptions, mockOptions)
+   * @param options - MockDriverOptions or DriverConfig
+   * @param mockOptions - MockDriverOptions if first param is DriverConfig
    */
   constructor(
-    optionsOrDriverOptions: MockDriverOptions | CreateDriverOptions,
+    optionsOrConfig: MockDriverOptions | DriverConfig,
     mockOptions?: MockDriverOptions
   ) {
     // Detect which constructor form is being used
-    if (mockOptions !== undefined || "agentId" in optionsOrDriverOptions) {
-      // Factory mode: (driverOptions, mockOptions)
-      const driverOptions = optionsOrDriverOptions as CreateDriverOptions;
+    if (mockOptions !== undefined || "apiKey" in optionsOrConfig) {
+      // Factory mode: (DriverConfig, MockDriverOptions)
+      this.config = optionsOrConfig as DriverConfig;
       const opts = mockOptions || {};
-      this.agentId = driverOptions.agentId;
       this.options = {
         defaultDelay: 10,
         speedMultiplier: 0,
         ...opts,
       };
-      this.fixtures = new Map(BUILTIN_FIXTURES);
-      if (opts.fixtures) {
-        for (const [name, fixture] of opts.fixtures) {
-          this.fixtures.set(name, fixture);
-        }
-      }
-      this.currentFixture = this.resolveFixture(opts.fixture || "simple-reply");
     } else {
-      // Simple mode: ({ fixture })
-      const opts = optionsOrDriverOptions as MockDriverOptions;
-      this.agentId = "mock-agent"; // Will be set on connect based on context
+      // Simple mode: (MockDriverOptions)
+      this.config = null;
+      const opts = optionsOrConfig as MockDriverOptions;
       this.options = {
         defaultDelay: 10,
         speedMultiplier: 0,
         ...opts,
       };
-      this.fixtures = new Map(BUILTIN_FIXTURES);
-      if (opts.fixtures) {
-        for (const [name, fixture] of opts.fixtures) {
-          this.fixtures.set(name, fixture);
-        }
-      }
-      this.currentFixture = this.resolveFixture(opts.fixture || "simple-reply");
     }
 
+    // Initialize fixtures
+    this.fixtures = new Map(BUILTIN_FIXTURES);
+    if (this.options.fixtures) {
+      for (const [name, fixture] of this.options.fixtures) {
+        this.fixtures.set(name, fixture);
+      }
+    }
+
+    // Set initial fixture
+    this.currentFixture = this.resolveFixture(this.options.fixture || "simple-reply");
+
     logger.debug("MockDriver created", {
-      agentId: this.agentId,
+      fixture: this.currentFixture.name,
+      agentId: this.config?.agentId,
+    });
+  }
+
+  // ============================================================================
+  // Driver Interface Properties
+  // ============================================================================
+
+  get sessionId(): string | null {
+    return this._sessionId;
+  }
+
+  get state(): DriverState {
+    return this._state;
+  }
+
+  // ============================================================================
+  // Lifecycle Methods
+  // ============================================================================
+
+  /**
+   * Initialize the Driver
+   */
+  async initialize(): Promise<void> {
+    if (this._state !== "idle") {
+      throw new Error(`Cannot initialize: MockDriver is in "${this._state}" state`);
+    }
+
+    // Generate a mock session ID
+    this._sessionId = `mock-session-${Date.now()}`;
+
+    logger.debug("MockDriver initialized", {
+      sessionId: this._sessionId,
       fixture: this.currentFixture.name,
     });
   }
 
   /**
-   * Resolve fixture from name or Fixture object
+   * Dispose and cleanup resources
    */
-  private resolveFixture(fixture: string | Fixture): Fixture {
-    if (typeof fixture === "string") {
-      const found = this.fixtures.get(fixture);
-      if (!found) {
-        logger.warn(`Fixture "${fixture}" not found, using "simple-reply"`);
-        return this.fixtures.get("simple-reply")!;
-      }
-      return found;
+  async dispose(): Promise<void> {
+    if (this._state === "disposed") {
+      return;
     }
-    return fixture;
+
+    this._state = "disposed";
+    this.isInterrupted = true;
+
+    logger.debug("MockDriver disposed");
   }
+
+  // ============================================================================
+  // Core Methods
+  // ============================================================================
+
+  /**
+   * Receive a user message and return stream of events
+   *
+   * Plays back the current fixture as DriverStreamEvent.
+   *
+   * @param message - User message (ignored for playback)
+   * @returns AsyncIterable of stream events
+   */
+  async *receive(_message: UserMessage): AsyncIterable<DriverStreamEvent> {
+    if (this._state === "disposed") {
+      throw new Error("Cannot receive: MockDriver is disposed");
+    }
+
+    if (this._state === "active") {
+      throw new Error("Cannot receive: MockDriver is already processing a message");
+    }
+
+    this._state = "active";
+    this.isInterrupted = false;
+
+    const { speedMultiplier = 0, defaultDelay = 10 } = this.options;
+
+    try {
+      for (const fixtureEvent of this.currentFixture.events) {
+        // Check for interrupt
+        if (this.isInterrupted) {
+          yield {
+            type: "interrupted",
+            timestamp: Date.now(),
+            data: { reason: "user" },
+          };
+          break;
+        }
+
+        // Apply delay
+        const delay = fixtureEvent.delay || defaultDelay;
+        if (delay > 0 && speedMultiplier > 0) {
+          await this.sleep(delay * speedMultiplier);
+        }
+
+        // Convert and yield event
+        const event = this.convertFixtureEvent(fixtureEvent);
+        if (event) {
+          yield event;
+        }
+      }
+    } finally {
+      this._state = "idle";
+    }
+  }
+
+  /**
+   * Interrupt current operation
+   */
+  interrupt(): void {
+    if (this._state !== "active") {
+      logger.debug("Interrupt called but no active operation");
+      return;
+    }
+
+    logger.debug("MockDriver interrupted");
+    this.isInterrupted = true;
+  }
+
+  // ============================================================================
+  // Fixture Management
+  // ============================================================================
 
   /**
    * Set the fixture to use for next playback
@@ -133,150 +239,126 @@ export class MockDriver implements Driver {
   }
 
   /**
-   * Connect to EventBus
+   * Get the current fixture
    */
-  connect(consumer: EventConsumer, producer: EventProducer): void {
-    this.producer = producer;
-
-    logger.debug("MockDriver connected", { agentId: this.agentId });
-
-    // Subscribe to user_message events
-    const unsubUserMessage = consumer.on("user_message", async (evt: BusEvent) => {
-      const typedEvent = evt as BusEvent & {
-        data: UserMessage;
-        requestId?: string;
-        context?: EventContext;
-      };
-
-      // In simple mode (agentId = "mock-agent"), accept any message
-      // In factory mode, filter by agentId
-      if (this.agentId !== "mock-agent" && typedEvent.context?.agentId !== this.agentId) {
-        return;
-      }
-
-      // Update agentId from context if in simple mode
-      if (this.agentId === "mock-agent" && typedEvent.context?.agentId) {
-        this.agentId = typedEvent.context.agentId;
-      }
-
-      logger.debug("MockDriver received user_message", {
-        agentId: this.agentId,
-        fixture: this.currentFixture.name,
-      });
-
-      // Play back fixture events
-      await this.playFixture(typedEvent.requestId, typedEvent.context);
-    });
-    this.unsubscribes.push(unsubUserMessage);
-
-    // Subscribe to interrupt events
-    const unsubInterrupt = consumer.on("interrupt_request", (evt: BusEvent) => {
-      const typedEvent = evt as BusEvent & { context?: EventContext };
-
-      if (typedEvent.context?.agentId !== this.agentId) {
-        return;
-      }
-
-      logger.debug("MockDriver interrupted", { agentId: this.agentId });
-      this.isPlaying = false;
-    });
-    this.unsubscribes.push(unsubInterrupt);
+  getFixture(): Fixture {
+    return this.currentFixture;
   }
 
   /**
-   * Disconnect from EventBus
+   * Get available fixture names
    */
-  disconnect(): void {
-    for (const unsub of this.unsubscribes) {
-      unsub();
+  getFixtureNames(): string[] {
+    return Array.from(this.fixtures.keys());
+  }
+
+  // ============================================================================
+  // Private Methods
+  // ============================================================================
+
+  /**
+   * Resolve fixture from name or Fixture object
+   */
+  private resolveFixture(fixture: string | Fixture): Fixture {
+    if (typeof fixture === "string") {
+      const found = this.fixtures.get(fixture);
+      if (!found) {
+        logger.warn(`Fixture "${fixture}" not found, using "simple-reply"`);
+        return this.fixtures.get("simple-reply")!;
+      }
+      return found;
     }
-    this.unsubscribes = [];
-    this.producer = null;
-    this.isPlaying = false;
-    logger.debug("MockDriver disconnected", { agentId: this.agentId });
+    return fixture;
   }
 
   /**
-   * Dispose driver resources
+   * Convert FixtureEvent to DriverStreamEvent
    */
-  dispose(): void {
-    this.disconnect();
-    logger.debug("MockDriver disposed", { agentId: this.agentId });
-  }
+  private convertFixtureEvent(fixtureEvent: FixtureEvent): DriverStreamEvent | null {
+    const timestamp = Date.now();
+    const data = fixtureEvent.data as Record<string, unknown>;
 
-  /**
-   * Play back fixture events
-   */
-  private async playFixture(requestId?: string, context?: EventContext): Promise<void> {
-    if (this.isPlaying) {
-      logger.warn("Already playing, ignoring new message");
-      return;
+    switch (fixtureEvent.type) {
+      case "message_start":
+        return {
+          type: "message_start",
+          timestamp,
+          data: {
+            messageId: (data.messageId as string) || `msg_${timestamp}`,
+            model: (data.model as string) || "mock-model",
+          },
+        };
+
+      case "text_delta":
+        return {
+          type: "text_delta",
+          timestamp,
+          data: { text: (data.text as string) || "" },
+        };
+
+      case "tool_use_start":
+        return {
+          type: "tool_use_start",
+          timestamp,
+          data: {
+            toolCallId: (data.toolCallId as string) || `tool_${timestamp}`,
+            toolName: (data.toolName as string) || "",
+          },
+        };
+
+      case "input_json_delta":
+        return {
+          type: "input_json_delta",
+          timestamp,
+          data: { partialJson: (data.partialJson as string) || "" },
+        };
+
+      case "tool_use_stop":
+        return {
+          type: "tool_use_stop",
+          timestamp,
+          data: {
+            toolCallId: (data.toolCallId as string) || "",
+            toolName: (data.toolName as string) || "",
+            input: (data.input as Record<string, unknown>) || {},
+          },
+        };
+
+      case "tool_result":
+        return {
+          type: "tool_result",
+          timestamp,
+          data: {
+            toolCallId: (data.toolCallId as string) || "",
+            result: data.result,
+            isError: data.isError as boolean | undefined,
+          },
+        };
+
+      case "message_stop":
+        return {
+          type: "message_stop",
+          timestamp,
+          data: {
+            stopReason: (data.stopReason as "end_turn" | "tool_use" | "max_tokens" | "stop_sequence" | "other") || "end_turn",
+          },
+        };
+
+      case "error":
+        return {
+          type: "error",
+          timestamp,
+          data: {
+            message: (data.message as string) || "Unknown error",
+            errorCode: (data.errorCode as string) || "mock_error",
+          },
+        };
+
+      default:
+        // Pass through unknown events with generic structure
+        logger.debug(`Unknown fixture event type: ${fixtureEvent.type}`);
+        return null;
     }
-
-    this.isPlaying = true;
-    const { speedMultiplier = 0, defaultDelay = 10 } = this.options;
-
-    for (const fixtureEvent of this.currentFixture.events) {
-      if (!this.isPlaying) {
-        // Interrupted
-        this.emitInterrupted(requestId, context);
-        break;
-      }
-
-      // Apply delay
-      const delay = fixtureEvent.delay || defaultDelay;
-      if (delay > 0 && speedMultiplier > 0) {
-        await this.sleep(delay * speedMultiplier);
-      }
-
-      // Emit event
-      this.emitEvent(fixtureEvent, requestId, context);
-    }
-
-    this.isPlaying = false;
-  }
-
-  /**
-   * Emit a fixture event to EventBus
-   */
-  private emitEvent(fixtureEvent: FixtureEvent, requestId?: string, context?: EventContext): void {
-    if (!this.producer) return;
-
-    const event: DriveableEvent = {
-      type: fixtureEvent.type,
-      timestamp: Date.now(),
-      source: "driver",
-      category: "stream",
-      intent: "notification",
-      requestId,
-      context,
-      data: fixtureEvent.data,
-    } as DriveableEvent;
-
-    // Add index if present
-    if (fixtureEvent.index !== undefined) {
-      (event as DriveableEvent & { index?: number }).index = fixtureEvent.index;
-    }
-
-    this.producer.emit(event);
-  }
-
-  /**
-   * Emit interrupted event
-   */
-  private emitInterrupted(requestId?: string, context?: EventContext): void {
-    if (!this.producer) return;
-
-    this.producer.emit({
-      type: "interrupted",
-      timestamp: Date.now(),
-      source: "driver",
-      category: "stream",
-      intent: "notification",
-      requestId,
-      context,
-      data: { reason: "user_interrupt" },
-    } as DriveableEvent);
   }
 
   /**
@@ -285,4 +367,16 @@ export class MockDriver implements Driver {
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
+}
+
+/**
+ * Create a MockDriver factory function
+ *
+ * Returns a CreateDriver-compatible function.
+ *
+ * @param mockOptions - Options for all created drivers
+ * @returns CreateDriver function
+ */
+export function createMockDriver(mockOptions: MockDriverOptions = {}): (config: DriverConfig) => Driver {
+  return (config: DriverConfig) => new MockDriver(config, mockOptions);
 }

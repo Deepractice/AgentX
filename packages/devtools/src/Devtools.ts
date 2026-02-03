@@ -12,17 +12,20 @@
  *   apiKey: process.env.DEEPRACTICE_API_KEY,
  * });
  *
- * // Has fixture → playback
- * // No fixture → call API, record, save, return
+ * // Has fixture → playback (MockDriver)
+ * // No fixture → call API, record, save, return MockDriver
  * const driver = await devtools.driver("hello-test", {
  *   message: "Hello!",
  * });
  *
- * driver.connect(consumer, producer);
+ * await driver.initialize();
+ * for await (const event of driver.receive({ content: "Hello" })) {
+ *   console.log(event);
+ * }
  * ```
  */
 
-import type { Driver, DriverFactory } from "@agentxjs/core/driver";
+import type { Driver, CreateDriver, DriverConfig } from "@agentxjs/core/driver";
 import type { Fixture } from "./types";
 import { MockDriver } from "./mock/MockDriver";
 import { RecordingDriver } from "./recorder/RecordingDriver";
@@ -71,7 +74,7 @@ export interface DevtoolsConfig {
    * Real driver factory for recording
    * If not provided, will try to use @agentxjs/claude-driver
    */
-  driverFactory?: DriverFactory;
+  createDriver?: CreateDriver;
 }
 
 /**
@@ -104,7 +107,7 @@ export interface DriverOptions {
  */
 export class Devtools {
   private config: DevtoolsConfig;
-  private realDriverFactory: DriverFactory | null = null;
+  private realCreateDriver: CreateDriver | null = null;
 
   constructor(config: DevtoolsConfig) {
     this.config = config;
@@ -134,18 +137,19 @@ export class Devtools {
   }
 
   /**
-   * Get a DriverFactory that uses fixtures
+   * Get a CreateDriver function that uses a pre-loaded fixture
+   *
+   * NOTE: This loads the fixture synchronously, so the fixture must exist.
+   * For async loading/recording, use driver() instead.
    */
-  factory(name: string, options: DriverOptions): DriverFactory {
-    const self = this;
-    return {
-      name: `DevtoolsFactory(${name})`,
-      createDriver: () => {
-        // Return a lazy driver that loads/records on first use
-        return new LazyDriver(async () => {
-          return self.driver(name, options);
-        });
-      },
+  createDriverForFixture(fixturePath: string): CreateDriver {
+    // Load fixture synchronously (requires existing fixture)
+    const { readFileSync } = require("node:fs") as typeof import("node:fs");
+    const content = readFileSync(this.getFixturePath(fixturePath), "utf-8");
+    const fixture = JSON.parse(content) as Fixture;
+
+    return (_config: DriverConfig) => {
+      return new MockDriver({ fixture });
     };
   }
 
@@ -153,24 +157,22 @@ export class Devtools {
    * Record a fixture
    */
   async record(name: string, options: DriverOptions): Promise<Fixture> {
-    const factory = await this.getRealDriverFactory();
-    const { EventBusImpl } = await import("@agentxjs/core/event");
+    const createDriver = await this.getRealCreateDriver();
 
-    const bus = new EventBusImpl();
     const agentId = `record-${name}`;
 
-    // Create real driver
-    const realDriver = factory.createDriver({
+    // Create driver config
+    const driverConfig: DriverConfig = {
+      apiKey: this.config.apiKey!,
+      baseUrl: this.config.baseUrl,
       agentId,
-      config: {
-        apiKey: this.config.apiKey!,
-        baseUrl: this.config.baseUrl,
-        model: this.config.model,
-        systemPrompt:
-          options.systemPrompt || this.config.systemPrompt || "You are a helpful assistant.",
-        cwd: options.cwd || this.config.cwd || process.cwd(),
-      },
-    });
+      model: this.config.model,
+      systemPrompt: options.systemPrompt || this.config.systemPrompt || "You are a helpful assistant.",
+      cwd: options.cwd || this.config.cwd || process.cwd(),
+    };
+
+    // Create real driver
+    const realDriver = createDriver(driverConfig);
 
     // Wrap with recorder
     const recorder = new RecordingDriver({
@@ -179,58 +181,46 @@ export class Devtools {
       description: `Recording of: "${options.message}"`,
     });
 
-    // Connect
-    recorder.connect(bus.asConsumer(), bus.asProducer());
+    // Initialize
+    await recorder.initialize();
 
-    // Wait for completion
-    const fixture = await new Promise<Fixture>((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        recorder.dispose();
-        reject(new Error(`Recording timeout for: ${name}`));
-      }, 120000);
-
-      bus.on("message_stop", (evt) => {
-        const data = evt.data as { stopReason?: string };
-        if (data.stopReason === "end_turn") {
-          clearTimeout(timeout);
-          const fixture = recorder.getFixture();
-          recorder.dispose();
-          resolve(fixture);
-        }
-      });
-
-      bus.on("error_received", (evt) => {
-        clearTimeout(timeout);
-        recorder.dispose();
-        const data = evt.data as { message?: string };
-        reject(new Error(`Recording error: ${data.message}`));
-      });
-
-      // Send message
-      bus.emit({
-        type: "user_message",
+    try {
+      // Build user message
+      const userMessage = {
+        id: `msg_${Date.now()}`,
+        role: "user" as const,
+        subtype: "user" as const,
+        content: options.message,
         timestamp: Date.now(),
-        source: "devtools",
-        category: "message",
-        intent: "request",
-        data: {
-          id: `msg_${Date.now()}`,
-          role: "user",
-          subtype: "user",
-          content: options.message,
-          timestamp: Date.now(),
-        },
-        context: {
-          agentId,
-          sessionId: `session-${name}`,
-        },
-      } as never);
-    });
+      };
 
-    // Save fixture
-    await this.saveFixture(name, fixture);
+      // Send message and collect all events
+      for await (const event of recorder.receive(userMessage)) {
+        logger.debug("Recording event", { type: event.type });
 
-    return fixture;
+        // Check for completion
+        if (event.type === "message_stop") {
+          break;
+        }
+
+        // Check for error
+        if (event.type === "error") {
+          const errorData = event.data as { message?: string };
+          throw new Error(`Recording error: ${errorData.message}`);
+        }
+      }
+
+      // Get fixture
+      const fixture = recorder.getFixture();
+
+      // Save fixture
+      await this.saveFixture(name, fixture);
+
+      return fixture;
+    } finally {
+      // Cleanup
+      await recorder.dispose();
+    }
   }
 
   /**
@@ -282,75 +272,31 @@ export class Devtools {
     logger.info("Fixture saved", { name, path, eventCount: fixture.events.length });
   }
 
-  private async getRealDriverFactory(): Promise<DriverFactory> {
-    if (this.realDriverFactory) {
-      return this.realDriverFactory;
+  private async getRealCreateDriver(): Promise<CreateDriver> {
+    if (this.realCreateDriver) {
+      return this.realCreateDriver;
     }
 
-    if (this.config.driverFactory) {
-      this.realDriverFactory = this.config.driverFactory;
-      return this.realDriverFactory;
+    if (this.config.createDriver) {
+      this.realCreateDriver = this.config.createDriver;
+      return this.realCreateDriver;
     }
 
     // Validate API key
     if (!this.config.apiKey) {
       throw new Error(
-        "apiKey is required for recording. Set it in DevtoolsConfig or provide a driverFactory."
+        "apiKey is required for recording. Set it in DevtoolsConfig or provide a createDriver."
       );
     }
 
     // Try to import claude-driver
     try {
-      const { createClaudeDriverFactory } = await import("@agentxjs/claude-driver");
-      this.realDriverFactory = createClaudeDriverFactory();
-      return this.realDriverFactory;
+      const { createClaudeDriver } = await import("@agentxjs/claude-driver");
+      this.realCreateDriver = createClaudeDriver;
+      return this.realCreateDriver;
     } catch {
-      throw new Error("@agentxjs/claude-driver not found. Install it or provide a driverFactory.");
+      throw new Error("@agentxjs/claude-driver not found. Install it or provide a createDriver.");
     }
-  }
-}
-
-/**
- * LazyDriver - Loads the actual driver on first connect
- */
-class LazyDriver implements Driver {
-  readonly name = "LazyDriver";
-  private driver: Driver | null = null;
-  private connectPending: {
-    consumer: import("@agentxjs/core/event").EventConsumer;
-    producer: import("@agentxjs/core/event").EventProducer;
-  } | null = null;
-
-  constructor(loader: () => Promise<Driver>) {
-    loader().then((driver) => {
-      this.driver = driver;
-      // If connect was called before driver loaded, connect now
-      if (this.connectPending) {
-        driver.connect(this.connectPending.consumer, this.connectPending.producer);
-        this.connectPending = null;
-      }
-      return driver;
-    });
-  }
-
-  connect(
-    consumer: import("@agentxjs/core/event").EventConsumer,
-    producer: import("@agentxjs/core/event").EventProducer
-  ): void {
-    if (this.driver) {
-      this.driver.connect(consumer, producer);
-    } else {
-      // Driver not ready yet, save for later
-      this.connectPending = { consumer, producer };
-    }
-  }
-
-  disconnect(): void {
-    this.driver?.disconnect();
-  }
-
-  dispose(): void {
-    this.driver?.dispose();
   }
 }
 

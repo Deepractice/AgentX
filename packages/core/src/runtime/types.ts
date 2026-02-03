@@ -36,7 +36,7 @@ import type { ContainerRepository } from "../container/types";
 import type { ImageRepository } from "../image/types";
 import type { SessionRepository } from "../session/types";
 import type { WorkspaceProvider } from "../workspace/types";
-import type { DriverFactory } from "../driver/types";
+import type { CreateDriver } from "../driver/types";
 import type { EventBus } from "../event/types";
 import type { UserContentPart } from "../agent/types";
 import type { BusEvent } from "../event/types";
@@ -95,9 +95,9 @@ export interface AgentXProvider {
   readonly workspaceProvider: WorkspaceProvider;
 
   /**
-   * LLM Driver Factory - creates Driver per Agent
+   * LLM Driver factory function - creates Driver per Agent
    */
-  readonly driverFactory: DriverFactory;
+  readonly createDriver: CreateDriver;
 
   /**
    * Event bus for pub/sub

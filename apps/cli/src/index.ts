@@ -12,7 +12,7 @@ import { hideBin } from "yargs/helpers";
 import { tui } from "./app";
 import { createServer } from "@agentxjs/server";
 import { nodeProvider, FileLoggerFactory } from "@agentxjs/node-provider";
-import { createClaudeDriverFactory } from "@agentxjs/claude-driver";
+import { createClaudeDriver } from "@agentxjs/claude-driver";
 import { createLogger, setLoggerFactory } from "commonxjs/logger";
 import { connect } from "net";
 
@@ -61,12 +61,10 @@ async function getServerUrl(port: number): Promise<{ url: string; cleanup?: () =
     process.exit(1);
   }
 
-  const driverFactory = createClaudeDriverFactory();
-
   const server = await createServer({
     provider: nodeProvider({
       dataPath,
-      driverFactory,
+      createDriver: createClaudeDriver,
       // logDir already configured at startup
     }),
     port,

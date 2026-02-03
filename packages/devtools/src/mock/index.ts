@@ -5,13 +5,19 @@
  *
  * Usage:
  * ```typescript
- * import { createMockDriverFactory } from "@agentxjs/devtools/mock";
+ * import { MockDriver, createMockDriver } from "@agentxjs/devtools/mock";
  *
- * const factory = createMockDriverFactory();
- * factory.setFixture("simple-reply");
- * const driver = factory.createDriver({ agentId: "agent-1" });
+ * // Simple usage
+ * const driver = new MockDriver({ fixture: "simple-reply" });
+ * await driver.initialize();
+ * for await (const event of driver.receive({ content: "Hello" })) {
+ *   console.log(event);
+ * }
+ *
+ * // Factory usage (for Provider)
+ * const createDriver = createMockDriver({ fixture: "simple-reply" });
+ * const driver = createDriver(config);
  * ```
  */
 
-export { MockDriver } from "./MockDriver";
-export { MockDriverFactory, createMockDriverFactory } from "./MockDriverFactory";
+export { MockDriver, createMockDriver } from "./MockDriver";
