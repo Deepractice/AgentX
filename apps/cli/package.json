@@ -1,0 +1,27 @@
+{
+  "name": "@agentxjs/cli",
+  "version": "0.0.1",
+  "description": "AgentX Terminal UI Client",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "agentx": "./bin/agentx"
+  },
+  "scripts": {
+    "dev": "bun run --conditions=browser src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target node",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@opentui/core": "^0.1.77",
+    "@opentui/solid": "^0.1.77",
+    "solid-js": "^1.9.10",
+    "agentxjs": "workspace:*",
+    "yargs": "^18.0.0",
+    "clipboardy": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/yargs": "^17.0.33",
+    "typescript": "^5.3.3"
+  }
+}
