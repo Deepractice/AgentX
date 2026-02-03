@@ -166,7 +166,8 @@ export class Devtools {
         apiKey: this.config.apiKey!,
         baseUrl: this.config.baseUrl,
         model: this.config.model,
-        systemPrompt: options.systemPrompt || this.config.systemPrompt || "You are a helpful assistant.",
+        systemPrompt:
+          options.systemPrompt || this.config.systemPrompt || "You are a helpful assistant.",
         cwd: options.cwd || this.config.cwd || process.cwd(),
       },
     });
@@ -293,7 +294,9 @@ export class Devtools {
 
     // Validate API key
     if (!this.config.apiKey) {
-      throw new Error("apiKey is required for recording. Set it in DevtoolsConfig or provide a driverFactory.");
+      throw new Error(
+        "apiKey is required for recording. Set it in DevtoolsConfig or provide a driverFactory."
+      );
     }
 
     // Try to import claude-driver

@@ -43,7 +43,10 @@ export function ToastProvider(props: ParentProps) {
       }
     },
     dismiss(id: string) {
-      setStore("toasts", store.toasts.filter((t) => t.id !== id));
+      setStore(
+        "toasts",
+        store.toasts.filter((t) => t.id !== id)
+      );
     },
     error(err: unknown) {
       const message = err instanceof Error ? err.message : String(err);

@@ -41,9 +41,4 @@ export type {
   ContainerCreateConfig,
 } from "./types";
 
-export {
-  ContainerImpl,
-  createContainer,
-  loadContainer,
-  getOrCreateContainer,
-} from "./Container";
+export { ContainerImpl, createContainer, loadContainer, getOrCreateContainer } from "./Container";

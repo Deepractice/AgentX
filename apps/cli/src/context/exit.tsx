@@ -9,11 +9,7 @@ type ExitFn = () => void;
 const ExitContext = createContext<ExitFn>();
 
 export function ExitProvider(props: ParentProps<{ onExit: () => void }>) {
-  return (
-    <ExitContext.Provider value={props.onExit}>
-      {props.children}
-    </ExitContext.Provider>
-  );
+  return <ExitContext.Provider value={props.onExit}>{props.children}</ExitContext.Provider>;
 }
 
 export function useExit(): ExitFn {

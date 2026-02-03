@@ -7,11 +7,7 @@
 
 import { createLogger } from "commonxjs/logger";
 import type { ContainerRecord } from "../persistence/types";
-import type {
-  Container,
-  ContainerContext,
-  ContainerCreateConfig,
-} from "./types";
+import type { Container, ContainerContext, ContainerCreateConfig } from "./types";
 
 const logger = createLogger("container/Container");
 
@@ -71,10 +67,7 @@ export class ContainerImpl implements Container {
   /**
    * Load an existing container from storage
    */
-  static async load(
-    containerId: string,
-    context: ContainerContext
-  ): Promise<ContainerImpl | null> {
+  static async load(containerId: string, context: ContainerContext): Promise<ContainerImpl | null> {
     const record = await context.containerRepository.findContainerById(containerId);
     if (!record) {
       logger.debug("Container not found", { containerId });
@@ -88,10 +81,7 @@ export class ContainerImpl implements Container {
   /**
    * Get or create a container
    */
-  static async getOrCreate(
-    containerId: string,
-    context: ContainerContext
-  ): Promise<ContainerImpl> {
+  static async getOrCreate(containerId: string, context: ContainerContext): Promise<ContainerImpl> {
     const existing = await ContainerImpl.load(containerId, context);
     if (existing) {
       return existing;
@@ -131,9 +121,7 @@ export class ContainerImpl implements Container {
    */
   async delete(): Promise<void> {
     // Find all images in this container
-    const images = await this.context.imageRepository.findImagesByContainerId(
-      this.containerId
-    );
+    const images = await this.context.imageRepository.findImagesByContainerId(this.containerId);
 
     // Delete all images and their sessions
     for (const image of images) {

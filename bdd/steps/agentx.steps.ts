@@ -42,57 +42,42 @@ function resolvePlaceholder(world: AgentXWorld, value: string): string {
 // Background Steps
 // ============================================================================
 
-Given(
-  "I have an AgentX client connected to the test server",
-  async function (this: AgentXWorld) {
-    const { RemoteClient } = await import("agentxjs");
-    const { AgentXWorld: World } = await import("../support/world");
+Given("I have an AgentX client connected to the test server", async function (this: AgentXWorld) {
+  const { RemoteClient } = await import("agentxjs");
+  const { AgentXWorld: World } = await import("../support/world");
 
-    const serverUrl = World.getTestServerUrl();
-    this.agentx = new RemoteClient({ serverUrl });
-    await (this.agentx as { connect(): Promise<void> }).connect();
-  }
-);
+  const serverUrl = World.getTestServerUrl();
+  this.agentx = new RemoteClient({ serverUrl });
+  await (this.agentx as { connect(): Promise<void> }).connect();
+});
 
 // ============================================================================
 // Container Steps
 // ============================================================================
 
-When(
-  "I create container {string}",
-  async function (this: AgentXWorld, containerId: string) {
-    const response = await this.agentx!.createContainer(containerId);
-    this.lastResponse = response;
-  }
-);
+When("I create container {string}", async function (this: AgentXWorld, containerId: string) {
+  const response = await this.agentx!.createContainer(containerId);
+  this.lastResponse = response;
+});
 
-Given(
-  "I have created container {string}",
-  async function (this: AgentXWorld, containerId: string) {
-    await this.agentx!.createContainer(containerId);
-  }
-);
+Given("I have created container {string}", async function (this: AgentXWorld, containerId: string) {
+  await this.agentx!.createContainer(containerId);
+});
 
-When(
-  "I get container {string}",
-  async function (this: AgentXWorld, containerId: string) {
-    const response = await this.agentx!.getContainer(containerId);
-    this.lastResponse = response;
-  }
-);
+When("I get container {string}", async function (this: AgentXWorld, containerId: string) {
+  const response = await this.agentx!.getContainer(containerId);
+  this.lastResponse = response;
+});
 
 When("I list containers", async function (this: AgentXWorld) {
   const response = await this.agentx!.listContainers();
   this.lastResponse = response;
 });
 
-Then(
-  "the response containerId should be {string}",
-  function (this: AgentXWorld, expected: string) {
-    const response = this.lastResponse as ContainerCreateResponse;
-    assert.strictEqual(response.containerId, expected);
-  }
-);
+Then("the response containerId should be {string}", function (this: AgentXWorld, expected: string) {
+  const response = this.lastResponse as ContainerCreateResponse;
+  assert.strictEqual(response.containerId, expected);
+});
 
 Then("the container should exist", function (this: AgentXWorld) {
   const response = this.lastResponse as ContainerGetResponse;
@@ -163,14 +148,11 @@ Given(
   }
 );
 
-When(
-  "I get image {string}",
-  async function (this: AgentXWorld, imageId: string) {
-    const resolvedId = resolvePlaceholder(this, imageId);
-    const response = await this.agentx!.getImage(resolvedId);
-    this.lastResponse = response;
-  }
-);
+When("I get image {string}", async function (this: AgentXWorld, imageId: string) {
+  const resolvedId = resolvePlaceholder(this, imageId);
+  const response = await this.agentx!.getImage(resolvedId);
+  this.lastResponse = response;
+});
 
 When(
   "I list images in container {string}",
@@ -180,22 +162,16 @@ When(
   }
 );
 
-When(
-  "I delete image {string}",
-  async function (this: AgentXWorld, imageId: string) {
-    const resolvedId = resolvePlaceholder(this, imageId);
-    const response = await this.agentx!.deleteImage(resolvedId);
-    this.lastResponse = response;
-  }
-);
+When("I delete image {string}", async function (this: AgentXWorld, imageId: string) {
+  const resolvedId = resolvePlaceholder(this, imageId);
+  const response = await this.agentx!.deleteImage(resolvedId);
+  this.lastResponse = response;
+});
 
-Then(
-  "the image record should have name {string}",
-  function (this: AgentXWorld, expected: string) {
-    const response = this.lastResponse as ImageCreateResponse;
-    assert.strictEqual(response.record.name, expected);
-  }
-);
+Then("the image record should have name {string}", function (this: AgentXWorld, expected: string) {
+  const response = this.lastResponse as ImageCreateResponse;
+  assert.strictEqual(response.record.name, expected);
+});
 
 Then("the image record should exist", function (this: AgentXWorld) {
   const response = this.lastResponse as ImageGetResponse;
@@ -207,28 +183,22 @@ Then("the image record should not exist", function (this: AgentXWorld) {
   assert.strictEqual(response.record, null, "Image record should not exist");
 });
 
-Then(
-  "the image list should include {string}",
-  function (this: AgentXWorld, imageId: string) {
-    const resolvedId = resolvePlaceholder(this, imageId);
-    const response = this.lastResponse as ImageListResponse;
-    const found = response.records.some((r) => r.imageId === resolvedId);
-    assert.ok(found, `Image list should include ${resolvedId}`);
-  }
-);
+Then("the image list should include {string}", function (this: AgentXWorld, imageId: string) {
+  const resolvedId = resolvePlaceholder(this, imageId);
+  const response = this.lastResponse as ImageListResponse;
+  const found = response.records.some((r) => r.imageId === resolvedId);
+  assert.ok(found, `Image list should include ${resolvedId}`);
+});
 
 // ============================================================================
 // Agent Steps
 // ============================================================================
 
-When(
-  "I create agent from image {string}",
-  async function (this: AgentXWorld, imageId: string) {
-    const resolvedId = resolvePlaceholder(this, imageId);
-    const response = await this.agentx!.createAgent({ imageId: resolvedId });
-    this.lastResponse = response;
-  }
-);
+When("I create agent from image {string}", async function (this: AgentXWorld, imageId: string) {
+  const resolvedId = resolvePlaceholder(this, imageId);
+  const response = await this.agentx!.createAgent({ imageId: resolvedId });
+  this.lastResponse = response;
+});
 
 When(
   "I create agent from image {string} with agentId {string}",
@@ -251,44 +221,32 @@ Given(
   }
 );
 
-When(
-  "I get agent {string}",
-  async function (this: AgentXWorld, agentId: string) {
-    const resolvedId = resolvePlaceholder(this, agentId);
-    const response = await this.agentx!.getAgent(resolvedId);
-    this.lastResponse = response;
-  }
-);
+When("I get agent {string}", async function (this: AgentXWorld, agentId: string) {
+  const resolvedId = resolvePlaceholder(this, agentId);
+  const response = await this.agentx!.getAgent(resolvedId);
+  this.lastResponse = response;
+});
 
 When("I list agents", async function (this: AgentXWorld) {
   const response = await this.agentx!.listAgents();
   this.lastResponse = response;
 });
 
-When(
-  "I destroy agent {string}",
-  async function (this: AgentXWorld, agentId: string) {
-    const resolvedId = resolvePlaceholder(this, agentId);
-    const response = await this.agentx!.destroyAgent(resolvedId);
-    this.lastResponse = response;
-  }
-);
+When("I destroy agent {string}", async function (this: AgentXWorld, agentId: string) {
+  const resolvedId = resolvePlaceholder(this, agentId);
+  const response = await this.agentx!.destroyAgent(resolvedId);
+  this.lastResponse = response;
+});
 
-Then(
-  "the agent response should have agentId",
-  function (this: AgentXWorld) {
-    const response = this.lastResponse as AgentCreateResponse;
-    assert.ok(response.agentId, "Agent response should have agentId");
-  }
-);
+Then("the agent response should have agentId", function (this: AgentXWorld) {
+  const response = this.lastResponse as AgentCreateResponse;
+  assert.ok(response.agentId, "Agent response should have agentId");
+});
 
-Then(
-  "the agent response should have sessionId",
-  function (this: AgentXWorld) {
-    const response = this.lastResponse as AgentCreateResponse;
-    assert.ok(response.sessionId, "Agent response should have sessionId");
-  }
-);
+Then("the agent response should have sessionId", function (this: AgentXWorld) {
+  const response = this.lastResponse as AgentCreateResponse;
+  assert.ok(response.sessionId, "Agent response should have sessionId");
+});
 
 Then(
   "the agent response agentId should be {string}",
@@ -308,15 +266,12 @@ Then("the agent should not exist", function (this: AgentXWorld) {
   assert.strictEqual(response.exists, false, "Agent should not exist");
 });
 
-Then(
-  "the agent list should include {string}",
-  function (this: AgentXWorld, agentId: string) {
-    const resolvedId = resolvePlaceholder(this, agentId);
-    const response = this.lastResponse as AgentListResponse;
-    const found = response.agents.some((a) => a.agentId === resolvedId);
-    assert.ok(found, `Agent list should include ${resolvedId}`);
-  }
-);
+Then("the agent list should include {string}", function (this: AgentXWorld, agentId: string) {
+  const resolvedId = resolvePlaceholder(this, agentId);
+  const response = this.lastResponse as AgentListResponse;
+  const found = response.agents.some((a) => a.agentId === resolvedId);
+  assert.ok(found, `Agent list should include ${resolvedId}`);
+});
 
 // ============================================================================
 // Message Steps
@@ -331,14 +286,11 @@ When(
   }
 );
 
-When(
-  "I interrupt agent {string}",
-  async function (this: AgentXWorld, agentId: string) {
-    const resolvedId = resolvePlaceholder(this, agentId);
-    const response = await this.agentx!.interrupt(resolvedId);
-    this.lastResponse = response;
-  }
-);
+When("I interrupt agent {string}", async function (this: AgentXWorld, agentId: string) {
+  const resolvedId = resolvePlaceholder(this, agentId);
+  const response = await this.agentx!.interrupt(resolvedId);
+  this.lastResponse = response;
+});
 
 // ============================================================================
 // Event Subscription Steps
@@ -348,12 +300,9 @@ Given("I subscribe to all events", function (this: AgentXWorld) {
   this.subscribeToAllEvents();
 });
 
-Given(
-  "I subscribe to {string} events",
-  function (this: AgentXWorld, eventType: string) {
-    this.subscribeToEvent(eventType);
-  }
-);
+Given("I subscribe to {string} events", function (this: AgentXWorld, eventType: string) {
+  this.subscribeToEvent(eventType);
+});
 
 Then(
   "I should receive {string} event within {int} seconds",
@@ -363,32 +312,21 @@ Then(
   }
 );
 
-Then(
-  "I should receive {string} events",
-  function (this: AgentXWorld, eventType: string) {
-    const events = this.getEventsOfType(eventType);
-    assert.ok(events.length > 0, `Should have received ${eventType} events`);
-  }
-);
+Then("I should receive {string} events", function (this: AgentXWorld, eventType: string) {
+  const events = this.getEventsOfType(eventType);
+  assert.ok(events.length > 0, `Should have received ${eventType} events`);
+});
 
-Then(
-  "I should have collected {string} events",
-  function (this: AgentXWorld, eventType: string) {
-    const events = this.getEventsOfType(eventType);
-    assert.ok(events.length > 0, `Should have collected ${eventType} events`);
-  }
-);
+Then("I should have collected {string} events", function (this: AgentXWorld, eventType: string) {
+  const events = this.getEventsOfType(eventType);
+  assert.ok(events.length > 0, `Should have collected ${eventType} events`);
+});
 
-Then(
-  "the combined text_delta content should not be empty",
-  function (this: AgentXWorld) {
-    const events = this.getEventsOfType("text_delta");
-    const combined = events
-      .map((e) => (e.data as { text?: string }).text || "")
-      .join("");
-    assert.ok(combined.length > 0, "Combined text_delta content should not be empty");
-  }
-);
+Then("the combined text_delta content should not be empty", function (this: AgentXWorld) {
+  const events = this.getEventsOfType("text_delta");
+  const combined = events.map((e) => (e.data as { text?: string }).text || "").join("");
+  assert.ok(combined.length > 0, "Combined text_delta content should not be empty");
+});
 
 Then(
   "the {string} event should have context.agentId",
@@ -410,12 +348,9 @@ Then(
   }
 );
 
-When(
-  "I wait for {int} second(s)",
-  async function (this: AgentXWorld, seconds: number) {
-    await new Promise((r) => setTimeout(r, seconds * 1000));
-  }
-);
+When("I wait for {int} second(s)", async function (this: AgentXWorld, seconds: number) {
+  await new Promise((r) => setTimeout(r, seconds * 1000));
+});
 
 // ============================================================================
 // Common Steps
@@ -426,20 +361,14 @@ Then("the response should be successful", function (this: AgentXWorld) {
   assert.ok(!this.lastResponse.error, `Response should not have error: ${this.lastResponse.error}`);
 });
 
-Given(
-  "I save the imageId as {string}",
-  function (this: AgentXWorld, key: string) {
-    const response = this.lastResponse as ImageCreateResponse;
-    assert.ok(response.record?.imageId, "Response should have imageId");
-    this.savedValues.set(key, response.record.imageId);
-  }
-);
+Given("I save the imageId as {string}", function (this: AgentXWorld, key: string) {
+  const response = this.lastResponse as ImageCreateResponse;
+  assert.ok(response.record?.imageId, "Response should have imageId");
+  this.savedValues.set(key, response.record.imageId);
+});
 
-Given(
-  "I save the agentId as {string}",
-  function (this: AgentXWorld, key: string) {
-    const response = this.lastResponse as AgentCreateResponse;
-    assert.ok(response.agentId, "Response should have agentId");
-    this.savedValues.set(key, response.agentId);
-  }
-);
+Given("I save the agentId as {string}", function (this: AgentXWorld, key: string) {
+  const response = this.lastResponse as AgentCreateResponse;
+  assert.ok(response.agentId, "Response should have agentId");
+  this.savedValues.set(key, response.agentId);
+});

@@ -8,12 +8,7 @@
 
 import { Subject } from "rxjs";
 import { filter } from "rxjs/operators";
-import type {
-  MessageQueue,
-  QueueEntry,
-  QueueConfig,
-  Unsubscribe,
-} from "@agentxjs/core/mq";
+import type { MessageQueue, QueueEntry, QueueConfig, Unsubscribe } from "@agentxjs/core/mq";
 import { createLogger } from "commonxjs/logger";
 import { openDatabase, type Database } from "commonxjs/sqlite";
 import { OffsetGenerator } from "./OffsetGenerator";

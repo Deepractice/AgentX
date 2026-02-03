@@ -79,7 +79,9 @@ export interface RpcClientConfig {
   /**
    * Headers for authentication (Node.js only, sent in first message for browser)
    */
-  headers?: Record<string, string> | (() => Record<string, string> | Promise<Record<string, string>>);
+  headers?:
+    | Record<string, string>
+    | (() => Record<string, string> | Promise<Record<string, string>>);
 
   /**
    * Debug logging
@@ -191,9 +193,10 @@ export class RpcClient {
 
         // Send auth if in browser (headers not supported in WebSocket API)
         if (isBrowser() && this.config.headers) {
-          const headers = typeof this.config.headers === "function"
-            ? await this.config.headers()
-            : this.config.headers;
+          const headers =
+            typeof this.config.headers === "function"
+              ? await this.config.headers()
+              : this.config.headers;
           this.notify("auth" as NotificationMethod, { headers });
         }
 

@@ -24,8 +24,4 @@
  * ```
  */
 
-export type {
-  Workspace,
-  WorkspaceCreateConfig,
-  WorkspaceProvider,
-} from "./types";
+export type { Workspace, WorkspaceCreateConfig, WorkspaceProvider } from "./types";

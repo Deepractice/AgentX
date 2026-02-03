@@ -86,26 +86,21 @@ export class RemoteClient implements AgentX {
   // ==================== Container Operations ====================
 
   async createContainer(containerId: string): Promise<ContainerCreateResponse> {
-    const result = await this.rpcClient.call<ContainerCreateResponse>(
-      "container.create",
-      { containerId }
-    );
+    const result = await this.rpcClient.call<ContainerCreateResponse>("container.create", {
+      containerId,
+    });
     return { ...result, requestId: "" };
   }
 
   async getContainer(containerId: string): Promise<ContainerGetResponse> {
-    const result = await this.rpcClient.call<ContainerGetResponse>(
-      "container.get",
-      { containerId }
-    );
+    const result = await this.rpcClient.call<ContainerGetResponse>("container.get", {
+      containerId,
+    });
     return { ...result, requestId: "" };
   }
 
   async listContainers(): Promise<ContainerListResponse> {
-    const result = await this.rpcClient.call<ContainerListResponse>(
-      "container.list",
-      {}
-    );
+    const result = await this.rpcClient.call<ContainerListResponse>("container.list", {});
     return { ...result, requestId: "" };
   }
 
@@ -118,10 +113,7 @@ export class RemoteClient implements AgentX {
     systemPrompt?: string;
     mcpServers?: Record<string, unknown>;
   }): Promise<ImageCreateResponse> {
-    const result = await this.rpcClient.call<ImageCreateResponse>(
-      "image.create",
-      params
-    );
+    const result = await this.rpcClient.call<ImageCreateResponse>("image.create", params);
 
     // Auto subscribe to session events
     if (result.__subscriptions) {
@@ -134,10 +126,7 @@ export class RemoteClient implements AgentX {
   }
 
   async getImage(imageId: string): Promise<ImageGetResponse> {
-    const result = await this.rpcClient.call<ImageGetResponse>(
-      "image.get",
-      { imageId }
-    );
+    const result = await this.rpcClient.call<ImageGetResponse>("image.get", { imageId });
 
     // Auto subscribe
     if (result.__subscriptions) {
@@ -150,10 +139,7 @@ export class RemoteClient implements AgentX {
   }
 
   async listImages(containerId?: string): Promise<ImageListResponse> {
-    const result = await this.rpcClient.call<ImageListResponse>(
-      "image.list",
-      { containerId }
-    );
+    const result = await this.rpcClient.call<ImageListResponse>("image.list", { containerId });
 
     // Auto subscribe
     if (result.__subscriptions) {
@@ -166,10 +152,7 @@ export class RemoteClient implements AgentX {
   }
 
   async deleteImage(imageId: string): Promise<BaseResponse> {
-    const result = await this.rpcClient.call<BaseResponse>(
-      "image.delete",
-      { imageId }
-    );
+    const result = await this.rpcClient.call<BaseResponse>("image.delete", { imageId });
     return { ...result, requestId: "" };
   }
 
@@ -177,52 +160,40 @@ export class RemoteClient implements AgentX {
 
   async createAgent(params: { imageId: string; agentId?: string }): Promise<AgentCreateResponse> {
     // Agent creation via image.run RPC
-    const result = await this.rpcClient.call<AgentCreateResponse>(
-      "image.run" as RpcMethod,
-      { imageId: params.imageId, agentId: params.agentId }
-    );
+    const result = await this.rpcClient.call<AgentCreateResponse>("image.run" as RpcMethod, {
+      imageId: params.imageId,
+      agentId: params.agentId,
+    });
     return { ...result, requestId: "" };
   }
 
   async getAgent(agentId: string): Promise<AgentGetResponse> {
-    const result = await this.rpcClient.call<AgentGetResponse>(
-      "agent.get",
-      { agentId }
-    );
+    const result = await this.rpcClient.call<AgentGetResponse>("agent.get", { agentId });
     return { ...result, requestId: "" };
   }
 
   async listAgents(containerId?: string): Promise<AgentListResponse> {
-    const result = await this.rpcClient.call<AgentListResponse>(
-      "agent.list",
-      { containerId }
-    );
+    const result = await this.rpcClient.call<AgentListResponse>("agent.list", { containerId });
     return { ...result, requestId: "" };
   }
 
   async destroyAgent(agentId: string): Promise<BaseResponse> {
-    const result = await this.rpcClient.call<BaseResponse>(
-      "agent.destroy",
-      { agentId }
-    );
+    const result = await this.rpcClient.call<BaseResponse>("agent.destroy", { agentId });
     return { ...result, requestId: "" };
   }
 
   // ==================== Message Operations ====================
 
   async sendMessage(agentId: string, content: string | unknown[]): Promise<MessageSendResponse> {
-    const result = await this.rpcClient.call<MessageSendResponse>(
-      "message.send",
-      { agentId, content }
-    );
+    const result = await this.rpcClient.call<MessageSendResponse>("message.send", {
+      agentId,
+      content,
+    });
     return { ...result, requestId: "" };
   }
 
   async interrupt(agentId: string): Promise<BaseResponse> {
-    const result = await this.rpcClient.call<BaseResponse>(
-      "agent.interrupt",
-      { agentId }
-    );
+    const result = await this.rpcClient.call<BaseResponse>("agent.interrupt", { agentId });
     return { ...result, requestId: "" };
   }
 

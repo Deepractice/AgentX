@@ -54,7 +54,8 @@ BeforeAll({ timeout: 60000 }, async function () {
   const { createNodeProvider } = await import("@agentxjs/node-provider");
   const { tmpdir } = await import("node:os");
   const { join, resolve } = await import("node:path");
-  const { mkdtempSync, existsSync, readFileSync, writeFileSync, mkdirSync } = await import("node:fs");
+  const { mkdtempSync, existsSync, readFileSync, writeFileSync, mkdirSync } =
+    await import("node:fs");
 
   const tempDir = mkdtempSync(join(tmpdir(), "agentx-bdd-"));
   const fixturesPath = resolve(process.cwd(), FIXTURES_DIR);
@@ -97,7 +98,7 @@ BeforeAll({ timeout: 60000 }, async function () {
         if (!apiKey) {
           throw new Error(
             `No fixture found for "${fixtureName}" and DEEPRACTICE_API_KEY not set. ` +
-            `Either create the fixture or set API key to record.`
+              `Either create the fixture or set API key to record.`
           );
         }
 

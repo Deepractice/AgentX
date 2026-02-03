@@ -69,9 +69,10 @@ export function SessionView(props: SessionViewProps) {
         setStreamingText("");
         setLoading(false);
       });
-
     } catch (err) {
-      logger.error("Failed to initialize session", { error: err instanceof Error ? err.message : String(err) });
+      logger.error("Failed to initialize session", {
+        error: err instanceof Error ? err.message : String(err),
+      });
       toast.error(err);
     }
   });
@@ -111,7 +112,9 @@ export function SessionView(props: SessionViewProps) {
       await agentx.client.sendMessage(agentId()!, content);
       logger.info("Message sent");
     } catch (err) {
-      logger.error("Failed to send message", { error: err instanceof Error ? err.message : String(err) });
+      logger.error("Failed to send message", {
+        error: err instanceof Error ? err.message : String(err),
+      });
       toast.error(err);
       setLoading(false);
     }
@@ -120,30 +123,18 @@ export function SessionView(props: SessionViewProps) {
   const visibleHeight = dimensions().height - 6; // Header + input area
 
   return (
-    <box
-      width={dimensions().width}
-      height={dimensions().height}
-      flexDirection="column"
-    >
+    <box width={dimensions().width} height={dimensions().height} flexDirection="column">
       {/* Header */}
       <box padding={1} flexDirection="row" gap={2}>
         <text fg={theme().primary}>
           <strong>Chat</strong>
         </text>
-        <text fg={theme().textMuted}>
-          Session: {props.sessionId.slice(0, 8)}...
-        </text>
-        <text fg={theme().textMuted}>
-          (Esc to go back)
-        </text>
+        <text fg={theme().textMuted}>Session: {props.sessionId.slice(0, 8)}...</text>
+        <text fg={theme().textMuted}>(Esc to go back)</text>
       </box>
 
       {/* Messages */}
-      <box
-        flexGrow={1}
-        flexDirection="column"
-        padding={1}
-      >
+      <box flexGrow={1} flexDirection="column" padding={1}>
         <For each={messages().slice(-Math.floor(visibleHeight / 2))}>
           {(msg) => (
             <box marginBottom={1}>
@@ -169,11 +160,7 @@ export function SessionView(props: SessionViewProps) {
       </box>
 
       {/* Input */}
-      <box
-        padding={1}
-        border
-        borderColor={theme().border}
-      >
+      <box padding={1} border borderColor={theme().border}>
         <text fg={theme().text}>
           <span style={{ fg: theme().primary }}>›</span> {input()}
           <span style={{ fg: theme().textMuted }}>▊</span>

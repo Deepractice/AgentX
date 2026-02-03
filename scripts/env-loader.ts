@@ -11,10 +11,7 @@ function findMonorepoRoot(startDir: string): string | null {
   let dir = startDir;
   while (dir !== "/") {
     // Check for monorepo markers
-    if (
-      existsSync(resolve(dir, "turbo.json")) ||
-      existsSync(resolve(dir, "bun.lockb"))
-    ) {
+    if (existsSync(resolve(dir, "turbo.json")) || existsSync(resolve(dir, "bun.lockb"))) {
       return dir;
     }
     dir = dirname(dir);

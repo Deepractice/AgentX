@@ -14,7 +14,11 @@ import {
 } from "../../../engine/internal/stateEventProcessor";
 
 // Helper to create test events
-function createStreamEvent(type: string, data: unknown = {}, timestamp = Date.now()): StateEventProcessorInput {
+function createStreamEvent(
+  type: string,
+  data: unknown = {},
+  timestamp = Date.now()
+): StateEventProcessorInput {
   return { type, data, timestamp } as StateEventProcessorInput;
 }
 
@@ -244,10 +248,7 @@ describe("stateEventProcessor", () => {
       allOutputs.push(...o2);
 
       // tool_use_stop
-      const [, o3] = stateEventProcessor(
-        context,
-        createStreamEvent("tool_use_stop", {})
-      );
+      const [, o3] = stateEventProcessor(context, createStreamEvent("tool_use_stop", {}));
       allOutputs.push(...o3);
 
       // message_stop with tool_use (should NOT emit conversation_end)
@@ -298,8 +299,14 @@ describe("stateEventProcessor", () => {
       // Process multiple events
       stateEventProcessor(originalContext, createStreamEvent("message_start", { messageId: "1" }));
       stateEventProcessor(originalContext, createStreamEvent("text_delta", { text: "Hello" }));
-      stateEventProcessor(originalContext, createStreamEvent("tool_use_start", { toolCallId: "t1", toolName: "test" }));
-      stateEventProcessor(originalContext, createStreamEvent("error_received", { message: "error" }));
+      stateEventProcessor(
+        originalContext,
+        createStreamEvent("tool_use_start", { toolCallId: "t1", toolName: "test" })
+      );
+      stateEventProcessor(
+        originalContext,
+        createStreamEvent("error_received", { message: "error" })
+      );
 
       // Original context should remain unchanged
       expect(originalContext).toEqual({});

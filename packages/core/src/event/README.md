@@ -26,13 +26,13 @@ The event module provides a central event bus for component communication within
 
 All components communicate through typed events:
 
-| Source | Events | Examples |
-|--------|--------|----------|
+| Source        | Events            | Examples                                   |
+| ------------- | ----------------- | ------------------------------------------ |
 | `environment` | LLM API responses | `message_start`, `text_delta`, `tool_call` |
-| `agent` | Agent internal | `conversation_start`, `assistant_message` |
-| `session` | Session lifecycle | `session_created`, `session_saved` |
-| `container` | Container ops | `container_created`, `agent_registered` |
-| `command` | Request/Response | `container_create_request/response` |
+| `agent`       | Agent internal    | `conversation_start`, `assistant_message`  |
+| `session`     | Session lifecycle | `session_created`, `session_saved`         |
+| `container`   | Container ops     | `container_created`, `agent_registered`    |
+| `command`     | Request/Response  | `container_create_request/response`        |
 
 ### Producer/Consumer Pattern
 
@@ -115,9 +115,13 @@ bus.once("message_stop", (e) => {
 
 ```typescript
 // Send request and wait for response
-const response = await bus.request("container_create_request", {
-  containerId: "my-container",
-}, 30000); // 30s timeout
+const response = await bus.request(
+  "container_create_request",
+  {
+    containerId: "my-container",
+  },
+  30000
+); // 30s timeout
 
 console.log("Created:", response.data.containerId);
 ```
@@ -199,9 +203,9 @@ class EventBus implements EventBusInterface {
 
 ```typescript
 interface SubscribeOptions<E> {
-  filter?: (event: E) => boolean;  // Filter events
-  priority?: number;               // Execution order (higher first)
-  once?: boolean;                  // Auto-unsubscribe after first
+  filter?: (event: E) => boolean; // Filter events
+  priority?: number; // Execution order (higher first)
+  once?: boolean; // Auto-unsubscribe after first
 }
 ```
 
@@ -219,12 +223,12 @@ Can run in: Node.js, Bun, Deno, Cloudflare Workers, Browser.
 
 EventBus is for **in-process** communication only:
 
-| | EventBus | MessageQueue |
-|--|----------|--------------|
-| Scope | Process-internal | Cross-process |
-| Persistence | None | SQLite/Redis |
-| Delivery | Best-effort | At-least-once |
-| Use case | Component decoupling | Reliable delivery |
+|             | EventBus             | MessageQueue      |
+| ----------- | -------------------- | ----------------- |
+| Scope       | Process-internal     | Cross-process     |
+| Persistence | None                 | SQLite/Redis      |
+| Delivery    | Best-effort          | At-least-once     |
+| Use case    | Component decoupling | Reliable delivery |
 
 For cross-process or persistent messaging, use the `mq` module.
 

@@ -34,19 +34,9 @@ const testProcessor: Processor<TestState, TestEvent, TestEvent> = (state, event)
         [{ type: "appended", text: event.text }],
       ];
     case "reset":
-      return [
-        { count: 0, buffer: [] },
-        [{ type: "reset_done" }],
-      ];
+      return [{ count: 0, buffer: [] }, [{ type: "reset_done" }]];
     case "multi_output":
-      return [
-        state,
-        [
-          { type: "output_1" },
-          { type: "output_2" },
-          { type: "output_3" },
-        ],
-      ];
+      return [state, [{ type: "output_1" }, { type: "output_2" }, { type: "output_3" }]];
     default:
       return [state, []];
   }
@@ -156,7 +146,10 @@ describe("Mealy", () => {
 
     it("should respect maxDepth limit", () => {
       // Processor that generates infinite chain
-      const infiniteProcessor: Processor<{ count: number }, TestEvent, TestEvent> = (state, event) => {
+      const infiniteProcessor: Processor<{ count: number }, TestEvent, TestEvent> = (
+        state,
+        event
+      ) => {
         if (event.type.startsWith("level_")) {
           const next = state.count + 1;
           return [{ count: next }, [{ type: `level_${next}` }]];

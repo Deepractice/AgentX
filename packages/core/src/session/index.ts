@@ -20,11 +20,6 @@
  * ```
  */
 
-export type {
-  SessionRecord,
-  SessionRepository,
-  Session,
-  SessionConfig,
-} from "./types";
+export type { SessionRecord, SessionRepository, Session, SessionConfig } from "./types";
 
 export { SessionImpl, createSession } from "./Session";

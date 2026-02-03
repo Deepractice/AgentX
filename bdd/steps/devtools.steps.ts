@@ -83,16 +83,13 @@ Given(
   }
 );
 
-Given(
-  "no fixture {string} exists",
-  function (this: DevtoolsWorld, name: string) {
-    const path = join(this.fixturesDir!, `${name}.json`);
-    if (existsSync(path)) {
-      rmSync(path);
-    }
-    this.fixtureExistedBefore = false;
+Given("no fixture {string} exists", function (this: DevtoolsWorld, name: string) {
+  const path = join(this.fixturesDir!, `${name}.json`);
+  if (existsSync(path)) {
+    rmSync(path);
   }
-);
+  this.fixtureExistedBefore = false;
+});
 
 Given(
   "a fixture {string} with text response {string}",
@@ -119,15 +116,12 @@ Given(
   }
 );
 
-Given(
-  "I have a real Claude driver",
-  async function (this: DevtoolsWorld) {
-    // Skip if no API key
-    if (!process.env.DEEPRACTICE_API_KEY) {
-      return "skipped";
-    }
+Given("I have a real Claude driver", async function (this: DevtoolsWorld) {
+  // Skip if no API key
+  if (!process.env.DEEPRACTICE_API_KEY) {
+    return "skipped";
   }
-);
+});
 
 // ============================================================================
 // When steps
@@ -162,46 +156,43 @@ When(
   }
 );
 
-When(
-  "I connect the driver and send a user message",
-  async function (this: DevtoolsWorld) {
-    const { EventBusImpl } = await import("@agentxjs/core/event");
-    const bus = new EventBusImpl();
+When("I connect the driver and send a user message", async function (this: DevtoolsWorld) {
+  const { EventBusImpl } = await import("@agentxjs/core/event");
+  const bus = new EventBusImpl();
 
-    // Collect text deltas
-    this.collectedTextDeltas = [];
-    bus.on("text_delta", (evt) => {
-      const data = evt.data as { text: string };
-      this.collectedTextDeltas!.push(data.text);
-    });
+  // Collect text deltas
+  this.collectedTextDeltas = [];
+  bus.on("text_delta", (evt) => {
+    const data = evt.data as { text: string };
+    this.collectedTextDeltas!.push(data.text);
+  });
 
-    // Connect driver
-    this.driver!.connect(bus.asConsumer(), bus.asProducer());
+  // Connect driver
+  this.driver!.connect(bus.asConsumer(), bus.asProducer());
 
-    // Send user message
-    bus.emit({
-      type: "user_message",
+  // Send user message
+  bus.emit({
+    type: "user_message",
+    timestamp: Date.now(),
+    source: "test",
+    category: "message",
+    intent: "request",
+    data: {
+      id: `msg_${Date.now()}`,
+      role: "user",
+      subtype: "user",
+      content: "Test message",
       timestamp: Date.now(),
-      source: "test",
-      category: "message",
-      intent: "request",
-      data: {
-        id: `msg_${Date.now()}`,
-        role: "user",
-        subtype: "user",
-        content: "Test message",
-        timestamp: Date.now(),
-      },
-      context: {
-        agentId: "mock-agent",
-        sessionId: "test-session",
-      },
-    } as never);
+    },
+    context: {
+      agentId: "mock-agent",
+      sessionId: "test-session",
+    },
+  } as never);
 
-    // Wait for events to process
-    await new Promise((r) => setTimeout(r, 100));
-  }
-);
+  // Wait for events to process
+  await new Promise((r) => setTimeout(r, 100));
+});
 
 When(
   "I wrap it with RecordingDriver named {string}",
@@ -285,148 +276,109 @@ When(
   }
 );
 
-When(
-  "I get a DriverFactory for {string}",
-  function (this: DevtoolsWorld, name: string) {
-    this.factory = this.devtools!.factory(name, { message: "Test" });
-  }
-);
+When("I get a DriverFactory for {string}", function (this: DevtoolsWorld, name: string) {
+  this.factory = this.devtools!.factory(name, { message: "Test" });
+});
 
 // ============================================================================
 // Then steps
 // ============================================================================
 
-Then(
-  "the driver should be a MockDriver",
-  async function (this: DevtoolsWorld) {
-    assert.ok(this.driver);
-    assert.strictEqual(this.driver.name, "MockDriver");
+Then("the driver should be a MockDriver", async function (this: DevtoolsWorld) {
+  assert.ok(this.driver);
+  assert.strictEqual(this.driver.name, "MockDriver");
+});
+
+Then("the fixture should not be re-recorded", function (this: DevtoolsWorld) {
+  // If fixture existed before, it should still exist and not be modified
+  assert.ok(this.fixtureExistedBefore);
+});
+
+Then("a new fixture {string} should be created", function (this: DevtoolsWorld, name: string) {
+  // Skip if no API key
+  if (!process.env.DEEPRACTICE_API_KEY) {
+    return "skipped";
   }
-);
 
-Then(
-  "the fixture should not be re-recorded",
-  function (this: DevtoolsWorld) {
-    // If fixture existed before, it should still exist and not be modified
-    assert.ok(this.fixtureExistedBefore);
+  const path = join(this.fixturesDir!, `${name}.json`);
+  assert.ok(existsSync(path), `Fixture ${name} should exist`);
+});
+
+Then("the fixture should contain message_start event", function (this: DevtoolsWorld) {
+  // Skip if no API key
+  if (!process.env.DEEPRACTICE_API_KEY) {
+    return "skipped";
   }
-);
+  // If we got here, recording succeeded
+});
 
-Then(
-  "a new fixture {string} should be created",
-  function (this: DevtoolsWorld, name: string) {
-    // Skip if no API key
-    if (!process.env.DEEPRACTICE_API_KEY) {
-      return "skipped";
-    }
-
-    const path = join(this.fixturesDir!, `${name}.json`);
-    assert.ok(existsSync(path), `Fixture ${name} should exist`);
+Then("the fixture should contain message_stop event", function (this: DevtoolsWorld) {
+  // Skip if no API key
+  if (!process.env.DEEPRACTICE_API_KEY) {
+    return "skipped";
   }
-);
+  // If we got here, recording succeeded
+});
 
-Then(
-  "the fixture should contain message_start event",
-  function (this: DevtoolsWorld) {
-    // Skip if no API key
-    if (!process.env.DEEPRACTICE_API_KEY) {
-      return "skipped";
-    }
-    // If we got here, recording succeeded
+Then("the fixture {string} should be updated", function (this: DevtoolsWorld, name: string) {
+  // Skip if no API key
+  if (!process.env.DEEPRACTICE_API_KEY) {
+    return "skipped";
   }
-);
 
-Then(
-  "the fixture should contain message_stop event",
-  function (this: DevtoolsWorld) {
-    // Skip if no API key
-    if (!process.env.DEEPRACTICE_API_KEY) {
-      return "skipped";
-    }
-    // If we got here, recording succeeded
+  const path = join(this.fixturesDir!, `${name}.json`);
+  assert.ok(existsSync(path));
+});
+
+Then("I should receive text_delta events", function (this: DevtoolsWorld) {
+  assert.ok(this.collectedTextDeltas);
+  assert.ok(this.collectedTextDeltas.length > 0, "Should have text_delta events");
+});
+
+Then("the combined text should be {string}", function (this: DevtoolsWorld, expected: string) {
+  const combined = this.collectedTextDeltas!.join("");
+  assert.strictEqual(combined, expected);
+});
+
+Then("the recording should contain events", function (this: DevtoolsWorld) {
+  // Skip if no recorder
+  if (!this.recorder) {
+    return "skipped";
   }
-);
 
-Then(
-  "the fixture {string} should be updated",
-  function (this: DevtoolsWorld, name: string) {
-    // Skip if no API key
-    if (!process.env.DEEPRACTICE_API_KEY) {
-      return "skipped";
-    }
+  assert.ok(this.recorder.eventCount > 0, "Recording should have events");
+});
 
-    const path = join(this.fixturesDir!, `${name}.json`);
-    assert.ok(existsSync(path));
+Then("I can save the fixture to a file", async function (this: DevtoolsWorld) {
+  // Skip if no recorder
+  if (!this.recorder) {
+    return "skipped";
   }
-);
 
-Then(
-  "I should receive text_delta events",
-  function (this: DevtoolsWorld) {
-    assert.ok(this.collectedTextDeltas);
-    assert.ok(this.collectedTextDeltas.length > 0, "Should have text_delta events");
-  }
-);
+  const path = join(this.fixturesDir!, "recorded-fixture.json");
+  await this.recorder.saveFixture(path);
+  assert.ok(existsSync(path));
 
-Then(
-  "the combined text should be {string}",
-  function (this: DevtoolsWorld, expected: string) {
-    const combined = this.collectedTextDeltas!.join("");
-    assert.strictEqual(combined, expected);
-  }
-);
+  // Cleanup
+  this.recorder.dispose();
+});
 
-Then(
-  "the recording should contain events",
-  function (this: DevtoolsWorld) {
-    // Skip if no recorder
-    if (!this.recorder) {
-      return "skipped";
-    }
+Then("I can use it to create drivers", function (this: DevtoolsWorld) {
+  assert.ok(this.factory);
+  const driver = this.factory.createDriver({ agentId: "test-agent", config: {} });
+  assert.ok(driver);
+});
 
-    assert.ok(this.recorder.eventCount > 0, "Recording should have events");
-  }
-);
+Then("the drivers use the fixture for playback", async function (this: DevtoolsWorld) {
+  // Create driver from factory
+  const driver = this.factory!.createDriver({ agentId: "test-agent", config: {} });
 
-Then(
-  "I can save the fixture to a file",
-  async function (this: DevtoolsWorld) {
-    // Skip if no recorder
-    if (!this.recorder) {
-      return "skipped";
-    }
+  // Wait for lazy loading
+  await new Promise((r) => setTimeout(r, 100));
 
-    const path = join(this.fixturesDir!, "recorded-fixture.json");
-    await this.recorder.saveFixture(path);
-    assert.ok(existsSync(path));
-
-    // Cleanup
-    this.recorder.dispose();
-  }
-);
-
-Then(
-  "I can use it to create drivers",
-  function (this: DevtoolsWorld) {
-    assert.ok(this.factory);
-    const driver = this.factory.createDriver({ agentId: "test-agent", config: {} });
-    assert.ok(driver);
-  }
-);
-
-Then(
-  "the drivers use the fixture for playback",
-  async function (this: DevtoolsWorld) {
-    // Create driver from factory
-    const driver = this.factory!.createDriver({ agentId: "test-agent", config: {} });
-
-    // Wait for lazy loading
-    await new Promise((r) => setTimeout(r, 100));
-
-    // Should be a LazyDriver wrapping MockDriver
-    assert.ok(driver);
-  }
-);
+  // Should be a LazyDriver wrapping MockDriver
+  assert.ok(driver);
+});
 
 // ============================================================================
 // Cleanup

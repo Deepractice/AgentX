@@ -104,9 +104,7 @@ interface ThemeContext {
 
 const ThemeCtx = createContext<ThemeContext>();
 
-export function ThemeProvider(
-  props: ParentProps<{ initialTheme?: string }>
-) {
+export function ThemeProvider(props: ParentProps<{ initialTheme?: string }>) {
   const [store, setStore] = createStore({
     active: props.initialTheme ?? "opencode",
   });

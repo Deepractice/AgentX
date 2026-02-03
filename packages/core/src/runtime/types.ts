@@ -192,11 +192,7 @@ export interface AgentXRuntime {
    *
    * Emits user_message to EventBus, Driver picks it up and responds.
    */
-  receive(
-    agentId: string,
-    content: string | UserContentPart[],
-    requestId?: string
-  ): Promise<void>;
+  receive(agentId: string, content: string | UserContentPart[], requestId?: string): Promise<void>;
 
   /**
    * Interrupt an agent's current operation

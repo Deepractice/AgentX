@@ -21,9 +21,7 @@ interface AgentXContext {
 
 const AgentXCtx = createContext<AgentXContext>();
 
-export function AgentXProvider(
-  props: ParentProps<{ serverUrl: string }>
-) {
+export function AgentXProvider(props: ParentProps<{ serverUrl: string }>) {
   const [client, setClient] = createSignal<AgentX | null>(null);
   const [connected, setConnected] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);

@@ -15,7 +15,11 @@ import {
 } from "../../../engine/internal/messageAssemblerProcessor";
 
 // Helper to create test events
-function createStreamEvent(type: string, data: unknown, timestamp = Date.now()): MessageAssemblerInput {
+function createStreamEvent(
+  type: string,
+  data: unknown,
+  timestamp = Date.now()
+): MessageAssemblerInput {
   return { type, data, timestamp } as MessageAssemblerInput;
 }
 
@@ -544,7 +548,11 @@ describe("messageAssemblerProcessor", () => {
       // tool_result
       const [s6, o6] = messageAssemblerProcessor(
         currentState,
-        createStreamEvent("tool_result", { toolCallId: "tool_1", result: "Found it!", isError: false })
+        createStreamEvent("tool_result", {
+          toolCallId: "tool_1",
+          result: "Found it!",
+          isError: false,
+        })
       );
       currentState = s6;
       allOutputs.push(...o6);

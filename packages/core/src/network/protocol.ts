@@ -44,12 +44,7 @@ export interface AckMessage {
  * Check if data is a ReliableWrapper
  */
 export function isReliableWrapper(data: unknown): data is ReliableWrapper {
-  return (
-    typeof data === "object" &&
-    data !== null &&
-    "__msgId" in data &&
-    "__payload" in data
-  );
+  return typeof data === "object" && data !== null && "__msgId" in data && "__payload" in data;
 }
 
 /**

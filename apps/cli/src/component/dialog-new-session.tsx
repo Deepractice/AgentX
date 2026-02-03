@@ -52,7 +52,9 @@ export function DialogNewSession() {
       toast.show({ message: "Session created", variant: "success" });
       route.navigate({ type: "session", sessionId: result.record.sessionId });
     } catch (err) {
-      logger.error("Failed to create session", { error: err instanceof Error ? err.message : String(err) });
+      logger.error("Failed to create session", {
+        error: err instanceof Error ? err.message : String(err),
+      });
       setError(err instanceof Error ? err.message : String(err));
       setCreating(false);
     }

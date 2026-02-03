@@ -99,10 +99,10 @@ const driver = await devtools.driver("name", { message: "Hello!" });
 const factory = devtools.factory("name", { message: "Hello!" });
 
 // Other APIs
-devtools.exists("name");           // Check if fixture exists
-await devtools.load("name");       // Load fixture
+devtools.exists("name"); // Check if fixture exists
+await devtools.load("name"); // Load fixture
 await devtools.record("name", {}); // Force record
-await devtools.delete("name");     // Delete fixture
+await devtools.delete("name"); // Delete fixture
 ```
 
 ## Tips

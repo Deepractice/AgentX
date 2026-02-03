@@ -40,18 +40,19 @@ The core insight is that **state is a means, outputs are the goal**.
 ```
 
 This pattern enables:
+
 - Pure functions (testable, no side effects)
 - Event chaining (outputs can trigger more processing)
 - Stateless processors (state managed externally)
 
 ### Event Layers
 
-| Layer | Events | Purpose |
-|-------|--------|---------|
-| **Stream** | `message_start`, `text_delta`, `tool_use_start`, `message_stop` | Raw LLM events |
-| **Message** | `assistant_message`, `tool_call_message`, `tool_result_message` | Complete messages |
-| **State** | `conversation_start`, `conversation_responding`, `conversation_end` | UI state transitions |
-| **Turn** | `turn_request`, `turn_response` | Analytics & billing |
+| Layer       | Events                                                              | Purpose              |
+| ----------- | ------------------------------------------------------------------- | -------------------- |
+| **Stream**  | `message_start`, `text_delta`, `tool_use_start`, `message_stop`     | Raw LLM events       |
+| **Message** | `assistant_message`, `tool_call_message`, `tool_result_message`     | Complete messages    |
+| **State**   | `conversation_start`, `conversation_responding`, `conversation_end` | UI state transitions |
+| **Turn**    | `turn_request`, `turn_response`                                     | Analytics & billing  |
 
 ## Usage
 
@@ -118,11 +119,7 @@ stateMachine.onStateChange(({ prev, current }) => {
 ### Custom Processors
 
 ```typescript
-import {
-  combineProcessors,
-  filterProcessor,
-  type Processor
-} from "@agentxjs/core/agent";
+import { combineProcessors, filterProcessor, type Processor } from "@agentxjs/core/agent";
 
 // Create a custom processor
 const myProcessor: Processor<MyState, StreamEvent, MyOutput> = (state, input) => {
@@ -169,15 +166,15 @@ agent/
 
 ### Component Responsibilities
 
-| Component | Responsibility |
-|-----------|----------------|
-| `AgentEngine` | Coordinate driver, machine, presenter |
-| `MealyMachine` | Process events, manage state per agent |
-| `AgentProcessor` | Combine all internal processors |
-| `MessageAssembler` | Stream → Message events |
-| `StateEventProcessor` | Stream → State events |
-| `TurnTracker` | Message → Turn events |
-| `AgentStateMachine` | Track agent state from StateEvents |
+| Component             | Responsibility                         |
+| --------------------- | -------------------------------------- |
+| `AgentEngine`         | Coordinate driver, machine, presenter  |
+| `MealyMachine`        | Process events, manage state per agent |
+| `AgentProcessor`      | Combine all internal processors        |
+| `MessageAssembler`    | Stream → Message events                |
+| `StateEventProcessor` | Stream → State events                  |
+| `TurnTracker`         | Message → Turn events                  |
+| `AgentStateMachine`   | Track agent state from StateEvents     |
 
 ## API Reference
 

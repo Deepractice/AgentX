@@ -37,7 +37,7 @@ export function tui(options: TuiOptions): Promise<void> {
       process.stdout.write("\x1b[?1002l"); // Disable mouse button tracking
       process.stdout.write("\x1b[?1003l"); // Disable all mouse tracking
       process.stdout.write("\x1b[?1006l"); // Disable SGR mouse mode
-      process.stdout.write("\x1b[?25h");   // Show cursor
+      process.stdout.write("\x1b[?25h"); // Show cursor
       process.stdout.write("\x1b[?1049l"); // Restore main screen buffer
       resolve();
       process.exit(0);
@@ -85,7 +85,11 @@ function App() {
     // Show last key for debugging
     const keyStr = `${evt.ctrl ? "Ctrl+" : ""}${evt.meta ? "Meta+" : ""}${evt.name}`;
     setLastKey(keyStr);
-    logger.debug("Key pressed", { key: keyStr, connected: agentx.connected(), dialogCount: dialog.stack.length });
+    logger.debug("Key pressed", {
+      key: keyStr,
+      connected: agentx.connected(),
+      dialogCount: dialog.stack.length,
+    });
 
     // Ctrl+C to exit
     if (evt.ctrl && evt.name === "c") {
@@ -152,7 +156,8 @@ function App() {
       {/* Debug: show status */}
       <box position="absolute" bottom={0} right={2}>
         <text fg={theme().textMuted}>
-          Key: {lastKey()} | Connected: {agentx.connected() ? "Y" : "N"} | Dialogs: {dialog.stack.length}
+          Key: {lastKey()} | Connected: {agentx.connected() ? "Y" : "N"} | Dialogs:{" "}
+          {dialog.stack.length}
         </text>
       </box>
     </box>
@@ -166,12 +171,7 @@ function ErrorScreen(props: { error: Error }) {
   const dimensions = useTerminalDimensions();
 
   return (
-    <box
-      width={dimensions().width}
-      height={dimensions().height}
-      flexDirection="column"
-      padding={2}
-    >
+    <box width={dimensions().width} height={dimensions().height} flexDirection="column" padding={2}>
       <text fg="#ff0000">Fatal Error:</text>
       <text fg="#ffffff">{props.error.message}</text>
       <text fg="#808080">{props.error.stack}</text>

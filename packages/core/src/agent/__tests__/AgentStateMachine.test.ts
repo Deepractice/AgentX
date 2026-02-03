@@ -69,22 +69,30 @@ describe("AgentStateMachine", () => {
     describe("tool lifecycle", () => {
       it("should transition to planning_tool on tool_planned", () => {
         stateMachine.process(createStateEvent("conversation_start", { messageId: "msg_1" }));
-        stateMachine.process(createStateEvent("tool_planned", { toolId: "t1", toolName: "search" }));
+        stateMachine.process(
+          createStateEvent("tool_planned", { toolId: "t1", toolName: "search" })
+        );
 
         expect(stateMachine.state).toBe("planning_tool");
       });
 
       it("should transition to awaiting_tool_result on tool_executing", () => {
         stateMachine.process(createStateEvent("conversation_start", { messageId: "msg_1" }));
-        stateMachine.process(createStateEvent("tool_planned", { toolId: "t1", toolName: "search" }));
-        stateMachine.process(createStateEvent("tool_executing", { toolId: "t1", toolName: "search", input: {} }));
+        stateMachine.process(
+          createStateEvent("tool_planned", { toolId: "t1", toolName: "search" })
+        );
+        stateMachine.process(
+          createStateEvent("tool_executing", { toolId: "t1", toolName: "search", input: {} })
+        );
 
         expect(stateMachine.state).toBe("awaiting_tool_result");
       });
 
       it("should transition to responding on tool_completed", () => {
         stateMachine.process(createStateEvent("conversation_start", { messageId: "msg_1" }));
-        stateMachine.process(createStateEvent("tool_executing", { toolId: "t1", toolName: "search", input: {} }));
+        stateMachine.process(
+          createStateEvent("tool_executing", { toolId: "t1", toolName: "search", input: {} })
+        );
         stateMachine.process(createStateEvent("tool_completed", { toolId: "t1", result: "done" }));
 
         expect(stateMachine.state).toBe("responding");
@@ -92,7 +100,9 @@ describe("AgentStateMachine", () => {
 
       it("should transition to responding on tool_failed", () => {
         stateMachine.process(createStateEvent("conversation_start", { messageId: "msg_1" }));
-        stateMachine.process(createStateEvent("tool_executing", { toolId: "t1", toolName: "search", input: {} }));
+        stateMachine.process(
+          createStateEvent("tool_executing", { toolId: "t1", toolName: "search", input: {} })
+        );
         stateMachine.process(createStateEvent("tool_failed", { toolId: "t1", error: "error" }));
 
         expect(stateMachine.state).toBe("responding");
@@ -102,11 +112,13 @@ describe("AgentStateMachine", () => {
     describe("error handling", () => {
       it("should transition to error on error_occurred", () => {
         stateMachine.process(createStateEvent("conversation_start", { messageId: "msg_1" }));
-        stateMachine.process(createStateEvent("error_occurred", {
-          code: "api_error",
-          message: "API failed",
-          recoverable: true,
-        }));
+        stateMachine.process(
+          createStateEvent("error_occurred", {
+            code: "api_error",
+            message: "API failed",
+            recoverable: true,
+          })
+        );
 
         expect(stateMachine.state).toBe("error");
       });
@@ -283,7 +295,9 @@ describe("AgentStateMachine", () => {
       stateMachine.process(createStateEvent("tool_planned", { toolId: "t1", toolName: "search" }));
 
       // Tool executing
-      stateMachine.process(createStateEvent("tool_executing", { toolId: "t1", toolName: "search", input: {} }));
+      stateMachine.process(
+        createStateEvent("tool_executing", { toolId: "t1", toolName: "search", input: {} })
+      );
 
       // Tool completes
       stateMachine.process(createStateEvent("tool_completed", { toolId: "t1", result: "done" }));
@@ -314,11 +328,13 @@ describe("AgentStateMachine", () => {
       stateMachine.process(createStateEvent("conversation_start", { messageId: "msg_1" }));
 
       // Error occurs
-      stateMachine.process(createStateEvent("error_occurred", {
-        code: "api_error",
-        message: "API failed",
-        recoverable: true,
-      }));
+      stateMachine.process(
+        createStateEvent("error_occurred", {
+          code: "api_error",
+          message: "API failed",
+          recoverable: true,
+        })
+      );
 
       expect(states).toEqual(["idle", "thinking", "error"]);
 

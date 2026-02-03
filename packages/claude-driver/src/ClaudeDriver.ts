@@ -30,12 +30,7 @@ import type {
   CreateDriverOptions,
   DriverFactory,
 } from "@agentxjs/core/driver";
-import type {
-  EventConsumer,
-  EventProducer,
-  BusEvent,
-  DriveableEvent,
-} from "@agentxjs/core/event";
+import type { EventConsumer, EventProducer, BusEvent, DriveableEvent } from "@agentxjs/core/event";
 import type { UserMessage } from "@agentxjs/core/agent";
 import type { SDKMessage, SDKPartialAssistantMessage } from "@anthropic-ai/claude-agent-sdk";
 import { Subject, Subscription, TimeoutError } from "rxjs";

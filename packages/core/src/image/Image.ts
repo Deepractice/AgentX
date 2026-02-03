@@ -6,12 +6,7 @@
  */
 
 import { createLogger } from "commonxjs/logger";
-import type {
-  Image,
-  ImageRecord,
-  ImageContext,
-  ImageCreateConfig,
-} from "./types";
+import type { Image, ImageRecord, ImageContext, ImageCreateConfig } from "./types";
 
 const logger = createLogger("image/Image");
 
@@ -67,10 +62,7 @@ export class ImageImpl implements Image {
   /**
    * Create a new image (conversation)
    */
-  static async create(
-    config: ImageCreateConfig,
-    context: ImageContext
-  ): Promise<ImageImpl> {
+  static async create(config: ImageCreateConfig, context: ImageContext): Promise<ImageImpl> {
     const now = Date.now();
     const imageId = ImageImpl.generateImageId();
     const sessionId = ImageImpl.generateSessionId();
@@ -127,10 +119,7 @@ export class ImageImpl implements Image {
   /**
    * List all images in a container
    */
-  static async listByContainer(
-    containerId: string,
-    context: ImageContext
-  ): Promise<ImageRecord[]> {
+  static async listByContainer(containerId: string, context: ImageContext): Promise<ImageRecord[]> {
     return context.imageRepository.findImagesByContainerId(containerId);
   }
 
@@ -209,9 +198,6 @@ export async function createImage(
 /**
  * Load an existing Image
  */
-export async function loadImage(
-  imageId: string,
-  context: ImageContext
-): Promise<Image | null> {
+export async function loadImage(imageId: string, context: ImageContext): Promise<Image | null> {
   return ImageImpl.load(imageId, context);
 }

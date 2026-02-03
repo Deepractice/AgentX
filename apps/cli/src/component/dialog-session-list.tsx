@@ -93,9 +93,7 @@ export function DialogSessionList() {
         </box>
 
         <box marginTop={1}>
-          <text fg={theme().textMuted}>
-            ↑/↓ navigate • Enter select • Esc close
-          </text>
+          <text fg={theme().textMuted}>↑/↓ navigate • Enter select • Esc close</text>
         </box>
       </Show>
     </box>

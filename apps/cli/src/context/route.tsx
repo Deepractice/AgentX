@@ -5,9 +5,7 @@
 import { createContext, useContext, type ParentProps } from "solid-js";
 import { createStore } from "solid-js/store";
 
-export type RouteData =
-  | { type: "home" }
-  | { type: "session"; sessionId: string };
+export type RouteData = { type: "home" } | { type: "session"; sessionId: string };
 
 interface RouteContext {
   data: RouteData;

@@ -13,16 +13,8 @@
  * ```
  */
 
-import type {
-  Driver,
-  CreateDriverOptions,
-} from "@agentxjs/core/driver";
-import type {
-  EventConsumer,
-  EventProducer,
-  BusEvent,
-  DriveableEvent,
-} from "@agentxjs/core/event";
+import type { Driver, CreateDriverOptions } from "@agentxjs/core/driver";
+import type { EventConsumer, EventProducer, BusEvent, DriveableEvent } from "@agentxjs/core/event";
 import type { UserMessage } from "@agentxjs/core/agent";
 import type { Fixture, FixtureEvent, MockDriverOptions } from "../types";
 import { BUILTIN_FIXTURES } from "../../fixtures";
@@ -64,7 +56,10 @@ export class MockDriver implements Driver {
    * Factory mode:
    *   new MockDriver(driverOptions, mockOptions)
    */
-  constructor(optionsOrDriverOptions: MockDriverOptions | CreateDriverOptions, mockOptions?: MockDriverOptions) {
+  constructor(
+    optionsOrDriverOptions: MockDriverOptions | CreateDriverOptions,
+    mockOptions?: MockDriverOptions
+  ) {
     // Detect which constructor form is being used
     if (mockOptions !== undefined || "agentId" in optionsOrDriverOptions) {
       // Factory mode: (driverOptions, mockOptions)
@@ -244,11 +239,7 @@ export class MockDriver implements Driver {
   /**
    * Emit a fixture event to EventBus
    */
-  private emitEvent(
-    fixtureEvent: FixtureEvent,
-    requestId?: string,
-    context?: EventContext
-  ): void {
+  private emitEvent(fixtureEvent: FixtureEvent, requestId?: string, context?: EventContext): void {
     if (!this.producer) return;
 
     const event: DriveableEvent = {

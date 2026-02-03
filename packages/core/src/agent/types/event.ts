@@ -291,10 +291,19 @@ export interface StateEvent<T extends string = string, D = unknown> extends Engi
 
 export type ConversationQueuedEvent = EngineEvent<"conversation_queued", ConversationQueuedData>;
 export type ConversationStartEvent = EngineEvent<"conversation_start", ConversationStartData>;
-export type ConversationThinkingEvent = EngineEvent<"conversation_thinking", ConversationThinkingData>;
-export type ConversationRespondingEvent = EngineEvent<"conversation_responding", ConversationRespondingData>;
+export type ConversationThinkingEvent = EngineEvent<
+  "conversation_thinking",
+  ConversationThinkingData
+>;
+export type ConversationRespondingEvent = EngineEvent<
+  "conversation_responding",
+  ConversationRespondingData
+>;
 export type ConversationEndEvent = EngineEvent<"conversation_end", ConversationEndData>;
-export type ConversationInterruptedEvent = EngineEvent<"conversation_interrupted", ConversationInterruptedData>;
+export type ConversationInterruptedEvent = EngineEvent<
+  "conversation_interrupted",
+  ConversationInterruptedData
+>;
 export type ToolPlannedEvent = EngineEvent<"tool_planned", ToolPlannedData>;
 export type ToolExecutingEvent = EngineEvent<"tool_executing", ToolExecutingData>;
 export type ToolCompletedEvent = EngineEvent<"tool_completed", ToolCompletedData>;

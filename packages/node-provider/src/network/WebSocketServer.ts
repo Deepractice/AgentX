@@ -63,7 +63,10 @@ export class WebSocketServer implements ChannelServer {
 
       // Handle WebSocket upgrade on the HTTP server
       server.on("upgrade", (request, socket, head) => {
-        const url = new URL((request as { url?: string }).url || "", `http://${(request as { headers: { host?: string } }).headers.host}`);
+        const url = new URL(
+          (request as { url?: string }).url || "",
+          `http://${(request as { headers: { host?: string } }).headers.host}`
+        );
         if (url.pathname === path) {
           this.wss!.handleUpgrade(request as never, socket as never, head as never, (ws: WS) => {
             this.wss!.emit("connection", ws, request);

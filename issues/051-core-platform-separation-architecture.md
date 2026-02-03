@@ -13,14 +13,14 @@ To support Deepractice Cloud deployment on Cloudflare Workers (Durable Objects),
 
 Current architecture assumes single-process long-running server, conflicting with Workers' stateless short-lived function model:
 
-| Component | Current Implementation | Workers Compatibility | Action |
-|-----------|----------------------|---------------------|--------|
-| WebSocket | `ws` package (Node native) | :x: | Abstract to SPI |
-| SystemBus | In-memory RxJS Subject | :white_check_mark: | Keep (DO single-instance) |
-| Timer/Heartbeat | setInterval | :x: | Abstract to SPI |
-| Session Storage | SQLite file | :x: | Add D1 driver |
-| RxJS | Pure JS | :white_check_mark: | Keep |
-| Event Architecture | Modular | :white_check_mark: | Keep |
+| Component          | Current Implementation     | Workers Compatibility | Action                    |
+| ------------------ | -------------------------- | --------------------- | ------------------------- |
+| WebSocket          | `ws` package (Node native) | :x:                   | Abstract to SPI           |
+| SystemBus          | In-memory RxJS Subject     | :white_check_mark:    | Keep (DO single-instance) |
+| Timer/Heartbeat    | setInterval                | :x:                   | Abstract to SPI           |
+| Session Storage    | SQLite file                | :x:                   | Add D1 driver             |
+| RxJS               | Pure JS                    | :white_check_mark:    | Keep                      |
+| Event Architecture | Modular                    | :white_check_mark:    | Keep                      |
 
 ---
 
@@ -35,6 +35,7 @@ types → common → persistence → queue → network → agent → runtime →
 ```
 
 **Issues:**
+
 - 9 package.json = 9 build configs, version management, publish cycles
 - Users need to remember: `@agentxjs/persistence/sqlite`, `@agentxjs/network`, ...
 - Dependency chain too long
@@ -83,20 +84,20 @@ types → common → persistence → queue → network → agent → runtime →
 
 ### Package Mapping
 
-| Before (9 packages) | After (5 packages) | Notes |
-|---------------------|-------------------|-------|
-| @agentxjs/types | → @agentxjs/core/types | Types with implementation |
-| @agentxjs/common | → @agentxjs/core/common | Utils, logger |
-| @agentxjs/persistence (interfaces) | → @agentxjs/core/spi | SPI only |
-| @agentxjs/persistence (drivers) | → @agentxjs/node/drivers | sqlite, redis, etc. |
-| @agentxjs/queue | → @agentxjs/core/queue | RxJS parts |
-| @agentxjs/queue (SQLite) | → @agentxjs/node/queue | Persistence |
-| @agentxjs/network | → @agentxjs/node/network | ws package |
-| @agentxjs/agent | → @agentxjs/core/agent | Agent logic |
-| @agentxjs/runtime | Split | Core → core, Platform → node |
-| agentxjs | Keep | User entry point |
-| @agentxjs/ui | Keep | Frontend only |
-| (new) | @agentxjs/cloudflare | Cloudflare adapter |
+| Before (9 packages)                | After (5 packages)       | Notes                        |
+| ---------------------------------- | ------------------------ | ---------------------------- |
+| @agentxjs/types                    | → @agentxjs/core/types   | Types with implementation    |
+| @agentxjs/common                   | → @agentxjs/core/common  | Utils, logger                |
+| @agentxjs/persistence (interfaces) | → @agentxjs/core/spi     | SPI only                     |
+| @agentxjs/persistence (drivers)    | → @agentxjs/node/drivers | sqlite, redis, etc.          |
+| @agentxjs/queue                    | → @agentxjs/core/queue   | RxJS parts                   |
+| @agentxjs/queue (SQLite)           | → @agentxjs/node/queue   | Persistence                  |
+| @agentxjs/network                  | → @agentxjs/node/network | ws package                   |
+| @agentxjs/agent                    | → @agentxjs/core/agent   | Agent logic                  |
+| @agentxjs/runtime                  | Split                    | Core → core, Platform → node |
+| agentxjs                           | Keep                     | User entry point             |
+| @agentxjs/ui                       | Keep                     | Frontend only                |
+| (new)                              | @agentxjs/cloudflare     | Cloudflare adapter           |
 
 ### Why Types in Core (Not Separate Package)
 
@@ -113,6 +114,7 @@ Provider 模式下的依赖关系：
 ```
 
 **不需要独立 types 包的原因：**
+
 1. 所有平台包都依赖 core → core/types 天然可用
 2. Provider 模式已解决跨平台 → 不需要 types 做中间层
 3. 减少一个包 → 更简洁
@@ -217,8 +219,8 @@ import { nodeProvider, sqliteDriver } from "@agentxjs/node";
 const agentx = await createAgentX({
   provider: nodeProvider({
     persistence: sqliteDriver("./data.db"),
-    llm: { apiKey: process.env.ANTHROPIC_API_KEY }
-  })
+    llm: { apiKey: process.env.ANTHROPIC_API_KEY },
+  }),
 });
 
 // Start server
@@ -238,14 +240,14 @@ export { AgentDurableObject };
 export default {
   async fetch(request: Request, env: Env) {
     const agentx = await createAgentX({
-      provider: cloudflareProvider(env)
+      provider: cloudflareProvider(env),
     });
 
     // Route to Durable Object
     const id = env.AGENT.idFromName("agent-1");
     const stub = env.AGENT.get(id);
     return stub.fetch(request);
-  }
+  },
 };
 ```
 
@@ -256,7 +258,7 @@ import { createAgentX } from "agentxjs";
 
 // No provider needed - connects to remote server
 const agentx = await createAgentX({
-  serverUrl: "wss://api.example.com"
+  serverUrl: "wss://api.example.com",
 });
 
 agentx.on("text_delta", (e) => console.log(e.data.text));
@@ -271,38 +273,38 @@ await agentx.request("message_send", { content: "Hello" });
 
 Consolidate in dependency order (bottom-up):
 
-| Step | Package | Action | Platform Dependency |
-|------|---------|--------|---------------------|
-| 1.1 | types | → core/types | :white_check_mark: None |
-| 1.2 | common | → core/common | :white_check_mark: None |
-| 1.3 | persistence (interfaces) | → core/spi | :white_check_mark: None |
-| 1.4 | agent | → core/agent | :white_check_mark: None |
-| 1.5 | queue (RxJS parts) | → core/queue | :white_check_mark: None |
-| 1.6 | runtime (core logic) | → core/runtime | :white_check_mark: None |
+| Step | Package                  | Action         | Platform Dependency     |
+| ---- | ------------------------ | -------------- | ----------------------- |
+| 1.1  | types                    | → core/types   | :white_check_mark: None |
+| 1.2  | common                   | → core/common  | :white_check_mark: None |
+| 1.3  | persistence (interfaces) | → core/spi     | :white_check_mark: None |
+| 1.4  | agent                    | → core/agent   | :white_check_mark: None |
+| 1.5  | queue (RxJS parts)       | → core/queue   | :white_check_mark: None |
+| 1.6  | runtime (core logic)     | → core/runtime | :white_check_mark: None |
 
 **Result:** `@agentxjs/core` contains all platform-agnostic code.
 
 ### Phase 2: Create @agentxjs/node
 
-| Step | Package | Action |
-|------|---------|--------|
-| 2.1 | persistence (drivers) | → node/drivers |
-| 2.2 | queue (SQLite) | → node/queue |
-| 2.3 | network | → node/network |
-| 2.4 | runtime (Node parts) | → node/runtime |
-| 2.5 | Create nodeProvider | Assemble all |
+| Step | Package               | Action         |
+| ---- | --------------------- | -------------- |
+| 2.1  | persistence (drivers) | → node/drivers |
+| 2.2  | queue (SQLite)        | → node/queue   |
+| 2.3  | network               | → node/network |
+| 2.4  | runtime (Node parts)  | → node/runtime |
+| 2.5  | Create nodeProvider   | Assemble all   |
 
 **Result:** `@agentxjs/node` contains all Node.js-specific code.
 
 ### Phase 3: Create @agentxjs/cloudflare
 
-| Step | Component | Implementation |
-|------|-----------|----------------|
-| 3.1 | AgentDurableObject | DO class with hibernation |
-| 3.2 | DOChannelServer | WebSocketPair wrapper |
-| 3.3 | d1Driver | D1 persistence driver |
-| 3.4 | DOScheduler | Alarm-based scheduler |
-| 3.5 | cloudflareProvider | Assemble all |
+| Step | Component          | Implementation            |
+| ---- | ------------------ | ------------------------- |
+| 3.1  | AgentDurableObject | DO class with hibernation |
+| 3.2  | DOChannelServer    | WebSocketPair wrapper     |
+| 3.3  | d1Driver           | D1 persistence driver     |
+| 3.4  | DOScheduler        | Alarm-based scheduler     |
+| 3.5  | cloudflareProvider | Assemble all              |
 
 **Result:** `@agentxjs/cloudflare` ready for Workers deployment.
 
@@ -365,17 +367,17 @@ export async function createAgentX(config: AgentXConfig): Promise<AgentX> {
 
 ```typescript
 // ❌ 平台耦合 - 需要抽象
-import { WebSocketServer } from "ws";           // → ChannelServerSPI
-import Database from "bun:sqlite";              // → PersistenceDriverSPI
-import { createServer } from "node:http";       // → 抽到 node/
-import { readFile } from "node:fs/promises";    // → FileSystemSPI
-import { join } from "node:path";               // → 需要 polyfill 或抽象
-import { setTimeout } from "node:timers";       // → SchedulerSPI
+import { WebSocketServer } from "ws"; // → ChannelServerSPI
+import Database from "bun:sqlite"; // → PersistenceDriverSPI
+import { createServer } from "node:http"; // → 抽到 node/
+import { readFile } from "node:fs/promises"; // → FileSystemSPI
+import { join } from "node:path"; // → 需要 polyfill 或抽象
+import { setTimeout } from "node:timers"; // → SchedulerSPI
 
 // ✅ 平台无关 - 直接迁移
-import { Subject, Observable } from "rxjs";     // 纯 JS
-import { z } from "zod";                        // 纯 JS
-import type { Agent } from "./types";           // 纯类型
+import { Subject, Observable } from "rxjs"; // 纯 JS
+import { z } from "zod"; // 纯 JS
+import type { Agent } from "./types"; // 纯类型
 ```
 
 ---
@@ -402,20 +404,22 @@ packages/types/src/
 ### Module 2: common
 
 **Step 2.1: 迁移类型**
+
 ```
 packages/common/src/types/ → packages/core/src/types/common/
 ```
 
 **Step 2.2: 迁移实现（需要拆分）**
 
-| 文件 | 平台依赖 | 处理方式 |
-|------|----------|----------|
-| logger/ | ✅ 无 | → core/common/logger/ |
-| id/ | ✅ 无 | → core/common/id/ |
-| path/ | ❌ node:path | 抽象 PathSPI |
-| sqlite/ | ❌ bun:sqlite/node:sqlite | 抽象 → node/sqlite/ |
+| 文件    | 平台依赖                  | 处理方式              |
+| ------- | ------------------------- | --------------------- |
+| logger/ | ✅ 无                     | → core/common/logger/ |
+| id/     | ✅ 无                     | → core/common/id/     |
+| path/   | ❌ node:path              | 抽象 PathSPI          |
+| sqlite/ | ❌ bun:sqlite/node:sqlite | 抽象 → node/sqlite/   |
 
 **path 的处理：**
+
 ```typescript
 // core/spi/PathSPI.ts - 接口
 export interface PathSPI {
@@ -440,6 +444,7 @@ export const cfPath: PathSPI = {
 ### Module 3: persistence
 
 **Step 3.1: 迁移类型**
+
 ```
 packages/persistence/src/
 ├── Persistence.ts (interface)     → core/spi/Persistence.ts
@@ -448,35 +453,37 @@ packages/persistence/src/
 
 **Step 3.2: 迁移实现**
 
-| 文件 | 平台依赖 | 处理方式 |
-|------|----------|----------|
-| repository/*Impl.ts | ✅ 纯 unstorage | → core/persistence/ |
-| drivers/memory.ts | ✅ 无 | → core/drivers/memory.ts |
-| drivers/sqlite.ts | ❌ bun:sqlite | → node/drivers/sqlite.ts |
-| drivers/redis.ts | ❌ ioredis | → node/drivers/redis.ts |
+| 文件                 | 平台依赖        | 处理方式                 |
+| -------------------- | --------------- | ------------------------ |
+| repository/\*Impl.ts | ✅ 纯 unstorage | → core/persistence/      |
+| drivers/memory.ts    | ✅ 无           | → core/drivers/memory.ts |
+| drivers/sqlite.ts    | ❌ bun:sqlite   | → node/drivers/sqlite.ts |
+| drivers/redis.ts     | ❌ ioredis      | → node/drivers/redis.ts  |
 
 ---
 
 ### Module 4: queue
 
 **Step 4.1: 迁移类型**
+
 ```
 packages/queue/src/types/ → core/types/queue/
 ```
 
 **Step 4.2: 迁移实现**
 
-| 文件 | 平台依赖 | 处理方式 |
-|------|----------|----------|
+| 文件                    | 平台依赖   | 处理方式      |
+| ----------------------- | ---------- | ------------- |
 | Queue.ts (RxJS Subject) | ✅ 纯 RxJS | → core/queue/ |
-| InMemoryQueue.ts | ✅ 无 | → core/queue/ |
-| SqliteQueue.ts | ❌ SQLite | → node/queue/ |
+| InMemoryQueue.ts        | ✅ 无      | → core/queue/ |
+| SqliteQueue.ts          | ❌ SQLite  | → node/queue/ |
 
 ---
 
 ### Module 5: network
 
 **Step 5.1: 迁移类型**
+
 ```
 packages/network/src/
 ├── types.ts → core/types/network/
@@ -485,14 +492,15 @@ packages/network/src/
 
 **Step 5.2: 迁移实现**
 
-| 文件 | 平台依赖 | 处理方式 |
-|------|----------|----------|
-| client/BrowserWebSocketClient.ts | ✅ 浏览器原生 | → core/network/client/ |
-| server/WebSocketServer.ts | ❌ ws 包 | → node/network/ |
-| server/WebSocketConnection.ts | ❌ ws 包 | → node/network/ |
-| protocol/reliable-message.ts | ✅ 纯 JS | → core/network/protocol/ |
+| 文件                             | 平台依赖      | 处理方式                 |
+| -------------------------------- | ------------- | ------------------------ |
+| client/BrowserWebSocketClient.ts | ✅ 浏览器原生 | → core/network/client/   |
+| server/WebSocketServer.ts        | ❌ ws 包      | → node/network/          |
+| server/WebSocketConnection.ts    | ❌ ws 包      | → node/network/          |
+| protocol/reliable-message.ts     | ✅ 纯 JS      | → core/network/protocol/ |
 
 **抽象 ChannelServerSPI：**
+
 ```typescript
 // core/spi/ChannelServerSPI.ts
 export interface ChannelServerSPI {
@@ -514,18 +522,19 @@ export class DOChannelServer implements ChannelServerSPI { ... }
 ### Module 6: agent
 
 **Step 6.1: 迁移类型**
+
 ```
 packages/agent/src/types/ → core/types/agent/
 ```
 
 **Step 6.2: 迁移实现**
 
-| 文件 | 平台依赖 | 处理方式 |
-|------|----------|----------|
-| AgentEngine.ts | ✅ 纯 RxJS | → core/agent/ |
-| MessageQueue.ts | ✅ 纯 TS | → core/agent/ |
-| StateMachine.ts | ✅ 纯 TS | → core/agent/ |
-| interceptors/ | ✅ 纯 TS | → core/agent/ |
+| 文件            | 平台依赖   | 处理方式      |
+| --------------- | ---------- | ------------- |
+| AgentEngine.ts  | ✅ 纯 RxJS | → core/agent/ |
+| MessageQueue.ts | ✅ 纯 TS   | → core/agent/ |
+| StateMachine.ts | ✅ 纯 TS   | → core/agent/ |
+| interceptors/   | ✅ 纯 TS   | → core/agent/ |
 
 **检查：** agent 包应该全部是平台无关的 ✅
 
@@ -534,21 +543,23 @@ packages/agent/src/types/ → core/types/agent/
 ### Module 7: runtime
 
 **Step 7.1: 迁移类型**
+
 ```
 packages/runtime/src/types/ → core/types/runtime/
 ```
 
 **Step 7.2: 迁移实现（需要仔细拆分）**
 
-| 文件 | 平台依赖 | 处理方式 |
-|------|----------|----------|
-| SystemBusImpl.ts | ✅ 纯 RxJS | → core/bus/ |
-| RuntimeImpl.ts | ⚠️ 检查 | 拆分 |
-| environment/ClaudeEnvironment.ts | ⚠️ 检查 Claude SDK | 可能需要抽象 |
-| internal/RuntimeSession.ts | ✅ 纯逻辑 | → core/runtime/ |
-| internal/RuntimeContainer.ts | ⚠️ 检查 | 拆分 |
+| 文件                             | 平台依赖           | 处理方式        |
+| -------------------------------- | ------------------ | --------------- |
+| SystemBusImpl.ts                 | ✅ 纯 RxJS         | → core/bus/     |
+| RuntimeImpl.ts                   | ⚠️ 检查            | 拆分            |
+| environment/ClaudeEnvironment.ts | ⚠️ 检查 Claude SDK | 可能需要抽象    |
+| internal/RuntimeSession.ts       | ✅ 纯逻辑          | → core/runtime/ |
+| internal/RuntimeContainer.ts     | ⚠️ 检查            | 拆分            |
 
 **Claude SDK 的处理：**
+
 ```typescript
 // Claude SDK 是 HTTP 调用，理论上平台无关
 // 但需要验证在 Cloudflare Workers 中能否工作
@@ -675,6 +686,7 @@ packages/
 ```
 
 **5 packages total:**
+
 1. `@agentxjs/core` - 核心 + 类型 + SPI
 2. `@agentxjs/node` - Node.js 平台适配
 3. `@agentxjs/cloudflare` - Cloudflare 平台适配
@@ -688,6 +700,7 @@ packages/
 ## Acceptance Criteria
 
 ### Functional
+
 - [ ] `createAgentX({ provider: nodeProvider() })` works
 - [ ] `createAgentX({ provider: cloudflareProvider(env) })` works
 - [ ] `createAgentX({ serverUrl })` works (browser remote mode)
@@ -695,12 +708,14 @@ packages/
 - [ ] BDD tests pass
 
 ### Architecture
+
 - [ ] @agentxjs/core has zero platform-specific imports
 - [ ] @agentxjs/node contains all Node.js dependencies
 - [ ] @agentxjs/cloudflare deploys to Workers
 - [ ] Tree-shaking works (unused platform code excluded)
 
 ### Developer Experience
+
 - [ ] Clear error if provider missing in local mode
 - [ ] TypeScript types work correctly
 - [ ] Documentation updated
@@ -758,7 +773,7 @@ export function d1Driver(db: D1Database): PersistenceDriver {
   return {
     async createStorage() {
       // D1-backed storage implementation
-    }
+    },
   };
 }
 ```
@@ -768,6 +783,7 @@ export function d1Driver(db: D1Database): PersistenceDriver {
 ## Tasks
 
 ### Phase 1: Core Package
+
 - [ ] Create packages/core/ directory structure
 - [ ] Migrate types package → core/types
 - [ ] Migrate common package → core/common (platform-agnostic parts)
@@ -779,6 +795,7 @@ export function d1Driver(db: D1Database): PersistenceDriver {
 - [ ] Verify build and tests pass
 
 ### Phase 2: Node Package
+
 - [ ] Create packages/node/ directory structure
 - [ ] Migrate network package → node/network
 - [ ] Migrate persistence drivers → node/drivers
@@ -789,6 +806,7 @@ export function d1Driver(db: D1Database): PersistenceDriver {
 - [ ] Verify build and tests pass
 
 ### Phase 3: Cloudflare Package
+
 - [ ] Create packages/cloudflare/ directory structure
 - [ ] Implement AgentDurableObject
 - [ ] Implement DOChannelServer (WebSocketPair)
@@ -799,12 +817,14 @@ export function d1Driver(db: D1Database): PersistenceDriver {
 - [ ] Test deployment to Workers
 
 ### Phase 4: Update Entry Points
+
 - [ ] Update agentxjs to require provider
 - [ ] Update createAgentX factory
 - [ ] Re-export common types from agentxjs
 - [ ] Update documentation
 
 ### Phase 5: Cleanup
+
 - [ ] Remove old packages (types, common, persistence, queue, network, agent, runtime)
 - [ ] Update all internal imports
 - [ ] Update CLAUDE.md

@@ -32,7 +32,10 @@ interface AccumulatorState {
 // Test processors
 const counterProcessor: Processor<CounterState, TestEvent, TestEvent> = (state, event) => {
   if (event.type === "increment") {
-    return [{ count: state.count + event.value }, [{ type: "counted", value: state.count + event.value }]];
+    return [
+      { count: state.count + event.value },
+      [{ type: "counted", value: state.count + event.value }],
+    ];
   }
   return [state, []];
 };
@@ -93,7 +96,11 @@ describe("combineProcessors", () => {
       return [state, []];
     };
 
-    const combined = combineProcessors<{ a: { a: number }; b: { b: number } }, TestEvent, TestEvent>({
+    const combined = combineProcessors<
+      { a: { a: number }; b: { b: number } },
+      TestEvent,
+      TestEvent
+    >({
       a: proc1,
       b: proc2,
     });

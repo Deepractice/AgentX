@@ -16,11 +16,7 @@ import type { SessionRepository } from "../session/types";
 // Re-export from persistence (storage schema)
 // ============================================================================
 
-export type {
-  ContainerRecord,
-  ContainerConfig,
-  ContainerRepository,
-} from "../persistence/types";
+export type { ContainerRecord, ContainerConfig, ContainerRepository } from "../persistence/types";
 
 // ============================================================================
 // Container Interface

@@ -87,10 +87,7 @@ describe("turnTrackerProcessor", () => {
       );
 
       // Complete the turn
-      const [state2] = turnTrackerProcessor(
-        state1,
-        createMessageStopEvent("end_turn")
-      );
+      const [state2] = turnTrackerProcessor(state1, createMessageStopEvent("end_turn"));
 
       // Start new turn
       const [state3, outputs3] = turnTrackerProcessor(
@@ -252,10 +249,7 @@ describe("turnTrackerProcessor", () => {
       allOutputs.push(...o1);
 
       // Assistant responds, message_stop at time 2500
-      const [s2, o2] = turnTrackerProcessor(
-        currentState,
-        createMessageStopEvent("end_turn", 2500)
-      );
+      const [s2, o2] = turnTrackerProcessor(currentState, createMessageStopEvent("end_turn", 2500));
       currentState = s2;
       allOutputs.push(...o2);
 
@@ -286,10 +280,7 @@ describe("turnTrackerProcessor", () => {
       allOutputs.push(...o1);
 
       // First message_stop with tool_use - turn should NOT complete
-      const [s2, o2] = turnTrackerProcessor(
-        currentState,
-        createMessageStopEvent("tool_use", 1500)
-      );
+      const [s2, o2] = turnTrackerProcessor(currentState, createMessageStopEvent("tool_use", 1500));
       currentState = s2;
       allOutputs.push(...o2);
 
@@ -297,10 +288,7 @@ describe("turnTrackerProcessor", () => {
       expect(allOutputs).toHaveLength(1); // Only turn_request
 
       // Second message_stop with end_turn - turn completes
-      const [s3, o3] = turnTrackerProcessor(
-        currentState,
-        createMessageStopEvent("end_turn", 3000)
-      );
+      const [s3, o3] = turnTrackerProcessor(currentState, createMessageStopEvent("end_turn", 3000));
       currentState = s3;
       allOutputs.push(...o3);
 
@@ -322,10 +310,7 @@ describe("turnTrackerProcessor", () => {
       currentState = s1;
       allTurnIds.push(o1[0].data.turnId);
 
-      const [s2] = turnTrackerProcessor(
-        currentState,
-        createMessageStopEvent("end_turn", 1500)
-      );
+      const [s2] = turnTrackerProcessor(currentState, createMessageStopEvent("end_turn", 1500));
       currentState = s2;
 
       // Second turn
@@ -336,10 +321,7 @@ describe("turnTrackerProcessor", () => {
       currentState = s3;
       allTurnIds.push(o3[0].data.turnId);
 
-      const [s4] = turnTrackerProcessor(
-        currentState,
-        createMessageStopEvent("end_turn", 2500)
-      );
+      const [s4] = turnTrackerProcessor(currentState, createMessageStopEvent("end_turn", 2500));
       currentState = s4;
 
       // Third turn

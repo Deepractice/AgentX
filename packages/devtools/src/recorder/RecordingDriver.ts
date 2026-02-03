@@ -23,11 +23,7 @@
  */
 
 import type { Driver } from "@agentxjs/core/driver";
-import type {
-  EventConsumer,
-  EventProducer,
-  DriveableEvent,
-} from "@agentxjs/core/event";
+import type { EventConsumer, EventProducer, DriveableEvent } from "@agentxjs/core/event";
 import type { Fixture, FixtureEvent } from "../types";
 import { createLogger } from "commonxjs/logger";
 

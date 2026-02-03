@@ -25,7 +25,11 @@ import {
   RpcErrorCodes,
   type RpcMethod,
 } from "@agentxjs/core/network";
-import { WebSocketServer, isDeferredProvider, type DeferredProviderConfig } from "@agentxjs/node-provider";
+import {
+  WebSocketServer,
+  isDeferredProvider,
+  type DeferredProviderConfig,
+} from "@agentxjs/node-provider";
 import { createLogger } from "commonxjs/logger";
 import { CommandHandler } from "./CommandHandler";
 import type { AgentXServer } from "./types";

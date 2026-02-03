@@ -25,6 +25,7 @@ fixtures/recording/
 ## Committing fixtures
 
 These fixtures should be committed to git:
+
 - Enables CI without API keys
 - Ensures consistent test behavior
 - Speeds up local development
@@ -32,5 +33,6 @@ These fixtures should be committed to git:
 ## Re-recording
 
 To re-record a fixture, either:
+
 - Delete the fixture file and run test
 - Use `forceRecord: true` option

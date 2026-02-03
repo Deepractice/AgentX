@@ -4,11 +4,7 @@
  * Provides isolated working directories for agents on Node.js.
  */
 
-import type {
-  Workspace,
-  WorkspaceProvider,
-  WorkspaceCreateConfig,
-} from "@agentxjs/core/workspace";
+import type { Workspace, WorkspaceProvider, WorkspaceCreateConfig } from "@agentxjs/core/workspace";
 import { mkdir, access, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { createLogger } from "commonxjs/logger";

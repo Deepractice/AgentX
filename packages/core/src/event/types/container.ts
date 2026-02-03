@@ -434,10 +434,7 @@ export type MCPResultEvent = ToolExecutedEvent | ResourceReadResult;
 /**
  * Type guard: is this a MCPEvent?
  */
-export function isMCPEvent(event: {
-  source?: string;
-  category?: string;
-}): event is MCPEvent {
+export function isMCPEvent(event: { source?: string; category?: string }): event is MCPEvent {
   return event.source === "sandbox" && event.category === "mcp";
 }
 

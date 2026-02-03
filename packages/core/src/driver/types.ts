@@ -1,31 +1,36 @@
 /**
- * Driver Types - LLM/External World Adapter
+ * Driver Types - LLM Communication Layer
  *
- * Driver is the bridge between EventBus and external world (LLM, API, etc.)
+ * Driver is the bridge between AgentX and external LLM (Claude, OpenAI, etc.)
  *
  * ```
- *                         EventBus
- *                        ↗        ↘
- *         subscribe     │          │     emit
- *         user_message  │          │     StreamEvent
- *              ↓        │          │      ↑
- *         ┌─────────────────────────────────────┐
- *         │              Driver                  │
- *         │                                      │
- *         │   user_message ───► LLM ───► Stream  │
- *         │                                      │
- *         └─────────────────────────────────────┘
- *                              │
- *                              ▼
- *                       External World
- *                       (Claude SDK)
+ *                    AgentX
+ *                      │
+ *         receive()    │    AsyncIterable<StreamEvent>
+ *         ─────────►   │   ◄─────────────────────────
+ *                      │
+ *              ┌───────────────┐
+ *              │    Driver     │
+ *              │               │
+ *              │  UserMessage  │
+ *              │      ↓        │
+ *              │   [SDK call]  │
+ *              │      ↓        │
+ *              │  StreamEvent  │
+ *              └───────────────┘
+ *                      │
+ *                      ▼
+ *               External LLM
+ *               (Claude SDK)
  * ```
  *
- * Implementations are provided by platform packages:
- * - @agentxjs/claude-driver: Claude Agent SDK driver
+ * Key Design:
+ * - Driver = single session communication (like Kimi SDK's Session)
+ * - Clear input/output boundary (for recording/playback)
+ * - Configuration defined by us (capability boundary)
  */
 
-import type { EventConsumer, EventProducer } from "../event/types";
+import type { UserMessage } from "../agent/types/message";
 
 // ============================================================================
 // MCP Server Configuration
@@ -54,15 +59,136 @@ export interface McpServerConfig {
 }
 
 // ============================================================================
+// Stream Event (Lightweight)
+// ============================================================================
+
+/**
+ * StopReason - Why the LLM stopped generating
+ */
+export type StopReason =
+  | "end_turn"
+  | "max_tokens"
+  | "tool_use"
+  | "stop_sequence"
+  | "content_filter"
+  | "error"
+  | "other";
+
+/**
+ * StreamEvent - Lightweight event from Driver
+ *
+ * Only contains essential fields: type, timestamp, data
+ * No source, category, intent, context (those are added by upper layers)
+ */
+export interface StreamEvent<T extends string = string, D = unknown> {
+  readonly type: T;
+  readonly timestamp: number;
+  readonly data: D;
+}
+
+// Stream Event Types
+export interface MessageStartEvent extends StreamEvent<
+  "message_start",
+  {
+    messageId: string;
+    model: string;
+  }
+> {}
+
+export interface MessageStopEvent extends StreamEvent<
+  "message_stop",
+  {
+    stopReason: StopReason;
+  }
+> {}
+
+export interface TextDeltaEvent extends StreamEvent<
+  "text_delta",
+  {
+    text: string;
+  }
+> {}
+
+export interface ToolUseStartEvent extends StreamEvent<
+  "tool_use_start",
+  {
+    toolCallId: string;
+    toolName: string;
+  }
+> {}
+
+export interface InputJsonDeltaEvent extends StreamEvent<
+  "input_json_delta",
+  {
+    partialJson: string;
+  }
+> {}
+
+export interface ToolUseStopEvent extends StreamEvent<
+  "tool_use_stop",
+  {
+    toolCallId: string;
+    toolName: string;
+    input: Record<string, unknown>;
+  }
+> {}
+
+export interface ToolResultEvent extends StreamEvent<
+  "tool_result",
+  {
+    toolCallId: string;
+    result: unknown;
+    isError?: boolean;
+  }
+> {}
+
+export interface ErrorEvent extends StreamEvent<
+  "error",
+  {
+    message: string;
+    errorCode?: string;
+  }
+> {}
+
+export interface InterruptedEvent extends StreamEvent<
+  "interrupted",
+  {
+    reason: "user" | "timeout" | "error";
+  }
+> {}
+
+/**
+ * DriverStreamEvent - Union of all stream events from Driver
+ */
+export type DriverStreamEvent =
+  | MessageStartEvent
+  | MessageStopEvent
+  | TextDeltaEvent
+  | ToolUseStartEvent
+  | InputJsonDeltaEvent
+  | ToolUseStopEvent
+  | ToolResultEvent
+  | ErrorEvent
+  | InterruptedEvent;
+
+/**
+ * DriverStreamEventType - String literal union of event types
+ */
+export type DriverStreamEventType = DriverStreamEvent["type"];
+
+// ============================================================================
 // Driver Configuration
 // ============================================================================
 
 /**
- * DriverConfig - Configuration for LLM/Agent SDK
+ * DriverConfig - All configuration for creating a Driver
  *
- * Contains all settings needed to connect to an LLM provider.
+ * This is our capability boundary - we define what we support.
+ * Specific implementations (Claude, OpenAI) must work within this.
  */
 export interface DriverConfig {
+  // === Provider Configuration ===
+
   /**
    * API key for authentication
    */
@@ -79,6 +205,18 @@ export interface DriverConfig {
   model?: string;
 
   /**
+   * Request timeout in milliseconds (default: 600000 = 10 minutes)
+   */
+  timeout?: number;
+
+  // === Agent Configuration ===
+
+  /**
+   * Agent ID (for identification and logging)
+   */
+  agentId: string;
+
+  /**
    * System prompt for the agent
    */
   systemPrompt?: string;
@@ -89,28 +227,72 @@ export interface DriverConfig {
   cwd?: string;
 
   /**
-   * Request timeout in milliseconds (default: 600000 = 10 minutes)
-   */
-  timeout?: number;
-
-  /**
    * MCP servers configuration
    */
   mcpServers?: Record<string, McpServerConfig>;
+
+  // === Session Configuration ===
+
+  /**
+   * Session ID to resume (for conversation continuity)
+   *
+   * If provided, Driver will attempt to resume this session.
+   * If not provided, a new session is created.
+   */
+  resumeSessionId?: string;
+
+  /**
+   * Callback when SDK session ID is captured
+   *
+   * Called once when the session ID becomes available.
+   * Save this ID to enable session resume later.
+   */
+  onSessionIdCaptured?: (sessionId: string) => void;
 }
+
+// ============================================================================
+// Driver State
+// ============================================================================
+
+/**
+ * DriverState - Current state of the Driver
+ *
+ * - idle: Ready to receive messages
+ * - active: Currently processing a message
+ * - disposed: Driver has been disposed, cannot be used
+ */
+export type DriverState = "idle" | "active" | "disposed";
 
 // ============================================================================
 // Driver Interface
 // ============================================================================
 
 /**
- * Driver interface - LLM/External World Adapter
+ * Driver - LLM Communication Interface
  *
- * Connects to EventBus and bridges communication with external world:
- * - Subscribes to user_message from EventBus
- * - Sends message to LLM
- * - Receives LLM response
- * - Emits StreamEvent to EventBus
+ * Responsible for a single session's communication with LLM.
+ * Similar to Kimi SDK's Session concept.
+ *
+ * Lifecycle:
+ * 1. createDriver(config) → Driver instance
+ * 2. driver.initialize() → Start SDK, MCP servers
+ * 3. driver.receive(message) → Send message, get events
+ * 4. driver.dispose() → Cleanup
+ *
+ * @example
+ * ```typescript
+ * const driver = createDriver(config);
+ * await driver.initialize();
+ *
+ * const events = driver.receive(message);
+ * for await (const event of events) {
+ *   if (event.type === "text_delta") {
+ *     console.log(event.data.text);
+ *   }
+ * }
+ *
+ * await driver.dispose();
+ * ```
  */
 export interface Driver {
   /**
@@ -119,86 +301,63 @@ export interface Driver {
   readonly name: string;
 
   /**
-   * Connect to EventBus
-   *
-   * After connection:
-   * - Subscribes to user_message events
-   * - Emits StreamEvent when LLM responds
-   *
-   * @param consumer - EventBus consumer (for subscribing)
-   * @param producer - EventBus producer (for emitting)
+   * SDK Session ID (available after first message)
    */
-  connect(consumer: EventConsumer, producer: EventProducer): void;
+  readonly sessionId: string | null;
 
   /**
-   * Disconnect from EventBus
-   *
-   * Unsubscribes from all events and cleans up resources.
+   * Current state
    */
-  disconnect(): void;
+  readonly state: DriverState;
 
   /**
-   * Dispose driver resources
+   * Receive a user message and return stream of events
    *
-   * Called when the driver is no longer needed.
-   * Should clean up any external connections (SDK, API clients, etc.)
+   * @param message - User message to send
+   * @returns AsyncIterable of stream events
    */
-  dispose(): void;
+  receive(message: UserMessage): AsyncIterable<DriverStreamEvent>;
+
+  /**
+   * Interrupt current operation
+   *
+   * Stops the current receive() operation gracefully.
+   * The AsyncIterable will emit an "interrupted" event and complete.
+   */
+  interrupt(): void;
+
+  /**
+   * Initialize the Driver
+   *
+   * Starts SDK subprocess, MCP servers, etc.
+   * Must be called before receive().
+   */
+  initialize(): Promise<void>;
+
+  /**
+   * Dispose and cleanup resources
+   *
+   * Stops SDK subprocess, MCP servers, etc.
+   * Driver cannot be used after dispose().
+   */
+  dispose(): Promise<void>;
 }
 
 // ============================================================================
-// Driver Factory
+// CreateDriver Function Type
 // ============================================================================
 
 /**
- * CreateDriverOptions - Options for creating a Driver
+ * CreateDriver - Factory function type for creating Driver instances
+ *
+ * Each implementation package exports a function of this type.
+ *
+ * @example
+ * ```typescript
+ * // @agentxjs/claude-driver
+ * export const createDriver: CreateDriver = (config) => {
+ *   return new ClaudeDriverImpl(config);
+ * };
+ * ```
  */
-export interface CreateDriverOptions {
-  /**
-   * Agent ID (for filtering events)
-   */
-  agentId: string;
-
-  /**
-   * Driver configuration
-   */
-  config: DriverConfig;
-
-  /**
-   * Session ID to resume (optional)
-   */
-  resumeSessionId?: string;
-
-  /**
-   * Callback when SDK session ID is captured
-   */
-  onSessionIdCaptured?: (sessionId: string) => void;
-}
-
-/**
- * DriverFactory - Factory for creating Driver instances
- */
-export interface DriverFactory {
-  /**
-   * Factory name (for identification)
-   */
-  readonly name: string;
-
-  /**
-   * Create a Driver instance
-   *
-   * @param options - Driver creation options
-   * @returns Driver instance
-   */
-  createDriver(options: CreateDriverOptions): Driver;
-
-  /**
-   * Warmup the driver (pre-initialize resources)
-   *
-   * Call this early to reduce latency for the first message.
-   * Safe to call multiple times.
-   *
-   * @param config - Driver configuration (for pre-validation)
-   */
-  warmup?(config: DriverConfig): Promise<void>;
-}
+export type CreateDriver = (config: DriverConfig) => Driver;

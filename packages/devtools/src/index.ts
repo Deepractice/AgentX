@@ -36,12 +36,7 @@
  */
 
 // Devtools SDK (recommended)
-export {
-  Devtools,
-  createDevtools,
-  type DevtoolsConfig,
-  type DriverOptions,
-} from "./Devtools";
+export { Devtools, createDevtools, type DevtoolsConfig, type DriverOptions } from "./Devtools";
 
 // Mock Driver (low-level)
 export { MockDriver } from "./mock/MockDriver";
@@ -55,11 +50,7 @@ export {
 } from "./recorder/RecordingDriver";
 
 // Types
-export type {
-  Fixture,
-  FixtureEvent,
-  MockDriverOptions,
-} from "./types";
+export type { Fixture, FixtureEvent, MockDriverOptions } from "./types";
 
 // Fixtures
 export {

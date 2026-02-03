@@ -7,16 +7,17 @@ Create `apps/cli` - a Terminal UI (TUI) client for AgentX, referencing OpenCode'
 ## Reference Project
 
 **OpenCode** (`temp/opencode`) provides a mature TUI framework:
+
 - Repository: https://github.com/anomalyco/opencode
 - License: MIT
 
 ## Core Dependencies
 
-| Package | Version | Description |
-|---------|---------|-------------|
-| `@opentui/core` | 0.1.77 | Terminal UI rendering engine |
-| `@opentui/solid` | 0.1.77 | Solid.js bindings for terminal |
-| `solid-js` | 1.9.10 | Reactive UI framework |
+| Package          | Version | Description                    |
+| ---------------- | ------- | ------------------------------ |
+| `@opentui/core`  | 0.1.77  | Terminal UI rendering engine   |
+| `@opentui/solid` | 0.1.77  | Solid.js bindings for terminal |
+| `solid-js`       | 1.9.10  | Reactive UI framework          |
 
 ## UI Components to Reference
 
@@ -41,16 +42,16 @@ Reference: `packages/opencode/src/cli/cmd/tui/ui/dialog.tsx`
 // Stack-based modal management
 const DialogProvider = () => {
   const [store, setStore] = createStore({
-    stack: [] as { element: JSX.Element; onClose?: () => void }[]
-  })
+    stack: [] as { element: JSX.Element; onClose?: () => void }[],
+  });
 
   // ESC to close, keyboard event handling
   useKeyboard((evt) => {
     if (evt.name === "escape" && store.stack.length > 0) {
       // pop from stack
     }
-  })
-}
+  });
+};
 ```
 
 ### 3. Theme System
@@ -63,6 +64,7 @@ Reference: `packages/opencode/src/cli/cmd/tui/context/theme.tsx`
 - Custom theme loading
 
 Theme colors include:
+
 - Primary, Secondary, Accent
 - Error, Warning, Success, Info
 - Text, TextMuted
@@ -169,12 +171,12 @@ apps/cli/
 
 ## Key Differences from OpenCode
 
-| Aspect | OpenCode | AgentX CLI |
-|--------|----------|------------|
-| SDK | `@opencode-ai/sdk` | `agentxjs` |
-| Backend | Internal API | WebSocket to AgentX Server |
-| Events | Custom event system | AgentX EventBus |
-| State Sync | SyncProvider | AgentX event subscription |
+| Aspect     | OpenCode            | AgentX CLI                 |
+| ---------- | ------------------- | -------------------------- |
+| SDK        | `@opencode-ai/sdk`  | `agentxjs`                 |
+| Backend    | Internal API        | WebSocket to AgentX Server |
+| Events     | Custom event system | AgentX EventBus            |
+| State Sync | SyncProvider        | AgentX event subscription  |
 
 ## package.json
 

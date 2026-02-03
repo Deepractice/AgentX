@@ -64,8 +64,8 @@ export type RpcMethod =
  * Notification method names (server push)
  */
 export type NotificationMethod =
-  | "stream.event"    // Stream events (text_delta, tool_call, etc.)
-  | "control.ack";    // ACK for reliable delivery
+  | "stream.event" // Stream events (text_delta, tool_call, etc.)
+  | "control.ack"; // ACK for reliable delivery
 
 // ============================================================================
 // Request/Response Type Definitions
@@ -165,10 +165,7 @@ export function createRequest(
 /**
  * Create a JSON-RPC notification (no response expected)
  */
-export function createNotification(
-  method: NotificationMethod | string,
-  params: unknown
-): JsonRpc {
+export function createNotification(method: NotificationMethod | string, params: unknown): JsonRpc {
   return jsonrpcNotification(method, params as Record<string, unknown>);
 }
 

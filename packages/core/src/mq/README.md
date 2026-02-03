@@ -82,9 +82,9 @@ interface MessageQueue {
 
 ```typescript
 interface QueueEntry {
-  readonly offset: string;    // Unique, monotonically increasing
-  readonly topic: string;     // Topic identifier
-  readonly event: unknown;    // Message payload
+  readonly offset: string; // Unique, monotonically increasing
+  readonly topic: string; // Topic identifier
+  readonly event: unknown; // Message payload
   readonly timestamp: number; // Unix milliseconds
 }
 ```
@@ -104,7 +104,7 @@ interface MessageQueueProvider {
 import { createNodeProvider } from "@agentxjs/node";
 
 const provider = createNodeProvider({
-  sqlitePath: "./data/queue.db"
+  sqlitePath: "./data/queue.db",
 });
 const queue = await provider.createQueue({ retentionMs: 86400000 });
 
@@ -143,13 +143,13 @@ OffsetGenerator.compare(offset1, offset2); // -1 (offset1 < offset2)
 
 ## Difference from EventBus
 
-| | EventBus | MessageQueue |
-|--|----------|--------------|
-| Scope | Process-internal | Cross-process |
-| Persistence | None | Platform-specific |
-| Delivery | Best-effort | At-least-once |
-| Recovery | No | Yes (via offset) |
-| Use case | Component decoupling | Reliable delivery |
+|             | EventBus             | MessageQueue      |
+| ----------- | -------------------- | ----------------- |
+| Scope       | Process-internal     | Cross-process     |
+| Persistence | None                 | Platform-specific |
+| Delivery    | Best-effort          | At-least-once     |
+| Recovery    | No                   | Yes (via offset)  |
+| Use case    | Component decoupling | Reliable delivery |
 
 ## Platform Independence
 

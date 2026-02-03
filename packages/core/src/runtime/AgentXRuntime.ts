@@ -123,10 +123,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     });
 
     // Connect driver to EventBus
-    driver.connect(
-      this.provider.eventBus.asConsumer(),
-      this.provider.eventBus.asProducer()
-    );
+    driver.connect(this.provider.eventBus.asConsumer(), this.provider.eventBus.asProducer());
 
     // Create runtime agent
     const agent: RuntimeAgent = {
@@ -344,7 +341,8 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     logger.debug("User message sent", {
       agentId,
       requestId: actualRequestId,
-      contentPreview: typeof content === "string" ? content.substring(0, 50) : `[${content.length} parts]`,
+      contentPreview:
+        typeof content === "string" ? content.substring(0, 50) : `[${content.length} parts]`,
     });
   }
 

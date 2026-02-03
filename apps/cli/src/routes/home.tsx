@@ -13,12 +13,7 @@ export function Home() {
   const agentx = useAgentX();
 
   return (
-    <box
-      width={dimensions().width}
-      height={dimensions().height}
-      flexDirection="column"
-      padding={2}
-    >
+    <box width={dimensions().width} height={dimensions().height} flexDirection="column" padding={2}>
       {/* Header */}
       <box flexDirection="row" gap={1}>
         <text fg={theme().primary}>
@@ -32,10 +27,7 @@ export function Home() {
         <Show
           when={agentx.connected()}
           fallback={
-            <Show
-              when={agentx.error()}
-              fallback={<text fg={theme().warning}>Connecting...</text>}
-            >
+            <Show when={agentx.error()} fallback={<text fg={theme().warning}>Connecting...</text>}>
               <text fg={theme().error}>Error: {agentx.error()}</text>
             </Show>
           }
@@ -47,9 +39,9 @@ export function Home() {
       {/* Instructions */}
       <box marginTop={2} flexDirection="column" gap={1}>
         <text fg={theme().textMuted}>Keyboard shortcuts:</text>
-        <text fg={theme().text}>  Ctrl+C  Exit</text>
-        <text fg={theme().text}>  Ctrl+N  New session</text>
-        <text fg={theme().text}>  Ctrl+L  List sessions</text>
+        <text fg={theme().text}> Ctrl+C Exit</text>
+        <text fg={theme().text}> Ctrl+N New session</text>
+        <text fg={theme().text}> Ctrl+L List sessions</text>
       </box>
 
       {/* Footer */}

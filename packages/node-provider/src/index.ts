@@ -113,9 +113,7 @@ export async function createNodeProvider(
   }
 
   // Create persistence with SQLite
-  const persistence = await createPersistence(
-    sqliteDriver({ path: join(dataPath, "agentx.db") })
-  );
+  const persistence = await createPersistence(sqliteDriver({ path: join(dataPath, "agentx.db") }));
 
   // Create workspace provider
   const workspaceProvider = new FileWorkspaceProvider({
@@ -129,7 +127,9 @@ export async function createNodeProvider(
   const driverFactory: DriverFactory = options.driverFactory ?? {
     name: "placeholder",
     createDriver: () => {
-      throw new Error("DriverFactory not configured. Please provide a driverFactory in NodeProviderOptions.");
+      throw new Error(
+        "DriverFactory not configured. Please provide a driverFactory in NodeProviderOptions."
+      );
     },
   };
 
@@ -159,7 +159,10 @@ export function isDeferredProvider(value: unknown): value is DeferredProviderCon
 export * from "./persistence";
 
 // Re-export workspace
-export { FileWorkspaceProvider, type FileWorkspaceProviderOptions } from "./workspace/FileWorkspaceProvider";
+export {
+  FileWorkspaceProvider,
+  type FileWorkspaceProviderOptions,
+} from "./workspace/FileWorkspaceProvider";
 
 // Re-export mq
 export { SqliteMessageQueue, OffsetGenerator } from "./mq";
