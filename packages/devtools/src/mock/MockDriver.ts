@@ -56,6 +56,9 @@ export class MockDriver implements Driver {
   // For interrupt handling
   private isInterrupted = false;
 
+  // Event cursor for multi-turn conversations
+  private eventCursor = 0;
+
   /**
    * Create a MockDriver
    *
@@ -176,9 +179,14 @@ export class MockDriver implements Driver {
     this.isInterrupted = false;
 
     const { speedMultiplier = 0, defaultDelay = 10 } = this.options;
+    const events = this.currentFixture.events;
 
     try {
-      for (const fixtureEvent of this.currentFixture.events) {
+      // Start from cursor position and play until message_stop
+      while (this.eventCursor < events.length) {
+        const fixtureEvent = events[this.eventCursor];
+        this.eventCursor++;
+
         // Check for interrupt
         if (this.isInterrupted) {
           yield {
@@ -199,6 +207,11 @@ export class MockDriver implements Driver {
         const event = this.convertFixtureEvent(fixtureEvent);
         if (event) {
           yield event;
+        }
+
+        // Stop at message_stop (end of one turn)
+        if (fixtureEvent.type === "message_stop") {
+          break;
         }
       }
     } finally {
@@ -228,6 +241,7 @@ export class MockDriver implements Driver {
    */
   setFixture(fixture: string | Fixture): void {
     this.currentFixture = this.resolveFixture(fixture);
+    this.eventCursor = 0; // Reset cursor when fixture changes
     logger.debug("Fixture changed", { fixture: this.currentFixture.name });
   }
 

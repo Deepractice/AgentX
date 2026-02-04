@@ -1,47 +1,54 @@
 {
-  "name": "force-test",
-  "description": "Recording of: \"Hello again!\"",
-  "recordedAt": 1770179431921,
+  "name": "reset-presentation-clears-all-state",
+  "description": "BDD scenario: reset-presentation-clears-all-state",
+  "recordedAt": 1770178329961,
   "events": [
     {
       "type": "message_start",
-      "delay": 9849,
+      "delay": 7024,
       "data": {
-        "messageId": "msg_9f3f25b7-eb79-45fa-82",
+        "messageId": "msg_7bdf424a-4d2c-40d4-a8",
         "model": "claude-haiku-4-5-20251001"
       }
     },
     {
       "type": "text_delta",
-      "delay": 1,
+      "delay": 0,
       "data": {
         "text": "Hello"
       }
     },
     {
       "type": "text_delta",
-      "delay": 0,
+      "delay": 6,
       "data": {
         "text": "! "
       }
     },
     {
       "type": "text_delta",
-      "delay": 0,
+      "delay": 16,
       "data": {
         "text": "👋 How"
       }
     },
     {
       "type": "text_delta",
-      "delay": 4,
+      "delay": 49,
       "data": {
-        "text": " can I help you today?"
+        "text": " can I help you today"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 104,
+      "data": {
+        "text": "?"
       }
     },
     {
       "type": "message_stop",
-      "delay": 115,
+      "delay": 84,
       "data": {
         "stopReason": "end_turn"
       }

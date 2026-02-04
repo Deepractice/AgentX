@@ -20,7 +20,6 @@ import {
 import type { AgentX, BaseResponse, Presentation, PresentationState } from "agentxjs";
 import type { BusEvent, Unsubscribe } from "@agentxjs/core/event";
 import type { AgentXServer } from "@agentxjs/server";
-import type { Driver, DriverConfig, CreateDriver } from "@agentxjs/core/driver";
 
 // ============================================================================
 // VCR Configuration
@@ -28,18 +27,11 @@ import type { Driver, DriverConfig, CreateDriver } from "@agentxjs/core/driver";
 
 const FIXTURES_DIR = "fixtures/recording/agentx";
 
-// Global registry: agentId → fixtureName
-const fixtureRegistry = new Map<string, string>();
-
 // Current scenario's fixture name (set by Before hook)
 let currentFixtureName: string | null = null;
 
 export function setCurrentFixture(name: string): void {
   currentFixtureName = name;
-}
-
-export function registerAgentFixture(agentId: string, fixtureName: string): void {
-  fixtureRegistry.set(agentId, fixtureName);
 }
 
 // ============================================================================
@@ -54,8 +46,7 @@ BeforeAll({ timeout: 60000 }, async function () {
   const { createNodeProvider } = await import("@agentxjs/node-provider");
   const { tmpdir } = await import("node:os");
   const { join, resolve } = await import("node:path");
-  const { mkdtempSync, existsSync, readFileSync, writeFileSync, mkdirSync } =
-    await import("node:fs");
+  const { mkdtempSync, mkdirSync, existsSync } = await import("node:fs");
 
   const tempDir = mkdtempSync(join(tmpdir(), "agentx-bdd-"));
   const fixturesPath = resolve(process.cwd(), FIXTURES_DIR);
@@ -72,75 +63,25 @@ BeforeAll({ timeout: 60000 }, async function () {
 
   console.log(`\n[BDD] VCR Mode - fixtures: ${FIXTURES_DIR}/\n`);
 
-  // Pre-load modules for VCR
-  const { MockDriver, createRecordingDriver } = await import("@agentxjs/devtools");
+  // Pre-load claude-driver for VCR recording
   const { createClaudeDriver } = await import("@agentxjs/claude-driver");
+  const { createVcrCreateDriver } = await import("@agentxjs/devtools");
 
-  // Create VCR-aware CreateDriver function
-  const vcrCreateDriver: CreateDriver = (config: DriverConfig): Driver => {
-    const { agentId } = config;
-
-    // Get fixture name from registry or use current scenario's fixture
-    const fixtureName = fixtureRegistry.get(agentId || "") || currentFixtureName || agentId || "unknown";
-    const fixturePath = join(fixturesPath, `${fixtureName}.json`);
-
-    if (existsSync(fixturePath)) {
-      // Fixture exists → MockDriver (playback)
-      console.log(`[VCR] Playback: ${fixtureName}`);
-
-      const fixture = JSON.parse(readFileSync(fixturePath, "utf-8"));
-      return new MockDriver({ fixture });
-    } else {
-      // No fixture → RecordingDriver (record)
-      if (!apiKey) {
-        throw new Error(
-          `No fixture found for "${fixtureName}" and DEEPRACTICE_API_KEY not set. ` +
-            `Either create the fixture or set API key to record.`
-        );
-      }
-
-      console.log(`[VCR] Recording: ${fixtureName}`);
-
-      // Create real driver with merged config
-      const realDriver = createClaudeDriver({
-        ...config,
-        apiKey,
-        baseUrl,
-        model,
-      });
-
-      const recorder = createRecordingDriver({
-        driver: realDriver,
-        name: fixtureName,
-        description: `BDD scenario: ${fixtureName}`,
-      });
-
-      // Save fixture on dispose
-      let fixtureSaved = false;
-      const saveFixture = () => {
-        if (fixtureSaved) return;
-        if (recorder.eventCount > 0) {
-          try {
-            const fixture = recorder.getFixture();
-            writeFileSync(fixturePath, JSON.stringify(fixture, null, 2), "utf-8");
-            console.log(`[VCR] Saved: ${fixtureName} (${recorder.eventCount} events)`);
-            fixtureSaved = true;
-          } catch (e) {
-            console.error(`[VCR] Failed to save: ${fixtureName}`, e);
-          }
-        }
-      };
-
-      // Hook into dispose to save fixture
-      const originalDispose = recorder.dispose.bind(recorder);
-      recorder.dispose = async () => {
-        saveFixture();
-        return originalDispose();
-      };
-
-      return recorder;
-    }
-  };
+  // Create VCR-aware CreateDriver using devtools
+  const vcrCreateDriver = createVcrCreateDriver({
+    fixturesDir: fixturesPath,
+    getFixtureName: () => {
+      // Use fixture registry or current scenario's fixture name
+      return currentFixtureName;
+    },
+    apiKey,
+    baseUrl,
+    model,
+    createRealDriver: createClaudeDriver,
+    onPlayback: (name) => console.log(`[VCR] Playback: ${name}`),
+    onRecording: (name) => console.log(`[VCR] Recording: ${name}`),
+    onSaved: (name, count) => console.log(`[VCR] Saved: ${name} (${count} events)`),
+  });
 
   const provider = await createNodeProvider({
     dataPath: tempDir,
@@ -181,6 +122,7 @@ export class AgentXWorld extends World {
   presentationStates: PresentationState[] = [];
   presentationComplete: boolean = false;
   presentationDisposed: boolean = false;
+  presentationUpdateCount: number = 0;
 
   constructor(options: IWorldOptions) {
     super(options);
@@ -244,6 +186,7 @@ export class AgentXWorld extends World {
     this.presentationStates = [];
     this.presentationComplete = false;
     this.presentationDisposed = false;
+    this.presentationUpdateCount = 0;
 
     if (this.agentx) {
       await this.agentx.dispose();
@@ -274,5 +217,4 @@ Before(async function (this: AgentXWorld, scenario) {
 After(async function (this: AgentXWorld) {
   await this.cleanup();
   setCurrentFixture(null as unknown as string);
-  fixtureRegistry.clear();
 });

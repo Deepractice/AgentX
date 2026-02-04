@@ -39,7 +39,14 @@
  */
 
 // Devtools SDK (recommended)
-export { Devtools, createDevtools, type DevtoolsConfig, type DriverOptions } from "./Devtools";
+export {
+  Devtools,
+  createDevtools,
+  createVcrCreateDriver,
+  type DevtoolsConfig,
+  type DriverOptions,
+  type VcrCreateDriverConfig,
+} from "./Devtools";
 
 // Mock Driver (low-level)
 export { MockDriver, createMockDriver } from "./mock/MockDriver";

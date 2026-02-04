@@ -1,13 +1,13 @@
 {
-  "name": "force-test",
-  "description": "Recording of: \"Hello again!\"",
-  "recordedAt": 1770179431921,
+  "name": "assistant-conversation-is-not-streaming-after-completion",
+  "description": "VCR recording: assistant-conversation-is-not-streaming-after-completion",
+  "recordedAt": 1770179216241,
   "events": [
     {
       "type": "message_start",
-      "delay": 9849,
+      "delay": 7966,
       "data": {
-        "messageId": "msg_9f3f25b7-eb79-45fa-82",
+        "messageId": "msg_c360b024-fbb4-4b70-bb",
         "model": "claude-haiku-4-5-20251001"
       }
     },
@@ -15,7 +15,7 @@
       "type": "text_delta",
       "delay": 1,
       "data": {
-        "text": "Hello"
+        "text": "Hi"
       }
     },
     {
@@ -34,14 +34,14 @@
     },
     {
       "type": "text_delta",
-      "delay": 4,
+      "delay": 0,
       "data": {
         "text": " can I help you today?"
       }
     },
     {
       "type": "message_stop",
-      "delay": 115,
+      "delay": 15,
       "data": {
         "stopReason": "end_turn"
       }

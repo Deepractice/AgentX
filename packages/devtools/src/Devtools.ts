@@ -305,3 +305,197 @@ export class Devtools {
 export function createDevtools(config: DevtoolsConfig): Devtools {
   return new Devtools(config);
 }
+
+// ============================================================================
+// VCR CreateDriver Factory
+// ============================================================================
+
+/**
+ * Configuration for VCR-aware CreateDriver
+ */
+export interface VcrCreateDriverConfig {
+  /**
+   * Directory to store/load fixtures
+   */
+  fixturesDir: string;
+
+  /**
+   * Get current fixture name. Return null to skip VCR (use real driver).
+   * Called when driver is created.
+   */
+  getFixtureName: () => string | null;
+
+  /**
+   * API key for recording
+   */
+  apiKey?: string;
+
+  /**
+   * API base URL
+   */
+  baseUrl?: string;
+
+  /**
+   * Default model
+   */
+  model?: string;
+
+  /**
+   * Real driver factory (optional, defaults to @agentxjs/claude-driver)
+   */
+  createRealDriver?: CreateDriver;
+
+  /**
+   * Called when playback mode is used
+   */
+  onPlayback?: (fixtureName: string) => void;
+
+  /**
+   * Called when recording mode is used
+   */
+  onRecording?: (fixtureName: string) => void;
+
+  /**
+   * Called when fixture is saved
+   */
+  onSaved?: (fixtureName: string, eventCount: number) => void;
+}
+
+/**
+ * Create a VCR-aware CreateDriver function
+ *
+ * VCR logic (hardcoded):
+ * - Fixture exists → Playback (MockDriver)
+ * - Fixture missing → Recording (RecordingDriver) → Auto-save on dispose
+ *
+ * @example
+ * ```typescript
+ * let currentFixture: string | null = null;
+ *
+ * const vcrCreateDriver = createVcrCreateDriver({
+ *   fixturesDir: "./fixtures",
+ *   getFixtureName: () => currentFixture,
+ *   apiKey: process.env.API_KEY,
+ * });
+ *
+ * // Before each test:
+ * currentFixture = "test-scenario-name";
+ *
+ * // Use with server/provider:
+ * const provider = await createNodeProvider({
+ *   createDriver: vcrCreateDriver,
+ * });
+ * ```
+ */
+export function createVcrCreateDriver(config: VcrCreateDriverConfig): CreateDriver {
+  const {
+    fixturesDir,
+    getFixtureName,
+    apiKey,
+    baseUrl,
+    model,
+    onPlayback,
+    onRecording,
+    onSaved,
+  } = config;
+
+  // Real driver factory (must be provided or pre-loaded)
+  const realCreateDriver: CreateDriver | null = config.createRealDriver || null;
+
+  return (driverConfig: DriverConfig): Driver => {
+    const fixtureName = getFixtureName();
+
+    // No fixture name → use real driver without VCR
+    if (!fixtureName) {
+      if (!apiKey) {
+        throw new Error("No fixture name and no API key. Cannot create driver.");
+      }
+
+      // Sync: we need to return immediately, so we create the driver with merged config
+      // Note: This path is for non-VCR scenarios
+      const createDriver = realCreateDriver || config.createRealDriver;
+      if (!createDriver) {
+        throw new Error("No createRealDriver provided and claude-driver not loaded yet.");
+      }
+
+      return createDriver({
+        ...driverConfig,
+        apiKey,
+        baseUrl,
+        model,
+      });
+    }
+
+    const fixturePath = join(fixturesDir, `${fixtureName}.json`);
+
+    // Fixture exists → Playback (MockDriver)
+    if (existsSync(fixturePath)) {
+      onPlayback?.(fixtureName);
+      logger.info("VCR Playback", { fixtureName });
+
+      const fixture = JSON.parse(readFileSync(fixturePath, "utf-8")) as Fixture;
+      return new MockDriver({ fixture });
+    }
+
+    // No fixture → Recording (RecordingDriver)
+    if (!apiKey) {
+      throw new Error(
+        `No fixture found for "${fixtureName}" and no API key for recording. ` +
+          `Either create the fixture or provide an API key.`
+      );
+    }
+
+    onRecording?.(fixtureName);
+    logger.info("VCR Recording", { fixtureName });
+
+    // Get real driver factory (sync - must be pre-loaded or provided)
+    const createDriver = realCreateDriver || config.createRealDriver;
+    if (!createDriver) {
+      throw new Error(
+        "createRealDriver not available. For async loading, ensure claude-driver is pre-loaded."
+      );
+    }
+
+    // Create real driver with merged config
+    const realDriver = createDriver({
+      ...driverConfig,
+      apiKey,
+      baseUrl,
+      model,
+    });
+
+    // Wrap with RecordingDriver
+    const recorder = new RecordingDriver({
+      driver: realDriver,
+      name: fixtureName,
+      description: `VCR recording: ${fixtureName}`,
+    });
+
+    // Auto-save fixture on dispose
+    let fixtureSaved = false;
+    const originalDispose = recorder.dispose.bind(recorder);
+
+    recorder.dispose = async () => {
+      if (!fixtureSaved && recorder.eventCount > 0) {
+        try {
+          const fixture = recorder.getFixture();
+
+          // Ensure directory exists
+          const { mkdir, writeFile } = await import("node:fs/promises");
+          await mkdir(dirname(fixturePath), { recursive: true });
+          await writeFile(fixturePath, JSON.stringify(fixture, null, 2), "utf-8");
+
+          fixtureSaved = true;
+          onSaved?.(fixtureName, recorder.eventCount);
+          logger.info("VCR Saved", { fixtureName, eventCount: recorder.eventCount });
+        } catch (e) {
+          logger.error("VCR Save failed", { fixtureName, error: e });
+        }
+      }
+
+      return originalDispose();
+    };
+
+    return recorder;
+  };
+}

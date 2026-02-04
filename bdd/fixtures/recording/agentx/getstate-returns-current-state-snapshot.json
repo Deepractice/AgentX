@@ -1,47 +1,47 @@
 {
-  "name": "force-test",
-  "description": "Recording of: \"Hello again!\"",
-  "recordedAt": 1770179431921,
+  "name": "getstate-returns-current-state-snapshot",
+  "description": "VCR recording: getstate-returns-current-state-snapshot",
+  "recordedAt": 1770179251753,
   "events": [
     {
       "type": "message_start",
-      "delay": 9849,
+      "delay": 7728,
       "data": {
-        "messageId": "msg_9f3f25b7-eb79-45fa-82",
+        "messageId": "msg_e4bed042-c5df-491a-a4",
         "model": "claude-haiku-4-5-20251001"
       }
     },
     {
       "type": "text_delta",
-      "delay": 1,
-      "data": {
-        "text": "Hello"
-      }
-    },
-    {
-      "type": "text_delta",
       "delay": 0,
       "data": {
-        "text": "! "
+        "text": "I'm"
       }
     },
     {
       "type": "text_delta",
-      "delay": 0,
+      "delay": 52,
       "data": {
-        "text": "👋 How"
+        "text": " ready to help!"
       }
     },
     {
       "type": "text_delta",
-      "delay": 4,
+      "delay": 20,
       "data": {
-        "text": " can I help you today?"
+        "text": " What"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 27,
+      "data": {
+        "text": " would you like me to do?"
       }
     },
     {
       "type": "message_stop",
-      "delay": 115,
+      "delay": 140,
       "data": {
         "stopReason": "end_turn"
       }

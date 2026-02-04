@@ -556,3 +556,101 @@ Then("the text block content should not be empty", function (this: AgentXWorld) 
 Then("the presentation should be disposed", function (this: AgentXWorld) {
   assert.ok(this.presentationDisposed, "Presentation should be disposed");
 });
+
+// ===========================================================================
+// Additional Presentation Steps
+// ===========================================================================
+
+Then("the second conversation should have text blocks", function (this: AgentXWorld) {
+  assert.ok(this.presentation, "Presentation should exist");
+  const state = this.presentation.getState();
+  assert.ok(state.conversations.length > 1, "Should have at least two conversations");
+
+  const conv = state.conversations[1];
+  if (conv.role === "assistant") {
+    const hasTextBlock = conv.blocks.some((block) => block.type === "text");
+    assert.ok(hasTextBlock, "Assistant conversation should have text blocks");
+  } else {
+    throw new Error(`Expected assistant conversation, got ${conv.role}`);
+  }
+});
+
+Then("the second conversation should not be streaming", function (this: AgentXWorld) {
+  assert.ok(this.presentation, "Presentation should exist");
+  const state = this.presentation.getState();
+  assert.ok(state.conversations.length > 1, "Should have at least two conversations");
+
+  const conv = state.conversations[1];
+  if (conv.role === "assistant") {
+    assert.strictEqual(conv.isStreaming, false, "Assistant conversation should not be streaming");
+  } else {
+    throw new Error(`Expected assistant conversation, got ${conv.role}`);
+  }
+});
+
+Then(
+  "conversation {int} should be from {string}",
+  function (this: AgentXWorld, index: number, role: string) {
+    assert.ok(this.presentation, "Presentation should exist");
+    const state = this.presentation.getState();
+    const arrayIndex = index - 1; // Convert to 0-based index
+    assert.ok(
+      state.conversations.length > arrayIndex,
+      `Should have at least ${index} conversations, but only have ${state.conversations.length}`
+    );
+    assert.strictEqual(
+      state.conversations[arrayIndex].role,
+      role,
+      `Conversation ${index} should be from ${role}`
+    );
+  }
+);
+
+Given(
+  "I create a presentation for agent {string} with update tracking",
+  function (this: AgentXWorld, agentId: string) {
+    assert.ok(this.agentx, "AgentX should be initialized");
+
+    const resolvedId = agentId.startsWith("{") && agentId.endsWith("}")
+      ? this.savedValues.get(agentId.slice(1, -1)) || agentId
+      : agentId;
+
+    this.presentationStates = [];
+    this.presentationComplete = false;
+    this.presentationDisposed = false;
+    this.presentationUpdateCount = 0;
+
+    this.presentation = this.agentx!.presentation(resolvedId, {
+      onUpdate: (state) => {
+        this.presentationStates.push({ ...state });
+        this.presentationUpdateCount++;
+        if (state.status === "idle" && state.conversations.length > 0) {
+          this.presentationComplete = true;
+        }
+      },
+    });
+  }
+);
+
+Then("the update callback should have been called", function (this: AgentXWorld) {
+  assert.ok(this.presentationUpdateCount > 0, "Update callback should have been called at least once");
+});
+
+Then("the update callback should have received the final state", function (this: AgentXWorld) {
+  assert.ok(this.presentationStates.length > 0, "Should have captured state updates");
+  const lastState = this.presentationStates[this.presentationStates.length - 1];
+  assert.strictEqual(lastState.status, "idle", "Final state status should be idle");
+  assert.ok(lastState.conversations.length > 0, "Final state should have conversations");
+});
+
+Then("getState should return empty conversations", function (this: AgentXWorld) {
+  assert.ok(this.presentation, "Presentation should exist");
+  const state = this.presentation.getState();
+  assert.strictEqual(state.conversations.length, 0, "getState should return empty conversations");
+});
+
+Then("getState should return {int} conversation(s)", function (this: AgentXWorld, count: number) {
+  assert.ok(this.presentation, "Presentation should exist");
+  const state = this.presentation.getState();
+  assert.strictEqual(state.conversations.length, count, `getState should return ${count} conversations`);
+});
