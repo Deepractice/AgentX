@@ -24,6 +24,7 @@ import type {
   MessageSendResponse,
   BaseResponse,
 } from "./types";
+import { Presentation, type PresentationOptions } from "./presentation";
 
 const logger = createLogger("agentx/RemoteClient");
 
@@ -210,5 +211,11 @@ export class RemoteClient implements AgentX {
   subscribe(sessionId: string): void {
     this.rpcClient.subscribe(sessionId);
     logger.debug("Subscribed to session", { sessionId });
+  }
+
+  // ==================== Presentation ====================
+
+  presentation(agentId: string, options?: PresentationOptions): Presentation {
+    return new Presentation(this, agentId, options);
   }
 }

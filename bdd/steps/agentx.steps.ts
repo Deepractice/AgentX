@@ -373,3 +373,186 @@ Given("I save the agentId as {string}", function (this: AgentXWorld, key: string
   assert.ok(response.agentId, "Response should have agentId");
   this.savedValues.set(key, response.agentId);
 });
+
+// ============================================================================
+// Presentation Steps
+// ============================================================================
+
+Given(
+  "I create a presentation for agent {string}",
+  function (this: AgentXWorld, agentId: string) {
+    const resolvedId = resolvePlaceholder(this, agentId);
+    this.presentationStates = [];
+    this.presentationComplete = false;
+    this.presentationDisposed = false;
+
+    this.presentation = this.agentx!.presentation(resolvedId, {
+      onUpdate: (state) => {
+        this.presentationStates.push({ ...state });
+        // Check if complete (no streaming and status is idle after user message)
+        if (state.streaming === null && state.status === "idle" && state.conversations.length > 1) {
+          this.presentationComplete = true;
+        }
+      },
+    });
+  }
+);
+
+When(
+  "I send {string} via presentation",
+  { timeout: 60000 },
+  async function (this: AgentXWorld, content: string) {
+    assert.ok(this.presentation, "Presentation should be created first");
+    this.presentationComplete = false;
+    await this.presentation.send(content);
+  }
+);
+
+When(
+  "I wait for presentation to complete within {int} seconds",
+  { timeout: 60000 },
+  async function (this: AgentXWorld, seconds: number) {
+    const timeout = seconds * 1000;
+    const start = Date.now();
+
+    while (Date.now() - start < timeout) {
+      if (this.presentationComplete) {
+        return;
+      }
+      await new Promise((r) => setTimeout(r, 50));
+    }
+
+    throw new Error(`Presentation did not complete within ${seconds} seconds`);
+  }
+);
+
+When("I reset the presentation", function (this: AgentXWorld) {
+  assert.ok(this.presentation, "Presentation should exist");
+  this.presentation.reset();
+  this.presentationStates = [];
+});
+
+When("I dispose the presentation", function (this: AgentXWorld) {
+  assert.ok(this.presentation, "Presentation should exist");
+  this.presentation.dispose();
+  this.presentationDisposed = true;
+});
+
+Then("the presentation state should have empty conversations", function (this: AgentXWorld) {
+  assert.ok(this.presentation, "Presentation should exist");
+  const state = this.presentation.getState();
+  assert.strictEqual(state.conversations.length, 0, "Conversations should be empty");
+});
+
+Then("the presentation status should be {string}", function (this: AgentXWorld, expected: string) {
+  assert.ok(this.presentation, "Presentation should exist");
+  const state = this.presentation.getState();
+  assert.strictEqual(state.status, expected, `Status should be ${expected}`);
+});
+
+Then("the presentation should have {int} conversation(s)", function (this: AgentXWorld, count: number) {
+  assert.ok(this.presentation, "Presentation should exist");
+  const state = this.presentation.getState();
+  assert.strictEqual(state.conversations.length, count, `Should have ${count} conversations`);
+});
+
+Then(
+  "the first conversation should be from {string}",
+  function (this: AgentXWorld, role: string) {
+    assert.ok(this.presentation, "Presentation should exist");
+    const state = this.presentation.getState();
+    assert.ok(state.conversations.length > 0, "Should have at least one conversation");
+    assert.strictEqual(state.conversations[0].role, role, `First conversation should be from ${role}`);
+  }
+);
+
+Then(
+  "the first conversation should contain text {string}",
+  function (this: AgentXWorld, text: string) {
+    assert.ok(this.presentation, "Presentation should exist");
+    const state = this.presentation.getState();
+    assert.ok(state.conversations.length > 0, "Should have at least one conversation");
+
+    const conv = state.conversations[0];
+    if (conv.role === "user" || conv.role === "assistant") {
+      const hasText = conv.blocks.some(
+        (block) => block.type === "text" && block.content.includes(text)
+      );
+      assert.ok(hasText, `Conversation should contain text "${text}"`);
+    } else {
+      throw new Error(`Unexpected conversation role: ${conv.role}`);
+    }
+  }
+);
+
+Then(
+  "the second conversation should be from {string}",
+  function (this: AgentXWorld, role: string) {
+    assert.ok(this.presentation, "Presentation should exist");
+    const state = this.presentation.getState();
+    assert.ok(state.conversations.length > 1, "Should have at least two conversations");
+    assert.strictEqual(state.conversations[1].role, role, `Second conversation should be from ${role}`);
+  }
+);
+
+Then("the second conversation should have blocks", function (this: AgentXWorld) {
+  assert.ok(this.presentation, "Presentation should exist");
+  const state = this.presentation.getState();
+  assert.ok(state.conversations.length > 1, "Should have at least two conversations");
+
+  const conv = state.conversations[1];
+  if (conv.role === "assistant") {
+    assert.ok(conv.blocks.length > 0, "Assistant conversation should have blocks");
+  } else {
+    throw new Error(`Expected assistant conversation, got ${conv.role}`);
+  }
+});
+
+Then("the presentation streaming should not be null during response", function (this: AgentXWorld) {
+  // Check if we captured a state where streaming was not null
+  const hasStreaming = this.presentationStates.some((state) => state.streaming !== null);
+  assert.ok(hasStreaming, "Should have captured streaming state during response");
+});
+
+Then(
+  "the presentation status should be {string} during response",
+  function (this: AgentXWorld, expected: string) {
+    // Check if we captured a state with the expected status
+    const hasStatus = this.presentationStates.some((state) => state.status === expected);
+    assert.ok(hasStatus, `Should have captured status "${expected}" during response`);
+  }
+);
+
+Then("the presentation streaming should be null", function (this: AgentXWorld) {
+  assert.ok(this.presentation, "Presentation should exist");
+  const state = this.presentation.getState();
+  assert.strictEqual(state.streaming, null, "Streaming should be null");
+});
+
+Then("the assistant conversation should have a text block", function (this: AgentXWorld) {
+  assert.ok(this.presentation, "Presentation should exist");
+  const state = this.presentation.getState();
+
+  const assistantConv = state.conversations.find((c) => c.role === "assistant");
+  assert.ok(assistantConv, "Should have an assistant conversation");
+  assert.ok(assistantConv.role === "assistant", "Should be assistant role");
+
+  const textBlock = assistantConv.blocks.find((b) => b.type === "text");
+  assert.ok(textBlock, "Assistant conversation should have a text block");
+});
+
+Then("the text block content should not be empty", function (this: AgentXWorld) {
+  assert.ok(this.presentation, "Presentation should exist");
+  const state = this.presentation.getState();
+
+  const assistantConv = state.conversations.find((c) => c.role === "assistant");
+  assert.ok(assistantConv && assistantConv.role === "assistant", "Should have an assistant conversation");
+
+  const textBlock = assistantConv.blocks.find((b) => b.type === "text");
+  assert.ok(textBlock && textBlock.type === "text", "Should have a text block");
+  assert.ok(textBlock.content.length > 0, "Text block content should not be empty");
+});
+
+Then("the presentation should be disposed", function (this: AgentXWorld) {
+  assert.ok(this.presentationDisposed, "Presentation should be disposed");
+});

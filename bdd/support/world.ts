@@ -17,7 +17,7 @@ import {
   After,
   type IWorldOptions,
 } from "@cucumber/cucumber";
-import type { AgentX, BaseResponse } from "agentxjs";
+import type { AgentX, BaseResponse, Presentation, PresentationState } from "agentxjs";
 import type { BusEvent, Unsubscribe } from "@agentxjs/core/event";
 import type { AgentXServer } from "@agentxjs/server";
 import type { Driver, DriverConfig, CreateDriver } from "@agentxjs/core/driver";
@@ -176,6 +176,12 @@ export class AgentXWorld extends World {
   savedValues: Map<string, string> = new Map();
   scenarioName: string = "";
 
+  // Presentation support
+  presentation?: Presentation;
+  presentationStates: PresentationState[] = [];
+  presentationComplete: boolean = false;
+  presentationDisposed: boolean = false;
+
   constructor(options: IWorldOptions) {
     super(options);
   }
@@ -229,6 +235,16 @@ export class AgentXWorld extends World {
       unsubscribe();
     }
     this.eventHandlers = [];
+
+    // Cleanup presentation
+    if (this.presentation && !this.presentationDisposed) {
+      this.presentation.dispose();
+      this.presentation = undefined;
+    }
+    this.presentationStates = [];
+    this.presentationComplete = false;
+    this.presentationDisposed = false;
+
     if (this.agentx) {
       await this.agentx.dispose();
       this.agentx = undefined;

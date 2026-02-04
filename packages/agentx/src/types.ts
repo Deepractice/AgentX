@@ -3,6 +3,7 @@
  */
 
 import type { BusEvent, EventBus, Unsubscribe, BusEventHandler } from "@agentxjs/core/event";
+import type { Presentation, PresentationOptions } from "./presentation";
 
 // ============================================================================
 // Configuration Types
@@ -290,6 +291,24 @@ export interface AgentX {
    * Subscribe to session events
    */
   subscribe(sessionId: string): void;
+
+  // ==================== Presentation ====================
+
+  /**
+   * Create a presentation for UI integration
+   *
+   * @example
+   * ```typescript
+   * const presentation = agentx.presentation(agentId);
+   *
+   * presentation.onUpdate((state) => {
+   *   render(state.conversations);
+   * });
+   *
+   * await presentation.send("Hello!");
+   * ```
+   */
+  presentation(agentId: string, options?: PresentationOptions): Presentation;
 
   // ==================== Lifecycle ====================
 

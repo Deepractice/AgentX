@@ -92,3 +92,27 @@ export type {
 
 // Re-export RemoteClient for advanced use
 export { RemoteClient } from "./RemoteClient";
+
+// Re-export Presentation types and classes
+export type {
+  Block,
+  TextBlock,
+  ToolBlock,
+  ImageBlock,
+  Conversation,
+  UserConversation,
+  AssistantConversation,
+  ErrorConversation,
+  PresentationState,
+  PresentationOptions,
+  PresentationUpdateHandler,
+  PresentationErrorHandler,
+} from "./presentation";
+
+export {
+  Presentation,
+  presentationReducer,
+  addUserConversation,
+  createInitialState,
+  initialPresentationState,
+} from "./presentation";
