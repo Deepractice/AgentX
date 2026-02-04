@@ -47,7 +47,9 @@ function createSqliteUnstorageDriver(db: Database): Driver {
 
     hasItem(key: string): boolean {
       const row = db.prepare("SELECT 1 FROM kv_storage WHERE key = ?").get(key);
-      return row !== undefined;
+      // Note: row can be null (not found) or object (found)
+      // Must use != null to handle both null and undefined
+      return row != null;
     },
 
     getItem(key: string): string | null {
