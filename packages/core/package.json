@@ -1,27 +1,87 @@
 {
   "name": "@agentxjs/core",
-  "version": "0.0.1",
+  "version": "1.9.6-dev",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./common": "./src/common/index.ts",
-    "./agent": "./src/agent/index.ts",
-    "./driver": "./src/driver/index.ts",
-    "./event": "./src/event/index.ts",
-    "./session": "./src/session/index.ts",
-    "./image": "./src/image/index.ts",
-    "./container": "./src/container/index.ts",
-    "./workspace": "./src/workspace/index.ts",
-    "./runtime": "./src/runtime/index.ts",
-    "./mq": "./src/mq/index.ts",
-    "./persistence": "./src/persistence/index.ts",
-    "./network": "./src/network/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./common": {
+      "types": "./dist/common/index.d.ts",
+      "import": "./dist/common/index.js",
+      "default": "./dist/common/index.js"
+    },
+    "./agent": {
+      "types": "./dist/agent/index.d.ts",
+      "import": "./dist/agent/index.js",
+      "default": "./dist/agent/index.js"
+    },
+    "./driver": {
+      "types": "./dist/driver/index.d.ts",
+      "import": "./dist/driver/index.js",
+      "default": "./dist/driver/index.js"
+    },
+    "./event": {
+      "types": "./dist/event/index.d.ts",
+      "import": "./dist/event/index.js",
+      "default": "./dist/event/index.js"
+    },
+    "./session": {
+      "types": "./dist/session/index.d.ts",
+      "import": "./dist/session/index.js",
+      "default": "./dist/session/index.js"
+    },
+    "./image": {
+      "types": "./dist/image/index.d.ts",
+      "import": "./dist/image/index.js",
+      "default": "./dist/image/index.js"
+    },
+    "./container": {
+      "types": "./dist/container/index.d.ts",
+      "import": "./dist/container/index.js",
+      "default": "./dist/container/index.js"
+    },
+    "./workspace": {
+      "types": "./dist/workspace/index.d.ts",
+      "import": "./dist/workspace/index.js",
+      "default": "./dist/workspace/index.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime/index.d.ts",
+      "import": "./dist/runtime/index.js",
+      "default": "./dist/runtime/index.js"
+    },
+    "./mq": {
+      "types": "./dist/mq/index.d.ts",
+      "import": "./dist/mq/index.js",
+      "default": "./dist/mq/index.js"
+    },
+    "./persistence": {
+      "types": "./dist/persistence/index.d.ts",
+      "import": "./dist/persistence/index.js",
+      "default": "./dist/persistence/index.js"
+    },
+    "./network": {
+      "types": "./dist/network/index.d.ts",
+      "import": "./dist/network/index.js",
+      "default": "./dist/network/index.js"
+    }
   },
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
+    "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "bun test"
   },
   "dependencies": {
+    "commonxjs": "^0.1.1",
     "jsonrpc-lite": "2.2.0",
     "rxjs": "^7.8.2"
   },

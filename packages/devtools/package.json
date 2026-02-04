@@ -1,23 +1,56 @@
 {
   "name": "@agentxjs/devtools",
-  "version": "0.0.1",
+  "version": "1.9.6-dev",
   "description": "Development tools for AgentX - MockDriver, RecordingDriver, Fixtures",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./mock": "./src/mock/index.ts",
-    "./recorder": "./src/recorder/index.ts",
-    "./fixtures": "./fixtures/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./mock": {
+      "types": "./dist/mock/index.d.ts",
+      "import": "./dist/mock/index.js",
+      "default": "./dist/mock/index.js"
+    },
+    "./recorder": {
+      "types": "./dist/recorder/index.d.ts",
+      "import": "./dist/recorder/index.js",
+      "default": "./dist/recorder/index.js"
+    },
+    "./fixtures": {
+      "types": "./dist/fixtures/index.d.ts",
+      "import": "./dist/fixtures/index.js",
+      "default": "./dist/fixtures/index.js"
+    }
   },
+  "files": [
+    "dist",
+    "src",
+    "fixtures"
+  ],
   "scripts": {
+    "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "bun test"
   },
   "dependencies": {
     "@agentxjs/core": "workspace:*",
-    "commonxjs": "^0.1.0"
+    "commonxjs": "^0.1.1"
   },
   "devDependencies": {
+    "@agentxjs/claude-driver": "workspace:*",
     "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "@agentxjs/claude-driver": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@agentxjs/claude-driver": {
+      "optional": true
+    }
   }
 }

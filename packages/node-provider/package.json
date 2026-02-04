@@ -1,20 +1,43 @@
 {
   "name": "@agentxjs/node-provider",
-  "version": "0.0.1",
+  "version": "1.9.6-dev",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./persistence": "./src/persistence/index.ts",
-    "./mq": "./src/mq/index.ts",
-    "./network": "./src/network/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./persistence": {
+      "types": "./dist/persistence/index.d.ts",
+      "import": "./dist/persistence/index.js",
+      "default": "./dist/persistence/index.js"
+    },
+    "./mq": {
+      "types": "./dist/mq/index.d.ts",
+      "import": "./dist/mq/index.js",
+      "default": "./dist/mq/index.js"
+    },
+    "./network": {
+      "types": "./dist/network/index.d.ts",
+      "import": "./dist/network/index.js",
+      "default": "./dist/network/index.js"
+    }
   },
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
+    "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "bun test"
   },
   "dependencies": {
     "@agentxjs/core": "workspace:*",
-    "commonxjs": "^0.1.0",
+    "commonxjs": "^0.1.1",
     "rxjs": "^7.8.2",
     "unstorage": "^1.10.2",
     "ws": "^8.18.0"

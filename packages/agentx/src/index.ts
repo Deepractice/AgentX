@@ -90,9 +90,6 @@ export type {
   BaseResponse,
 } from "./types";
 
-// Re-export RemoteClient for advanced use
-export { RemoteClient } from "./RemoteClient";
-
 // Re-export Presentation types and classes
 export type {
   Block,

@@ -1,15 +1,27 @@
 {
   "name": "@agentxjs/server",
-  "version": "0.0.1",
+  "version": "1.9.6-dev",
   "description": "AgentX Server - WebSocket server with Provider support",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "bin": {
     "agentx-server": "./bin/server.ts"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
+  "files": [
+    "dist",
+    "src",
+    "bin"
+  ],
   "scripts": {
+    "build": "tsup",
     "dev": "bun run bin/server.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test"
@@ -18,7 +30,7 @@
     "@agentxjs/core": "workspace:*",
     "@agentxjs/node-provider": "workspace:*",
     "@agentxjs/claude-driver": "workspace:*",
-    "commonxjs": "^0.1.0"
+    "commonxjs": "^0.1.1"
   },
   "devDependencies": {
     "typescript": "^5.3.3"

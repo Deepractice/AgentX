@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "bun dev/dev-manager.ts",
     "start": "bun apps/portagent/bin/portagent.js",
-    "build": "turbo build --filter='!@agentx/dev-storybook'",
+    "build": "turbo build --filter='!@agentxjs/cli'",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "format": "prettier --write .",
@@ -57,6 +57,7 @@
     "prettier": "^3.6.2",
     "string-width": "4.2.3",
     "tailwindcss": "^3.4.17",
+    "tsup": "8.5.1",
     "turbo": "^2.5.8",
     "typedoc": "^0.28.15",
     "typescript": "^5.9.3",
