@@ -1,47 +1,61 @@
 {
   "name": "getstate-returns-current-state-snapshot",
   "description": "VCR recording: getstate-returns-current-state-snapshot",
-  "recordedAt": 1770179251753,
+  "recordedAt": 1770265450099,
   "events": [
     {
       "type": "message_start",
-      "delay": 7728,
+      "delay": 2,
       "data": {
-        "messageId": "msg_e4bed042-c5df-491a-a4",
+        "messageId": "msg_1770265450101",
         "model": "claude-haiku-4-5-20251001"
       }
     },
     {
       "type": "text_delta",
-      "delay": 0,
+      "delay": 1853,
       "data": {
-        "text": "I'm"
+        "text": "Hello"
       }
     },
     {
       "type": "text_delta",
-      "delay": 52,
+      "delay": 5,
       "data": {
-        "text": " ready to help!"
+        "text": "! I'm here to help."
       }
     },
     {
       "type": "text_delta",
-      "delay": 20,
+      "delay": 38,
       "data": {
-        "text": " What"
+        "text": " Coul"
       }
     },
     {
       "type": "text_delta",
-      "delay": 27,
+      "delay": 40,
       "data": {
-        "text": " would you like me to do?"
+        "text": "d you please clar"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 44,
+      "data": {
+        "text": "ify what you nee"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 43,
+      "data": {
+        "text": "d assistance with?"
       }
     },
     {
       "type": "message_stop",
-      "delay": 140,
+      "delay": 121,
       "data": {
         "stopReason": "end_turn"
       }

@@ -23,6 +23,7 @@ import type {
 import type { UserContentPart, UserMessage } from "../agent/types";
 import type { BusEvent } from "../event/types";
 import type { Driver, DriverConfig, DriverStreamEvent } from "../driver/types";
+import { createSession } from "../session/Session";
 
 const logger = createLogger("runtime/AgentXRuntime");
 
@@ -86,6 +87,14 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     });
     await workspace.initialize();
 
+    // Create Session for driver (MonoDriver needs this to read history)
+    const session = createSession({
+      sessionId: imageRecord.sessionId,
+      imageId,
+      containerId: imageRecord.containerId,
+      repository: this.provider.sessionRepository,
+    });
+
     // Create driver config
     const driverConfig: DriverConfig = {
       apiKey: process.env.ANTHROPIC_API_KEY ?? "",
@@ -94,6 +103,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       systemPrompt: imageRecord.systemPrompt,
       cwd: workspace.path,
       mcpServers: imageRecord.mcpServers,
+      session, // Inject Session for stateless drivers
       resumeSessionId: imageRecord.metadata?.claudeSdkSessionId as string | undefined,
       onSessionIdCaptured: async (claudeSdkSessionId: string) => {
         // Persist SDK session ID for resume

@@ -1,19 +1,19 @@
 {
-  "name": "event-stream-contains-required-fields",
-  "description": "VCR recording: event-stream-contains-required-fields",
-  "recordedAt": 1770265431138,
+  "name": "message-start-event-contains-model-info",
+  "description": "VCR recording: message-start-event-contains-model-info",
+  "recordedAt": 1770265165905,
   "events": [
     {
       "type": "message_start",
-      "delay": 1,
+      "delay": 0,
       "data": {
-        "messageId": "msg_1770265431139",
+        "messageId": "msg_1770265165905",
         "model": "claude-haiku-4-5-20251001"
       }
     },
     {
       "type": "text_delta",
-      "delay": 1837,
+      "delay": 1778,
       "data": {
         "text": "Hello"
       }
@@ -27,14 +27,14 @@
     },
     {
       "type": "text_delta",
-      "delay": 1,
+      "delay": 37,
       "data": {
         "text": " can I help you today?"
       }
     },
     {
       "type": "message_stop",
-      "delay": 115,
+      "delay": 108,
       "data": {
         "stopReason": "end_turn"
       }

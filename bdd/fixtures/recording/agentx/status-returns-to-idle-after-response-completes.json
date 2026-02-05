@@ -1,47 +1,40 @@
 {
   "name": "status-returns-to-idle-after-response-completes",
   "description": "VCR recording: status-returns-to-idle-after-response-completes",
-  "recordedAt": 1770179224244,
+  "recordedAt": 1770265442146,
   "events": [
     {
       "type": "message_start",
-      "delay": 7163,
+      "delay": 2,
       "data": {
-        "messageId": "msg_c35cb89b-6253-4445-bb",
+        "messageId": "msg_1770265442148",
         "model": "claude-haiku-4-5-20251001"
       }
     },
     {
       "type": "text_delta",
-      "delay": 0,
+      "delay": 1741,
       "data": {
         "text": "Hello"
       }
     },
     {
       "type": "text_delta",
-      "delay": 46,
+      "delay": 31,
       "data": {
         "text": "! How"
       }
     },
     {
       "type": "text_delta",
-      "delay": 16,
+      "delay": 64,
       "data": {
-        "text": " can I help you today"
-      }
-    },
-    {
-      "type": "text_delta",
-      "delay": 94,
-      "data": {
-        "text": "?"
+        "text": " can I help you today?"
       }
     },
     {
       "type": "message_stop",
-      "delay": 24,
+      "delay": 87,
       "data": {
         "stopReason": "end_turn"
       }

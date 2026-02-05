@@ -1,47 +1,61 @@
 {
   "name": "subscribe-to-specific-event-type",
-  "description": "BDD scenario: subscribe-to-specific-event-type",
-  "recordedAt": 1770116176273,
+  "description": "VCR recording: subscribe-to-specific-event-type",
+  "recordedAt": 1770265433100,
   "events": [
     {
       "type": "message_start",
-      "delay": 7536,
+      "delay": 2,
       "data": {
-        "messageId": "msg_be39538d-60af-437e-9d",
+        "messageId": "msg_1770265433102",
         "model": "claude-haiku-4-5-20251001"
       }
     },
     {
       "type": "text_delta",
-      "delay": 0,
+      "delay": 1660,
       "data": {
-        "text": "I'm"
+        "text": "Hello"
       }
     },
     {
       "type": "text_delta",
-      "delay": 0,
+      "delay": 21,
       "data": {
-        "text": " ready to help!"
+        "text": "! I'm here to help."
       }
     },
     {
       "type": "text_delta",
-      "delay": 0,
+      "delay": 39,
       "data": {
-        "text": " What"
+        "text": " Coul"
       }
     },
     {
       "type": "text_delta",
-      "delay": 0,
+      "delay": 38,
       "data": {
-        "text": " would you like me to do?"
+        "text": "d you please clar"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 42,
+      "data": {
+        "text": "ify what you nee"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 41,
+      "data": {
+        "text": "d assistance with?"
       }
     },
     {
       "type": "message_stop",
-      "delay": 62,
+      "delay": 128,
       "data": {
         "stopReason": "end_turn"
       }

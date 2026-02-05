@@ -1,54 +1,33 @@
 {
   "name": "send-message-creates-user-and-assistant-conversations",
   "description": "VCR recording: send-message-creates-user-and-assistant-conversations",
-  "recordedAt": 1770179209356,
+  "recordedAt": 1770265438161,
   "events": [
     {
       "type": "message_start",
-      "delay": 6648,
+      "delay": 1,
       "data": {
-        "messageId": "msg_4bbf6034-7db6-48e9-a0",
+        "messageId": "msg_1770265438162",
         "model": "claude-haiku-4-5-20251001"
       }
     },
     {
       "type": "text_delta",
-      "delay": 0,
+      "delay": 1647,
       "data": {
-        "text": "Hello"
+        "text": "Hello! How"
       }
     },
     {
       "type": "text_delta",
-      "delay": 0,
+      "delay": 26,
       "data": {
-        "text": "! "
-      }
-    },
-    {
-      "type": "text_delta",
-      "delay": 1,
-      "data": {
-        "text": "👋 How"
-      }
-    },
-    {
-      "type": "text_delta",
-      "delay": 25,
-      "data": {
-        "text": " can I help you today"
-      }
-    },
-    {
-      "type": "text_delta",
-      "delay": 37,
-      "data": {
-        "text": "?"
+        "text": " can I help you today?"
       }
     },
     {
       "type": "message_stop",
-      "delay": 163,
+      "delay": 107,
       "data": {
         "stopReason": "end_turn"
       }

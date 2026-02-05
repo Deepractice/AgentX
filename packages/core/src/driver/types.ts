@@ -31,6 +31,7 @@
  */
 
 import type { UserMessage } from "../agent/types/message";
+import type { Session } from "../session/types";
 
 // ============================================================================
 // MCP Server Configuration
@@ -253,6 +254,21 @@ export interface DriverConfig<TOptions = Record<string, unknown>> {
   mcpServers?: Record<string, McpServerConfig>;
 
   // === Session Configuration ===
+
+  /**
+   * Session for message history access
+   *
+   * Stateless drivers (like MonoDriver) use this to read conversation history.
+   * Stateful drivers (like ClaudeDriver) may ignore this as they manage
+   * history internally via SDK.
+   *
+   * @example
+   * ```typescript
+   * // MonoDriver reads history from Session
+   * const history = await config.session?.getMessages();
+   * ```
+   */
+  session?: Session;
 
   /**
    * Session ID to resume (for conversation continuity)

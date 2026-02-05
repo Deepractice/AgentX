@@ -1,33 +1,33 @@
 {
-  "name": "reset-presentation-clears-all-state",
-  "description": "VCR recording: reset-presentation-clears-all-state",
-  "recordedAt": 1770265435121,
+  "name": "event-sequence-follows-the-expected-order",
+  "description": "VCR recording: event-sequence-follows-the-expected-order",
+  "recordedAt": 1770265164072,
   "events": [
     {
       "type": "message_start",
-      "delay": 2,
+      "delay": 1,
       "data": {
-        "messageId": "msg_1770265435123",
+        "messageId": "msg_1770265164073",
         "model": "claude-haiku-4-5-20251001"
       }
     },
     {
       "type": "text_delta",
-      "delay": 2965,
+      "delay": 1701,
       "data": {
-        "text": "Hello! How"
+        "text": "Hi"
       }
     },
     {
       "type": "text_delta",
-      "delay": 1,
+      "delay": 23,
       "data": {
-        "text": " can I help you today?"
+        "text": " there!"
       }
     },
     {
       "type": "message_stop",
-      "delay": 52,
+      "delay": 106,
       "data": {
         "stopReason": "end_turn"
       }

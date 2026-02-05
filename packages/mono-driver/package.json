@@ -1,0 +1,39 @@
+{
+  "name": "@agentxjs/mono-driver",
+  "version": "0.0.1",
+  "description": "Unified cross-platform Driver using Vercel AI SDK",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@agentxjs/core": "workspace:*",
+    "@ai-sdk/anthropic": "^3.0.36",
+    "@ai-sdk/deepseek": "2.0.17",
+    "@ai-sdk/google": "^3.0.21",
+    "@ai-sdk/mistral": "3.0.18",
+    "@ai-sdk/openai": "^3.0.25",
+    "@ai-sdk/openai-compatible": "2.0.27",
+    "@ai-sdk/xai": "3.0.47",
+    "ai": "^6.0.70",
+    "commonxjs": "^0.1.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

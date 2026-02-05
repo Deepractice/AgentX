@@ -19,6 +19,7 @@ import {
 } from "@cucumber/cucumber";
 import type { AgentX, BaseResponse, Presentation, PresentationState } from "agentxjs";
 import type { BusEvent, Unsubscribe } from "@agentxjs/core/event";
+import type { Driver, DriverStreamEvent } from "@agentxjs/core/driver";
 import type { AgentXServer } from "@agentxjs/server";
 
 // ============================================================================
@@ -63,21 +64,20 @@ BeforeAll({ timeout: 60000 }, async function () {
 
   console.log(`\n[BDD] VCR Mode - fixtures: ${FIXTURES_DIR}/\n`);
 
-  // Pre-load claude-driver for VCR recording
-  const { createClaudeDriver } = await import("@agentxjs/claude-driver");
+  // Use MonoDriver as default driver
+  const { createMonoDriver } = await import("@agentxjs/mono-driver");
   const { createVcrCreateDriver } = await import("@agentxjs/devtools");
 
   // Create VCR-aware CreateDriver using devtools
   const vcrCreateDriver = createVcrCreateDriver({
     fixturesDir: fixturesPath,
     getFixtureName: () => {
-      // Use fixture registry or current scenario's fixture name
       return currentFixtureName;
     },
     apiKey,
     baseUrl,
     model,
-    createRealDriver: createClaudeDriver,
+    createRealDriver: createMonoDriver as any,
     onPlayback: (name) => console.log(`[VCR] Playback: ${name}`),
     onRecording: (name) => console.log(`[VCR] Recording: ${name}`),
     onSaved: (name, count) => console.log(`[VCR] Saved: ${name} (${count} events)`),
@@ -116,6 +116,10 @@ export class AgentXWorld extends World {
   private eventHandlers: Unsubscribe[] = [];
   savedValues: Map<string, string> = new Map();
   scenarioName: string = "";
+
+  // MonoDriver direct testing support
+  monoDriver?: Driver;
+  driverEvents: DriverStreamEvent[] = [];
 
   // Presentation support
   presentation?: Presentation;
@@ -177,6 +181,13 @@ export class AgentXWorld extends World {
       unsubscribe();
     }
     this.eventHandlers = [];
+
+    // Cleanup MonoDriver
+    if (this.monoDriver) {
+      await this.monoDriver.dispose();
+      this.monoDriver = undefined;
+    }
+    this.driverEvents = [];
 
     // Cleanup presentation
     if (this.presentation && !this.presentationDisposed) {

@@ -1,97 +1,90 @@
 {
   "name": "multiple-messages-accumulate-in-conversations",
   "description": "VCR recording: multiple-messages-accumulate-in-conversations",
-  "recordedAt": 1770179231597,
+  "recordedAt": 1770265444099,
   "events": [
     {
       "type": "message_start",
-      "delay": 6660,
+      "delay": 2,
       "data": {
-        "messageId": "msg_cbbafb59-5f05-4606-bb",
+        "messageId": "msg_1770265444101",
         "model": "claude-haiku-4-5-20251001"
       }
     },
     {
       "type": "text_delta",
-      "delay": 1,
+      "delay": 1682,
       "data": {
         "text": "Hello"
       }
     },
     {
       "type": "text_delta",
-      "delay": 39,
+      "delay": 16,
       "data": {
         "text": "! How"
       }
     },
     {
       "type": "text_delta",
-      "delay": 13,
+      "delay": 38,
       "data": {
-        "text": " can I help you today"
-      }
-    },
-    {
-      "type": "text_delta",
-      "delay": 80,
-      "data": {
-        "text": "?"
+        "text": " can I help you today?"
       }
     },
     {
       "type": "message_stop",
-      "delay": 27,
+      "delay": 138,
       "data": {
         "stopReason": "end_turn"
       }
     },
     {
       "type": "message_start",
-      "delay": 3328,
+      "delay": 2,
       "data": {
-        "messageId": "msg_ee767b94-703e-4545-9d",
+        "messageId": "msg_1770265445977",
         "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1907,
+      "data": {
+        "text": "Hello"
       }
     },
     {
       "type": "text_delta",
       "delay": 1,
       "data": {
-        "text": "I'm doing well, thank you for"
+        "text": "! I'm doing well, thank you"
       }
     },
     {
       "type": "text_delta",
-      "delay": 45,
+      "delay": 37,
       "data": {
-        "text": " asking! How"
+        "text": " for asking. How"
       }
     },
     {
       "type": "text_delta",
-      "delay": 13,
+      "delay": 50,
       "data": {
         "text": " can"
       }
     },
     {
       "type": "text_delta",
-      "delay": 33,
+      "delay": 82,
       "data": {
-        "text": " I assist"
-      }
-    },
-    {
-      "type": "text_delta",
-      "delay": 366,
-      "data": {
-        "text": " you today?"
+        "text": " I help you today?"
       }
     },
     {
       "type": "message_stop",
-      "delay": 46,
+      "delay": 23,
       "data": {
         "stopReason": "end_turn"
       }

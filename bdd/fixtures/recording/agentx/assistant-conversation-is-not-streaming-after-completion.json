@@ -1,35 +1,28 @@
 {
   "name": "assistant-conversation-is-not-streaming-after-completion",
   "description": "VCR recording: assistant-conversation-is-not-streaming-after-completion",
-  "recordedAt": 1770179216241,
+  "recordedAt": 1770265439950,
   "events": [
     {
       "type": "message_start",
-      "delay": 7966,
+      "delay": 2,
       "data": {
-        "messageId": "msg_c360b024-fbb4-4b70-bb",
+        "messageId": "msg_1770265439952",
         "model": "claude-haiku-4-5-20251001"
       }
     },
     {
       "type": "text_delta",
-      "delay": 1,
+      "delay": 2094,
       "data": {
         "text": "Hi"
       }
     },
     {
       "type": "text_delta",
-      "delay": 0,
+      "delay": 1,
       "data": {
-        "text": "! "
-      }
-    },
-    {
-      "type": "text_delta",
-      "delay": 0,
-      "data": {
-        "text": "👋 How"
+        "text": "! How"
       }
     },
     {
@@ -41,7 +34,7 @@
     },
     {
       "type": "message_stop",
-      "delay": 15,
+      "delay": 90,
       "data": {
         "stopReason": "end_turn"
       }

@@ -1,0 +1,29 @@
+{
+  "name": "send-message-and-receive-streamed-response",
+  "description": "VCR recording: send-message-and-receive-streamed-response",
+  "recordedAt": 1770265157716,
+  "events": [
+    {
+      "type": "message_start",
+      "delay": 5,
+      "data": {
+        "messageId": "msg_1770265157721",
+        "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 2285,
+      "data": {
+        "text": "Hello!"
+      }
+    },
+    {
+      "type": "message_stop",
+      "delay": 63,
+      "data": {
+        "stopReason": "end_turn"
+      }
+    }
+  ]
+}

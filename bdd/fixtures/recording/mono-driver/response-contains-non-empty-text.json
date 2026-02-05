@@ -1,0 +1,29 @@
+{
+  "name": "response-contains-non-empty-text",
+  "description": "VCR recording: response-contains-non-empty-text",
+  "recordedAt": 1770265160072,
+  "events": [
+    {
+      "type": "message_start",
+      "delay": 1,
+      "data": {
+        "messageId": "msg_1770265160073",
+        "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1976,
+      "data": {
+        "text": "4"
+      }
+    },
+    {
+      "type": "message_stop",
+      "delay": 71,
+      "data": {
+        "stopReason": "end_turn"
+      }
+    }
+  ]
+}

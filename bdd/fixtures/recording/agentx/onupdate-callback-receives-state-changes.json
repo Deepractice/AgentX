@@ -1,54 +1,40 @@
 {
   "name": "onupdate-callback-receives-state-changes",
   "description": "VCR recording: onupdate-callback-receives-state-changes",
-  "recordedAt": 1770179242263,
+  "recordedAt": 1770265448088,
   "events": [
     {
       "type": "message_start",
-      "delay": 9378,
+      "delay": 2,
       "data": {
-        "messageId": "msg_ff2e0043-a5f9-4fe6-b9",
+        "messageId": "msg_1770265448090",
         "model": "claude-haiku-4-5-20251001"
       }
     },
     {
       "type": "text_delta",
-      "delay": 2,
+      "delay": 1825,
       "data": {
         "text": "Hello"
       }
     },
     {
       "type": "text_delta",
-      "delay": 0,
+      "delay": 26,
       "data": {
-        "text": "! "
+        "text": "! How"
       }
     },
     {
       "type": "text_delta",
       "delay": 33,
       "data": {
-        "text": "👋 How"
-      }
-    },
-    {
-      "type": "text_delta",
-      "delay": 1,
-      "data": {
-        "text": " can I help you today"
-      }
-    },
-    {
-      "type": "text_delta",
-      "delay": 0,
-      "data": {
-        "text": "?"
+        "text": " can I help you today?"
       }
     },
     {
       "type": "message_stop",
-      "delay": 43,
+      "delay": 117,
       "data": {
         "stopReason": "end_turn"
       }

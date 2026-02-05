@@ -6,12 +6,14 @@
   "type": "module",
   "scripts": {
     "test": "NODE_OPTIONS='--import tsx' cucumber-js",
-    "test:devtools": "NODE_OPTIONS='--import tsx' cucumber-js --tags @devtools"
+    "test:devtools": "NODE_OPTIONS='--import tsx' cucumber-js --tags @devtools",
+    "test:mono-driver": "NODE_OPTIONS='--import tsx' cucumber-js --tags @mono-driver"
   },
   "devDependencies": {
     "@agentxjs/claude-driver": "workspace:*",
     "@agentxjs/core": "workspace:*",
     "@agentxjs/devtools": "workspace:*",
+    "@agentxjs/mono-driver": "workspace:*",
     "@agentxjs/node-provider": "workspace:*",
     "@agentxjs/server": "workspace:*",
     "@cucumber/cucumber": "^11.2.0",

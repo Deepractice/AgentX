@@ -43,12 +43,11 @@ function resolvePlaceholder(world: AgentXWorld, value: string): string {
 // ============================================================================
 
 Given("I have an AgentX client connected to the test server", async function (this: AgentXWorld) {
-  const { RemoteClient } = await import("agentxjs");
+  const { createAgentX } = await import("agentxjs");
   const { AgentXWorld: World } = await import("../support/world");
 
   const serverUrl = World.getTestServerUrl();
-  this.agentx = new RemoteClient({ serverUrl });
-  await (this.agentx as { connect(): Promise<void> }).connect();
+  this.agentx = await createAgentX({ serverUrl });
 });
 
 // ============================================================================

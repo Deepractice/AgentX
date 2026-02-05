@@ -1,47 +1,33 @@
 {
   "name": "receive-text-content-from-assistant",
-  "description": "BDD scenario: receive-text-content-from-assistant",
-  "recordedAt": 1770116159714,
+  "description": "VCR recording: receive-text-content-from-assistant",
+  "recordedAt": 1770265429325,
   "events": [
     {
       "type": "message_start",
-      "delay": 7731,
+      "delay": 2,
       "data": {
-        "messageId": "msg_73a19cd2-77de-47fc-9d",
+        "messageId": "msg_1770265429327",
         "model": "claude-haiku-4-5-20251001"
       }
     },
     {
       "type": "text_delta",
-      "delay": 0,
+      "delay": 1660,
       "data": {
         "text": "Hello"
       }
     },
     {
       "type": "text_delta",
-      "delay": 88,
+      "delay": 29,
       "data": {
-        "text": "! "
-      }
-    },
-    {
-      "type": "text_delta",
-      "delay": 40,
-      "data": {
-        "text": "👋 How"
-      }
-    },
-    {
-      "type": "text_delta",
-      "delay": 41,
-      "data": {
-        "text": " can I help you today?"
+        "text": "! How can I help you today?"
       }
     },
     {
       "type": "message_stop",
-      "delay": 146,
+      "delay": 114,
       "data": {
         "stopReason": "end_turn"
       }
