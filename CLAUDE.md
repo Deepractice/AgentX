@@ -13,15 +13,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── apps/
 │   └── portagent/        # Web UI with auth (Hono + Vite + React)
 ├── packages/
-│   ├── types/            # @agentxjs/types - Type definitions (zero deps)
-│   ├── common/           # @agentxjs/common - Logger, SQLite, Path utilities
-│   ├── persistence/      # @agentxjs/persistence - Storage layer (SQLite, Redis, etc.)
-│   ├── queue/            # @agentxjs/queue - Event queue with RxJS + SQLite
-│   ├── network/          # @agentxjs/network - WebSocket with reliable delivery (ACK)
-│   ├── agent/            # @agentxjs/agent - Agent lifecycle and event management
-│   ├── agentx/           # agentxjs - Platform API (unified entry point)
-│   ├── runtime/          # @agentxjs/runtime - Claude driver, SystemBus
-│   └── ui/               # @agentxjs/ui - React components (pure UI, no server deps)
+│   ├── core/             # @agentxjs/core - Interfaces and types (driver, runtime, platform, bash, agent, event, etc.)
+│   ├── claude-driver/    # @agentxjs/claude-driver - Claude Code SDK driver
+│   ├── mono-driver/      # @agentxjs/mono-driver - Vercel AI SDK driver (multi-provider)
+│   ├── node-platform/    # @agentxjs/node-platform - Node.js platform (SQLite, bash, network)
+│   ├── devtools/         # @agentxjs/devtools - VCR recording/playback for BDD tests
+│   ├── server/           # @agentxjs/server - WebSocket server for remote mode
+│   └── agentx/           # agentxjs - Platform API (unified entry point)
 ├── bdd/                  # BDD tests (Cucumber)
 └── dev/
     ├── server/           # Shared dev server (WebSocket, Agent runtime)
@@ -30,7 +28,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
         └── stories/      # Component stories
 ```
 
-**Package Dependency**: `types → common → persistence → agent → agentx → runtime → ui`
+**Package Dependency**: `core → drivers/platform → devtools → server/agentx`
 
 **Dev Tools Isolation**: All development tools (Storybook, dev server) are isolated in `dev/`, ensuring `packages/ui` remains frontend-only with zero server dependencies.
 

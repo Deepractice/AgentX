@@ -1,0 +1,1444 @@
+{
+  "name": "agent-executes-commands-and-works-with-files",
+  "description": "VCR recording: agent-executes-commands-and-works-with-files",
+  "recordedAt": 1770287683423,
+  "events": [
+    {
+      "type": "message_start",
+      "delay": 6,
+      "data": {
+        "messageId": "msg_1770287683428",
+        "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "tool_use_start",
+      "delay": 2713,
+      "data": {
+        "toolCallId": "tooluse_sjbWpqIi8cSZTvtFFm7Ipm",
+        "toolName": "bash"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 464,
+      "data": {
+        "partialJson": "{\"command\""
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 4,
+      "data": {
+        "partialJson": ": \""
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 5,
+      "data": {
+        "partialJson": "ec"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "ho hello-ag"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 7,
+      "data": {
+        "partialJson": "entx\"}"
+      }
+    },
+    {
+      "type": "tool_use_stop",
+      "delay": 18,
+      "data": {
+        "toolCallId": "tooluse_sjbWpqIi8cSZTvtFFm7Ipm",
+        "toolName": "bash",
+        "input": {
+          "command": "echo hello-agentx"
+        }
+      }
+    },
+    {
+      "type": "tool_result",
+      "delay": 6,
+      "data": {
+        "toolCallId": "tooluse_sjbWpqIi8cSZTvtFFm7Ipm",
+        "result": {
+          "stdout": "hello-agentx",
+          "stderr": "",
+          "exitCode": 0
+        },
+        "isError": false
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1892,
+      "data": {
+        "text": "The command execute"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 24,
+      "data": {
+        "text": "d successfully an"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 38,
+      "data": {
+        "text": "d output"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 43,
+      "data": {
+        "text": ":"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 60,
+      "data": {
+        "text": " **"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 39,
+      "data": {
+        "text": "hello"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 45,
+      "data": {
+        "text": "-agentx**"
+      }
+    },
+    {
+      "type": "message_stop",
+      "delay": 109,
+      "data": {
+        "stopReason": "end_turn"
+      }
+    },
+    {
+      "type": "message_start",
+      "delay": 206,
+      "data": {
+        "messageId": "msg_1770287689103",
+        "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 2196,
+      "data": {
+        "text": "I'll help you with those"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": " tasks. Let me run"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 45,
+      "data": {
+        "text": " the"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 109,
+      "data": {
+        "text": " commands"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 54,
+      "data": {
+        "text": ":"
+      }
+    },
+    {
+      "type": "tool_use_start",
+      "delay": 114,
+      "data": {
+        "toolCallId": "tooluse_dL31hxrsFZeDTMXjrqY3y3",
+        "toolName": "bash"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 307,
+      "data": {
+        "partialJson": "{\"command\""
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 128,
+      "data": {
+        "partialJson": ": \"ec"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 30,
+      "data": {
+        "partialJson": "ho h"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 3,
+      "data": {
+        "partialJson": "ello-"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "agentx\"}"
+      }
+    },
+    {
+      "type": "tool_use_stop",
+      "delay": 12,
+      "data": {
+        "toolCallId": "tooluse_dL31hxrsFZeDTMXjrqY3y3",
+        "toolName": "bash",
+        "input": {
+          "command": "echo hello-agentx"
+        }
+      }
+    },
+    {
+      "type": "tool_result",
+      "delay": 4,
+      "data": {
+        "toolCallId": "tooluse_dL31hxrsFZeDTMXjrqY3y3",
+        "result": {
+          "stdout": "hello-agentx",
+          "stderr": "",
+          "exitCode": 0
+        },
+        "isError": false
+      }
+    },
+    {
+      "type": "tool_use_start",
+      "delay": 4263,
+      "data": {
+        "toolCallId": "tooluse_finOl0zGYr9bmQiqypT6wj",
+        "toolName": "bash"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "{\"command\": "
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 11,
+      "data": {
+        "partialJson": "\"echo '"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 5,
+      "data": {
+        "partialJson": "Hello W"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "orld' > test"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": ".txt && "
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 8,
+      "data": {
+        "partialJson": "cat t"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "est.txt\"}"
+      }
+    },
+    {
+      "type": "tool_use_stop",
+      "delay": 6,
+      "data": {
+        "toolCallId": "tooluse_finOl0zGYr9bmQiqypT6wj",
+        "toolName": "bash",
+        "input": {
+          "command": "echo 'Hello World' > test.txt && cat test.txt"
+        }
+      }
+    },
+    {
+      "type": "tool_result",
+      "delay": 8,
+      "data": {
+        "toolCallId": "tooluse_finOl0zGYr9bmQiqypT6wj",
+        "result": {
+          "stdout": "Hello World",
+          "stderr": "",
+          "exitCode": 0
+        },
+        "isError": false
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 2392,
+      "data": {
+        "text": "Done"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 31,
+      "data": {
+        "text": "! Here"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 188,
+      "data": {
+        "text": "'s what happene"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 26,
+      "data": {
+        "text": "d:"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 8,
+      "data": {
+        "text": "\n\n1. **"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 17,
+      "data": {
+        "text": "echo hello-agentx**: Output"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 149,
+      "data": {
+        "text": " `"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "hello"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": "-agentx`"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 39,
+      "data": {
+        "text": "\n2. **Create"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 41,
+      "data": {
+        "text": "d test.txt**"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 41,
+      "data": {
+        "text": " with the"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 43,
+      "data": {
+        "text": " content "
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 41,
+      "data": {
+        "text": "'Hello World'\n3. **"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 122,
+      "data": {
+        "text": "Rea"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 14,
+      "data": {
+        "text": "d it back**: The"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 42,
+      "data": {
+        "text": " file says"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 485,
+      "data": {
+        "text": " `"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "Hello"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": " World`"
+      }
+    },
+    {
+      "type": "message_stop",
+      "delay": 6,
+      "data": {
+        "stopReason": "end_turn"
+      }
+    },
+    {
+      "type": "message_start",
+      "delay": 204,
+      "data": {
+        "messageId": "msg_1770287700321",
+        "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 2184,
+      "data": {
+        "text": "I'll run"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 4,
+      "data": {
+        "text": " those"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 96,
+      "data": {
+        "text": " commands for you."
+      }
+    },
+    {
+      "type": "tool_use_start",
+      "delay": 24,
+      "data": {
+        "toolCallId": "tooluse_WuUOgL3Tx0bgzGYRoyHH68",
+        "toolName": "bash"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 223,
+      "data": {
+        "partialJson": "{\"comman"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "d\": \"echo he"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "llo-ag"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "ent"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "x\"}"
+      }
+    },
+    {
+      "type": "tool_use_stop",
+      "delay": 2,
+      "data": {
+        "toolCallId": "tooluse_WuUOgL3Tx0bgzGYRoyHH68",
+        "toolName": "bash",
+        "input": {
+          "command": "echo hello-agentx"
+        }
+      }
+    },
+    {
+      "type": "tool_result",
+      "delay": 6,
+      "data": {
+        "toolCallId": "tooluse_WuUOgL3Tx0bgzGYRoyHH68",
+        "result": {
+          "stdout": "hello-agentx",
+          "stderr": "",
+          "exitCode": 0
+        },
+        "isError": false
+      }
+    },
+    {
+      "type": "tool_use_start",
+      "delay": 3638,
+      "data": {
+        "toolCallId": "tooluse_IaSaQVqeQVPcnoCBeJ0bmD",
+        "toolName": "bash"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 285,
+      "data": {
+        "partialJson": "{\"c"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "ommand\""
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 5,
+      "data": {
+        "partialJson": ": \"ech"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "o 'Hell"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "o W"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 6,
+      "data": {
+        "partialJson": "orld"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "' > tes"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "t.txt"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 2,
+      "data": {
+        "partialJson": " && cat "
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "test.txt\"}"
+      }
+    },
+    {
+      "type": "tool_use_stop",
+      "delay": 12,
+      "data": {
+        "toolCallId": "tooluse_IaSaQVqeQVPcnoCBeJ0bmD",
+        "toolName": "bash",
+        "input": {
+          "command": "echo 'Hello World' > test.txt && cat test.txt"
+        }
+      }
+    },
+    {
+      "type": "tool_result",
+      "delay": 13,
+      "data": {
+        "toolCallId": "tooluse_IaSaQVqeQVPcnoCBeJ0bmD",
+        "result": {
+          "stdout": "Hello World",
+          "stderr": "",
+          "exitCode": 0
+        },
+        "isError": false
+      }
+    },
+    {
+      "type": "tool_use_start",
+      "delay": 3101,
+      "data": {
+        "toolCallId": "tooluse_RR9QquMC3b9R6C4dZbJg4D",
+        "toolName": "bash"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 2,
+      "data": {
+        "partialJson": "{\"comman"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 3,
+      "data": {
+        "partialJson": "d\": \"ls "
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "*.t"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "xt\"}"
+      }
+    },
+    {
+      "type": "tool_use_stop",
+      "delay": 19,
+      "data": {
+        "toolCallId": "tooluse_RR9QquMC3b9R6C4dZbJg4D",
+        "toolName": "bash",
+        "input": {
+          "command": "ls *.txt"
+        }
+      }
+    },
+    {
+      "type": "tool_result",
+      "delay": 20,
+      "data": {
+        "toolCallId": "tooluse_RR9QquMC3b9R6C4dZbJg4D",
+        "result": {
+          "stdout": "test.txt",
+          "stderr": "",
+          "exitCode": 0
+        },
+        "isError": false
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 2723,
+      "data": {
+        "text": "**"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "Results"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 2,
+      "data": {
+        "text": ":**"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 3,
+      "data": {
+        "text": "\n\n1. **"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "echo hello-agentx**:"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": " Output"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": " is `"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "hello"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": "-agentx`"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 80,
+      "data": {
+        "text": "\n\n2. **Create"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 44,
+      "data": {
+        "text": "d test.txt**: The"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 41,
+      "data": {
+        "text": " file contains `"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 111,
+      "data": {
+        "text": "Hello"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": " World`\n\n3. **List"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 47,
+      "data": {
+        "text": " ."
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 42,
+      "data": {
+        "text": "txt files**: Foun"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 43,
+      "data": {
+        "text": "d `"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 36,
+      "data": {
+        "text": "test.txt` in the"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 42,
+      "data": {
+        "text": " current directory"
+      }
+    },
+    {
+      "type": "message_stop",
+      "delay": 138,
+      "data": {
+        "stopReason": "end_turn"
+      }
+    },
+    {
+      "type": "message_start",
+      "delay": 213,
+      "data": {
+        "messageId": "msg_1770287713558",
+        "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 2662,
+      "data": {
+        "text": "I'll run"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": " all"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 3,
+      "data": {
+        "text": " these"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 151,
+      "data": {
+        "text": " bash"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": " commands for you."
+      }
+    },
+    {
+      "type": "tool_use_start",
+      "delay": 5,
+      "data": {
+        "toolCallId": "tooluse_dbhiuGsHuPfLm4GYKJElvj",
+        "toolName": "bash"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 166,
+      "data": {
+        "partialJson": "{\"c"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "ommand\": \"e"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "cho hello-a"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "gentx\"}"
+      }
+    },
+    {
+      "type": "tool_use_stop",
+      "delay": 7,
+      "data": {
+        "toolCallId": "tooluse_dbhiuGsHuPfLm4GYKJElvj",
+        "toolName": "bash",
+        "input": {
+          "command": "echo hello-agentx"
+        }
+      }
+    },
+    {
+      "type": "tool_result",
+      "delay": 6,
+      "data": {
+        "toolCallId": "tooluse_dbhiuGsHuPfLm4GYKJElvj",
+        "result": {
+          "stdout": "hello-agentx",
+          "stderr": "",
+          "exitCode": 0
+        },
+        "isError": false
+      }
+    },
+    {
+      "type": "tool_use_start",
+      "delay": 5448,
+      "data": {
+        "toolCallId": "tooluse_K6oJBt1IFTK7kgVGP8BFhp",
+        "toolName": "bash"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 311,
+      "data": {
+        "partialJson": "{\"comma"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "nd\": "
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "\"ec"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 4,
+      "data": {
+        "partialJson": "ho 'H"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "ello World'"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 3,
+      "data": {
+        "partialJson": " > test"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": ".txt &&"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 2,
+      "data": {
+        "partialJson": " c"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 3,
+      "data": {
+        "partialJson": "at test"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": ".txt\"}"
+      }
+    },
+    {
+      "type": "tool_use_stop",
+      "delay": 10,
+      "data": {
+        "toolCallId": "tooluse_K6oJBt1IFTK7kgVGP8BFhp",
+        "toolName": "bash",
+        "input": {
+          "command": "echo 'Hello World' > test.txt && cat test.txt"
+        }
+      }
+    },
+    {
+      "type": "tool_result",
+      "delay": 11,
+      "data": {
+        "toolCallId": "tooluse_K6oJBt1IFTK7kgVGP8BFhp",
+        "result": {
+          "stdout": "Hello World",
+          "stderr": "",
+          "exitCode": 0
+        },
+        "isError": false
+      }
+    },
+    {
+      "type": "tool_use_start",
+      "delay": 2264,
+      "data": {
+        "toolCallId": "tooluse_yuJ5AvFxfARHs9ndyS35jt",
+        "toolName": "bash"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 253,
+      "data": {
+        "partialJson": "{\"co"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "mmand"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "\": \"ls *.t"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "xt\"}"
+      }
+    },
+    {
+      "type": "tool_use_stop",
+      "delay": 10,
+      "data": {
+        "toolCallId": "tooluse_yuJ5AvFxfARHs9ndyS35jt",
+        "toolName": "bash",
+        "input": {
+          "command": "ls *.txt"
+        }
+      }
+    },
+    {
+      "type": "tool_result",
+      "delay": 19,
+      "data": {
+        "toolCallId": "tooluse_yuJ5AvFxfARHs9ndyS35jt",
+        "result": {
+          "stdout": "test.txt",
+          "stderr": "",
+          "exitCode": 0
+        },
+        "isError": false
+      }
+    },
+    {
+      "type": "tool_use_start",
+      "delay": 1961,
+      "data": {
+        "toolCallId": "tooluse_esqPJpgjWAyzz8xQL75Sxj",
+        "toolName": "bash"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 516,
+      "data": {
+        "partialJson": "{\"comma"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 3,
+      "data": {
+        "partialJson": "nd\":"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": " \"M"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 3,
+      "data": {
+        "partialJson": "Y_VAR=he"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 3,
+      "data": {
+        "partialJson": "llo123 && "
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 4,
+      "data": {
+        "partialJson": "echo $MY_VAR"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "\"}"
+      }
+    },
+    {
+      "type": "tool_use_stop",
+      "delay": 10,
+      "data": {
+        "toolCallId": "tooluse_esqPJpgjWAyzz8xQL75Sxj",
+        "toolName": "bash",
+        "input": {
+          "command": "MY_VAR=hello123 && echo $MY_VAR"
+        }
+      }
+    },
+    {
+      "type": "tool_result",
+      "delay": 6,
+      "data": {
+        "toolCallId": "tooluse_esqPJpgjWAyzz8xQL75Sxj",
+        "result": {
+          "stdout": "hello123",
+          "stderr": "",
+          "exitCode": 0
+        },
+        "isError": false
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 4486,
+      "data": {
+        "text": "**"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "Results"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": ":**"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 101,
+      "data": {
+        "text": "\n\n1. **"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "echo hello-agentx**:"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 240,
+      "data": {
+        "text": " Output"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 252,
+      "data": {
+        "text": " is `"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 13,
+      "data": {
+        "text": "hello"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "-agentx`"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 11,
+      "data": {
+        "text": "\n\n2. **Create"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": " an"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 9,
+      "data": {
+        "text": "d read test.txt**: The"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 2,
+      "data": {
+        "text": " file says"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 11,
+      "data": {
+        "text": " `"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 2,
+      "data": {
+        "text": "Hello"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": " World`"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 43,
+      "data": {
+        "text": "\n\n3. **List ."
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 36,
+      "data": {
+        "text": "txt files**: Foun"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 97,
+      "data": {
+        "text": "d `"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 427,
+      "data": {
+        "text": "test.txt` in"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": " the"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": " current directory\n\n4. **Set an"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "d echo MY"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "_VAR**: Successfully"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": " set an"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": "d echoed `"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "hello123`"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": " ("
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "both"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 32,
+      "data": {
+        "text": " times"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 61,
+      "data": {
+        "text": ")"
+      }
+    },
+    {
+      "type": "message_stop",
+      "delay": 119,
+      "data": {
+        "stopReason": "end_turn"
+      }
+    }
+  ]
+}

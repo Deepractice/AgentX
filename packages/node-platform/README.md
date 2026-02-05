@@ -1,6 +1,6 @@
 # @agentxjs/node-platform
 
-Node.js platform for AgentX. Supplies concrete implementations of persistence, workspace, network, message queue, and logging for server-side environments. The platform assembles these components into an `AgentXPlatform` that can be passed to the AgentX runtime.
+Node.js platform for AgentX. Supplies concrete implementations of persistence, bash, network, message queue, and logging for server-side environments. The platform assembles these components into an `AgentXPlatform` that can be passed to the AgentX runtime.
 
 ## Installation
 
@@ -20,8 +20,8 @@ const platform = await createNodePlatform({
 // platform.containerRepository  - SQLite-backed container storage
 // platform.imageRepository      - SQLite-backed image storage
 // platform.sessionRepository    - SQLite-backed session storage
-// platform.workspaceProvider    - File system workspace isolation
 // platform.eventBus             - In-memory event bus
+// platform.bashProvider         - Shell command execution (execa)
 ```
 
 ### Deferred Initialization
@@ -43,7 +43,7 @@ const platform = await config.resolve();
 
 | Option     | Type       | Default    | Description                                                    |
 |------------|------------|------------|----------------------------------------------------------------|
-| `dataPath` | `string`   | `"./data"` | Base directory for all data storage (SQLite database, workspaces) |
+| `dataPath` | `string`   | `"./data"` | Base directory for all data storage (SQLite database) |
 | `logDir`   | `string`   | --         | Directory for log files. If provided, enables file logging instead of console output |
 | `logLevel` | `LogLevel` | `"debug"` (file) / `"info"` (console) | Log verbosity: `"debug"`, `"info"`, `"warn"`, `"error"`, or `"silent"` |
 
@@ -103,40 +103,32 @@ await persistence.sessions.getMessages(sessionId);
 - `sqliteDriver({ path })` -- Persistent storage using SQLite. Auto-creates parent directories. Uses WAL mode for the message queue schema.
 - `memoryDriver()` -- Ephemeral in-memory storage for testing. Data is lost when the process exits.
 
-### Workspace
+### Bash
 
-`FileWorkspaceProvider` creates isolated file system directories for each agent, organized by container and image.
+`NodeBashProvider` executes shell commands using [execa](https://github.com/sindresorhus/execa). It implements the `BashProvider` interface from `@agentxjs/core/bash`.
 
 ```typescript
-import { FileWorkspaceProvider } from "@agentxjs/node-platform";
+import { NodeBashProvider } from "@agentxjs/node-platform";
 
-const workspaceProvider = new FileWorkspaceProvider({
-  basePath: "./data/workspaces",
+const bash = new NodeBashProvider();
+
+const result = await bash.execute("echo hello", {
+  cwd: "/tmp",
+  timeout: 10000,
 });
 
-// Create a workspace for an agent
-const workspace = await workspaceProvider.create({
-  containerId: "container-1",
-  imageId: "image-1",
-  name: "my-workspace",
-});
-
-// Initialize the directory on disk
-await workspace.initialize();
-
-// Access workspace properties
-console.log(workspace.id);    // "ws_container-1_image-1_lq5x4g2_a1b2"
-console.log(workspace.path);  // "./data/workspaces/container-1/image-1"
-
-// Cleanup when done
-await workspace.cleanup();
+console.log(result.stdout);   // "hello\n"
+console.log(result.exitCode); // 0
 ```
 
-Each workspace provides:
+When `createNodePlatform()` is called, a `NodeBashProvider` is automatically created and included in the returned `AgentXPlatform.bashProvider`. The runtime then uses `createBashTool()` to wrap it into a `ToolDefinition` and inject it into every agent's driver — so agents can execute shell commands via LLM tool calling out of the box.
 
-- `initialize()` -- Creates the directory (recursive `mkdir`)
-- `exists()` -- Checks if the directory exists on disk
-- `cleanup()` -- Removes the directory and its contents
+**Key characteristics:**
+
+- Uses `execa` with `shell: true` for full shell syntax support (pipes, redirects, etc.)
+- `reject: false` — command failures are reported via `exitCode`, never thrown
+- Default timeout: 30 seconds (configurable per call)
+- Supports `cwd` and `env` options
 
 ### Network
 
@@ -280,10 +272,10 @@ The returned `AgentXPlatform` contains:
 | `containerRepository`   | `ContainerRepository`       | Container CRUD operations       |
 | `imageRepository`       | `ImageRepository`           | Image CRUD operations           |
 | `sessionRepository`     | `SessionRepository`         | Session and message operations  |
-| `workspaceProvider`     | `WorkspaceProvider`         | File system workspace manager   |
 | `eventBus`              | `EventBus`                  | In-memory event pub/sub         |
+| `bashProvider`          | `BashProvider`              | Shell command execution (execa) |
 
-The platform handles persistence, workspace, and event bus concerns only. The AI driver (e.g., Claude) is injected separately at the runtime level.
+The platform handles persistence, bash, and event bus concerns only. The AI driver (e.g., Claude) is injected separately at the runtime level.
 
 ### nodePlatform(options?)
 
@@ -321,7 +313,8 @@ The package exposes additional entry points for direct access to individual modu
 
 ## Dependencies
 
-- `@agentxjs/core` -- Core interfaces (`ContainerRepository`, `ImageRepository`, `SessionRepository`, `WorkspaceProvider`, `EventBus`, `ChannelServer`, `MessageQueue`)
+- `@agentxjs/core` -- Core interfaces (`ContainerRepository`, `ImageRepository`, `SessionRepository`, `BashProvider`, `EventBus`, `ChannelServer`, `MessageQueue`)
+- `execa` -- Subprocess execution with timeout, shell support, and cross-platform compatibility
 - `commonxjs` -- Cross-runtime SQLite and logging utilities
 - `rxjs` -- Reactive streams for in-memory pub/sub
 - `unstorage` -- Backend-agnostic key-value storage abstraction

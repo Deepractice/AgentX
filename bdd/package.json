@@ -18,6 +18,7 @@
     "@agentxjs/node-platform": "workspace:*",
     "@agentxjs/server": "workspace:*",
     "@cucumber/cucumber": "^11.2.0",
+    "@modelcontextprotocol/server-filesystem": "2026.1.14",
     "@types/node": "^24.9.2",
     "agentxjs": "workspace:*",
     "dotenv": "^17.2.3",

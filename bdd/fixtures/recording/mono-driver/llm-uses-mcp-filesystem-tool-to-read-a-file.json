@@ -1,0 +1,201 @@
+{
+  "name": "llm-uses-mcp-filesystem-tool-to-read-a-file",
+  "description": "VCR recording: llm-uses-mcp-filesystem-tool-to-read-a-file",
+  "recordedAt": 1770288877379,
+  "events": [
+    {
+      "type": "message_start",
+      "delay": 5,
+      "data": {
+        "messageId": "msg_1770288877384",
+        "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "tool_use_start",
+      "delay": 2804,
+      "data": {
+        "toolCallId": "tooluse_vojLW6F8BYFd5uz1yu2zKm",
+        "toolName": "read_file"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 608,
+      "data": {
+        "partialJson": "{\"pat"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "h\": \"/U"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 5,
+      "data": {
+        "partialJson": "sers/s"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 2,
+      "data": {
+        "partialJson": "ean/"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 10,
+      "data": {
+        "partialJson": "Deepractic"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "e/AgentX"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "/bdd/"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "fi"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "xture"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "s/mc"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "p-test/"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "hello.t"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "xt\"}"
+      }
+    },
+    {
+      "type": "tool_use_stop",
+      "delay": 1,
+      "data": {
+        "toolCallId": "tooluse_vojLW6F8BYFd5uz1yu2zKm",
+        "toolName": "read_file",
+        "input": {
+          "path": "/Users/sean/Deepractice/AgentX/bdd/fixtures/mcp-test/hello.txt"
+        }
+      }
+    },
+    {
+      "type": "tool_result",
+      "delay": 5,
+      "data": {
+        "toolCallId": "tooluse_vojLW6F8BYFd5uz1yu2zKm",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Hello from AgentX MCP test!"
+            }
+          ],
+          "structuredContent": {
+            "content": "Hello from AgentX MCP test!"
+          },
+          "isError": false
+        },
+        "isError": false
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 2011,
+      "data": {
+        "text": "The content"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 18,
+      "data": {
+        "text": " of"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 180,
+      "data": {
+        "text": " hello"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": ".txt is:"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "\n\n**"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": "Hello from AgentX MCP test"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 29,
+      "data": {
+        "text": "!**"
+      }
+    },
+    {
+      "type": "message_stop",
+      "delay": 432,
+      "data": {
+        "stopReason": "end_turn"
+      }
+    }
+  ]
+}

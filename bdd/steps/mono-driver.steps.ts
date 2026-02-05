@@ -170,6 +170,43 @@ Given(
   }
 );
 
+Given(
+  "I have a MonoDriver with provider {string} and MCP filesystem server",
+  async function (this: AgentXWorld, provider: string) {
+    assert.ok(monoVcrCreateDriver, "VCR CreateDriver not initialized");
+
+    currentMonoFixture = this.scenarioName;
+
+    const apiKey =
+      process.env.ANTHROPIC_API_KEY ||
+      process.env.DEEPRACTICE_API_KEY ||
+      "test-key";
+    const baseUrl = process.env.DEEPRACTICE_BASE_URL;
+
+    const mcpTestDir = resolve(process.cwd(), "fixtures/mcp-test");
+
+    const config = {
+      apiKey,
+      baseUrl,
+      agentId: "bdd-mcp-test",
+      systemPrompt:
+        `You are a helpful assistant. When asked to read a file, use the read_file tool. Files are located in ${mcpTestDir}. Always use the full absolute path. Be brief.`,
+      model: process.env.DEEPRACTICE_MODEL || "claude-haiku-4-5-20251001",
+      mcpServers: {
+        filesystem: {
+          command: "npx",
+          args: ["-y", "@modelcontextprotocol/server-filesystem", mcpTestDir],
+        },
+      },
+      options: { provider },
+    };
+
+    this.monoDriver = monoVcrCreateDriver(config);
+    await this.monoDriver.initialize();
+    this.driverEvents = [];
+  }
+);
+
 // ============================================================================
 // When Steps
 // ============================================================================

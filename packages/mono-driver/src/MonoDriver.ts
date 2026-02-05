@@ -24,6 +24,7 @@
  */
 
 import { streamText, stepCountIs } from "ai";
+import type { ToolSet } from "ai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
@@ -31,6 +32,9 @@ import { createXai } from "@ai-sdk/xai";
 import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createMistral } from "@ai-sdk/mistral";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { createMCPClient } from "@ai-sdk/mcp";
+import type { MCPClient } from "@ai-sdk/mcp";
+import { Experimental_StdioMCPTransport } from "@ai-sdk/mcp/mcp-stdio";
 import type {
   Driver,
   DriverState,
@@ -59,6 +63,11 @@ export class MonoDriver implements Driver {
   private readonly provider: MonoProvider;
   private readonly maxSteps: number;
   private readonly compatibleConfig?: OpenAICompatibleConfig;
+
+  /** MCP clients created during initialize() */
+  private mcpClients: MCPClient[] = [];
+  /** Tools discovered from MCP servers */
+  private mcpTools: ToolSet = {};
 
   constructor(config: MonoDriverConfig) {
     this.config = config;
@@ -100,6 +109,25 @@ export class MonoDriver implements Driver {
     // Notify session ID captured
     this.config.onSessionIdCaptured?.(this._sessionId);
 
+    // Initialize MCP servers
+    if (this.config.mcpServers) {
+      for (const [name, serverConfig] of Object.entries(this.config.mcpServers)) {
+        const transport = new Experimental_StdioMCPTransport({
+          command: serverConfig.command,
+          args: serverConfig.args,
+          env: serverConfig.env,
+        });
+        const client = await createMCPClient({ transport });
+        this.mcpClients.push(client);
+        const tools = await client.tools();
+        Object.assign(this.mcpTools, tools);
+        logger.info("MCP server connected", {
+          name,
+          toolCount: Object.keys(tools).length,
+        });
+      }
+    }
+
     logger.info("MonoDriver initialized", { sessionId: this._sessionId });
   }
 
@@ -113,6 +141,13 @@ export class MonoDriver implements Driver {
     // Abort any ongoing request
     this.abortController?.abort();
     this.abortController = null;
+
+    // Close MCP clients
+    for (const client of this.mcpClients) {
+      await client.close();
+    }
+    this.mcpClients = [];
+    this.mcpTools = {};
 
     this._state = "disposed";
     logger.info("MonoDriver disposed");
@@ -164,7 +199,7 @@ export class MonoDriver implements Driver {
         model: this.getModel(),
         system: this.config.systemPrompt,
         messages,
-        tools: this.config.tools?.length ? toVercelTools(this.config.tools) : undefined,
+        tools: this.mergeTools(),
         stopWhen: stepCountIs(this.maxSteps),
         abortSignal: this.abortController.signal,
       });
@@ -274,6 +309,18 @@ export class MonoDriver implements Driver {
   // ============================================================================
   // Private Methods
   // ============================================================================
+
+  /**
+   * Merge MCP tools and config tools into a single ToolSet.
+   * Config tools (bash etc.) take precedence over MCP tools with the same name.
+   */
+  private mergeTools(): ToolSet | undefined {
+    const configTools = this.config.tools?.length
+      ? toVercelTools(this.config.tools)
+      : {};
+    const merged = { ...this.mcpTools, ...configTools };
+    return Object.keys(merged).length > 0 ? merged : undefined;
+  }
 
   private getModel() {
     const modelId = this.config.model ?? this.getDefaultModel();

@@ -1,6 +1,6 @@
 # @agentxjs/core
 
-Core type definitions, interfaces, and implementations for the AgentX framework. This package serves as the foundational layer that all other AgentX packages depend on. It defines the contracts (interfaces and types) for drivers, runtime, agents, events, sessions, images, containers, workspaces, networking, message queues, and persistence -- without coupling to any specific platform or LLM provider.
+Core type definitions, interfaces, and implementations for the AgentX framework. This package serves as the foundational layer that all other AgentX packages depend on. It defines the contracts (interfaces and types) for drivers, runtime, platform, agents, events, sessions, images, containers, bash, networking, message queues, and persistence -- without coupling to any specific platform or LLM provider.
 
 ## Installation
 
@@ -10,18 +10,19 @@ bun add @agentxjs/core
 
 ## Architecture Overview
 
-`@agentxjs/core` is organized into 13 submodules, each accessible via its own subpath export. The package follows a clean separation between **interface definitions** (contracts) and **platform implementations** (provided by other packages like `@agentxjs/node-platform` or `@agentxjs/cloudflare`).
+`@agentxjs/core` is organized into submodules, each accessible via its own subpath export. The package follows a clean separation between **interface definitions** (contracts) and **platform implementations** (provided by other packages like `@agentxjs/node-platform` or `@agentxjs/cloudflare`).
 
 ```
 @agentxjs/core
 ├── common       Re-exported logger utilities from commonxjs
-├── driver       LLM communication interfaces (Driver, DriverConfig, StreamEvent)
+├── driver       LLM communication interfaces (Driver, DriverConfig, ToolDefinition, StreamEvent)
+├── bash         Command execution abstraction (BashProvider) + tool factory
+├── platform     AgentXPlatform: dependency injection container for platform capabilities
 ├── agent        Agent engine: event processing, Mealy machine, state management
 ├── event        Central EventBus system with typed pub/sub
 ├── session      Conversation message management
 ├── image        Persistent conversation entities
 ├── container    Resource isolation units
-├── workspace    Isolated working environment abstraction
 ├── runtime      AgentXRuntime: orchestrates agent lifecycle
 ├── network      Transport-agnostic channel interfaces + JSON-RPC 2.0
 ├── mq           Message queue interfaces for reliable delivery
@@ -54,7 +55,8 @@ Defines the interface for communicating with LLM providers (Claude, OpenAI, etc.
 **Key types:**
 - `Driver` -- LLM communication interface with lifecycle (`initialize`, `receive`, `interrupt`, `dispose`)
 - `CreateDriver` -- Factory function type for creating Driver instances
-- `DriverConfig<TOptions>` -- Configuration including API key, model, system prompt, MCP servers
+- `DriverConfig<TOptions>` -- Configuration including API key, model, system prompt, MCP servers, tools
+- `ToolDefinition` -- Tool definition with JSON Schema parameters and execute function
 - `DriverStreamEvent` -- Union of all stream events from the Driver
 - `StreamEvent<T, D>` -- Base stream event with type, timestamp, and data
 - `McpServerConfig` -- MCP server process configuration
@@ -93,11 +95,11 @@ await driver.dispose();
 
 ### `@agentxjs/core/runtime`
 
-The orchestration layer that integrates all components for agent lifecycle management. `AgentXRuntime` coordinates Driver, EventBus, repositories, and workspaces.
+The orchestration layer that integrates all components for agent lifecycle management. `AgentXRuntime` coordinates Driver, EventBus, and repositories.
 
 **Key types:**
 - `AgentXRuntime` -- Runtime interface for agent lifecycle, messaging, and event subscription
-- `AgentXPlatform` -- Dependency injection container holding repositories, workspace provider, and event bus
+- `AgentXPlatform` -- Dependency injection container (re-exported from `@agentxjs/core/platform`)
 - `CreateAgentXRuntime` -- Factory function type
 - `RuntimeAgent` -- Active agent instance metadata
 - `CreateAgentOptions` -- Options for creating agents (imageId, optional agentId)
@@ -116,8 +118,8 @@ const platform: AgentXPlatform = {
   containerRepository,
   imageRepository,
   sessionRepository,
-  workspaceProvider,
   eventBus,
+  bashProvider, // optional
 };
 
 const createDriver: CreateDriver = (config) => new MyLLMDriver(config);
@@ -369,31 +371,55 @@ await container.delete();
 
 ---
 
-### `@agentxjs/core/workspace`
+### `@agentxjs/core/bash`
 
-Abstraction for isolated working environments. Different platforms provide different implementations (file system, R2, IndexedDB).
+Abstraction for command execution capability. Different platforms provide different implementations (child_process, Docker exec, sandbox).
 
 **Key types:**
-- `Workspace` -- Isolated working environment with `id`, `name`, `path`, `initialize()`, `exists()`
-- `WorkspaceProvider` -- Factory for creating platform-specific workspaces
-- `WorkspaceCreateConfig` -- Configuration (containerId, imageId, optional name)
+- `BashProvider` -- Stateless command execution interface (`execute(command, options)`)
+- `BashResult` -- Output with `stdout`, `stderr`, `exitCode`
+- `BashOptions` -- Execution options (`cwd`, `timeout`, `env`)
+- `createBashTool(provider)` -- Factory that wraps a BashProvider into a `ToolDefinition`
 
 ```typescript
-import type { Workspace, WorkspaceProvider } from "@agentxjs/core/workspace";
+import type { BashProvider } from "@agentxjs/core/bash";
+import { createBashTool } from "@agentxjs/core/bash";
 
-// Platform provides implementation
-const provider: WorkspaceProvider = new FileWorkspaceProvider({
-  basePath: "~/.agentx/workspaces",
-});
+// Platform provides BashProvider implementation
+const bash: BashProvider = platform.bashProvider;
 
-const workspace: Workspace = await provider.create({
-  containerId: "user-123",
-  imageId: "img_xxx",
-});
+// Direct usage
+const result = await bash.execute("echo hello", { cwd: "/tmp" });
+console.log(result.stdout);   // "hello\n"
+console.log(result.exitCode); // 0
 
-await workspace.initialize();
-console.log(workspace.path); // ~/.agentx/workspaces/user-123/img_xxx
+// As a tool for LLM (used by Runtime automatically)
+const tool = createBashTool(bash);
+// tool is a ToolDefinition ready for DriverConfig.tools
 ```
+
+---
+
+### `@agentxjs/core/platform`
+
+Dependency injection container for platform capabilities. Platform packages (e.g., `@agentxjs/node-platform`) provide implementations.
+
+**Key types:**
+- `AgentXPlatform` -- Collects all platform dependencies (repositories, event bus, optional providers)
+
+```typescript
+import type { AgentXPlatform } from "@agentxjs/core/platform";
+
+const platform: AgentXPlatform = {
+  containerRepository,  // required
+  imageRepository,      // required
+  sessionRepository,    // required
+  eventBus,             // required
+  bashProvider,         // optional — not all platforms support shell execution
+};
+```
+
+When `bashProvider` is present, `AgentXRuntime` automatically creates a bash tool and injects it into every agent's `DriverConfig.tools`.
 
 ---
 
@@ -567,8 +593,8 @@ interface AgentXPlatform {
   containerRepository: ContainerRepository;
   imageRepository: ImageRepository;
   sessionRepository: SessionRepository;
-  workspaceProvider: WorkspaceProvider;
   eventBus: EventBus;
+  bashProvider?: BashProvider; // optional
 }
 ```
 
@@ -578,7 +604,7 @@ The platform is **separate** from the driver factory. `createAgentXRuntime` acce
 
 `AgentXRuntime` is the orchestration layer that ties everything together. It:
 
-1. Creates agents from images (loads image, creates workspace, initializes driver)
+1. Creates agents from images (loads image, assembles default tools, initializes driver)
 2. Manages agent lifecycle (create, stop, resume, destroy)
 3. Routes messages to drivers and processes stream events
 4. Publishes events to the EventBus for subscribers
@@ -640,8 +666,10 @@ This design enables:
 | `Driver` | `driver` | LLM communication interface |
 | `CreateDriver<TOptions>` | `driver` | Factory function for creating drivers |
 | `DriverConfig<TOptions>` | `driver` | Configuration for driver creation |
+| `ToolDefinition` | `driver` | Tool definition with schema and execute function |
 | `AgentXRuntime` | `runtime` | Agent lifecycle and message orchestration |
-| `AgentXPlatform` | `runtime` | Dependency injection container |
+| `AgentXPlatform` | `platform` | Dependency injection container |
+| `BashProvider` | `bash` | Command execution interface |
 | `RuntimeAgent` | `runtime` | Active agent instance metadata |
 | `AgentEngine` | `agent` | Event processing unit |
 | `EventBus` | `event` | Central pub/sub event bus |
@@ -650,8 +678,6 @@ This design enables:
 | `Session` | `session` | Conversation message management |
 | `Image` | `image` | Persistent conversation entity |
 | `Container` | `container` | Resource isolation unit |
-| `Workspace` | `workspace` | Isolated working environment |
-| `WorkspaceProvider` | `workspace` | Factory for workspaces |
 | `ChannelServer` | `network` | Server that accepts connections |
 | `ChannelClient` | `network` | Client that connects to server |
 | `ChannelConnection` | `network` | Server-side client representation |
