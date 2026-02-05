@@ -34,6 +34,62 @@ import type { UserMessage } from "../agent/types/message";
 import type { Session } from "../session/types";
 
 // ============================================================================
+// Tool Definition
+// ============================================================================
+
+/**
+ * ToolDefinition - Defines a tool for LLM tool calling
+ *
+ * Tools are injected into the Driver via DriverConfig.tools.
+ * The Driver passes tool schemas to the LLM and executes handlers
+ * when the LLM requests a tool call.
+ *
+ * @example
+ * ```typescript
+ * const calculator: ToolDefinition = {
+ *   name: "calculator",
+ *   description: "Evaluates a math expression",
+ *   parameters: {
+ *     type: "object",
+ *     properties: {
+ *       expression: { type: "string", description: "e.g. '123 * 456'" },
+ *     },
+ *     required: ["expression"],
+ *   },
+ *   execute: async (params) => {
+ *     const result = Function(`"use strict"; return (${params.expression})`)();
+ *     return { result: String(result) };
+ *   },
+ * };
+ * ```
+ */
+export interface ToolDefinition {
+  /**
+   * Tool name (unique identifier)
+   */
+  name: string;
+
+  /**
+   * Description of what the tool does (sent to LLM)
+   */
+  description?: string;
+
+  /**
+   * JSON Schema for the tool's input parameters
+   */
+  parameters: {
+    type: "object";
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
+
+  /**
+   * Function to execute when the LLM calls this tool
+   */
+  execute: (params: Record<string, unknown>) => Promise<unknown>;
+}
+
+// ============================================================================
 // MCP Server Configuration
 // ============================================================================
 
@@ -252,6 +308,15 @@ export interface DriverConfig<TOptions = Record<string, unknown>> {
    * MCP servers configuration
    */
   mcpServers?: Record<string, McpServerConfig>;
+
+  /**
+   * Tool definitions for LLM tool calling
+   *
+   * Tools are passed to the LLM provider and executed when the LLM
+   * requests a tool call. Each tool includes its JSON Schema (sent to
+   * the LLM) and an execute function (called at runtime).
+   */
+  tools?: ToolDefinition[];
 
   // === Session Configuration ===
 

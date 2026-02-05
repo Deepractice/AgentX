@@ -31,7 +31,7 @@ Given(
       provider: provider as any,
       model,
       baseUrl,
-      dataPath: ":memory:",
+      dataPath: ".tmp",
     });
   }
 );
@@ -319,7 +319,7 @@ When(
   "I create a NodePlatform with default options",
   async function (this: AgentXWorld) {
     const { createNodePlatform } = await import("@agentxjs/node-platform");
-    this.docPlatform = await createNodePlatform({ dataPath: ":memory:" });
+    this.docPlatform = await createNodePlatform({ dataPath: ".tmp" });
   }
 );
 
@@ -409,7 +409,7 @@ Given(
     const { createServer } = await import("@agentxjs/server");
     const { createNodePlatform } = await import("@agentxjs/node-platform");
     const { createMonoDriver } = await import("@agentxjs/mono-driver");
-    const platform = await createNodePlatform({ dataPath: ":memory:" });
+    const platform = await createNodePlatform({ dataPath: ".tmp" });
     const wrappedCreateDriver = (config: any) => {
       return createMonoDriver({ ...config, apiKey: "test-key", options: { provider: "anthropic" } });
     };

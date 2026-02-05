@@ -10,7 +10,7 @@ import { strict as assert } from "node:assert";
 import { resolve } from "node:path";
 import { mkdirSync, existsSync } from "node:fs";
 import type { AgentXWorld } from "../support/world";
-import type { CreateDriver } from "@agentxjs/core/driver";
+import type { CreateDriver, ToolDefinition } from "@agentxjs/core/driver";
 
 // ============================================================================
 // VCR Configuration for MonoDriver
@@ -79,6 +79,53 @@ Given(
       systemPrompt:
         "You are a helpful assistant. Reply briefly in one short sentence.",
       model: process.env.DEEPRACTICE_MODEL || "claude-haiku-4-5-20251001",
+      options: { provider },
+    };
+
+    this.monoDriver = monoVcrCreateDriver(config);
+    await this.monoDriver.initialize();
+    this.driverEvents = [];
+  }
+);
+
+Given(
+  "I have a MonoDriver with provider {string} and a calculator tool",
+  async function (this: AgentXWorld, provider: string) {
+    assert.ok(monoVcrCreateDriver, "VCR CreateDriver not initialized");
+
+    currentMonoFixture = this.scenarioName;
+
+    const apiKey =
+      process.env.ANTHROPIC_API_KEY ||
+      process.env.DEEPRACTICE_API_KEY ||
+      "test-key";
+    const baseUrl = process.env.DEEPRACTICE_BASE_URL;
+
+    const calculator: ToolDefinition = {
+      name: "calculator",
+      description: "Evaluates a math expression and returns the result. Use this for any arithmetic.",
+      parameters: {
+        type: "object",
+        properties: {
+          expression: { type: "string", description: "Math expression, e.g. '123 * 456'" },
+        },
+        required: ["expression"],
+      },
+      execute: async (params) => {
+        const expr = params.expression as string;
+        const result = new Function(`"use strict"; return (${expr})`)();
+        return { result: String(result) };
+      },
+    };
+
+    const config = {
+      apiKey,
+      baseUrl,
+      agentId: "bdd-tool-test",
+      systemPrompt:
+        "You are a helpful assistant. Always use the calculator tool for math calculations. Be brief.",
+      model: process.env.DEEPRACTICE_MODEL || "claude-haiku-4-5-20251001",
+      tools: [calculator],
       options: { provider },
     };
 
@@ -166,6 +213,25 @@ Then(
     assert.ok(
       combinedText.trim().length > 0,
       "Combined text delta should not be empty"
+    );
+  }
+);
+
+Then(
+  "the combined text delta should contain {string}",
+  function (this: AgentXWorld, expected: string) {
+    const textEvents = this.driverEvents.filter(
+      (e) => e.type === "text_delta"
+    );
+    const combinedText = textEvents
+      .map((e) => (e.data as { text: string }).text)
+      .join("");
+    // Normalize commas in numbers for flexible matching (LLMs format "56088" as "56,088")
+    const normalizedText = combinedText.replace(/,/g, "");
+    const normalizedExpected = expected.replace(/,/g, "");
+    assert.ok(
+      normalizedText.includes(normalizedExpected),
+      `Expected combined text to contain "${expected}", got: "${combinedText}"`
     );
   }
 );

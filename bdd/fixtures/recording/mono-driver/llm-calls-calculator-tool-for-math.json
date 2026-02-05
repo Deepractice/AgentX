@@ -1,0 +1,108 @@
+{
+  "name": "llm-calls-calculator-tool-for-math",
+  "description": "VCR recording: llm-calls-calculator-tool-for-math",
+  "recordedAt": 1770281361109,
+  "events": [
+    {
+      "type": "message_start",
+      "delay": 7,
+      "data": {
+        "messageId": "msg_1770281361116",
+        "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "tool_use_start",
+      "delay": 9710,
+      "data": {
+        "toolCallId": "tooluse_6Urvst8gdC2tsDTOWWCtOL",
+        "toolName": "calculator"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 283,
+      "data": {
+        "partialJson": "{\"expre"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "ssio"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "n\": "
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 4,
+      "data": {
+        "partialJson": "\"123 * 456\"}"
+      }
+    },
+    {
+      "type": "tool_use_stop",
+      "delay": 50,
+      "data": {
+        "toolCallId": "tooluse_6Urvst8gdC2tsDTOWWCtOL",
+        "toolName": "calculator",
+        "input": {
+          "expression": "123 * 456"
+        }
+      }
+    },
+    {
+      "type": "tool_result",
+      "delay": 0,
+      "data": {
+        "toolCallId": "tooluse_6Urvst8gdC2tsDTOWWCtOL",
+        "result": {
+          "result": "56088"
+        },
+        "isError": false
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 3164,
+      "data": {
+        "text": "123"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 17,
+      "data": {
+        "text": " * 456 = 56"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 41,
+      "data": {
+        "text": ","
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 29,
+      "data": {
+        "text": "088"
+      }
+    },
+    {
+      "type": "message_stop",
+      "delay": 87,
+      "data": {
+        "stopReason": "end_turn"
+      }
+    }
+  ]
+}

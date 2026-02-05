@@ -1,0 +1,120 @@
+{
+  "name": "agent-follows-system-prompt-instructions",
+  "description": "VCR recording: agent-follows-system-prompt-instructions",
+  "recordedAt": 1770279555347,
+  "events": [
+    {
+      "type": "message_start",
+      "delay": 8,
+      "data": {
+        "messageId": "msg_1770279555354",
+        "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 3951,
+      "data": {
+        "text": "你"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": "好！我很好，谢"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "谢你的问候。我"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": "是"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "一"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 504,
+      "data": {
+        "text": "个AI助手，随"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "时准"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": "备帮助你。你"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "今"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "天过得"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "怎么样？有"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 145,
+      "data": {
+        "text": "什么我"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "可以帮助你的"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "吗？"
+      }
+    },
+    {
+      "type": "message_stop",
+      "delay": 3,
+      "data": {
+        "stopReason": "end_turn"
+      }
+    }
+  ]
+}

@@ -6,3 +6,5 @@ reports/
 
 # Test data (isolated from production)
 .agentx-test/
+.tmp/
+:memory:

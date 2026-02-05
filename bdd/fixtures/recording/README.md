@@ -2,29 +2,26 @@
 
 This directory contains recorded LLM API responses for BDD tests.
 
+**All BDD tests MUST use VCR recording.** No test should hit the real LLM API in CI. If a test doesn't have a fixture, the first run records it; subsequent runs play back.
+
 ## How it works
 
-1. **First run** → Calls real API, records response, saves to `{feature}/*.json`
+1. **First run** → Calls real API, records response, saves to `{scenario-name}.json`
 2. **Subsequent runs** → Plays back from fixtures, no API calls
 
 ## Directory structure
 
 ```
 fixtures/recording/
-├── devtools/               # devtools feature fixtures
-│   ├── simple-hello.json
-│   ├── new-greeting.json
-│   ├── force-test.json
-│   ├── playback-test.json
-│   ├── recorded-fixture.json
-│   └── factory-test.json
-├── client/                 # future: agentxjs client fixtures
-└── server/                 # future: server fixtures
+├── agentx/                 # agentx feature fixtures (remote mode)
+├── journey/                # journey test fixtures (local mode)
+├── mono-driver/            # mono-driver feature fixtures
+└── devtools/               # devtools feature fixtures
 ```
 
 ## Committing fixtures
 
-These fixtures should be committed to git:
+These fixtures **must** be committed to git:
 
 - Enables CI without API keys
 - Ensures consistent test behavior
@@ -36,3 +33,12 @@ To re-record a fixture, either:
 
 - Delete the fixture file and run test
 - Use `forceRecord: true` option
+
+## Adding VCR to new tests
+
+Both remote mode (test server) and local mode (`createAgentX`) support VCR via `createVcrCreateDriver`. Local mode injects VCR through the `createDriver` option:
+
+```typescript
+const vcrCreateDriver = createVcrCreateDriver({ fixturesDir, ... });
+const agentx = await createAgentX({ createDriver: vcrCreateDriver });
+```

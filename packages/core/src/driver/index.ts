@@ -18,6 +18,7 @@
 export type {
   // Configuration
   McpServerConfig,
+  ToolDefinition,
   DriverConfig,
   DriverState,
 

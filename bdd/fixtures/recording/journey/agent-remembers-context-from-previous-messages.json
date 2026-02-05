@@ -1,0 +1,72 @@
+{
+  "name": "agent-remembers-context-from-previous-messages",
+  "description": "VCR recording: agent-remembers-context-from-previous-messages",
+  "recordedAt": 1770279179216,
+  "events": [
+    {
+      "type": "message_start",
+      "delay": 9,
+      "data": {
+        "messageId": "msg_1770279179225",
+        "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 3731,
+      "data": {
+        "text": "Nice"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 6,
+      "data": {
+        "text": " to meet you, Alice!"
+      }
+    },
+    {
+      "type": "message_stop",
+      "delay": 106,
+      "data": {
+        "stopReason": "end_turn"
+      }
+    },
+    {
+      "type": "message_start",
+      "delay": 204,
+      "data": {
+        "messageId": "msg_1770279183272",
+        "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 2497,
+      "data": {
+        "text": "Your"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": " name is Alice"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "."
+      }
+    },
+    {
+      "type": "message_stop",
+      "delay": 6,
+      "data": {
+        "stopReason": "end_turn"
+      }
+    }
+  ]
+}

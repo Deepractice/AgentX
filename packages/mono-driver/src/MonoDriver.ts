@@ -40,7 +40,7 @@ import type { UserMessage } from "@agentxjs/core/agent";
 import type { Session } from "@agentxjs/core/session";
 import { createLogger } from "commonxjs/logger";
 import type { MonoDriverConfig, MonoProvider, OpenAICompatibleConfig } from "./types";
-import { toVercelMessages, toStopReason, createEvent } from "./converters";
+import { toVercelMessages, toStopReason, createEvent, toVercelTools } from "./converters";
 
 const logger = createLogger("mono-driver/MonoDriver");
 
@@ -164,6 +164,7 @@ export class MonoDriver implements Driver {
         model: this.getModel(),
         system: this.config.systemPrompt,
         messages,
+        tools: this.config.tools?.length ? toVercelTools(this.config.tools) : undefined,
         stopWhen: stepCountIs(this.maxSteps),
         abortSignal: this.abortController.signal,
       });

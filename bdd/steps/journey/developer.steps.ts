@@ -2,12 +2,23 @@
  * Journey Steps - Developer Persona
  *
  * End-to-end workflows for developers using the AgentX SDK.
+ * All journeys use VCR recording for reproducible, offline tests.
  */
 
 import { Given, When, Then } from "@cucumber/cucumber";
 import { strict as assert } from "node:assert";
+import { resolve } from "node:path";
 import type { AgentXWorld } from "../../support/world";
 import type { BusEvent } from "@agentxjs/core/event";
+
+// ============================================================================
+// VCR Configuration for Journey Tests
+// ============================================================================
+
+const JOURNEY_FIXTURES_DIR = resolve(
+  process.cwd(),
+  "fixtures/recording/journey"
+);
 
 // ============================================================================
 // State for developer journey
@@ -18,6 +29,7 @@ interface DeveloperState {
   imageId?: string;
   agentId?: string;
   sessionId?: string;
+  lastReplyText?: string;
   events: BusEvent[];
   unsubscribes: Array<() => void>;
 }
@@ -32,7 +44,7 @@ function getState(world: AgentXWorld): DeveloperState {
 }
 
 // ============================================================================
-// Phase 1: Initialize
+// Phase 1: Setup
 // ============================================================================
 
 Given(
@@ -40,6 +52,8 @@ Given(
   { timeout: 30000 },
   async function (this: AgentXWorld, provider: string) {
     const { createAgentX } = await import("agentxjs");
+    const { createVcrCreateDriver } = await import("@agentxjs/devtools");
+    const { createMonoDriver } = await import("@agentxjs/mono-driver");
 
     const apiKey =
       process.env.ANTHROPIC_API_KEY ||
@@ -48,18 +62,31 @@ Given(
     const baseUrl = process.env.DEEPRACTICE_BASE_URL;
     const model = process.env.DEEPRACTICE_MODEL || "claude-haiku-4-5-20251001";
 
-    this.localAgentX = await createAgentX({
+    const fixtureName = this.scenarioName;
+
+    const vcrCreateDriver = createVcrCreateDriver({
+      fixturesDir: JOURNEY_FIXTURES_DIR,
+      getFixtureName: () => fixtureName,
       apiKey,
-      provider: provider as any,
-      model,
       baseUrl,
-      dataPath: ":memory:",
+      model,
+      createRealDriver: createMonoDriver as any,
+      onPlayback: (name) => console.log(`[Journey VCR] Playback: ${name}`),
+      onRecording: (name) => console.log(`[Journey VCR] Recording: ${name}`),
+      onSaved: (name, count) =>
+        console.log(`[Journey VCR] Saved: ${name} (${count} events)`),
+    });
+
+    this.localAgentX = await createAgentX({
+      createDriver: vcrCreateDriver,
+      provider: provider as any,
+      dataPath: ".tmp",
     });
   }
 );
 
 // ============================================================================
-// Phase 2: Create resources
+// Phase 2: Create agent
 // ============================================================================
 
 When(
@@ -67,14 +94,6 @@ When(
   async function (this: AgentXWorld, containerId: string) {
     const result = await this.localAgentX!.containers.create(containerId);
     getState(this).containerId = result.containerId;
-  }
-);
-
-Then(
-  "the container {string} should exist",
-  async function (this: AgentXWorld, containerId: string) {
-    const result = await this.localAgentX!.containers.get(containerId);
-    assert.ok(result.exists, `Container "${containerId}" should exist`);
   }
 );
 
@@ -97,22 +116,6 @@ When(
   }
 );
 
-Then(
-  "the image should be created with a valid ID",
-  function (this: AgentXWorld) {
-    const state = getState(this);
-    assert.ok(state.imageId, "Image should have an imageId");
-    assert.ok(
-      state.imageId!.startsWith("img_"),
-      `imageId should start with img_, got: ${state.imageId}`
-    );
-  }
-);
-
-// ============================================================================
-// Phase 3: Run agent
-// ============================================================================
-
 When(
   "I run the image as an agent",
   { timeout: 30000 },
@@ -125,81 +128,71 @@ When(
   }
 );
 
-Then("the agent should be running", async function (this: AgentXWorld) {
-  const state = getState(this);
-  const result = await this.localAgentX!.agents.get(state.agentId!);
-  assert.ok(result.exists, "Agent should exist");
-});
-
 // ============================================================================
-// Phase 4: Conversation
+// Phase 3: Chat
 // ============================================================================
-
-When("I start listening for events", function (this: AgentXWorld) {
-  const state = getState(this);
-  state.events = [];
-  const unsub = this.localAgentX!.onAny((event) => {
-    state.events.push(event);
-  });
-  state.unsubscribes.push(unsub);
-});
 
 When(
   "I send message {string}",
   { timeout: 30000 },
   async function (this: AgentXWorld, message: string) {
     const state = getState(this);
+    state.events = [];
+
+    const unsub = this.localAgentX!.onAny((event) => {
+      state.events.push(event);
+    });
+    state.unsubscribes.push(unsub);
+
     await this.localAgentX!.sessions.send(state.agentId!, message);
-    // Wait briefly for events to propagate
     await new Promise((r) => setTimeout(r, 200));
-  }
-);
 
-Then(
-  "I should receive the complete event stream",
-  function (this: AgentXWorld) {
-    const state = getState(this);
-    const types = state.events.map((e) => e.type);
-
-    assert.ok(
-      types.includes("message_start"),
-      `Should have message_start, got: [${types.join(", ")}]`
-    );
-    assert.ok(
-      types.includes("text_delta"),
-      `Should have text_delta, got: [${types.join(", ")}]`
-    );
-    assert.ok(
-      types.includes("message_stop"),
-      `Should have message_stop, got: [${types.join(", ")}]`
-    );
-
-    // Verify correct order: message_start before text_delta before message_stop
-    const startIdx = types.indexOf("message_start");
-    const deltaIdx = types.indexOf("text_delta");
-    const stopIdx = types.lastIndexOf("message_stop");
-    assert.ok(startIdx < deltaIdx, "message_start should come before text_delta");
-    assert.ok(deltaIdx < stopIdx, "text_delta should come before message_stop");
-  }
-);
-
-Then(
-  "the response should contain non-empty text",
-  function (this: AgentXWorld) {
-    const state = getState(this);
+    // Extract reply text from text_delta events
     const textDeltas = state.events.filter((e) => e.type === "text_delta");
-    const fullText = textDeltas.map((e) => (e.data as any).text).join("");
-    assert.ok(fullText.length > 0, "Response text should not be empty");
+    state.lastReplyText = textDeltas.map((e) => (e.data as any).text).join("");
+  }
+);
+
+Then(
+  "I should receive a non-empty reply",
+  function (this: AgentXWorld) {
+    const state = getState(this);
+    assert.ok(
+      state.lastReplyText && state.lastReplyText.length > 0,
+      "Should receive a non-empty reply from the agent"
+    );
+  }
+);
+
+Then(
+  "the reply should contain {string}",
+  function (this: AgentXWorld, expected: string) {
+    const state = getState(this);
+    assert.ok(
+      state.lastReplyText && state.lastReplyText.includes(expected),
+      `Reply should contain "${expected}", got: "${state.lastReplyText}"`
+    );
+  }
+);
+
+Then(
+  "the reply should contain a Chinese character",
+  function (this: AgentXWorld) {
+    const state = getState(this);
+    const hasChinese = /[\u4e00-\u9fff]/.test(state.lastReplyText || "");
+    assert.ok(
+      hasChinese,
+      `Reply should contain Chinese characters, got: "${state.lastReplyText}"`
+    );
   }
 );
 
 // ============================================================================
-// Phase 5: Cleanup
+// Phase 4: Cleanup
 // ============================================================================
 
 When("I destroy the agent", async function (this: AgentXWorld) {
   const state = getState(this);
-  // Unsubscribe event handlers first
   for (const unsub of state.unsubscribes) {
     unsub();
   }

@@ -1,0 +1,87 @@
+{
+  "name": "tool-events-appear-in-correct-order",
+  "description": "VCR recording: tool-events-appear-in-correct-order",
+  "recordedAt": 1770281374509,
+  "events": [
+    {
+      "type": "message_start",
+      "delay": 1,
+      "data": {
+        "messageId": "msg_1770281374510",
+        "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "tool_use_start",
+      "delay": 2939,
+      "data": {
+        "toolCallId": "tooluse_0nIjs7BRYohvpWsvgRtDCY",
+        "toolName": "calculator"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 18,
+      "data": {
+        "partialJson": "{\"expressio"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "n\": \"7 +"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": " 8\"}"
+      }
+    },
+    {
+      "type": "tool_use_stop",
+      "delay": 10,
+      "data": {
+        "toolCallId": "tooluse_0nIjs7BRYohvpWsvgRtDCY",
+        "toolName": "calculator",
+        "input": {
+          "expression": "7 + 8"
+        }
+      }
+    },
+    {
+      "type": "tool_result",
+      "delay": 0,
+      "data": {
+        "toolCallId": "tooluse_0nIjs7BRYohvpWsvgRtDCY",
+        "result": {
+          "result": "15"
+        },
+        "isError": false
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 2408,
+      "data": {
+        "text": "The result"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 23,
+      "data": {
+        "text": " is 15."
+      }
+    },
+    {
+      "type": "message_stop",
+      "delay": 202,
+      "data": {
+        "stopReason": "end_turn"
+      }
+    }
+  ]
+}

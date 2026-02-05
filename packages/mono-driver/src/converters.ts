@@ -4,9 +4,10 @@
  * Converts between AgentX types and Vercel AI SDK v6 types
  */
 
-import type { ModelMessage } from "ai";
+import { tool, jsonSchema } from "ai";
+import type { ModelMessage, ToolSet } from "ai";
 import type { Message } from "@agentxjs/core/agent";
-import type { DriverStreamEvent, StopReason } from "@agentxjs/core/driver";
+import type { DriverStreamEvent, StopReason, ToolDefinition } from "@agentxjs/core/driver";
 
 // ============================================================================
 // Message Converters (AgentX → Vercel AI SDK v6)
@@ -131,4 +132,28 @@ export function createEvent<T extends DriverStreamEvent["type"]>(
     timestamp: Date.now(),
     data,
   } as DriverStreamEvent;
+}
+
+// ============================================================================
+// Tool Converters (AgentX → Vercel AI SDK v6)
+// ============================================================================
+
+/**
+ * Convert AgentX ToolDefinitions to Vercel AI SDK tool format
+ *
+ * Uses jsonSchema() instead of Zod to avoid adding Zod dependency to core.
+ * Type casts are needed to bridge our ToolDefinition.parameters (simplified
+ * JSON Schema) to the AI SDK's strict JSONSchema7 type.
+ */
+export function toVercelTools(tools: ToolDefinition[]): ToolSet {
+  const result: ToolSet = {};
+  for (const t of tools) {
+    result[t.name] = tool({
+      description: t.description,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      inputSchema: jsonSchema(t.parameters as any),
+      execute: async (input) => t.execute(input as Record<string, unknown>),
+    });
+  }
+  return result;
 }
