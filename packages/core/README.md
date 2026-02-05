@@ -10,7 +10,7 @@ bun add @agentxjs/core
 
 ## Architecture Overview
 
-`@agentxjs/core` is organized into 13 submodules, each accessible via its own subpath export. The package follows a clean separation between **interface definitions** (contracts) and **platform implementations** (provided by other packages like `@agentxjs/node` or `@agentxjs/cloudflare`).
+`@agentxjs/core` is organized into 13 submodules, each accessible via its own subpath export. The package follows a clean separation between **interface definitions** (contracts) and **platform implementations** (provided by other packages like `@agentxjs/node-platform` or `@agentxjs/cloudflare`).
 
 ```
 @agentxjs/core
@@ -493,7 +493,7 @@ await queue.close();
 
 ### `@agentxjs/core/persistence`
 
-Defines standard repository interfaces for data persistence. Implementations are provided by platform packages (`@agentxjs/node` uses SQLite, `@agentxjs/cloudflare` uses Durable Objects).
+Defines standard repository interfaces for data persistence. Implementations are provided by platform packages (`@agentxjs/node-platform` uses SQLite, `@agentxjs/cloudflare` uses Durable Objects).
 
 **Key types:**
 - `ContainerRepository` -- CRUD operations for containers

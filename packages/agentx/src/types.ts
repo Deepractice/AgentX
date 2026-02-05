@@ -243,6 +243,122 @@ export interface MessageSendResponse extends BaseResponse {
 }
 
 // ============================================================================
+// Namespace Interfaces
+// ============================================================================
+
+/**
+ * Container operations namespace
+ */
+export interface ContainerNamespace {
+  /**
+   * Create or get container
+   */
+  create(containerId: string): Promise<ContainerCreateResponse>;
+
+  /**
+   * Get container
+   */
+  get(containerId: string): Promise<ContainerGetResponse>;
+
+  /**
+   * List containers
+   */
+  list(): Promise<ContainerListResponse>;
+}
+
+/**
+ * Image operations namespace
+ */
+export interface ImageNamespace {
+  /**
+   * Create a new image
+   */
+  create(params: {
+    containerId: string;
+    name?: string;
+    description?: string;
+    systemPrompt?: string;
+    mcpServers?: Record<string, unknown>;
+  }): Promise<ImageCreateResponse>;
+
+  /**
+   * Get image by ID
+   */
+  get(imageId: string): Promise<ImageGetResponse>;
+
+  /**
+   * List images
+   */
+  list(containerId?: string): Promise<ImageListResponse>;
+
+  /**
+   * Delete image
+   */
+  delete(imageId: string): Promise<BaseResponse>;
+}
+
+/**
+ * Agent operations namespace
+ */
+export interface AgentNamespace {
+  /**
+   * Create a new agent
+   */
+  create(params: { imageId: string; agentId?: string }): Promise<AgentCreateResponse>;
+
+  /**
+   * Get agent by ID
+   */
+  get(agentId: string): Promise<AgentGetResponse>;
+
+  /**
+   * List agents
+   */
+  list(containerId?: string): Promise<AgentListResponse>;
+
+  /**
+   * Destroy an agent
+   */
+  destroy(agentId: string): Promise<BaseResponse>;
+}
+
+/**
+ * Session operations namespace (messaging)
+ */
+export interface SessionNamespace {
+  /**
+   * Send message to agent
+   */
+  send(agentId: string, content: string | unknown[]): Promise<MessageSendResponse>;
+
+  /**
+   * Interrupt agent
+   */
+  interrupt(agentId: string): Promise<BaseResponse>;
+}
+
+/**
+ * Presentation operations namespace
+ */
+export interface PresentationNamespace {
+  /**
+   * Create a presentation for UI integration
+   *
+   * @example
+   * ```typescript
+   * const pres = agentx.presentations.create(agentId, {
+   *   onUpdate: (state) => renderUI(state),
+   *   onError: (error) => console.error(error),
+   * });
+   *
+   * await pres.send("Hello!");
+   * pres.dispose();
+   * ```
+   */
+  create(agentId: string, options?: PresentationOptions): Presentation;
+}
+
+// ============================================================================
 // AgentX Client Interface
 // ============================================================================
 
@@ -260,84 +376,32 @@ export interface AgentX {
    */
   readonly events: EventBus;
 
-  // ==================== Agent Operations ====================
+  // ==================== Namespaced Operations ====================
 
   /**
-   * Create a new agent
+   * Container operations
    */
-  createAgent(params: { imageId: string; agentId?: string }): Promise<AgentCreateResponse>;
+  readonly containers: ContainerNamespace;
 
   /**
-   * Get agent by ID
+   * Image operations
    */
-  getAgent(agentId: string): Promise<AgentGetResponse>;
+  readonly images: ImageNamespace;
 
   /**
-   * List agents
+   * Agent operations
    */
-  listAgents(containerId?: string): Promise<AgentListResponse>;
+  readonly agents: AgentNamespace;
 
   /**
-   * Destroy an agent
+   * Session operations (messaging)
    */
-  destroyAgent(agentId: string): Promise<BaseResponse>;
-
-  // ==================== Message Operations ====================
+  readonly sessions: SessionNamespace;
 
   /**
-   * Send message to agent
+   * Presentation operations (UI integration)
    */
-  sendMessage(agentId: string, content: string | unknown[]): Promise<MessageSendResponse>;
-
-  /**
-   * Interrupt agent
-   */
-  interrupt(agentId: string): Promise<BaseResponse>;
-
-  // ==================== Image Operations ====================
-
-  /**
-   * Create a new image
-   */
-  createImage(params: {
-    containerId: string;
-    name?: string;
-    description?: string;
-    systemPrompt?: string;
-    mcpServers?: Record<string, unknown>;
-  }): Promise<ImageCreateResponse>;
-
-  /**
-   * Get image by ID
-   */
-  getImage(imageId: string): Promise<ImageGetResponse>;
-
-  /**
-   * List images
-   */
-  listImages(containerId?: string): Promise<ImageListResponse>;
-
-  /**
-   * Delete image
-   */
-  deleteImage(imageId: string): Promise<BaseResponse>;
-
-  // ==================== Container Operations ====================
-
-  /**
-   * Create or get container
-   */
-  createContainer(containerId: string): Promise<ContainerCreateResponse>;
-
-  /**
-   * Get container
-   */
-  getContainer(containerId: string): Promise<ContainerGetResponse>;
-
-  /**
-   * List containers
-   */
-  listContainers(): Promise<ContainerListResponse>;
+  readonly presentations: PresentationNamespace;
 
   // ==================== Event Subscription ====================
 
@@ -355,24 +419,6 @@ export interface AgentX {
    * Subscribe to session events
    */
   subscribe(sessionId: string): void;
-
-  // ==================== Presentation ====================
-
-  /**
-   * Create a presentation for UI integration
-   *
-   * @example
-   * ```typescript
-   * const presentation = agentx.presentation(agentId);
-   *
-   * presentation.onUpdate((state) => {
-   *   render(state.conversations);
-   * });
-   *
-   * await presentation.send("Hello!");
-   * ```
-   */
-  presentation(agentId: string, options?: PresentationOptions): Presentation;
 
   // ==================== Lifecycle ====================
 

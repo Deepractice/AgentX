@@ -12,15 +12,15 @@
  *   provider: "anthropic",
  * });
  *
- * await agentx.createContainer("my-app");
- * const { record: image } = await agentx.createImage({
+ * await agentx.containers.create("my-app");
+ * const { record: image } = await agentx.images.create({
  *   containerId: "my-app",
  *   systemPrompt: "You are helpful",
  * });
- * const { agentId } = await agentx.createAgent({ imageId: image.imageId });
+ * const { agentId } = await agentx.agents.create({ imageId: image.imageId });
  *
  * agentx.on("text_delta", (e) => process.stdout.write(e.data.text));
- * await agentx.sendMessage(agentId, "Hello!");
+ * await agentx.sessions.send(agentId, "Hello!");
  * ```
  *
  * @example Remote mode (WebSocket client)
@@ -116,6 +116,11 @@ export type {
   AgentInfo,
   ImageRecord,
   ContainerInfo,
+  ContainerNamespace,
+  ImageNamespace,
+  AgentNamespace,
+  SessionNamespace,
+  PresentationNamespace,
   AgentCreateResponse,
   AgentGetResponse,
   AgentListResponse,

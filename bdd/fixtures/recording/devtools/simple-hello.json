@@ -1,7 +1,7 @@
 {
   "name": "simple-hello",
   "description": "Test fixture",
-  "recordedAt": 1770270190521,
+  "recordedAt": 1770277179780,
   "events": [
     {
       "type": "message_start",

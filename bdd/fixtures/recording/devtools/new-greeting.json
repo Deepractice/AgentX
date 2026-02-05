@@ -1,13 +1,13 @@
 {
   "name": "new-greeting",
   "description": "Recording of: \"Hi there!\"",
-  "recordedAt": 1770270190558,
+  "recordedAt": 1770277179817,
   "events": [
     {
       "type": "message_start",
-      "delay": 7081,
+      "delay": 7413,
       "data": {
-        "messageId": "msg_e119f03f-8402-42d1-ad",
+        "messageId": "msg_5738a48d-64a4-4a62-b5",
         "model": "claude-haiku-4-5-20251001"
       }
     },
@@ -20,35 +20,35 @@
     },
     {
       "type": "text_delta",
-      "delay": 0,
+      "delay": 25,
       "data": {
         "text": "! "
       }
     },
     {
       "type": "text_delta",
-      "delay": 0,
+      "delay": 29,
       "data": {
         "text": "👋 How"
       }
     },
     {
       "type": "text_delta",
-      "delay": 4,
+      "delay": 798,
       "data": {
         "text": " can I help you today"
       }
     },
     {
       "type": "text_delta",
-      "delay": 84,
+      "delay": 0,
       "data": {
         "text": "?"
       }
     },
     {
       "type": "message_stop",
-      "delay": 131,
+      "delay": 1,
       "data": {
         "stopReason": "end_turn"
       }

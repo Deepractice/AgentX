@@ -55,21 +55,21 @@ Given("I have an AgentX client connected to the test server", async function (th
 // ============================================================================
 
 When("I create container {string}", async function (this: AgentXWorld, containerId: string) {
-  const response = await this.agentx!.createContainer(containerId);
+  const response = await this.agentx!.containers.create(containerId);
   this.lastResponse = response;
 });
 
 Given("I have created container {string}", async function (this: AgentXWorld, containerId: string) {
-  await this.agentx!.createContainer(containerId);
+  await this.agentx!.containers.create(containerId);
 });
 
 When("I get container {string}", async function (this: AgentXWorld, containerId: string) {
-  const response = await this.agentx!.getContainer(containerId);
+  const response = await this.agentx!.containers.get(containerId);
   this.lastResponse = response;
 });
 
 When("I list containers", async function (this: AgentXWorld) {
-  const response = await this.agentx!.listContainers();
+  const response = await this.agentx!.containers.list();
   this.lastResponse = response;
 });
 
@@ -107,7 +107,7 @@ When(
   "I create image in container {string} with:",
   async function (this: AgentXWorld, containerId: string, dataTable: DataTable) {
     const data = dataTable.rowsHash();
-    const response = await this.agentx!.createImage({
+    const response = await this.agentx!.images.create({
       containerId,
       name: data.name,
       description: data.description,
@@ -120,7 +120,7 @@ When(
 When(
   "I create image in container {string}",
   async function (this: AgentXWorld, containerId: string) {
-    const response = await this.agentx!.createImage({ containerId });
+    const response = await this.agentx!.images.create({ containerId });
     this.lastResponse = response;
   }
 );
@@ -128,7 +128,7 @@ When(
 Given(
   "I have created an image in container {string}",
   async function (this: AgentXWorld, containerId: string) {
-    const response = await this.agentx!.createImage({ containerId });
+    const response = await this.agentx!.images.create({ containerId });
     this.lastResponse = response;
   }
 );
@@ -137,7 +137,7 @@ Given(
   "I have created an image in container {string} with:",
   async function (this: AgentXWorld, containerId: string, dataTable: DataTable) {
     const data = dataTable.rowsHash();
-    const response = await this.agentx!.createImage({
+    const response = await this.agentx!.images.create({
       containerId,
       name: data.name,
       description: data.description,
@@ -149,21 +149,21 @@ Given(
 
 When("I get image {string}", async function (this: AgentXWorld, imageId: string) {
   const resolvedId = resolvePlaceholder(this, imageId);
-  const response = await this.agentx!.getImage(resolvedId);
+  const response = await this.agentx!.images.get(resolvedId);
   this.lastResponse = response;
 });
 
 When(
   "I list images in container {string}",
   async function (this: AgentXWorld, containerId: string) {
-    const response = await this.agentx!.listImages(containerId);
+    const response = await this.agentx!.images.list(containerId);
     this.lastResponse = response;
   }
 );
 
 When("I delete image {string}", async function (this: AgentXWorld, imageId: string) {
   const resolvedId = resolvePlaceholder(this, imageId);
-  const response = await this.agentx!.deleteImage(resolvedId);
+  const response = await this.agentx!.images.delete(resolvedId);
   this.lastResponse = response;
 });
 
@@ -195,7 +195,7 @@ Then("the image list should include {string}", function (this: AgentXWorld, imag
 
 When("I create agent from image {string}", async function (this: AgentXWorld, imageId: string) {
   const resolvedId = resolvePlaceholder(this, imageId);
-  const response = await this.agentx!.createAgent({ imageId: resolvedId });
+  const response = await this.agentx!.agents.create({ imageId: resolvedId });
   this.lastResponse = response;
 });
 
@@ -203,7 +203,7 @@ When(
   "I create agent from image {string} with agentId {string}",
   async function (this: AgentXWorld, imageId: string, agentId: string) {
     const resolvedImageId = resolvePlaceholder(this, imageId);
-    const response = await this.agentx!.createAgent({
+    const response = await this.agentx!.agents.create({
       imageId: resolvedImageId,
       agentId,
     });
@@ -215,25 +215,25 @@ Given(
   "I have created an agent from image {string}",
   async function (this: AgentXWorld, imageId: string) {
     const resolvedId = resolvePlaceholder(this, imageId);
-    const response = await this.agentx!.createAgent({ imageId: resolvedId });
+    const response = await this.agentx!.agents.create({ imageId: resolvedId });
     this.lastResponse = response;
   }
 );
 
 When("I get agent {string}", async function (this: AgentXWorld, agentId: string) {
   const resolvedId = resolvePlaceholder(this, agentId);
-  const response = await this.agentx!.getAgent(resolvedId);
+  const response = await this.agentx!.agents.get(resolvedId);
   this.lastResponse = response;
 });
 
 When("I list agents", async function (this: AgentXWorld) {
-  const response = await this.agentx!.listAgents();
+  const response = await this.agentx!.agents.list();
   this.lastResponse = response;
 });
 
 When("I destroy agent {string}", async function (this: AgentXWorld, agentId: string) {
   const resolvedId = resolvePlaceholder(this, agentId);
-  const response = await this.agentx!.destroyAgent(resolvedId);
+  const response = await this.agentx!.agents.destroy(resolvedId);
   this.lastResponse = response;
 });
 
@@ -281,14 +281,14 @@ When(
   { timeout: 60000 },
   async function (this: AgentXWorld, content: string, agentId: string) {
     const resolvedAgentId = resolvePlaceholder(this, agentId);
-    const response = await this.agentx!.sendMessage(resolvedAgentId, content);
+    const response = await this.agentx!.sessions.send(resolvedAgentId, content);
     this.lastResponse = response;
   }
 );
 
 When("I interrupt agent {string}", async function (this: AgentXWorld, agentId: string) {
   const resolvedId = resolvePlaceholder(this, agentId);
-  const response = await this.agentx!.interrupt(resolvedId);
+  const response = await this.agentx!.sessions.interrupt(resolvedId);
   this.lastResponse = response;
 });
 
@@ -385,7 +385,7 @@ Given(
     this.presentationComplete = false;
     this.presentationDisposed = false;
 
-    this.presentation = this.agentx!.presentation(resolvedId, {
+    this.presentation = this.agentx!.presentations.create(resolvedId, {
       onUpdate: (state) => {
         this.presentationStates.push({ ...state });
         // Check if complete (no streaming and status is idle after user message)
@@ -619,7 +619,7 @@ Given(
     this.presentationDisposed = false;
     this.presentationUpdateCount = 0;
 
-    this.presentation = this.agentx!.presentation(resolvedId, {
+    this.presentation = this.agentx!.presentations.create(resolvedId, {
       onUpdate: (state) => {
         this.presentationStates.push({ ...state });
         this.presentationUpdateCount++;

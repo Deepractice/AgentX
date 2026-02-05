@@ -5,9 +5,10 @@
   "description": "BDD tests for agentxjs and @agentxjs/server",
   "type": "module",
   "scripts": {
-    "test": "NODE_OPTIONS='--import tsx' cucumber-js",
-    "test:devtools": "NODE_OPTIONS='--import tsx' cucumber-js --tags @devtools",
-    "test:mono-driver": "NODE_OPTIONS='--import tsx' cucumber-js --tags @mono-driver"
+    "test": "bun test",
+    "test:devtools": "BDD_TAGS='@devtools' bun test",
+    "test:mono-driver": "BDD_TAGS='@mono-driver' bun test",
+    "test:cucumber": "NODE_OPTIONS='--import tsx' cucumber-js"
   },
   "devDependencies": {
     "@agentxjs/claude-driver": "workspace:*",

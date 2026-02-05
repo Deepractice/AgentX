@@ -39,7 +39,7 @@ Given(
 When(
   "I create container {string} via local client",
   async function (this: AgentXWorld, containerId: string) {
-    const result = await this.localAgentX!.createContainer(containerId);
+    const result = await this.localAgentX!.containers.create(containerId);
     this.lastContainerId = result.containerId;
   }
 );
@@ -47,7 +47,7 @@ When(
 Then(
   "the container {string} should exist via local client",
   async function (this: AgentXWorld, containerId: string) {
-    const result = await this.localAgentX!.getContainer(containerId);
+    const result = await this.localAgentX!.containers.get(containerId);
     assert.ok(result.exists, `Container ${containerId} should exist`);
   }
 );
@@ -55,8 +55,8 @@ Then(
 When(
   "I create an image in container {string} with systemPrompt {string}",
   async function (this: AgentXWorld, containerId: string, systemPrompt: string) {
-    await this.localAgentX!.createContainer(containerId);
-    const result = await this.localAgentX!.createImage({
+    await this.localAgentX!.containers.create(containerId);
+    const result = await this.localAgentX!.images.create({
       containerId,
       systemPrompt,
     });
@@ -75,7 +75,7 @@ Then(
 Given(
   "I have container {string} via local client",
   async function (this: AgentXWorld, containerId: string) {
-    await this.localAgentX!.createContainer(containerId);
+    await this.localAgentX!.containers.create(containerId);
     this.lastContainerId = containerId;
   }
 );
@@ -83,7 +83,7 @@ Given(
 Given(
   "I have an image in container {string} with systemPrompt {string}",
   async function (this: AgentXWorld, containerId: string, systemPrompt: string) {
-    const result = await this.localAgentX!.createImage({
+    const result = await this.localAgentX!.images.create({
       containerId,
       systemPrompt,
     });
@@ -96,7 +96,7 @@ Given(
   "I have an agent from the image via local client",
   { timeout: 30000 },
   async function (this: AgentXWorld) {
-    const result = await this.localAgentX!.createAgent({
+    const result = await this.localAgentX!.agents.create({
       imageId: this.lastImageId!,
     });
     this.lastAgentId = result.agentId;
@@ -111,7 +111,7 @@ When(
     const unsub = this.localAgentX!.onAny((event) => {
       this.localEvents!.push(event);
     });
-    await this.localAgentX!.sendMessage(this.lastAgentId!, message);
+    await this.localAgentX!.sessions.send(this.lastAgentId!, message);
     // Wait briefly for events to propagate
     await new Promise((resolve) => setTimeout(resolve, 200));
     unsub();
@@ -179,7 +179,7 @@ Given(
 When(
   "I create container {string} via remote client",
   async function (this: AgentXWorld, containerId: string) {
-    const result = await this.remoteAgentX!.createContainer(containerId);
+    const result = await this.remoteAgentX!.containers.create(containerId);
     this.lastContainerId = result.containerId;
   }
 );
@@ -187,7 +187,7 @@ When(
 Then(
   "the container {string} should exist via remote client",
   async function (this: AgentXWorld, containerId: string) {
-    const result = await this.remoteAgentX!.getContainer(containerId);
+    const result = await this.remoteAgentX!.containers.get(containerId);
     assert.ok(result.exists, `Container ${containerId} should exist`);
   }
 );
@@ -203,7 +203,7 @@ Then(
 Given(
   "I have container {string} via remote client",
   async function (this: AgentXWorld, containerId: string) {
-    await this.remoteAgentX!.createContainer(containerId);
+    await this.remoteAgentX!.containers.create(containerId);
     this.lastContainerId = containerId;
   }
 );
@@ -211,8 +211,8 @@ Given(
 When(
   "I create an image in container {string} via remote with systemPrompt {string}",
   async function (this: AgentXWorld, containerId: string, systemPrompt: string) {
-    await this.remoteAgentX!.createContainer(containerId);
-    const result = await this.remoteAgentX!.createImage({
+    await this.remoteAgentX!.containers.create(containerId);
+    const result = await this.remoteAgentX!.images.create({
       containerId,
       systemPrompt,
     });
@@ -224,7 +224,7 @@ When(
 Given(
   "I have an image in container {string} via remote with systemPrompt {string}",
   async function (this: AgentXWorld, containerId: string, systemPrompt: string) {
-    const result = await this.remoteAgentX!.createImage({
+    const result = await this.remoteAgentX!.images.create({
       containerId,
       systemPrompt,
     });
@@ -236,7 +236,7 @@ Given(
   "I have an agent from the image via remote client",
   { timeout: 30000 },
   async function (this: AgentXWorld) {
-    const result = await this.remoteAgentX!.createAgent({
+    const result = await this.remoteAgentX!.agents.create({
       imageId: this.lastImageId!,
     });
     this.lastAgentId = result.agentId;
@@ -251,7 +251,7 @@ When(
     const unsub = this.remoteAgentX!.onAny((event) => {
       this.remoteEvents!.push(event);
     });
-    await this.remoteAgentX!.sendMessage(this.lastAgentId!, message);
+    await this.remoteAgentX!.sessions.send(this.lastAgentId!, message);
     // Wait for events to propagate over WebSocket
     await new Promise((resolve) => setTimeout(resolve, 500));
     unsub();
@@ -493,10 +493,10 @@ When(
   async function (this: AgentXWorld, method: string, containerId: string) {
     switch (method) {
       case "container.create":
-        this.lastRpcResult = await this.docClient!.createContainer(containerId);
+        this.lastRpcResult = await this.docClient!.containers.create(containerId);
         break;
       case "container.get":
-        this.lastRpcResult = await this.docClient!.getContainer(containerId);
+        this.lastRpcResult = await this.docClient!.containers.get(containerId);
         break;
       default:
         throw new Error(`Unknown method: ${method}`);
@@ -509,7 +509,7 @@ When(
   async function (this: AgentXWorld, method: string) {
     switch (method) {
       case "container.list":
-        this.lastRpcResult = await this.docClient!.listContainers();
+        this.lastRpcResult = await this.docClient!.containers.list();
         break;
       default:
         throw new Error(`Unknown method: ${method}`);

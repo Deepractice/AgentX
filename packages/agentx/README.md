@@ -28,23 +28,23 @@ const agentx = await createAgentX({
 });
 
 // Create a container to organize images and agents
-await agentx.createContainer("my-app");
+await agentx.containers.create("my-app");
 
 // Create an image (agent blueprint)
-const { record: image } = await agentx.createImage({
+const { record: image } = await agentx.images.create({
   containerId: "my-app",
   name: "Assistant",
   systemPrompt: "You are a helpful assistant.",
 });
 
 // Create an agent from the image
-const { agentId } = await agentx.createAgent({ imageId: image.imageId });
+const { agentId } = await agentx.agents.create({ imageId: image.imageId });
 
 // Listen for streaming text
 agentx.on("text_delta", (e) => process.stdout.write(e.data.text));
 
 // Send a message
-await agentx.sendMessage(agentId, "Hello!");
+await agentx.sessions.send(agentId, "Hello!");
 ```
 
 ### Remote Mode
@@ -59,15 +59,15 @@ const agentx = await createAgentX({
 });
 
 // The same AgentX interface is available
-await agentx.createContainer("my-app");
-const { record: image } = await agentx.createImage({
+await agentx.containers.create("my-app");
+const { record: image } = await agentx.images.create({
   containerId: "my-app",
   systemPrompt: "You are a helpful assistant.",
 });
-const { agentId } = await agentx.createAgent({ imageId: image.imageId });
+const { agentId } = await agentx.agents.create({ imageId: image.imageId });
 
 agentx.on("text_delta", (e) => process.stdout.write(e.data.text));
-await agentx.sendMessage(agentId, "Hello!");
+await agentx.sessions.send(agentId, "Hello!");
 ```
 
 ## Mode Detection
@@ -169,13 +169,13 @@ Containers are organizational units that group images and agents.
 
 ```typescript
 // Create or get a container
-const { containerId } = await agentx.createContainer("my-app");
+const { containerId } = await agentx.containers.create("my-app");
 
 // Check if a container exists
-const { exists } = await agentx.getContainer("my-app");
+const { exists } = await agentx.containers.get("my-app");
 
 // List all containers
-const { containerIds } = await agentx.listContainers();
+const { containerIds } = await agentx.containers.list();
 ```
 
 ### Image Operations
@@ -184,7 +184,7 @@ Images are agent blueprints that define the system prompt and configuration. The
 
 ```typescript
 // Create an image
-const { record } = await agentx.createImage({
+const { record } = await agentx.images.create({
   containerId: "my-app",
   name: "Code Reviewer",
   description: "Reviews pull requests",
@@ -193,14 +193,14 @@ const { record } = await agentx.createImage({
 });
 
 // Get an image by ID
-const { record: image } = await agentx.getImage(imageId);
+const { record: image } = await agentx.images.get(imageId);
 
 // List images, optionally filtered by container
-const { records } = await agentx.listImages("my-app");
-const { records: allImages } = await agentx.listImages();
+const { records } = await agentx.images.list("my-app");
+const { records: allImages } = await agentx.images.list();
 
 // Delete an image
-await agentx.deleteImage(imageId);
+await agentx.images.delete(imageId);
 ```
 
 ### Agent Operations
@@ -209,35 +209,35 @@ Agents are running instances created from images.
 
 ```typescript
 // Create an agent from an image
-const { agentId, sessionId } = await agentx.createAgent({
+const { agentId, sessionId } = await agentx.agents.create({
   imageId: image.imageId,
   agentId: "optional-custom-id",
 });
 
 // Get agent info
-const { agent, exists } = await agentx.getAgent(agentId);
+const { agent, exists } = await agentx.agents.get(agentId);
 
 // List agents, optionally filtered by container
-const { agents } = await agentx.listAgents("my-app");
+const { agents } = await agentx.agents.list("my-app");
 
 // Destroy an agent
-await agentx.destroyAgent(agentId);
+await agentx.agents.destroy(agentId);
 ```
 
 ### Message Operations
 
 ```typescript
 // Send a text message
-await agentx.sendMessage(agentId, "Explain this code.");
+await agentx.sessions.send(agentId, "Explain this code.");
 
 // Send structured content (multipart)
-await agentx.sendMessage(agentId, [
+await agentx.sessions.send(agentId, [
   { type: "text", text: "What is in this image?" },
   { type: "image", source: { type: "url", url: "https://example.com/img.png" } },
 ]);
 
 // Interrupt a response in progress
-await agentx.interrupt(agentId);
+await agentx.sessions.interrupt(agentId);
 ```
 
 ### Event Subscription
@@ -292,7 +292,7 @@ The `Presentation` class provides a high-level, UI-friendly wrapper around the A
 ### Creating a Presentation
 
 ```typescript
-const presentation = agentx.presentation(agentId, {
+const presentation = agentx.presentations.create(agentId, {
   onUpdate: (state) => {
     // Called on every state change
     renderUI(state);
@@ -523,18 +523,18 @@ async function main() {
   });
 
   // Set up container and image
-  await agentx.createContainer("demo");
-  const { record: image } = await agentx.createImage({
+  await agentx.containers.create("demo");
+  const { record: image } = await agentx.images.create({
     containerId: "demo",
     name: "Chat Assistant",
     systemPrompt: "You are a friendly assistant. Be concise.",
   });
 
   // Create agent
-  const { agentId } = await agentx.createAgent({ imageId: image.imageId });
+  const { agentId } = await agentx.agents.create({ imageId: image.imageId });
 
   // Use Presentation for structured state management
-  const presentation = agentx.presentation(agentId, {
+  const presentation = agentx.presentations.create(agentId, {
     onUpdate: (state) => {
       if (state.status === "responding" && state.streaming) {
         const textBlocks = state.streaming.blocks.filter((b) => b.type === "text");
