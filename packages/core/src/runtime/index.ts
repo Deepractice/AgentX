@@ -1,25 +1,14 @@
 /**
  * Runtime Module
  *
- * AgentXPlatform and AgentXRuntime interfaces.
- * Platform packages provide concrete implementations.
+ * AgentXRuntime interface and implementation.
+ * AgentXPlatform is re-exported here for backward compatibility,
+ * but its canonical home is @agentxjs/core/platform.
  *
  * Usage:
  * ```typescript
- * import type {
- *   AgentXPlatform,
- *   AgentXRuntime,
- *   RuntimeAgent,
- * } from "@agentxjs/core/runtime";
- *
- * // Platform provides implementation
- * const platform: AgentXPlatform = {
- *   containerRepository,
- *   imageRepository,
- *   sessionRepository,
- *   workspaceProvider,
- *   eventBus,
- * };
+ * import type { AgentXPlatform } from "@agentxjs/core/platform";
+ * import type { AgentXRuntime, RuntimeAgent } from "@agentxjs/core/runtime";
  *
  * const runtime = createAgentXRuntime(platform, createDriver);
  *

@@ -22,8 +22,9 @@ import type {
 } from "./types";
 import type { UserContentPart, UserMessage } from "../agent/types";
 import type { BusEvent } from "../event/types";
-import type { CreateDriver, Driver, DriverConfig, DriverStreamEvent } from "../driver/types";
+import type { CreateDriver, Driver, DriverConfig, DriverStreamEvent, ToolDefinition } from "../driver/types";
 import { createSession } from "../session/Session";
+import { createBashTool } from "../bash/tool";
 
 const logger = createLogger("runtime/AgentXRuntime");
 
@@ -82,13 +83,6 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       throw new Error(`Container not found: ${imageRecord.containerId}`);
     }
 
-    // Create workspace
-    const workspace = await this.platform.workspaceProvider.create({
-      containerId: imageRecord.containerId,
-      imageId,
-    });
-    await workspace.initialize();
-
     // Create Session for driver (MonoDriver needs this to read history)
     const session = createSession({
       sessionId: imageRecord.sessionId,
@@ -97,13 +91,19 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       repository: this.platform.sessionRepository,
     });
 
+    // Assemble platform-provided default tools
+    const defaultTools: ToolDefinition[] = [];
+    if (this.platform.bashProvider) {
+      defaultTools.push(createBashTool(this.platform.bashProvider));
+    }
+
     // Create driver config (apiKey/baseUrl are provided by the createDriver closure)
     const driverConfig: DriverConfig = {
       apiKey: "",
       agentId,
       systemPrompt: imageRecord.systemPrompt,
-      cwd: workspace.path,
       mcpServers: imageRecord.mcpServers,
+      tools: defaultTools.length > 0 ? defaultTools : undefined,
       session, // Inject Session for stateless drivers
       resumeSessionId: imageRecord.metadata?.claudeSdkSessionId as string | undefined,
       onSessionIdCaptured: async (claudeSdkSessionId: string) => {

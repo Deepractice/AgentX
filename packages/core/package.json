@@ -45,10 +45,15 @@
       "import": "./dist/container/index.js",
       "default": "./dist/container/index.js"
     },
-    "./workspace": {
-      "types": "./dist/workspace/index.d.ts",
-      "import": "./dist/workspace/index.js",
-      "default": "./dist/workspace/index.js"
+    "./bash": {
+      "types": "./dist/bash/index.d.ts",
+      "import": "./dist/bash/index.js",
+      "default": "./dist/bash/index.js"
+    },
+    "./platform": {
+      "types": "./dist/platform/index.d.ts",
+      "import": "./dist/platform/index.js",
+      "default": "./dist/platform/index.js"
     },
     "./runtime": {
       "types": "./dist/runtime/index.d.ts",

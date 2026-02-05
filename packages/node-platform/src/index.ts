@@ -2,7 +2,7 @@
  * @agentxjs/node-platform
  *
  * Node.js platform for AgentX.
- * Provides implementations for persistence, workspace, and network.
+ * Provides implementations for persistence, bash, and network.
  *
  * @example
  * ```typescript
@@ -17,7 +17,7 @@ import type { LogLevel } from "commonxjs/logger";
 import { setLoggerFactory } from "commonxjs/logger";
 import { EventBusImpl } from "@agentxjs/core/event";
 import { createPersistence, sqliteDriver } from "./persistence";
-import { FileWorkspaceProvider } from "./workspace/FileWorkspaceProvider";
+import { NodeBashProvider } from "./bash/NodeBashProvider";
 import { FileLoggerFactory } from "./logger";
 import { join } from "node:path";
 
@@ -100,10 +100,8 @@ export async function createNodePlatform(
   // Create persistence with SQLite
   const persistence = await createPersistence(sqliteDriver({ path: join(dataPath, "agentx.db") }));
 
-  // Create workspace provider
-  const workspaceProvider = new FileWorkspaceProvider({
-    basePath: join(dataPath, "workspaces"),
-  });
+  // Create bash provider
+  const bashProvider = new NodeBashProvider();
 
   // Create event bus
   const eventBus = new EventBusImpl();
@@ -112,8 +110,8 @@ export async function createNodePlatform(
     containerRepository: persistence.containers,
     imageRepository: persistence.images,
     sessionRepository: persistence.sessions,
-    workspaceProvider,
     eventBus,
+    bashProvider,
   };
 }
 
@@ -132,11 +130,8 @@ export function isDeferredPlatform(value: unknown): value is DeferredPlatformCon
 // Re-export persistence
 export * from "./persistence";
 
-// Re-export workspace
-export {
-  FileWorkspaceProvider,
-  type FileWorkspaceProviderOptions,
-} from "./workspace/FileWorkspaceProvider";
+// Re-export bash
+export { NodeBashProvider } from "./bash/NodeBashProvider";
 
 // Re-export mq
 export { SqliteMessageQueue, OffsetGenerator } from "./mq";

@@ -1,0 +1,124 @@
+{
+  "name": "llm-uses-bash-to-run-a-command",
+  "description": "VCR recording: llm-uses-bash-to-run-a-command",
+  "recordedAt": 1770283934436,
+  "events": [
+    {
+      "type": "message_start",
+      "delay": 4,
+      "data": {
+        "messageId": "msg_1770283934440",
+        "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "tool_use_start",
+      "delay": 2630,
+      "data": {
+        "toolCallId": "tooluse_2UYg41aIqYBnBuQLHc6w3e",
+        "toolName": "bash"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 207,
+      "data": {
+        "partialJson": "{\"command\":"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": " \"ech"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "o he"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 1,
+      "data": {
+        "partialJson": "llo-agentx"
+      }
+    },
+    {
+      "type": "input_json_delta",
+      "delay": 0,
+      "data": {
+        "partialJson": "\"}"
+      }
+    },
+    {
+      "type": "tool_use_stop",
+      "delay": 8,
+      "data": {
+        "toolCallId": "tooluse_2UYg41aIqYBnBuQLHc6w3e",
+        "toolName": "bash",
+        "input": {
+          "command": "echo hello-agentx"
+        }
+      }
+    },
+    {
+      "type": "tool_result",
+      "delay": 3,
+      "data": {
+        "toolCallId": "tooluse_2UYg41aIqYBnBuQLHc6w3e",
+        "result": {
+          "stdout": "hello-agentx",
+          "stderr": "",
+          "exitCode": 0
+        },
+        "isError": false
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 2689,
+      "data": {
+        "text": "The command output"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": ":"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 39,
+      "data": {
+        "text": " **"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 42,
+      "data": {
+        "text": "hello"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 42,
+      "data": {
+        "text": "-agentx**"
+      }
+    },
+    {
+      "type": "message_stop",
+      "delay": 222,
+      "data": {
+        "stopReason": "end_turn"
+      }
+    }
+  ]
+}

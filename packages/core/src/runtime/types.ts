@@ -1,21 +1,13 @@
 /**
  * Runtime Types
  *
- * AgentXPlatform - Dependency injection container
  * AgentXRuntime - Runtime integration layer
  *
  * Architecture:
  * ```
  * ┌─────────────────────────────────────────────────────────────┐
  * │                      AgentXPlatform                         │
- * │  (Dependency Injection - Platform provides implementations) │
- * │                                                             │
- * │  ┌─────────────┐ ┌─────────────┐                           │
- * │  │ Repositories│ │  Workspace  │                           │
- * │  │  Container  │ │  Provider   │                           │
- * │  │  Image      │ │             │                           │
- * │  │  Session    │ │             │                           │
- * │  └─────────────┘ └─────────────┘                           │
+ * │           (see @agentxjs/core/platform)                     │
  * └─────────────────────────────────────────────────────────────┘
  *                              │
  *                              ▼
@@ -32,13 +24,12 @@
  * ```
  */
 
-import type { ContainerRepository } from "../container/types";
-import type { ImageRepository } from "../image/types";
-import type { SessionRepository } from "../session/types";
-import type { WorkspaceProvider } from "../workspace/types";
-import type { EventBus } from "../event/types";
+import type { AgentXPlatform } from "../platform/types";
 import type { UserContentPart } from "../agent/types";
 import type { BusEvent } from "../event/types";
+
+// Re-export AgentXPlatform for backward compatibility
+export type { AgentXPlatform } from "../platform/types";
 
 // ============================================================================
 // Agent Runtime State
@@ -60,43 +51,6 @@ export interface RuntimeAgent {
   readonly name: string;
   readonly lifecycle: AgentLifecycle;
   readonly createdAt: number;
-}
-
-// ============================================================================
-// AgentXPlatform - Dependency Injection
-// ============================================================================
-
-/**
- * AgentXPlatform - Collects all dependencies for runtime
- *
- * Platform packages provide implementations of these interfaces.
- * The platform is passed to AgentXRuntime for integration.
- */
-export interface AgentXPlatform {
-  /**
-   * Container repository for persistence
-   */
-  readonly containerRepository: ContainerRepository;
-
-  /**
-   * Image repository for persistence
-   */
-  readonly imageRepository: ImageRepository;
-
-  /**
-   * Session repository for persistence
-   */
-  readonly sessionRepository: SessionRepository;
-
-  /**
-   * Workspace provider for isolated environments
-   */
-  readonly workspaceProvider: WorkspaceProvider;
-
-  /**
-   * Event bus for pub/sub
-   */
-  readonly eventBus: EventBus;
 }
 
 // ============================================================================

@@ -11,6 +11,8 @@ import { resolve } from "node:path";
 import { mkdirSync, existsSync } from "node:fs";
 import type { AgentXWorld } from "../support/world";
 import type { CreateDriver, ToolDefinition } from "@agentxjs/core/driver";
+import { createBashTool } from "@agentxjs/core/bash";
+import { NodeBashProvider } from "@agentxjs/node-platform";
 
 // ============================================================================
 // VCR Configuration for MonoDriver
@@ -126,6 +128,39 @@ Given(
         "You are a helpful assistant. Always use the calculator tool for math calculations. Be brief.",
       model: process.env.DEEPRACTICE_MODEL || "claude-haiku-4-5-20251001",
       tools: [calculator],
+      options: { provider },
+    };
+
+    this.monoDriver = monoVcrCreateDriver(config);
+    await this.monoDriver.initialize();
+    this.driverEvents = [];
+  }
+);
+
+Given(
+  "I have a MonoDriver with provider {string} and a bash tool",
+  async function (this: AgentXWorld, provider: string) {
+    assert.ok(monoVcrCreateDriver, "VCR CreateDriver not initialized");
+
+    currentMonoFixture = this.scenarioName;
+
+    const apiKey =
+      process.env.ANTHROPIC_API_KEY ||
+      process.env.DEEPRACTICE_API_KEY ||
+      "test-key";
+    const baseUrl = process.env.DEEPRACTICE_BASE_URL;
+
+    const bashProvider = new NodeBashProvider();
+    const bashTool = createBashTool(bashProvider);
+
+    const config = {
+      apiKey,
+      baseUrl,
+      agentId: "bdd-bash-test",
+      systemPrompt:
+        "You are a helpful assistant. When asked to run a command, always use the bash tool. Be brief.",
+      model: process.env.DEEPRACTICE_MODEL || "claude-haiku-4-5-20251001",
+      tools: [bashTool],
       options: { provider },
     };
 

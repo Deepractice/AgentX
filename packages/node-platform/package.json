@@ -38,6 +38,7 @@
   "dependencies": {
     "@agentxjs/core": "workspace:*",
     "commonxjs": "^0.1.1",
+    "execa": "9.6.1",
     "rxjs": "^7.8.2",
     "unstorage": "^1.10.2",
     "ws": "^8.18.0"

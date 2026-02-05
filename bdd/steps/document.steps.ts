@@ -345,13 +345,6 @@ Then(
 );
 
 Then(
-  "the platform should have a workspaceProvider",
-  function (this: AgentXWorld) {
-    assert.ok(this.docPlatform!.workspaceProvider, "Should have workspaceProvider");
-  }
-);
-
-Then(
   "the platform should have an eventBus",
   function (this: AgentXWorld) {
     assert.ok(this.docPlatform!.eventBus, "Should have eventBus");
