@@ -568,7 +568,7 @@ ImageRecord
 ├── sessionId: "sess_xyz789"  ← Links to Session
 ├── name: "My Conversation"
 ├── systemPrompt: "You are helpful."
-└── metadata: { claudeSdkSessionId: "..." }
+└── metadata: { driverSessionId: "..." }
 
 SessionRecord
 ├── sessionId: "sess_xyz789"
@@ -591,17 +591,17 @@ interface Message {
 }
 ```
 
-### Claude SDK Session ID
+### Driver Session ID
 
-AgentX stores the Claude SDK session ID in the Image metadata for conversation resume:
+AgentX stores the driver session ID in the Image metadata for conversation resume:
 
 ```typescript
 interface ImageMetadata {
-  claudeSdkSessionId?: string; // For Claude API conversation resume
+  driverSessionId?: string; // For driver conversation resume
 }
 ```
 
-This enables the Claude API to maintain conversation context even across agent restarts.
+This enables the driver to maintain conversation context even across agent restarts.
 
 ## Best Practices
 

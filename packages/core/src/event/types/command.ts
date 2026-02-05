@@ -87,7 +87,7 @@ export interface McpServerConfig {
  * Image metadata for storing provider-specific data
  */
 export interface ImageMetadata {
-  claudeSdkSessionId?: string;
+  driverSessionId?: string;
 }
 
 /**

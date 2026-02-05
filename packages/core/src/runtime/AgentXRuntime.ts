@@ -105,10 +105,10 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       mcpServers: imageRecord.mcpServers,
       tools: defaultTools.length > 0 ? defaultTools : undefined,
       session, // Inject Session for stateless drivers
-      resumeSessionId: imageRecord.metadata?.claudeSdkSessionId as string | undefined,
-      onSessionIdCaptured: async (claudeSdkSessionId: string) => {
-        // Persist SDK session ID for resume
-        await this.platform.imageRepository.updateMetadata(imageId, { claudeSdkSessionId });
+      resumeSessionId: imageRecord.metadata?.driverSessionId as string | undefined,
+      onSessionIdCaptured: async (driverSessionId: string) => {
+        // Persist driver session ID for resume
+        await this.platform.imageRepository.updateMetadata(imageId, { driverSessionId });
       },
     };
 

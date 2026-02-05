@@ -77,6 +77,18 @@ const driver = createMyDriver({
   agentId: "my-agent",
   systemPrompt: "You are a helpful assistant",
   model: "claude-sonnet-4-20250514",
+  tools: [myTool],                   // Explicit tool definitions (optional)
+  mcpServers: {                      // MCP servers for tool discovery (optional)
+    filesystem: {                    // Stdio — local subprocess
+      command: "npx",
+      args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+    },
+    remote: {                        // HTTP Streamable — remote server
+      type: "http",
+      url: "https://mcp.example.com/mcp",
+      headers: { Authorization: "Bearer token" },
+    },
+  },
 });
 
 await driver.initialize();
@@ -526,7 +538,7 @@ Defines standard repository interfaces for data persistence. Implementations are
 - `ImageRepository` -- CRUD operations for images (conversations)
 - `SessionRepository` -- CRUD for sessions + message operations (addMessage, getMessages)
 - `ContainerRecord`, `ImageRecord`, `SessionRecord` -- Storage schemas
-- `ImageMetadata` -- Provider-specific metadata (e.g., `claudeSdkSessionId`)
+- `ImageMetadata` -- Provider-specific metadata (e.g., `driverSessionId`)
 - `McpServerConfig` -- MCP server configuration (re-exported from driver)
 
 ```typescript

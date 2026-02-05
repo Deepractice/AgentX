@@ -256,7 +256,7 @@ const driver = createMonoDriver({ apiKey: "...", agentId: "my-agent" });
 
 ##### `initialize(): Promise<void>`
 
-Initializes the driver and generates a session ID. Must be called before `receive()`. Throws if the driver is not in the `"idle"` state.
+Initializes the driver, generates a session ID, and connects to any configured MCP servers. Must be called before `receive()`. Throws if the driver is not in the `"idle"` state.
 
 ##### `receive(message: UserMessage): AsyncIterable<DriverStreamEvent>`
 
@@ -270,7 +270,7 @@ Interrupts the current `receive()` operation. The async iterable will emit an `"
 
 ##### `dispose(): Promise<void>`
 
-Disposes the driver and releases resources. Aborts any in-flight request. The driver cannot be used after disposal.
+Disposes the driver and releases resources. Closes all MCP client connections, aborts any in-flight request. The driver cannot be used after disposal.
 
 ### Stream Events
 
@@ -299,6 +299,97 @@ import { toVercelMessage, toVercelMessages, toStopReason } from "@agentxjs/mono-
 - `toVercelMessage(message: Message)` -- Converts a single AgentX Message to a Vercel AI SDK ModelMessage.
 - `toVercelMessages(messages: Message[])` -- Converts an array of AgentX Messages.
 - `toStopReason(finishReason: string)` -- Maps a Vercel AI SDK finish reason to an AgentX `StopReason`.
+
+## MCP Server Support
+
+MonoDriver can connect to [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) servers to give the LLM access to external tools. MCP servers are started as stdio subprocesses during `initialize()` and their tools are automatically discovered and made available to the LLM.
+
+```typescript
+const driver = createMonoDriver({
+  apiKey: "sk-ant-xxxxx",
+  agentId: "my-agent",
+  systemPrompt: "You are a helpful assistant.",
+  mcpServers: {
+    filesystem: {
+      command: "npx",
+      args: ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/dir"],
+    },
+    github: {
+      command: "npx",
+      args: ["-y", "@modelcontextprotocol/server-github"],
+      env: { GITHUB_TOKEN: "ghp_xxxxx" },
+    },
+  },
+  options: { provider: "anthropic" },
+});
+
+await driver.initialize(); // Starts MCP servers, discovers tools
+```
+
+### McpServerConfig
+
+Each entry in `mcpServers` maps a server name to its configuration. Two transport types are supported:
+
+**Stdio (local subprocess):**
+
+| Field | Type | Description |
+|---|---|---|
+| `command` | `string` | Command to start the server (e.g. `npx`, `node`, `python`) |
+| `args` | `string[]` | Command arguments (optional) |
+| `env` | `Record<string, string>` | Environment variables (optional) |
+
+**HTTP Streamable (remote server):**
+
+| Field | Type | Description |
+|---|---|---|
+| `type` | `"http"` | Transport type discriminator (required) |
+| `url` | `string` | URL of the remote MCP server |
+| `headers` | `Record<string, string>` | HTTP headers, e.g. `Authorization` (optional) |
+
+```typescript
+const driver = createMonoDriver({
+  apiKey: "sk-ant-xxxxx",
+  agentId: "my-agent",
+  mcpServers: {
+    // Stdio — local subprocess
+    filesystem: {
+      command: "npx",
+      args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+    },
+    // HTTP Streamable — remote server
+    remote: {
+      type: "http",
+      url: "https://mcp.example.com/mcp",
+      headers: { Authorization: "Bearer token-xxx" },
+    },
+  },
+});
+```
+
+### How It Works
+
+1. **`initialize()`** -- For each server in `mcpServers`, spawns a child process via stdio transport, connects via MCP protocol, and calls `tools/list` to discover available tools.
+2. **`receive()`** -- MCP tools are merged with any `tools` from the config (e.g. bash tool). If both define a tool with the same name, config tools take precedence. All tools are passed to the LLM via Vercel AI SDK's `streamText`.
+3. **`dispose()`** -- Closes all MCP client connections and terminates server processes.
+
+### Using MCP Tools with Config Tools
+
+MCP servers and explicit `tools` can be used together:
+
+```typescript
+import { createBashTool } from "@agentxjs/core/bash";
+
+const driver = createMonoDriver({
+  apiKey: "sk-ant-xxxxx",
+  agentId: "my-agent",
+  tools: [bashTool],       // Explicit tools
+  mcpServers: {            // MCP-discovered tools
+    filesystem: { command: "npx", args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"] },
+  },
+});
+```
+
+Config tools override MCP tools with the same name, ensuring platform-provided tools always take priority.
 
 ## Important Notes
 

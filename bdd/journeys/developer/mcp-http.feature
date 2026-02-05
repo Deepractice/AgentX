@@ -1,13 +1,8 @@
-@journey @developer @pending
+@journey @developer
 Feature: MCP Server - HTTP
   A developer wants to connect their agent to a remote
   MCP server via Streamable HTTP transport.
   The MCP server is already running as a web service.
-
-  # ============================================
-  # REQUIRES: MonoDriver MCP support (Streamable HTTP transport)
-  # Currently only ClaudeDriver supports MCP.
-  # ============================================
 
   Scenario: Agent uses a remote HTTP MCP server to query code context
     # Phase 1: Setup

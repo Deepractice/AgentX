@@ -1,13 +1,8 @@
-@journey @developer @pending
+@journey @developer
 Feature: MCP Server - Stdio
   A developer wants to give their agent custom capabilities
   by connecting a local MCP server via stdio transport.
   The MCP server runs as a child process.
-
-  # ============================================
-  # REQUIRES: MonoDriver MCP support (stdio transport)
-  # Currently only ClaudeDriver supports MCP.
-  # ============================================
 
   Scenario: Agent uses filesystem MCP server to read and write files
     # Phase 1: Setup

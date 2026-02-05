@@ -94,11 +94,9 @@ export interface ToolDefinition {
 // ============================================================================
 
 /**
- * MCP Server configuration
- *
- * Defines how to launch an MCP server process.
+ * Stdio transport — launches a local MCP server as a child process.
  */
-export interface McpServerConfig {
+export interface McpStdioServerConfig {
   /**
    * Command to run the MCP server
    */
@@ -114,6 +112,34 @@ export interface McpServerConfig {
    */
   env?: Record<string, string>;
 }
+
+/**
+ * HTTP Streamable transport — connects to a remote MCP server over HTTP.
+ */
+export interface McpHttpServerConfig {
+  /**
+   * Transport type discriminator
+   */
+  type: "http";
+
+  /**
+   * URL of the remote MCP server
+   */
+  url: string;
+
+  /**
+   * Additional HTTP headers (e.g. Authorization)
+   */
+  headers?: Record<string, string>;
+}
+
+/**
+ * MCP Server configuration.
+ *
+ * - Stdio: `{ command, args?, env? }` — local subprocess
+ * - HTTP:  `{ transport: "http", url, headers? }` — remote server
+ */
+export type McpServerConfig = McpStdioServerConfig | McpHttpServerConfig;
 
 // ============================================================================
 // Stream Event (Lightweight)

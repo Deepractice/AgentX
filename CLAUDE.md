@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── packages/
 │   ├── core/             # @agentxjs/core - Interfaces and types (driver, runtime, platform, bash, agent, event, etc.)
 │   ├── claude-driver/    # @agentxjs/claude-driver - Claude Code SDK driver
-│   ├── mono-driver/      # @agentxjs/mono-driver - Vercel AI SDK driver (multi-provider)
+│   ├── mono-driver/      # @agentxjs/mono-driver - Vercel AI SDK driver (multi-provider, MCP support)
 │   ├── node-platform/    # @agentxjs/node-platform - Node.js platform (SQLite, bash, network)
 │   ├── devtools/         # @agentxjs/devtools - VCR recording/playback for BDD tests
 │   ├── server/           # @agentxjs/server - WebSocket server for remote mode

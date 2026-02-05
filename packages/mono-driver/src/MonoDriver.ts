@@ -112,12 +112,27 @@ export class MonoDriver implements Driver {
     // Initialize MCP servers
     if (this.config.mcpServers) {
       for (const [name, serverConfig] of Object.entries(this.config.mcpServers)) {
-        const transport = new Experimental_StdioMCPTransport({
-          command: serverConfig.command,
-          args: serverConfig.args,
-          env: serverConfig.env,
-        });
-        const client = await createMCPClient({ transport });
+        let client: MCPClient;
+
+        if ("command" in serverConfig) {
+          // Stdio transport — local subprocess
+          const transport = new Experimental_StdioMCPTransport({
+            command: serverConfig.command,
+            args: serverConfig.args,
+            env: serverConfig.env,
+          });
+          client = await createMCPClient({ transport });
+        } else {
+          // HTTP Streamable transport — remote server
+          client = await createMCPClient({
+            transport: {
+              type: serverConfig.type,
+              url: serverConfig.url,
+              headers: serverConfig.headers,
+            },
+          });
+        }
+
         this.mcpClients.push(client);
         const tools = await client.tools();
         Object.assign(this.mcpTools, tools);

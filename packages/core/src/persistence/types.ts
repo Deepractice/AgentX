@@ -50,8 +50,8 @@ export interface ContainerRecord {
  * Image metadata for storing provider-specific data
  */
 export interface ImageMetadata {
-  /** Claude SDK session ID for conversation resume */
-  claudeSdkSessionId?: string;
+  /** Driver session ID for conversation resume */
+  driverSessionId?: string;
 }
 
 /**

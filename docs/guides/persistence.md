@@ -399,7 +399,7 @@ const byContainer = await persistence.images.findImagesByContainerId("container-
 
 // Update metadata
 await persistence.images.updateMetadata("img_abc123", {
-  claudeSdkSessionId: "sdk-session-xxx",
+  driverSessionId: "sdk-session-xxx",
 });
 
 // Delete image

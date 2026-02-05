@@ -1,0 +1,64 @@
+{
+  "name": "agent-remembers-conversation-after-restart",
+  "description": "VCR recording: agent-remembers-conversation-after-restart",
+  "recordedAt": 1770299283927,
+  "events": [
+    {
+      "type": "message_start",
+      "delay": 6,
+      "data": {
+        "messageId": "msg_1770299283932",
+        "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 4358,
+      "data": {
+        "text": "Hello"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": " Bob! I've"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": " note"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "d your name."
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": " How"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": " can I help you today?"
+      }
+    },
+    {
+      "type": "message_stop",
+      "delay": 3,
+      "data": {
+        "stopReason": "end_turn"
+      }
+    }
+  ]
+}

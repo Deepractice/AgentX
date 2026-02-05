@@ -774,7 +774,7 @@ interface ImageRecord {
 }
 
 interface ImageMetadata {
-  claudeSdkSessionId?: string;
+  driverSessionId?: string;
 }
 ```
 

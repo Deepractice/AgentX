@@ -8,6 +8,8 @@
 import { Given, When, Then } from "@cucumber/cucumber";
 import { strict as assert } from "node:assert";
 import { resolve } from "node:path";
+import { mkdirSync, existsSync } from "node:fs";
+import type { DataTable } from "@cucumber/cucumber";
 import type { AgentXWorld } from "../../support/world";
 import type { BusEvent } from "@agentxjs/core/event";
 
@@ -109,6 +111,57 @@ When(
       containerId,
       name,
       systemPrompt,
+    });
+    const state = getState(this);
+    state.imageId = result.record.imageId;
+    state.sessionId = result.record.sessionId;
+  }
+);
+
+When(
+  "I create an image {string} in {string} with prompt {string} and mcp servers:",
+  async function (
+    this: AgentXWorld,
+    name: string,
+    containerId: string,
+    systemPrompt: string,
+    table: DataTable
+  ) {
+    const mcpServers: Record<string, any> = {};
+    for (const row of table.hashes()) {
+      if (row.url) {
+        // HTTP/Streamable HTTP transport
+        mcpServers[row.name] = {
+          type: "http",
+          url: row.url,
+        };
+      } else {
+        // Stdio transport
+        const args = row.args ? row.args.split(" ") : undefined;
+
+        // Ensure directories exist for filesystem MCP servers
+        if (args) {
+          const lastArg = args[args.length - 1];
+          if (lastArg && lastArg.startsWith("/") && !lastArg.includes(".")) {
+            if (!existsSync(lastArg)) {
+              mkdirSync(lastArg, { recursive: true });
+            }
+          }
+        }
+
+        mcpServers[row.name] = {
+          command: row.command,
+          args,
+          env: row.env ? JSON.parse(row.env) : undefined,
+        };
+      }
+    }
+
+    const result = await this.localAgentX!.images.create({
+      containerId,
+      name,
+      systemPrompt,
+      mcpServers,
     });
     const state = getState(this);
     state.imageId = result.record.imageId;
