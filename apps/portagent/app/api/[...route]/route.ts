@@ -302,6 +302,27 @@ app.get("/admin/invites", requireAdmin, (c) => {
 });
 
 // ============================================================================
+// Chat: WebSocket Config
+// ============================================================================
+
+app.get("/chat/ws-config", (c) => {
+  const user = c.get("user");
+  if (!user) {
+    return c.json({ error: "Not authenticated" }, 401);
+  }
+
+  const wsPort = process.env.WS_PORT || "5200";
+  // In production, the WS URL should be configurable
+  // For now, use the same host with the WS port
+  const wsUrl = `ws://localhost:${wsPort}/ws`;
+
+  return c.json({
+    wsUrl,
+    containerId: `user-${user.userId}`,
+  });
+});
+
+// ============================================================================
 // Export Handlers
 // ============================================================================
 

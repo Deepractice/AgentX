@@ -21,7 +21,6 @@ Feature: AgentX Connection
   # Dependencies
   # ============================================================================
 
-  @pending
   Scenario: AgentX packages are integrated
     Given the portagent project
     Then package.json should have "@agentxjs/server" dependency
