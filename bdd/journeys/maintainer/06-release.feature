@@ -36,16 +36,14 @@ Feature: Release and Publishing
   Scenario: Maintainer understands fixed versioning
     Given the changeset config uses "fixed" mode
     Then all these packages are versioned together:
-      | package               |
-      | agentxjs              |
-      | @agentxjs/runtime     |
-      | @agentxjs/ui          |
-      | @agentxjs/portagent   |
-      | @agentxjs/persistence |
-      | @agentxjs/network     |
-      | @agentxjs/agent       |
-      | @agentxjs/types       |
-      | @agentxjs/common      |
+      | package                 |
+      | agentxjs                |
+      | @agentxjs/core          |
+      | @agentxjs/node-platform |
+      | @agentxjs/mono-driver   |
+      | @agentxjs/claude-driver |
+      | @agentxjs/server        |
+      | @agentxjs/devtools      |
     And bumping any one of them bumps all of them
 
   Scenario: CI creates a Version PR automatically

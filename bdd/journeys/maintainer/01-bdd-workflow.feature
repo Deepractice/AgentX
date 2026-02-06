@@ -35,6 +35,40 @@ Feature: BDD-Driven Development Workflow
       | packages/agentx    | packages/agentx/bdd/      |
       | monorepo root      | bdd/                      |
 
+  Scenario: Monorepo BDD is Living Documentation
+    Given the monorepo root "bdd/" directory
+    Then its feature files serve as Living Documentation:
+      | aspect   | description                                    |
+      | Purpose  | Describe product requirements and project norms |
+      | Audience | New contributors, AI agents, maintainers        |
+      | Style    | Macro-level journeys and conventions            |
+      | Testing  | Partially automated (e.g. doc quality checks)   |
+    And they are "project docs written in Gherkin"
+
+  Scenario: Package BDD is Executable Specification
+    Given a package or app "bdd/" directory
+    Then its feature files serve as Executable Specifications:
+      | aspect   | description                                    |
+      | Purpose  | Verify component behavior                      |
+      | Audience | Developers working on the package               |
+      | Style    | Concrete scenarios with specific assertions     |
+      | Testing  | Fully automated, run on every change            |
+    And they are "the real tests"
+
+  Scenario: Living Documentation scenarios are auto-verified when possible
+    Given a Living Documentation scenario
+    Then if it can be programmatically verified, it should be:
+      | verifiable                          | example                              |
+      | File/directory existence            | BDD folder structure                 |
+      | Config values                       | Changeset fixed list matches reality |
+      | Naming patterns                     | Feature filenames follow convention  |
+      | Dependency relationships            | Core has no internal deps            |
+    And if it cannot be automated, it passes as documentation:
+      | not verifiable                      | example                              |
+      | Process guidance                    | "Write feature before code"          |
+      | Semantic quality                    | "Scenarios describe goals"           |
+      | AI behavior norms                   | "Agent reads features first"         |
+
   Scenario: Feature files are the source of truth
     Given a contributor wants to understand a feature
     Then they should read the .feature file, not the code

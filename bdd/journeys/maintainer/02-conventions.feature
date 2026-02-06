@@ -5,12 +5,15 @@ Feature: Naming and Tagging Conventions
 
   Scenario: Journey files follow naming conventions
     Given a journey feature file
-    Then the filename should be lowercase with hyphens
-    And it should describe the user goal
+    Then the filename should use numbered prefix with hyphenated description:
+      | pattern                     | meaning                            |
+      | NN-description.feature      | NN = two-digit sequence number     |
     Examples:
-      | good                        | bad                       |
-      | first-conversation.feature  | FirstConversation.feature |
-      | app-bootstrap.feature       | app_bootstrap.feature     |
+      | good                           | bad                       |
+      | 01-bdd-workflow.feature        | bdd-workflow.feature      |
+      | 04-chat-ui.feature             | ChatUI.feature            |
+      | 00-app-bootstrap.feature       | app_bootstrap.feature     |
+    And the number reflects the logical reading order, not priority
 
   Scenario: Features have correct tags
     Given a journey feature file

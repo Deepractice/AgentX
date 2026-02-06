@@ -5,14 +5,12 @@
   "fixed": [
     [
       "agentxjs",
-      "@agentxjs/runtime",
-      "@agentxjs/ui",
-      "@agentxjs/portagent",
-      "@agentxjs/persistence",
-      "@agentxjs/network",
-      "@agentxjs/agent",
-      "@agentxjs/types",
-      "@agentxjs/common"
+      "@agentxjs/core",
+      "@agentxjs/node-platform",
+      "@agentxjs/mono-driver",
+      "@agentxjs/claude-driver",
+      "@agentxjs/server",
+      "@agentxjs/devtools"
     ]
   ],
   "linked": [],
