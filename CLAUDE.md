@@ -1,184 +1,48 @@
 # CLAUDE.md
 
+## Language
+
+Always respond in Chinese.
+
 ## The Iron Law: BDD First
 
-**Before writing ANY code, read the BDD directory.**
+> **Feature files are the documentation. Code is just implementation. No feature = no code.**
 
-```text
-project/bdd/journeys/  ← Start here
-```
+Before writing ANY code, read `bdd/journeys/`. Details: `bdd/journeys/maintainer/01-bdd-workflow.feature`
 
-Features are living documentation:
+## Quick Reference
 
-- **Scenario exists** → Implement according to it
-- **No scenario** → Write the feature first, then code
-- **Unsure if allowed** → Check if feature covers it
-
-**Never allowed**: Skip BDD and write code directly.
-
----
-
-## BDD Directory Structure
-
-Each project has its own `bdd/` directory:
-
-```text
-apps/portagent/bdd/           # Web App
-├── journeys/contributor/     # Building portagent
-├── journeys/user/            # Using portagent
-└── steps/
-
-packages/agentx/bdd/          # SDK
-├── journeys/developer/       # Using SDK
-└── steps/
-
-bdd/                          # Monorepo
-├── journeys/maintainer/      # Release, CI, governance
-└── fixtures/                 # Shared VCR recordings
-```
-
-**Only journeys matter.** No journey = not important.
-
----
-
-## Development Workflow
-
-```text
-1. Write .feature file
-2. Write .steps.ts (Cucumber steps call agentUiTester for UI scenarios)
-3. Implement code
-4. Run bun run bdd → pass
-```
-
-### Find Code
-
-**Read the feature file.** It documents the requirement.
-
----
-
-## Running Tests
-
-```bash
-cd apps/portagent && bun run bdd
-cd packages/agentx && bun run bdd
-```
-
----
-
-## UI Testing with agentUiTester
-
-UI scenarios are tested via `agentUiTester` — a Claude CLI + agent-browser wrapper.
-
-```typescript
-import { agentUiTester } from "@agentxjs/devtools/bdd";
-
-When("I complete the admin setup", function () {
-  const result = agentUiTester(`
-    Navigate to http://localhost:3000
-    Fill email "admin@example.com", password "admin123"
-    Click Setup, verify logged in as admin
-  `);
-  expect(result.passed).toBe(true);
-});
-```
-
-- Default model: haiku (fast, cheap)
-- Uses system Chrome via agent-browser CLI
-- Returns `{ passed: boolean, output: string }`
-
----
-
-## Feature Format
-
-```gherkin
-@journey @developer
-Feature: First Conversation
-  A developer wants to create an agent and chat.
-
-  Scenario: Create agent and chat locally
-    Given a local AgentX environment with provider "anthropic"
-    When I create a container "my-app"
-    And I create an image "Assistant" in "my-app" with prompt "You are helpful"
-    And I run the image as an agent
-    When I send message "Hello"
-    Then I should receive a non-empty reply
-```
-
----
-
-## Shared Tools
-
-```typescript
-import {
-  createCucumberConfig,
-  paths,
-  agentUiTester,
-  startDevServer,
-} from "@agentxjs/devtools/bdd";
-```
-
----
+| What | Where |
+|------|-------|
+| BDD workflow | `bdd/journeys/maintainer/01-bdd-workflow.feature` |
+| Naming & tagging | `bdd/journeys/maintainer/02-conventions.feature` |
+| Testing tools | `bdd/journeys/maintainer/03-testing.feature` |
+| AI agent workflow | `bdd/journeys/maintainer/04-ai-workflow.feature` |
+| Environment & commands | `bdd/journeys/maintainer/05-environment.feature` |
+| Package READMEs | `bdd/journeys/contributor/package-readmes.feature` |
 
 ## Commands
 
 ```bash
-bun install
-bun build
-bun dev
-bun dev server
+bun install && bun build        # Setup
+bun run bdd                     # Run tests
+bun run bdd:ui                  # Run UI tests
+bun run bdd:docs                # Run doc tests
 ```
-
----
 
 ## Environment
 
 ```bash
-ANTHROPIC_API_KEY
-DEEPRACTICE_API_KEY
-DEEPRACTICE_BASE_URL
-DEEPRACTICE_MODEL
+ANTHROPIC_API_KEY               # Required for AI features
+DEEPRACTICE_API_KEY             # Alternative API key
+DEEPRACTICE_BASE_URL            # Custom API base URL
+DEEPRACTICE_MODEL               # Override default model
 ```
-
----
-
-## Parallel Workflow
-
-```text
-┌─────────────────────────────────────────┐
-│  Main Agent (with User)                 │
-│  1. Discuss requirements                │
-│  2. Write .feature + .steps.ts          │
-│  3. Spawn Sub Agent for implementation  │
-│  4. Continue next feature discussion    │
-└─────────────────────────────────────────┘
-         ↓ (parallel)
-┌─────────────────────────────────────────┐
-│  Sub Agent (background)                 │
-│  1. Read feature + steps (the spec)     │
-│  2. Implement code                      │
-│  3. Run bun run bdd → pass              │
-│  4. Report result                       │
-└─────────────────────────────────────────┘
-```
-
-Use `run_in_background: true` when spawning implementation agents.
-
----
 
 ## Session State
 
-When working in BDD-driven mode, end each response with status:
+When in BDD-driven mode, end each response with:
 
 ```
 「BDD Driving」Next: [what we're doing next]
 ```
-
-This reminds AI of the current workflow state across turns.
-
----
-
-## Remember
-
-> **Feature files are the documentation.**
-> **Code is just implementation.**
-> **No feature = no code.**

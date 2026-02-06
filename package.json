@@ -18,6 +18,8 @@
     "format:check": "prettier --check .",
     "test": "turbo test",
     "test:bdd": "bun bdd/test-manager.ts",
+    "bdd": "bdd",
+    "bdd:docs": "bdd --profile docs",
     "clean": "turbo clean && rm -rf node_modules",
     "prepare": "lefthook install || true",
     "docs": "typedoc",

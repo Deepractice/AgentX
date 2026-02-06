@@ -73,6 +73,9 @@
       "name": "@agentx/portagent",
       "version": "0.1.0",
       "dependencies": {
+        "@agentxjs/mono-driver": "workspace:*",
+        "@agentxjs/node-platform": "workspace:*",
+        "@agentxjs/server": "workspace:*",
         "agentxjs": "workspace:*",
         "class-variance-authority": "0.7.1",
         "clsx": "2.1.1",

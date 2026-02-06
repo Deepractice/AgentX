@@ -49,3 +49,9 @@ export {
   type UiTestResult,
   type UiTesterOptions,
 } from "./agent-ui-tester";
+
+export {
+  agentDocTester,
+  type DocTestResult,
+  type DocTesterOptions,
+} from "./agent-doc-tester";
