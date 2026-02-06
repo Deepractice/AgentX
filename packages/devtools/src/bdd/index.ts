@@ -19,6 +19,7 @@ export {
 export {
   launchBrowser,
   getPage,
+  resetPage,
   closePage,
   closeBrowser,
   waitForUrl,

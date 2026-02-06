@@ -1,4 +1,4 @@
-@journey @internal @contributor
+@journey @contributor
 Feature: App Bootstrap
   As a contributor, I need the portagent app to start correctly,
   so that I can begin developing features.
@@ -6,12 +6,14 @@ Feature: App Bootstrap
   Background:
     Given the portagent app is configured
 
-  Scenario: Dev server starts successfully
+  @bootstrap
+  Scenario: Dev server starts and responds
     When I start the portagent dev server
-    Then the server should be running on port 5173
+    Then the server should be running on port 3000
 
-  Scenario: Homepage renders
-    Given the portagent dev server is running
+  @bootstrap
+  Scenario: Fresh install redirects to setup
+    Given a fresh installation
     When I visit the homepage
-    Then I should see "AgentX" in the page title
-    And I should see a welcome message
+    Then I should be on "/setup"
+    And I should see "Create Admin Account"

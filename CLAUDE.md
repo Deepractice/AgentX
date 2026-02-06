@@ -82,6 +82,34 @@ bun run bdd --tags @contributor
 
 ---
 
+## Scenario Types
+
+### Functional Scenarios (Runtime)
+
+Test actual behavior with browser/server:
+
+```gherkin
+Scenario: Homepage renders
+  Given the portagent dev server is running
+  When I visit the homepage
+  Then I should see "Portagent" in the page title
+```
+
+### Verification Scenarios (Static)
+
+Verify files/config exist - no runtime needed:
+
+```gherkin
+Scenario: Next.js is configured
+  Given the portagent project
+  Then package.json should have "next" dependency
+  And "app/layout.tsx" should exist
+```
+
+**Principle**: If it can be verified by checking files, do that. Simpler, faster, still documents the requirement.
+
+---
+
 ## Feature Format
 
 ```gherkin
@@ -132,6 +160,56 @@ DEEPRACTICE_API_KEY
 DEEPRACTICE_BASE_URL
 DEEPRACTICE_MODEL
 ```
+
+---
+
+## Parallel Workflow
+
+**Key Principle: Writer of tests ≠ Writer of implementation**
+
+This ensures tests represent requirements, not implementation details.
+
+```text
+┌─────────────────────────────────────────┐
+│  Main Agent (with User) - QA Role       │
+│  1. Discuss requirements                │
+│  2. Draw ASCII design                   │
+│  3. Write .feature file (spec)          │
+│  4. Write .steps.ts (test code)         │
+│  5. Run tests → all fail (red)          │
+│  6. Spawn Sub Agent (bg)                │
+│  7. Continue next feature discussion    │
+└─────────────────────────────────────────┘
+         ↓ (parallel)
+┌─────────────────────────────────────────┐
+│  Sub Agent (background) - Dev Role      │
+│  1. Read feature + steps (the spec)     │
+│  2. Implement code only                 │
+│  3. Run tests → all pass (green)        │
+│  4. Report result                       │
+└─────────────────────────────────────────┘
+```
+
+**Why this split?**
+
+- Main Agent has expectations → writes tests that reflect expectations
+- Sub Agent has clear goal → make tests pass
+- If tests fail → either implementation wrong or requirements need adjustment
+- This is true BDD: outside-in, test-driven
+
+Use `run_in_background: true` when spawning implementation agents.
+
+---
+
+## Session State
+
+When working in BDD-driven mode, end each response with status:
+
+```
+「BDD Driving」Next: [what we're doing next]
+```
+
+This reminds AI of the current workflow state across turns.
 
 ---
 
