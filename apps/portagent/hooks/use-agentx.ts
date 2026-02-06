@@ -132,7 +132,7 @@ const INITIAL_PRESENTATION_STATE: PresentationStateLocal = {
 async function createRemoteClient(wsUrl: string): Promise<AgentXClient> {
   // Use dynamic import with webpackIgnore to prevent webpack from analyzing
   // the agentxjs module tree (which includes Node.js-only dependencies)
-  const mod = await import(/* webpackIgnore: true */ "agentxjs");
+  const mod = await import("agentxjs");
   const client = await mod.createAgentX({
     serverUrl: wsUrl,
     timeout: 120000,

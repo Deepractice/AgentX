@@ -7,9 +7,9 @@
     "dev": "next dev --port 3000",
     "build": "next build",
     "start": "next start",
-    "bdd": "bdd",
-    "bdd:ui": "bdd --profile ui",
-    "bdd:fast": "bdd --fail-fast"
+    "bdd": "node ../../node_modules/.bin/bdd",
+    "bdd:ui": "node ../../node_modules/.bin/bdd --profile ui",
+    "bdd:fast": "node ../../node_modules/.bin/bdd --fail-fast"
   },
   "dependencies": {
     "@agentxjs/mono-driver": "workspace:*",
