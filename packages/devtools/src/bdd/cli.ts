@@ -38,9 +38,35 @@ function loadEnvFile(filePath: string) {
   }
 }
 
+// Find monorepo root by walking up to find the root package.json with workspaces
+function findMonorepoRoot(startDir: string): string | null {
+  let dir = startDir;
+  while (true) {
+    const pkgPath = resolve(dir, "package.json");
+    if (existsSync(pkgPath)) {
+      try {
+        const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+        if (pkg.workspaces) return dir;
+      } catch {}
+    }
+    const parent = dirname(dir);
+    if (parent === dir) return null; // reached filesystem root
+    dir = parent;
+  }
+}
+
 const cwd = process.cwd();
+
+// Load .env files from cwd first
 loadEnvFile(resolve(cwd, ".env"));
 loadEnvFile(resolve(cwd, ".env.local"));
+
+// Also load from monorepo root (if different from cwd)
+const monorepoRoot = findMonorepoRoot(cwd);
+if (monorepoRoot && monorepoRoot !== cwd) {
+  loadEnvFile(resolve(monorepoRoot, ".env"));
+  loadEnvFile(resolve(monorepoRoot, ".env.local"));
+}
 
 const args = process.argv.slice(2);
 

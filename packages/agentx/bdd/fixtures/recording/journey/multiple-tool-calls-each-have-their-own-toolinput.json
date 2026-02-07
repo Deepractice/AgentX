@@ -1,19 +1,19 @@
 {
   "name": "multiple-tool-calls-each-have-their-own-toolinput",
   "description": "VCR recording: multiple-tool-calls-each-have-their-own-toolinput",
-  "recordedAt": 1770388571524,
+  "recordedAt": 1770435431669,
   "events": [
     {
       "type": "message_start",
-      "delay": 4,
+      "delay": 3,
       "data": {
-        "messageId": "msg_1770388571528",
+        "messageId": "msg_1770435431672",
         "model": "claude-haiku-4-5-20251001"
       }
     },
     {
       "type": "error",
-      "delay": 245,
+      "delay": 186,
       "data": {
         "message": "AI_APICallError: Forbidden",
         "errorCode": "stream_error"

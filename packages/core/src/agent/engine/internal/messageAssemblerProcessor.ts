@@ -46,16 +46,22 @@ import type {
 
 /**
  * Pending content accumulator
+ *
+ * Tracks content blocks in the order they appear in the stream.
+ * Text and tool_use blocks may be interleaved.
  */
 export interface PendingContent {
   type: "text" | "tool_use";
-  index: number;
   // For text content
   textDeltas?: string[];
   // For tool use
   toolId?: string;
   toolName?: string;
   toolInputJson?: string;
+  /** True when tool_use_stop has been processed and input is fully parsed */
+  assembled?: boolean;
+  /** Parsed tool input (set at tool_use_stop time) */
+  parsedInput?: Record<string, unknown>;
 }
 
 /**
@@ -83,16 +89,10 @@ export interface MessageAssemblerState {
   messageStartTime: number | null;
 
   /**
-   * Pending content blocks being accumulated
-   * Key is the content block index
+   * Pending content blocks in stream order.
+   * Preserves the interleaved order of text and tool_use blocks.
    */
-  pendingContents: Record<number, PendingContent>;
-
-  /**
-   * Assembled tool call parts (accumulated during tool_use_stop events).
-   * Included in AssistantMessage.content at message_stop time.
-   */
-  assembledToolCalls: ToolCallPart[];
+  pendingContents: PendingContent[];
 
   /**
    * Pending tool calls waiting for results
@@ -108,8 +108,7 @@ export function createInitialMessageAssemblerState(): MessageAssemblerState {
   return {
     currentMessageId: null,
     messageStartTime: null,
-    pendingContents: {},
-    assembledToolCalls: [],
+    pendingContents: [],
     pendingToolCalls: {},
   };
 }
@@ -121,6 +120,16 @@ export function createInitialMessageAssemblerState(): MessageAssemblerState {
  */
 function generateId(): string {
   return `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
+
+/**
+ * Find last index matching a predicate (Array.findLastIndex polyfill)
+ */
+function findLastIndex<T>(arr: readonly T[], predicate: (item: T) => boolean): number {
+  for (let i = arr.length - 1; i >= 0; i--) {
+    if (predicate(arr[i])) return i;
+  }
+  return -1;
 }
 
 /**
@@ -191,7 +200,7 @@ function handleMessageStart(
       ...state,
       currentMessageId: data.messageId,
       messageStartTime: event.timestamp,
-      pendingContents: {},
+      pendingContents: [],
     },
     [],
   ];
@@ -199,34 +208,35 @@ function handleMessageStart(
 
 /**
  * Handle text_delta event
+ *
+ * Appends to the last text block if one exists, otherwise creates a new one.
+ * This preserves the interleaved order: text after a tool_use gets its own block.
  */
 function handleTextDelta(
   state: Readonly<MessageAssemblerState>,
   event: StreamEvent
 ): [MessageAssemblerState, MessageAssemblerOutput[]] {
   const { data } = event as TextDeltaEvent;
-  const index = 0; // Text content uses index 0
-  const existingContent = state.pendingContents[index];
+  const lastContent = state.pendingContents[state.pendingContents.length - 1];
 
-  const pendingContent: PendingContent =
-    existingContent?.type === "text"
-      ? {
-          ...existingContent,
-          textDeltas: [...(existingContent.textDeltas || []), data.text],
-        }
-      : {
-          type: "text",
-          index,
-          textDeltas: [data.text],
-        };
+  // Append to last text block if it exists
+  if (lastContent?.type === "text") {
+    const updated = [...state.pendingContents];
+    updated[updated.length - 1] = {
+      ...lastContent,
+      textDeltas: [...(lastContent.textDeltas || []), data.text],
+    };
+    return [{ ...state, pendingContents: updated }, []];
+  }
 
+  // Create a new text block (preserves position after any preceding tool_use)
   return [
     {
       ...state,
-      pendingContents: {
+      pendingContents: [
         ...state.pendingContents,
-        [index]: pendingContent,
-      },
+        { type: "text", textDeltas: [data.text] },
+      ],
     },
     [],
   ];
@@ -240,23 +250,19 @@ function handleToolUseStart(
   event: StreamEvent
 ): [MessageAssemblerState, MessageAssemblerOutput[]] {
   const { data } = event as ToolUseStartEvent;
-  const index = 1; // Tool use uses index 1
-
-  const pendingContent: PendingContent = {
-    type: "tool_use",
-    index,
-    toolId: data.toolCallId,
-    toolName: data.toolName,
-    toolInputJson: "",
-  };
 
   return [
     {
       ...state,
-      pendingContents: {
+      pendingContents: [
         ...state.pendingContents,
-        [index]: pendingContent,
-      },
+        {
+          type: "tool_use",
+          toolId: data.toolCallId,
+          toolName: data.toolName,
+          toolInputJson: "",
+        },
+      ],
     },
     [],
   ];
@@ -270,78 +276,64 @@ function handleInputJsonDelta(
   event: StreamEvent
 ): [MessageAssemblerState, MessageAssemblerOutput[]] {
   const { data } = event as InputJsonDeltaEvent;
-  const index = 1; // Tool use uses index 1
-  const existingContent = state.pendingContents[index];
 
-  if (!existingContent || existingContent.type !== "tool_use") {
-    // No pending tool_use content, ignore
+  // Find the last tool_use content in the array
+  const lastToolIndex = findLastIndex(state.pendingContents, (c) => c.type === "tool_use" && !c.assembled);
+  if (lastToolIndex === -1) {
     return [state, []];
   }
 
-  const pendingContent: PendingContent = {
+  const existingContent = state.pendingContents[lastToolIndex];
+  const updated = [...state.pendingContents];
+  updated[lastToolIndex] = {
     ...existingContent,
     toolInputJson: (existingContent.toolInputJson || "") + data.partialJson,
   };
 
-  return [
-    {
-      ...state,
-      pendingContents: {
-        ...state.pendingContents,
-        [index]: pendingContent,
-      },
-    },
-    [],
-  ];
+  return [{ ...state, pendingContents: updated }, []];
 }
 
 /**
  * Handle tool_use_stop event
  *
- * Accumulates the completed ToolCallPart into state.
- * It will be included in AssistantMessage.content at message_stop time.
- * No event is emitted here — tool calls are part of the assistant message.
+ * Marks the tool_use entry as assembled with parsed input.
+ * The entry stays in pendingContents to preserve its position.
+ * No event is emitted — tool calls are part of the assistant message.
  */
 function handleToolUseStop(
   state: Readonly<MessageAssemblerState>,
   _event: StreamEvent
 ): [MessageAssemblerState, MessageAssemblerOutput[]] {
-  const index = 1;
-  const pendingContent = state.pendingContents[index];
-
-  if (!pendingContent || pendingContent.type !== "tool_use") {
+  // Find the last unassembled tool_use content
+  const lastToolIndex = findLastIndex(state.pendingContents, (c) => c.type === "tool_use" && !c.assembled);
+  if (lastToolIndex === -1) {
     return [state, []];
   }
 
-  // Get tool info from pendingContent (saved during tool_use_start)
+  const pendingContent = state.pendingContents[lastToolIndex];
   const toolId = pendingContent.toolId || "";
   const toolName = pendingContent.toolName || "";
 
-  // Parse tool input JSON (accumulated during input_json_delta)
+  // Parse tool input JSON
   let toolInput: Record<string, unknown> = {};
   try {
     toolInput = pendingContent.toolInputJson ? JSON.parse(pendingContent.toolInputJson) : {};
   } catch {
-    // Failed to parse, use empty object
     toolInput = {};
   }
 
-  // Create ToolCallPart — accumulated, not emitted
-  const toolCall: ToolCallPart = {
-    type: "tool-call",
-    id: toolId,
-    name: toolName,
-    input: toolInput,
+  // Mark as assembled in-place (preserves position)
+  const updated = [...state.pendingContents];
+  updated[lastToolIndex] = {
+    ...pendingContent,
+    assembled: true,
+    parsedInput: toolInput,
   };
-
-  // Remove from pending contents, add to assembled tool calls and pending tool calls
-  const { [index]: _, ...remainingContents } = state.pendingContents;
 
   return [
     {
       ...state,
-      pendingContents: remainingContents,
-      assembledToolCalls: [...state.assembledToolCalls, toolCall],
+      pendingContents: updated,
       pendingToolCalls: {
         ...state.pendingToolCalls,
         [toolId]: { id: toolId, name: toolName },
@@ -413,9 +405,8 @@ function handleToolResult(
 /**
  * Handle message_stop event
  *
- * Assembles the complete AssistantMessage with text and tool call parts.
- * Tool calls are content blocks within the assistant message,
- * matching the mainstream API pattern (Anthropic, OpenAI).
+ * Assembles the complete AssistantMessage from pendingContents in stream order.
+ * Text and tool call parts are interleaved as they appeared in the stream.
  */
 function handleMessageStop(
   state: Readonly<MessageAssemblerState>,
@@ -427,22 +418,31 @@ function handleMessageStop(
     return [state, []];
   }
 
-  // Assemble all text content
-  const textParts: string[] = [];
-  const sortedContents = Object.values(state.pendingContents).sort((a, b) => a.index - b.index);
+  // Build content parts in stream order from pendingContents
+  const contentParts: Array<TextPart | ToolCallPart> = [];
 
-  for (const pending of sortedContents) {
+  for (const pending of state.pendingContents) {
     if (pending.type === "text" && pending.textDeltas) {
-      textParts.push(pending.textDeltas.join(""));
+      const text = pending.textDeltas.join("");
+      if (text.trim().length > 0) {
+        contentParts.push({ type: "text", text });
+      }
+    } else if (pending.type === "tool_use" && pending.assembled) {
+      contentParts.push({
+        type: "tool-call",
+        id: pending.toolId || "",
+        name: pending.toolName || "",
+        input: pending.parsedInput || {},
+      });
     }
   }
 
-  const textContent = textParts.join("");
-  const hasToolCalls = state.assembledToolCalls.length > 0;
+  const hasToolCalls = contentParts.some((p) => p.type === "tool-call");
+  const hasText = contentParts.some((p) => p.type === "text");
 
   // Skip truly empty messages (no text AND no tool calls)
   const stopReason = data.stopReason;
-  if ((!textContent || textContent.trim().length === 0) && !hasToolCalls) {
+  if (!hasText && !hasToolCalls) {
     const shouldPreserveToolCalls = stopReason === "tool_use";
     return [
       {
@@ -453,16 +453,7 @@ function handleMessageStop(
     ];
   }
 
-  // Build content parts: text first, then tool calls
-  const contentParts: Array<TextPart | ToolCallPart> = [];
-  if (textContent && textContent.trim().length > 0) {
-    contentParts.push({ type: "text", text: textContent });
-  }
-  for (const toolCall of state.assembledToolCalls) {
-    contentParts.push(toolCall);
-  }
-
-  // Create AssistantMessage with all content (text + tool calls)
+  // Create AssistantMessage with interleaved content
   const timestamp = state.messageStartTime || Date.now();
   const assistantMessage: AssistantMessage = {
     id: state.currentMessageId,

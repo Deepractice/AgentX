@@ -12,6 +12,7 @@ import type { DataTable } from "@cucumber/cucumber";
 import type { AgentXWorld } from "../support/world";
 import type { BusEvent } from "@agentxjs/core/event";
 import { getFixturesPath, ensureDir } from "@agentxjs/devtools/bdd";
+import { env } from "@agentxjs/devtools";
 
 // ============================================================================
 // State for developer journey
@@ -49,22 +50,15 @@ Given(
     const { createVcrCreateDriver } = await import("@agentxjs/devtools");
     const { createMonoDriver } = await import("@agentxjs/mono-driver");
 
-    const apiKey =
-      process.env.ANTHROPIC_API_KEY ||
-      process.env.DEEPRACTICE_API_KEY ||
-      "test-key";
-    const baseUrl = process.env.DEEPRACTICE_BASE_URL;
-    const model = process.env.DEEPRACTICE_MODEL || "claude-haiku-4-5-20251001";
-
     const fixtureName = this.scenarioName;
     const fixturesDir = ensureDir(getFixturesPath("recording/journey"));
 
     const vcrCreateDriver = createVcrCreateDriver({
       fixturesDir,
       getFixtureName: () => fixtureName,
-      apiKey,
-      baseUrl,
-      model,
+      apiKey: env.apiKey,
+      baseUrl: env.baseUrl,
+      model: env.model,
       createRealDriver: createMonoDriver as any,
       onPlayback: (name) => console.log(`[Journey VCR] Playback: ${name}`),
       onRecording: (name) => console.log(`[Journey VCR] Recording: ${name}`),
@@ -676,19 +670,14 @@ When(
   async function (this: AgentXWorld, logLevel: string) {
     const { createAgentX } = await import("agentxjs");
 
-    const apiKey =
-      process.env.ANTHROPIC_API_KEY ||
-      process.env.DEEPRACTICE_API_KEY ||
-      "test-key";
-
     // Start capturing BEFORE creating AgentX so we catch all init logs
     startConsoleCapture();
 
     this.localAgentX = await createAgentX({
-      apiKey,
+      apiKey: env.apiKey,
       provider: "anthropic" as any,
-      model: process.env.DEEPRACTICE_MODEL || "claude-haiku-4-5-20251001",
-      baseUrl: process.env.DEEPRACTICE_BASE_URL,
+      model: env.model,
+      baseUrl: env.baseUrl,
       logLevel: logLevel as any,
       dataPath: ":memory:",
     });
@@ -724,6 +713,57 @@ Then(
     assert.ok(
       hasMatch,
       `Expected console output to contain "${expected}" but captured ${capturedLogs.length} lines:\n${capturedLogs.slice(0, 20).join("\n")}`
+    );
+  }
+);
+
+// ============================================================================
+// Token Usage Steps (Feature 13)
+// ============================================================================
+
+Then(
+  "the presentation should have completed conversations",
+  function (this: AgentXWorld) {
+    const state = getState(this);
+    const ps = state.presentation!.getState();
+    const assistantConvs = ps.conversations.filter((c) => c.role === "assistant");
+    assert.ok(
+      assistantConvs.length > 0,
+      `Expected at least 1 assistant conversation, got ${assistantConvs.length}`
+    );
+  }
+);
+
+Then(
+  "the last assistant conversation should have usage with inputTokens > {int}",
+  function (this: AgentXWorld, minTokens: number) {
+    const state = getState(this);
+    const ps = state.presentation!.getState();
+    const assistantConvs = ps.conversations.filter((c) => c.role === "assistant");
+    assert.ok(assistantConvs.length > 0, "No assistant conversations found");
+
+    const last = assistantConvs[assistantConvs.length - 1] as { usage?: { inputTokens: number } };
+    assert.ok(last.usage, `Last assistant conversation has no usage data. Conversations: ${JSON.stringify(ps.conversations.map(c => c.role))}`);
+    assert.ok(
+      last.usage.inputTokens > minTokens,
+      `Expected inputTokens > ${minTokens}, got ${last.usage.inputTokens}`
+    );
+  }
+);
+
+Then(
+  "the last assistant conversation should have usage with outputTokens > {int}",
+  function (this: AgentXWorld, minTokens: number) {
+    const state = getState(this);
+    const ps = state.presentation!.getState();
+    const assistantConvs = ps.conversations.filter((c) => c.role === "assistant");
+    assert.ok(assistantConvs.length > 0, "No assistant conversations found");
+
+    const last = assistantConvs[assistantConvs.length - 1] as { usage?: { outputTokens: number } };
+    assert.ok(last.usage, `Last assistant conversation has no usage data`);
+    assert.ok(
+      last.usage.outputTokens > minTokens,
+      `Expected outputTokens > ${minTokens}, got ${last.usage.outputTokens}`
     );
   }
 );

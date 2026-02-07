@@ -233,6 +233,16 @@ export interface ErrorEvent extends StreamEvent<
   }
 > {}
 
+export interface MessageDeltaEvent extends StreamEvent<
+  "message_delta",
+  {
+    usage?: {
+      inputTokens: number;
+      outputTokens: number;
+    };
+  }
+> {}
+
 export interface InterruptedEvent extends StreamEvent<
   "interrupted",
   {
@@ -245,6 +255,7 @@ export interface InterruptedEvent extends StreamEvent<
  */
 export type DriverStreamEvent =
   | MessageStartEvent
+  | MessageDeltaEvent
   | MessageStopEvent
   | TextDeltaEvent
   | ToolUseStartEvent

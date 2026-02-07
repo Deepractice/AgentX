@@ -162,6 +162,7 @@
       },
       "devDependencies": {
         "@agentxjs/claude-driver": "workspace:*",
+        "@agentxjs/mono-driver": "workspace:*",
         "typescript": "^5.3.3",
       },
       "peerDependencies": {

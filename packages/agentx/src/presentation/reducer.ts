@@ -31,6 +31,7 @@ import type {
   TextBlock,
   ToolBlock,
   Block,
+  TokenUsage,
 } from "./types";
 import { initialPresentationState } from "./types";
 
@@ -56,6 +57,13 @@ interface ToolUseStopData {
   toolCallId: string;
   toolName: string;
   input: Record<string, unknown>;
+}
+
+interface MessageDeltaData {
+  usage?: {
+    inputTokens: number;
+    outputTokens: number;
+  };
 }
 
 interface MessageStopData {
@@ -96,6 +104,9 @@ export function presentationReducer(
 
     case "tool_use_stop":
       return handleToolUseStop(state, event.data as ToolUseStopData);
+
+    case "message_delta":
+      return handleMessageDelta(state, event.data as MessageDeltaData);
 
     case "message_stop":
       return handleMessageStop(state, event.data as MessageStopData);
@@ -232,6 +243,29 @@ function handleToolUseStop(
     streaming: {
       ...state.streaming,
       blocks,
+    },
+  };
+}
+
+function handleMessageDelta(
+  state: PresentationState,
+  data: MessageDeltaData
+): PresentationState {
+  if (!state.streaming || !data.usage) {
+    return state;
+  }
+
+  const prev = state.streaming.usage;
+  const usage: TokenUsage = {
+    inputTokens: (prev?.inputTokens ?? 0) + data.usage.inputTokens,
+    outputTokens: (prev?.outputTokens ?? 0) + data.usage.outputTokens,
+  };
+
+  return {
+    ...state,
+    streaming: {
+      ...state.streaming,
+      usage,
     },
   };
 }

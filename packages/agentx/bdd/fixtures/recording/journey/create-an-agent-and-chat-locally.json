@@ -1,63 +1,22 @@
 {
   "name": "create-an-agent-and-chat-locally",
   "description": "VCR recording: create-an-agent-and-chat-locally",
-  "recordedAt": 1770278764691,
+  "recordedAt": 1770435423898,
   "events": [
     {
       "type": "message_start",
-      "delay": 7,
+      "delay": 6,
       "data": {
-        "messageId": "msg_1770278764698",
+        "messageId": "msg_1770435423904",
         "model": "claude-haiku-4-5-20251001"
       }
     },
     {
-      "type": "text_delta",
-      "delay": 3758,
+      "type": "error",
+      "delay": 667,
       "data": {
-        "text": "I'm a"
-      }
-    },
-    {
-      "type": "text_delta",
-      "delay": 4,
-      "data": {
-        "text": " helpful assistant here"
-      }
-    },
-    {
-      "type": "text_delta",
-      "delay": 0,
-      "data": {
-        "text": " to answer your questions an"
-      }
-    },
-    {
-      "type": "text_delta",
-      "delay": 1,
-      "data": {
-        "text": "d assist"
-      }
-    },
-    {
-      "type": "text_delta",
-      "delay": 33,
-      "data": {
-        "text": " you"
-      }
-    },
-    {
-      "type": "text_delta",
-      "delay": 27,
-      "data": {
-        "text": " with various tasks."
-      }
-    },
-    {
-      "type": "message_stop",
-      "delay": 92,
-      "data": {
-        "stopReason": "end_turn"
+        "message": "AI_APICallError: Forbidden",
+        "errorCode": "stream_error"
       }
     }
   ]

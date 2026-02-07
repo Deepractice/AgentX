@@ -1,0 +1,23 @@
+{
+  "name": "token-usage-accumulates-across-tool-call-steps",
+  "description": "VCR recording: token-usage-accumulates-across-tool-call-steps",
+  "recordedAt": 1770435433447,
+  "events": [
+    {
+      "type": "message_start",
+      "delay": 2,
+      "data": {
+        "messageId": "msg_1770435433449",
+        "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "error",
+      "delay": 180,
+      "data": {
+        "message": "AI_APICallError: Forbidden",
+        "errorCode": "stream_error"
+      }
+    }
+  ]
+}

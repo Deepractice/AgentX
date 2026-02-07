@@ -36,8 +36,7 @@ describe("messageAssemblerProcessor", () => {
 
       expect(initialState.currentMessageId).toBeNull();
       expect(initialState.messageStartTime).toBeNull();
-      expect(initialState.pendingContents).toEqual({});
-      expect(initialState.assembledToolCalls).toEqual([]);
+      expect(initialState.pendingContents).toEqual([]);
       expect(initialState.pendingToolCalls).toEqual({});
     });
   });
@@ -50,19 +49,19 @@ describe("messageAssemblerProcessor", () => {
 
       expect(newState.currentMessageId).toBe("msg_123");
       expect(newState.messageStartTime).toBe(1000);
-      expect(newState.pendingContents).toEqual({});
+      expect(newState.pendingContents).toEqual([]);
       expect(outputs).toHaveLength(0);
     });
 
     it("should reset pendingContents on new message", () => {
       // First message with some content
-      state.pendingContents = { 0: { type: "text", index: 0, textDeltas: ["old"] } };
+      state.pendingContents = [{ type: "text", textDeltas: ["old"] }];
 
       const event = createStreamEvent("message_start", { messageId: "msg_new" });
 
       const [newState, outputs] = messageAssemblerProcessor(state, event);
 
-      expect(newState.pendingContents).toEqual({});
+      expect(newState.pendingContents).toEqual([]);
       expect(outputs).toHaveLength(0);
     });
   });
@@ -73,7 +72,7 @@ describe("messageAssemblerProcessor", () => {
 
       const [newState, outputs] = messageAssemblerProcessor(state, event);
 
-      expect(newState.pendingContents[0]).toBeDefined();
+      expect(newState.pendingContents).toHaveLength(1);
       expect(newState.pendingContents[0].type).toBe("text");
       expect(newState.pendingContents[0].textDeltas).toContain("Hello");
       expect(outputs).toHaveLength(0);
@@ -105,6 +104,25 @@ describe("messageAssemblerProcessor", () => {
       expect(finalState.pendingContents[0].textDeltas).toEqual(["Hello", " World", "!"]);
       expect(outputs).toHaveLength(0);
     });
+
+    it("should create new text block after a tool_use block", () => {
+      // Setup: text then tool_use already in pendingContents
+      state.pendingContents = [
+        { type: "text", textDeltas: ["Before tool"] },
+        { type: "tool_use", toolId: "t1", toolName: "test", toolInputJson: "{}", assembled: true, parsedInput: {} },
+      ];
+
+      const event = createStreamEvent("text_delta", { text: "After tool" });
+      const [newState] = messageAssemblerProcessor(state, event);
+
+      // Should create a NEW text block (not append to the first one)
+      expect(newState.pendingContents).toHaveLength(3);
+      expect(newState.pendingContents[0].type).toBe("text");
+      expect(newState.pendingContents[0].textDeltas).toEqual(["Before tool"]);
+      expect(newState.pendingContents[1].type).toBe("tool_use");
+      expect(newState.pendingContents[2].type).toBe("text");
+      expect(newState.pendingContents[2].textDeltas).toEqual(["After tool"]);
+    });
   });
 
   describe("tool_use_start event", () => {
@@ -116,43 +134,60 @@ describe("messageAssemblerProcessor", () => {
 
       const [newState, outputs] = messageAssemblerProcessor(state, event);
 
-      expect(newState.pendingContents[1]).toBeDefined();
-      expect(newState.pendingContents[1].type).toBe("tool_use");
-      expect(newState.pendingContents[1].toolId).toBe("tool_123");
-      expect(newState.pendingContents[1].toolName).toBe("calculate");
-      expect(newState.pendingContents[1].toolInputJson).toBe("");
+      expect(newState.pendingContents).toHaveLength(1);
+      expect(newState.pendingContents[0].type).toBe("tool_use");
+      expect(newState.pendingContents[0].toolId).toBe("tool_123");
+      expect(newState.pendingContents[0].toolName).toBe("calculate");
+      expect(newState.pendingContents[0].toolInputJson).toBe("");
       expect(outputs).toHaveLength(0);
+    });
+
+    it("should append tool_use after existing text", () => {
+      state.pendingContents = [{ type: "text", textDeltas: ["Some text"] }];
+
+      const event = createStreamEvent("tool_use_start", {
+        toolCallId: "tool_123",
+        toolName: "calculate",
+      });
+
+      const [newState] = messageAssemblerProcessor(state, event);
+
+      expect(newState.pendingContents).toHaveLength(2);
+      expect(newState.pendingContents[0].type).toBe("text");
+      expect(newState.pendingContents[1].type).toBe("tool_use");
     });
   });
 
   describe("input_json_delta event", () => {
     it("should accumulate JSON input for tool use", () => {
       // Setup: start a tool use
-      state.pendingContents[1] = {
-        type: "tool_use",
-        index: 1,
-        toolId: "tool_123",
-        toolName: "calculate",
-        toolInputJson: "",
-      };
+      state.pendingContents = [
+        {
+          type: "tool_use",
+          toolId: "tool_123",
+          toolName: "calculate",
+          toolInputJson: "",
+        },
+      ];
 
       const event = createStreamEvent("input_json_delta", { partialJson: '{"value":' });
 
       const [newState, outputs] = messageAssemblerProcessor(state, event);
 
-      expect(newState.pendingContents[1].toolInputJson).toBe('{"value":');
+      expect(newState.pendingContents[0].toolInputJson).toBe('{"value":');
       expect(outputs).toHaveLength(0);
     });
 
     it("should append multiple JSON deltas", () => {
       // Setup
-      state.pendingContents[1] = {
-        type: "tool_use",
-        index: 1,
-        toolId: "tool_123",
-        toolName: "calculate",
-        toolInputJson: "",
-      };
+      state.pendingContents = [
+        {
+          type: "tool_use",
+          toolId: "tool_123",
+          toolName: "calculate",
+          toolInputJson: "",
+        },
+      ];
 
       let currentState = state;
 
@@ -169,7 +204,7 @@ describe("messageAssemblerProcessor", () => {
         createStreamEvent("input_json_delta", { partialJson: "42}" })
       );
 
-      expect(finalState.pendingContents[1].toolInputJson).toBe('{"value":42}');
+      expect(finalState.pendingContents[0].toolInputJson).toBe('{"value":42}');
     });
 
     it("should ignore input_json_delta without pending tool use", () => {
@@ -183,16 +218,17 @@ describe("messageAssemblerProcessor", () => {
   });
 
   describe("tool_use_stop event", () => {
-    it("should accumulate ToolCallPart without emitting event", () => {
+    it("should mark tool_use as assembled without emitting event", () => {
       // Setup: complete tool use sequence
       state.currentMessageId = "parent_msg";
-      state.pendingContents[1] = {
-        type: "tool_use",
-        index: 1,
-        toolId: "tool_123",
-        toolName: "calculate",
-        toolInputJson: '{"x":10,"y":20}',
-      };
+      state.pendingContents = [
+        {
+          type: "tool_use",
+          toolId: "tool_123",
+          toolName: "calculate",
+          toolInputJson: '{"x":10,"y":20}',
+        },
+      ];
 
       const event = createStreamEvent("tool_use_stop", {});
 
@@ -201,38 +237,36 @@ describe("messageAssemblerProcessor", () => {
       // No event emitted — tool calls are part of the assistant message
       expect(outputs).toHaveLength(0);
 
-      // Should accumulate ToolCallPart
-      expect(newState.assembledToolCalls).toHaveLength(1);
-      expect(newState.assembledToolCalls[0].type).toBe("tool-call");
-      expect(newState.assembledToolCalls[0].id).toBe("tool_123");
-      expect(newState.assembledToolCalls[0].name).toBe("calculate");
-      expect(newState.assembledToolCalls[0].input).toEqual({ x: 10, y: 20 });
+      // Should mark as assembled with parsed input (stays in pendingContents)
+      expect(newState.pendingContents).toHaveLength(1);
+      expect(newState.pendingContents[0].type).toBe("tool_use");
+      expect(newState.pendingContents[0].assembled).toBe(true);
+      expect(newState.pendingContents[0].parsedInput).toEqual({ x: 10, y: 20 });
 
       // Should add to pending tool calls
       expect(newState.pendingToolCalls["tool_123"]).toEqual({
         id: "tool_123",
         name: "calculate",
       });
-
-      // Should remove from pending contents
-      expect(newState.pendingContents[1]).toBeUndefined();
     });
 
     it("should handle invalid JSON input gracefully", () => {
-      state.pendingContents[1] = {
-        type: "tool_use",
-        index: 1,
-        toolId: "tool_123",
-        toolName: "test",
-        toolInputJson: "invalid json",
-      };
+      state.pendingContents = [
+        {
+          type: "tool_use",
+          toolId: "tool_123",
+          toolName: "test",
+          toolInputJson: "invalid json",
+        },
+      ];
 
       const event = createStreamEvent("tool_use_stop", {});
 
       const [newState, outputs] = messageAssemblerProcessor(state, event);
 
       expect(outputs).toHaveLength(0);
-      expect(newState.assembledToolCalls[0].input).toEqual({});
+      expect(newState.pendingContents[0].assembled).toBe(true);
+      expect(newState.pendingContents[0].parsedInput).toEqual({});
     });
 
     it("should handle missing pending tool use", () => {
@@ -313,11 +347,12 @@ describe("messageAssemblerProcessor", () => {
       // Setup: complete message with text
       state.currentMessageId = "msg_123";
       state.messageStartTime = 1000;
-      state.pendingContents[0] = {
-        type: "text",
-        index: 0,
-        textDeltas: ["Hello", " ", "World!"],
-      };
+      state.pendingContents = [
+        {
+          type: "text",
+          textDeltas: ["Hello", " ", "World!"],
+        },
+      ];
 
       const event = createStreamEvent("message_stop", { stopReason: "end_turn" });
 
@@ -336,7 +371,7 @@ describe("messageAssemblerProcessor", () => {
 
       // Should reset state
       expect(newState.currentMessageId).toBeNull();
-      expect(newState.pendingContents).toEqual({});
+      expect(newState.pendingContents).toEqual([]);
     });
 
     it("should skip empty messages", () => {
@@ -352,11 +387,12 @@ describe("messageAssemblerProcessor", () => {
 
     it("should skip whitespace-only messages", () => {
       state.currentMessageId = "msg_123";
-      state.pendingContents[0] = {
-        type: "text",
-        index: 0,
-        textDeltas: ["   ", "\n", "\t"],
-      };
+      state.pendingContents = [
+        {
+          type: "text",
+          textDeltas: ["   ", "\n", "\t"],
+        },
+      ];
 
       const event = createStreamEvent("message_stop", { stopReason: "end_turn" });
 
@@ -368,8 +404,15 @@ describe("messageAssemblerProcessor", () => {
     it("should preserve pending tool calls when stopReason is tool_use", () => {
       state.currentMessageId = "msg_123";
       state.pendingToolCalls["tool_123"] = { id: "tool_123", name: "test" };
-      state.assembledToolCalls = [
-        { type: "tool-call", id: "tool_123", name: "test", input: { q: "hello" } },
+      state.pendingContents = [
+        {
+          type: "tool_use",
+          toolId: "tool_123",
+          toolName: "test",
+          toolInputJson: '{"q":"hello"}',
+          assembled: true,
+          parsedInput: { q: "hello" },
+        },
       ];
 
       const event = createStreamEvent("message_stop", { stopReason: "tool_use" });
@@ -390,11 +433,12 @@ describe("messageAssemblerProcessor", () => {
     it("should clear pending tool calls for non-tool_use stop reason", () => {
       state.currentMessageId = "msg_123";
       state.pendingToolCalls["tool_123"] = { id: "tool_123", name: "test" };
-      state.pendingContents[0] = {
-        type: "text",
-        index: 0,
-        textDeltas: ["Done"],
-      };
+      state.pendingContents = [
+        {
+          type: "text",
+          textDeltas: ["Done"],
+        },
+      ];
 
       const event = createStreamEvent("message_stop", { stopReason: "end_turn" });
 
@@ -404,11 +448,12 @@ describe("messageAssemblerProcessor", () => {
     });
 
     it("should handle missing currentMessageId", () => {
-      state.pendingContents[0] = {
-        type: "text",
-        index: 0,
-        textDeltas: ["Some text"],
-      };
+      state.pendingContents = [
+        {
+          type: "text",
+          textDeltas: ["Some text"],
+        },
+      ];
 
       const event = createStreamEvent("message_stop", { stopReason: "end_turn" });
 
@@ -438,7 +483,7 @@ describe("messageAssemblerProcessor", () => {
 
       // Should reset state
       expect(newState.currentMessageId).toBeNull();
-      expect(newState.pendingContents).toEqual({});
+      expect(newState.pendingContents).toEqual([]);
     });
 
     it("should handle missing errorCode", () => {
@@ -534,7 +579,7 @@ describe("messageAssemblerProcessor", () => {
       currentState = s3;
       allOutputs.push(...o3);
 
-      // tool_use_stop — no event emitted, accumulates ToolCallPart
+      // tool_use_stop — no event emitted, marks as assembled
       const [s4, o4] = messageAssemblerProcessor(
         currentState,
         createStreamEvent("tool_use_stop", {})
@@ -575,6 +620,154 @@ describe("messageAssemblerProcessor", () => {
 
       expect(allOutputs[1].type).toBe("tool_result_message");
       expect(allOutputs[1].data.toolResult.output.value).toBe("Found it!");
+    });
+
+    it("should preserve interleaved text and tool call order", () => {
+      let currentState = createInitialMessageAssemblerState();
+      const allOutputs: MessageAssemblerOutput[] = [];
+
+      // message_start
+      const [s1, o1] = messageAssemblerProcessor(
+        currentState,
+        createStreamEvent("message_start", { messageId: "msg_1" }, 1000)
+      );
+      currentState = s1;
+      allOutputs.push(...o1);
+
+      // Text before tool
+      const [s2] = messageAssemblerProcessor(
+        currentState,
+        createStreamEvent("text_delta", { text: "Let me search for that." })
+      );
+      currentState = s2;
+
+      // tool_use_start
+      const [s3] = messageAssemblerProcessor(
+        currentState,
+        createStreamEvent("tool_use_start", { toolCallId: "tool_1", toolName: "search" })
+      );
+      currentState = s3;
+
+      // input_json_delta
+      const [s4] = messageAssemblerProcessor(
+        currentState,
+        createStreamEvent("input_json_delta", { partialJson: '{"q":"test"}' })
+      );
+      currentState = s4;
+
+      // tool_use_stop
+      const [s5] = messageAssemblerProcessor(
+        currentState,
+        createStreamEvent("tool_use_stop", {})
+      );
+      currentState = s5;
+
+      // Text after tool
+      const [s6] = messageAssemblerProcessor(
+        currentState,
+        createStreamEvent("text_delta", { text: "Here are the results." })
+      );
+      currentState = s6;
+
+      // message_stop
+      const [, o7] = messageAssemblerProcessor(
+        currentState,
+        createStreamEvent("message_stop", { stopReason: "end_turn" })
+      );
+      allOutputs.push(...o7);
+
+      expect(allOutputs).toHaveLength(1);
+      expect(allOutputs[0].type).toBe("assistant_message");
+
+      const content = allOutputs[0].data.content;
+      // Order must be: text, tool-call, text (preserving stream order)
+      expect(content).toHaveLength(3);
+      expect(content[0].type).toBe("text");
+      expect(content[0].text).toBe("Let me search for that.");
+      expect(content[1].type).toBe("tool-call");
+      expect(content[1].name).toBe("search");
+      expect(content[1].input).toEqual({ q: "test" });
+      expect(content[2].type).toBe("text");
+      expect(content[2].text).toBe("Here are the results.");
+    });
+
+    it("should handle text + tool + text + tool interleaving", () => {
+      let currentState = createInitialMessageAssemblerState();
+
+      // message_start
+      const [s1] = messageAssemblerProcessor(
+        currentState,
+        createStreamEvent("message_start", { messageId: "msg_1" }, 1000)
+      );
+      currentState = s1;
+
+      // Text 1
+      const [s2] = messageAssemblerProcessor(
+        currentState,
+        createStreamEvent("text_delta", { text: "First " })
+      );
+      currentState = s2;
+
+      // Tool 1
+      const [s3] = messageAssemblerProcessor(
+        currentState,
+        createStreamEvent("tool_use_start", { toolCallId: "t1", toolName: "toolA" })
+      );
+      currentState = s3;
+      const [s4] = messageAssemblerProcessor(
+        currentState,
+        createStreamEvent("input_json_delta", { partialJson: '{"a":1}' })
+      );
+      currentState = s4;
+      const [s5] = messageAssemblerProcessor(
+        currentState,
+        createStreamEvent("tool_use_stop", {})
+      );
+      currentState = s5;
+
+      // Text 2
+      const [s6] = messageAssemblerProcessor(
+        currentState,
+        createStreamEvent("text_delta", { text: "Second " })
+      );
+      currentState = s6;
+
+      // Tool 2
+      const [s7] = messageAssemblerProcessor(
+        currentState,
+        createStreamEvent("tool_use_start", { toolCallId: "t2", toolName: "toolB" })
+      );
+      currentState = s7;
+      const [s8] = messageAssemblerProcessor(
+        currentState,
+        createStreamEvent("input_json_delta", { partialJson: '{"b":2}' })
+      );
+      currentState = s8;
+      const [s9] = messageAssemblerProcessor(
+        currentState,
+        createStreamEvent("tool_use_stop", {})
+      );
+      currentState = s9;
+
+      // message_stop
+      const [, outputs] = messageAssemblerProcessor(
+        currentState,
+        createStreamEvent("message_stop", { stopReason: "tool_use" })
+      );
+
+      expect(outputs).toHaveLength(1);
+      const content = outputs[0].data.content;
+
+      // Must preserve: text, tool, text, tool
+      expect(content).toHaveLength(4);
+      expect(content[0]).toEqual({ type: "text", text: "First " });
+      expect(content[1].type).toBe("tool-call");
+      expect(content[1].name).toBe("toolA");
+      expect(content[1].input).toEqual({ a: 1 });
+      expect(content[2]).toEqual({ type: "text", text: "Second " });
+      expect(content[3].type).toBe("tool-call");
+      expect(content[3].name).toBe("toolB");
+      expect(content[3].input).toEqual({ b: 2 });
     });
   });
 });

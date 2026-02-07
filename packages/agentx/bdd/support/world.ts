@@ -23,6 +23,7 @@ import type { Driver, DriverStreamEvent } from "@agentxjs/core/driver";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type { AgentXServer } from "@agentxjs/server";
 import { getFixturesPath, getTempPath, ensureDir } from "@agentxjs/devtools/bdd";
+import { env } from "@agentxjs/devtools";
 
 // Current scenario's fixture name (set by Before hook)
 let currentFixtureName: string | null = null;
@@ -45,11 +46,6 @@ BeforeAll({ timeout: 60000 }, async function () {
   const tempDir = getTempPath("agentx-bdd-");
   const fixturesPath = ensureDir(getFixturesPath("recording/agentx"));
 
-  // API config for recording
-  const apiKey = process.env.DEEPRACTICE_API_KEY;
-  const baseUrl = process.env.DEEPRACTICE_BASE_URL;
-  const model = process.env.DEEPRACTICE_MODEL || "claude-haiku-4-5-20251001";
-
   console.log(`\n[BDD] VCR Mode - fixtures: ${fixturesPath}\n`);
 
   // Use MonoDriver as default driver
@@ -62,9 +58,9 @@ BeforeAll({ timeout: 60000 }, async function () {
     getFixtureName: () => {
       return currentFixtureName;
     },
-    apiKey,
-    baseUrl,
-    model,
+    apiKey: env.apiKey,
+    baseUrl: env.baseUrl,
+    model: env.model,
     createRealDriver: createMonoDriver as any,
     onPlayback: (name) => console.log(`[VCR] Playback: ${name}`),
     onRecording: (name) => console.log(`[VCR] Recording: ${name}`),

@@ -9,6 +9,7 @@ export type {
   TextBlock,
   ToolBlock,
   ImageBlock,
+  TokenUsage,
   Conversation,
   UserConversation,
   AssistantConversation,

@@ -1,19 +1,19 @@
 {
   "name": "assistant-reply-is-persisted-to-session",
   "description": "VCR recording: assistant-reply-is-persisted-to-session",
-  "recordedAt": 1770373115819,
+  "recordedAt": 1770435430575,
   "events": [
     {
       "type": "message_start",
-      "delay": 9,
+      "delay": 2,
       "data": {
-        "messageId": "msg_1770373115827",
+        "messageId": "msg_1770435430577",
         "model": "claude-haiku-4-5-20251001"
       }
     },
     {
       "type": "error",
-      "delay": 592,
+      "delay": 180,
       "data": {
         "message": "AI_APICallError: Forbidden",
         "errorCode": "stream_error"

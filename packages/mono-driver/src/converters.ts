@@ -49,7 +49,7 @@ export function toVercelMessage(message: Message): ModelMessage | null {
               type: "tool-call" as const,
               toolCallId: tc.id,
               toolName: tc.name,
-              args: tc.input,
+              input: tc.input,
             })),
           ],
         } as unknown as ModelMessage;

@@ -56,12 +56,22 @@ export interface UserConversation {
 }
 
 /**
+ * Token usage for a message (one LLM call / step)
+ */
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
+/**
  * Assistant conversation
  */
 export interface AssistantConversation {
   role: "assistant";
   blocks: Block[];
   isStreaming: boolean;
+  /** Accumulated token usage across all steps in this conversation */
+  usage?: TokenUsage;
 }
 
 /**

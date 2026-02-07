@@ -1,0 +1,23 @@
+{
+  "name": "presentation-state-includes-token-usage-after-agent-response",
+  "description": "VCR recording: presentation-state-includes-token-usage-after-agent-response",
+  "recordedAt": 1770435432749,
+  "events": [
+    {
+      "type": "message_start",
+      "delay": 3,
+      "data": {
+        "messageId": "msg_1770435432752",
+        "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "error",
+      "delay": 178,
+      "data": {
+        "message": "AI_APICallError: Forbidden",
+        "errorCode": "stream_error"
+      }
+    }
+  ]
+}

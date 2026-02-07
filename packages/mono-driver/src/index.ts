@@ -51,6 +51,7 @@ export {
   toVercelMessage,
   toVercelMessages,
   toStopReason,
+  createEvent,
 } from "./converters";
 
 // Re-export Vercel AI SDK utilities for advanced usage

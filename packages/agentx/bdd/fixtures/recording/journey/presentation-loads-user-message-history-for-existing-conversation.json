@@ -1,35 +1,22 @@
 {
-  "name": "presentation-loads-history-for-existing-conversation",
-  "description": "VCR recording: presentation-loads-history-for-existing-conversation",
-  "recordedAt": 1770372650717,
+  "name": "presentation-loads-user-message-history-for-existing-conversation",
+  "description": "VCR recording: presentation-loads-user-message-history-for-existing-conversation",
+  "recordedAt": 1770435430169,
   "events": [
     {
       "type": "message_start",
-      "delay": 5,
+      "delay": 2,
       "data": {
-        "messageId": "msg_1770372650723",
+        "messageId": "msg_1770435430171",
         "model": "claude-haiku-4-5-20251001"
       }
     },
     {
-      "type": "text_delta",
-      "delay": 100,
+      "type": "error",
+      "delay": 178,
       "data": {
-        "text": "Got it! I'll remember"
-      }
-    },
-    {
-      "type": "text_delta",
-      "delay": 10,
-      "data": {
-        "text": " the word: pineapple."
-      }
-    },
-    {
-      "type": "message_stop",
-      "delay": 50,
-      "data": {
-        "stopReason": "end_turn"
+        "message": "AI_APICallError: Forbidden",
+        "errorCode": "stream_error"
       }
     }
   ]

@@ -8,9 +8,11 @@
  * ```typescript
  * import { createDevtools } from "@agentxjs/devtools";
  *
+ * import { env } from "@agentxjs/devtools";
+ *
  * const devtools = createDevtools({
  *   fixturesDir: "./fixtures",
- *   apiKey: process.env.DEEPRACTICE_API_KEY,
+ *   apiKey: env.apiKey,
  * });
  *
  * // Has fixture → playback (MockDriver)
@@ -57,6 +59,9 @@ export {
   createRecordingDriver,
   type RecordingDriverOptions,
 } from "./recorder/RecordingDriver";
+
+// Environment
+export { env } from "./env";
 
 // Types
 export type { Fixture, FixtureEvent, MockDriverOptions } from "./types";

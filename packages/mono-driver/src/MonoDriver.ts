@@ -221,6 +221,11 @@ export class MonoDriver implements Driver {
 
       // Track state for event conversion
       let messageStartEmitted = false;
+      // Track tool calls in current step for correct message ordering.
+      // AI SDK emits: tool-call → tool-result → finish-step
+      // Engine needs: AssistantMessage(with tool-calls) BEFORE ToolResultMessage
+      // So we inject message_stop before the first tool-result in each step.
+      let hasToolCallsInStep = false;
 
       // Process fullStream (AI SDK v6 event types)
       for await (const part of result.fullStream) {
@@ -238,6 +243,7 @@ export class MonoDriver implements Driver {
               yield createEvent("message_start", { messageId, model });
               messageStartEmitted = true;
             }
+            hasToolCallsInStep = false;
             break;
 
           case "text-delta":
@@ -258,6 +264,7 @@ export class MonoDriver implements Driver {
             break;
 
           case "tool-call":
+            hasToolCallsInStep = true;
             yield createEvent("tool_use_stop", {
               toolCallId: part.toolCallId,
               toolName: part.toolName,
@@ -266,6 +273,14 @@ export class MonoDriver implements Driver {
             break;
 
           case "tool-result":
+            // Flush AssistantMessage before first tool-result in this step.
+            // Ensures correct ordering: Assistant(tool-calls) → ToolResult
+            if (hasToolCallsInStep) {
+              yield createEvent("message_stop", {
+                stopReason: toStopReason("tool-calls"),
+              });
+              hasToolCallsInStep = false;
+            }
             yield createEvent("tool_result", {
               toolCallId: part.toolCallId,
               result: part.output,
@@ -274,11 +289,31 @@ export class MonoDriver implements Driver {
             break;
 
           case "tool-error":
+            if (hasToolCallsInStep) {
+              yield createEvent("message_stop", {
+                stopReason: toStopReason("tool-calls"),
+              });
+              hasToolCallsInStep = false;
+            }
             yield createEvent("tool_result", {
               toolCallId: part.toolCallId,
               result: part.error,
               isError: true,
             });
+            break;
+
+          case "finish-step":
+            // Emit usage data for this step
+            if (part.usage) {
+              yield createEvent("message_delta", {
+                usage: {
+                  inputTokens: part.usage.inputTokens ?? 0,
+                  outputTokens: part.usage.outputTokens ?? 0,
+                },
+              });
+            }
+            // Reset for next step so start-step emits a new message_start
+            messageStartEmitted = false;
             break;
 
           case "finish":

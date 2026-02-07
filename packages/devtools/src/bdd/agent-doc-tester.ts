@@ -1,4 +1,5 @@
 import { readFileSync, existsSync } from "node:fs";
+import { env } from "../env";
 
 const SYSTEM_PROMPT = `You are a documentation reviewer evaluating documents from the reader's experience.
 
@@ -47,9 +48,9 @@ export async function agentDocTester(
 ): Promise<DocTestResult> {
   const {
     provider = process.env.AGENTX_PROVIDER || "anthropic",
-    model = process.env.DEEPRACTICE_MODEL || "claude-haiku-4-5-20251001",
-    apiKey = process.env.DEEPRACTICE_API_KEY || process.env.ANTHROPIC_API_KEY || "",
-    baseUrl = process.env.DEEPRACTICE_BASE_URL,
+    model = env.model,
+    apiKey = env.apiKey || "",
+    baseUrl = env.baseUrl,
     timeout = 120_000,
   } = testerOptions;
 
