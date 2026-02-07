@@ -5,17 +5,17 @@
  * Usage:
  *   bdd                              # Run all tests
  *   bdd path/to/file.feature         # Run specific feature file
- *   bdd path/to/file.feature:10      # Run specific line
+ *   bdd path/to/file.feature:10      # Run specific scenario by line
  *   bdd --tags @contributor           # Run specific tags
  *   bdd --tags "@dev and not @slow"   # Tag expression
- *   bdd --name "token usage"          # Filter by scenario name
+ *   bdd --name "token usage"          # Filter by scenario name (regex)
  *   bdd --dry-run                     # Validate without executing
  *   bdd --config path                 # Custom config (default: bdd/cucumber.js)
  */
 
 import { spawn } from "node:child_process";
-import { resolve, dirname } from "node:path";
-import { existsSync, readFileSync } from "node:fs";
+import { resolve, dirname, relative } from "node:path";
+import { existsSync, readFileSync, writeFileSync, unlinkSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -117,8 +117,29 @@ const cucumberBin =
 
 const rootNodeModules = resolve(cwd, "node_modules");
 
-// Build cucumber args: feature paths first (positional), then config, then flags
-const cucumberArgs = [...featurePaths, "--config", configPath, ...flags];
+// When feature paths are specified, generate a temp config that overrides
+// the original config's `paths` — cucumber-js config.paths takes precedence
+// over positional args, so we must override it in the config itself.
+let effectiveConfig = configPath;
+let tempConfigPath: string | null = null;
+
+if (featurePaths.length > 0) {
+  const configRelPath = relative(dirname(resolve(cwd, "bdd/.tmp-cucumber.js")), fullConfigPath)
+    .replace(/\\/g, "/");
+  const pathsJson = JSON.stringify(featurePaths);
+  const tempContent = [
+    `import config from "./${configRelPath}";`,
+    `export default { ...config.default ?? config, paths: ${pathsJson} };`,
+    "",
+  ].join("\n");
+
+  tempConfigPath = resolve(cwd, "bdd/.tmp-cucumber.js");
+  writeFileSync(tempConfigPath, tempContent);
+  effectiveConfig = "bdd/.tmp-cucumber.js";
+}
+
+// Build cucumber args
+const cucumberArgs = ["--config", effectiveConfig, ...flags];
 
 const child = spawn(cucumberBin, cucumberArgs, {
   stdio: "inherit",
@@ -130,5 +151,11 @@ const child = spawn(cucumberBin, cucumberArgs, {
 });
 
 child.on("close", (code) => {
+  // Clean up temp config
+  if (tempConfigPath && existsSync(tempConfigPath)) {
+    try {
+      unlinkSync(tempConfigPath);
+    } catch {}
+  }
   process.exit(code ?? 0);
 });

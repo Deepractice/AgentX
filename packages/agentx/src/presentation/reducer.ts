@@ -106,7 +106,6 @@ export function presentationReducer(
       return handleToolUseStop(state, event.data as ToolUseStopData);
 
     case "message_delta":
-      console.log("[reducer] message_delta received, data:", JSON.stringify(event.data));
       return handleMessageDelta(state, event.data as MessageDeltaData);
 
     case "message_stop":
@@ -253,12 +252,10 @@ function handleMessageDelta(
   data: MessageDeltaData
 ): PresentationState {
   if (!state.streaming || !data.usage) {
-    console.log("[reducer] message_delta skipped — streaming:", !!state.streaming, "usage:", !!data.usage);
     return state;
   }
 
   const prev = state.streaming.usage;
-  console.log("[reducer] message_delta applied — input:", data.usage.inputTokens, "output:", data.usage.outputTokens);
   const usage: TokenUsage = {
     inputTokens: (prev?.inputTokens ?? 0) + data.usage.inputTokens,
     outputTokens: (prev?.outputTokens ?? 0) + data.usage.outputTokens,

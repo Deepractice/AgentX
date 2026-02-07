@@ -161,17 +161,9 @@ export class Presentation {
         return;
       }
 
-      // DEBUG: trace message_delta arrival
-      if (event.type === "message_delta") {
-        console.log("[Presentation] message_delta received", JSON.stringify(event.data));
-      }
-
       // Reduce event into state
       const newState = presentationReducer(this.state, event);
       if (newState !== this.state) {
-        if (event.type === "message_delta") {
-          console.log("[Presentation] message_delta applied, usage:", JSON.stringify(newState.streaming?.usage));
-        }
         this.state = newState;
         this.notify();
       }
