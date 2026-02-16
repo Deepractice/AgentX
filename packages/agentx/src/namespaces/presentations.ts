@@ -5,8 +5,8 @@
  * Presentation only depends on the AgentX interface.
  */
 
+import { messagesToConversations, Presentation, type PresentationOptions } from "../presentation";
 import type { AgentX, PresentationNamespace } from "../types";
-import { Presentation, type PresentationOptions, messagesToConversations } from "../presentation";
 
 /**
  * Create presentation namespace backed by any AgentX client

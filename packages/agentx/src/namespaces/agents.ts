@@ -2,13 +2,13 @@
  * Agent namespace factories
  */
 
-import type { AgentXRuntime } from "@agentxjs/core/runtime";
 import type { RpcClient, RpcMethod } from "@agentxjs/core/network";
+import type { AgentXRuntime } from "@agentxjs/core/runtime";
 import type {
-  AgentNamespace,
   AgentCreateResponse,
   AgentGetResponse,
   AgentListResponse,
+  AgentNamespace,
   BaseResponse,
 } from "../types";
 

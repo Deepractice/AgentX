@@ -19,12 +19,12 @@
  * ```
  */
 
-import type { ContainerRepository } from "../container/types";
-import type { ImageRepository } from "../image/types";
-import type { SessionRepository } from "../session/types";
-import type { EventBus } from "../event/types";
 import type { BashProvider } from "../bash/types";
+import type { ContainerRepository } from "../container/types";
+import type { EventBus } from "../event/types";
+import type { ImageRepository } from "../image/types";
 import type { WebSocketFactory } from "../network/RpcClient";
+import type { SessionRepository } from "../session/types";
 
 // ============================================================================
 // AgentXPlatform - Dependency Injection

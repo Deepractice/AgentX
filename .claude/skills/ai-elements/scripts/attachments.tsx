@@ -1,13 +1,13 @@
 "use client";
 
+import { nanoid } from "nanoid";
+import { memo, useCallback, useState } from "react";
 import {
   Attachment,
   AttachmentPreview,
   AttachmentRemove,
   Attachments,
 } from "@/components/ai-elements/attachments";
-import { nanoid } from "nanoid";
-import { memo, useCallback, useState } from "react";
 
 const initialAttachments = [
   {

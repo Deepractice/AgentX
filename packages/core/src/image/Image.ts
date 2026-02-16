@@ -6,7 +6,7 @@
  */
 
 import { createLogger } from "commonxjs/logger";
-import type { Image, ImageRecord, ImageContext, ImageCreateConfig } from "./types";
+import type { Image, ImageContext, ImageCreateConfig, ImageRecord } from "./types";
 
 const logger = createLogger("image/Image");
 

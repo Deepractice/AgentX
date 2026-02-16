@@ -12,14 +12,14 @@
  * ```
  */
 
+import { join } from "node:path";
+import { EventBusImpl } from "@agentxjs/core/event";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type { LogLevel } from "commonxjs/logger";
-import { setLoggerFactory, ConsoleLogger } from "commonxjs/logger";
-import { EventBusImpl } from "@agentxjs/core/event";
-import { createPersistence, sqliteDriver } from "./persistence";
+import { ConsoleLogger, setLoggerFactory } from "commonxjs/logger";
 import { NodeBashProvider } from "./bash/NodeBashProvider";
 import { FileLoggerFactory } from "./logger";
-import { join } from "node:path";
+import { createPersistence, sqliteDriver } from "./persistence";
 
 /**
  * Options for creating a Node platform
@@ -135,17 +135,15 @@ export function isDeferredPlatform(value: unknown): value is DeferredPlatformCon
   );
 }
 
-// Re-export persistence
-export * from "./persistence";
-
 // Re-export bash
 export { NodeBashProvider } from "./bash/NodeBashProvider";
-
-// Re-export mq
-export { SqliteMessageQueue, OffsetGenerator } from "./mq";
-
-// Re-export network
-export { WebSocketServer, WebSocketConnection } from "./network";
-
 // Re-export logger
 export { FileLoggerFactory, type FileLoggerFactoryOptions } from "./logger";
+
+// Re-export mq
+export { OffsetGenerator, SqliteMessageQueue } from "./mq";
+
+// Re-export network
+export { WebSocketConnection, WebSocketServer } from "./network";
+// Re-export persistence
+export * from "./persistence";

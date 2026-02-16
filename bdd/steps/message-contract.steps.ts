@@ -5,30 +5,30 @@
  * Tests toVercelMessage() / toVercelMessages() with real message structures.
  */
 
-import { Given, When, Then } from "@cucumber/cucumber";
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { ModelMessage } from "ai";
-import { modelMessageSchema } from "ai";
 import type {
-  Message,
-  ToolResultMessage,
   AssistantMessage,
-  ToolResultOutput,
+  Message,
   MessageAssemblerState,
+  ToolResultMessage,
+  ToolResultOutput,
 } from "@agentxjs/core/agent";
 import {
-  messageAssemblerProcessor,
   createInitialMessageAssemblerState,
+  messageAssemblerProcessor,
 } from "@agentxjs/core/agent";
 import {
-  toVercelMessage,
-  toVercelMessages,
   createEvent,
   toStopReason,
+  toVercelMessage,
+  toVercelMessages,
 } from "@agentxjs/mono-driver";
+import { Given, Then, When } from "@cucumber/cucumber";
+import type { ModelMessage } from "ai";
+import { modelMessageSchema } from "ai";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../..");
@@ -49,7 +49,7 @@ let convertedResults: ModelMessage[];
 
 // --- Scenario 1: ToolResultMessage converts to Vercel ToolModelMessage ---
 
-Given("the core defines ToolResultMessage as:", function (_table: any) {
+Given("the core defines ToolResultMessage as:", (_table: any) => {
   // Construct a realistic ToolResultMessage for testing
   toolResultMsg = {
     id: "msg-tr-001",
@@ -67,15 +67,15 @@ Given("the core defines ToolResultMessage as:", function (_table: any) {
   currentMessage = toolResultMsg;
 });
 
-Given("ToolResultPart.output is a ToolResultOutput union:", function (_table: any) {
+Given("ToolResultPart.output is a ToolResultOutput union:", (_table: any) => {
   // The table documents the union variants — verified in Then step
 });
 
-When("the driver converts it to Vercel AI SDK format", function () {
+When("the driver converts it to Vercel AI SDK format", () => {
   convertedResult = toVercelMessage(currentMessage);
 });
 
-Then("the Vercel ToolModelMessage must have:", function (table: any) {
+Then("the Vercel ToolModelMessage must have:", (table: any) => {
   assert.ok(convertedResult, "toVercelMessage returned null for ToolResultMessage");
 
   const msg = convertedResult as any;
@@ -83,7 +83,7 @@ Then("the Vercel ToolModelMessage must have:", function (table: any) {
   assert.ok(Array.isArray(msg.content), "Expected content to be an array");
   assert.strictEqual(msg.content.length, 1, "Expected exactly one content part");
 
-  const part = msg.content[0];
+  const _part = msg.content[0];
   const rows = table.hashes();
   for (const row of rows) {
     const field = row.field as string;
@@ -102,7 +102,7 @@ Then("the Vercel ToolModelMessage must have:", function (table: any) {
   }
 });
 
-Then("the output must preserve the ToolResultOutput discriminated union", function () {
+Then("the output must preserve the ToolResultOutput discriminated union", () => {
   // Test each variant of ToolResultOutput is preserved through conversion
   const variants: Array<{ label: string; output: ToolResultOutput }> = [
     { label: "text", output: { type: "text", value: "hello world" } },
@@ -143,7 +143,7 @@ Then("the output must preserve the ToolResultOutput discriminated union", functi
 
 Given(
   "the core defines AssistantMessage.content as array containing ToolCallPart:",
-  function (_table: any) {
+  (_table: any) => {
     assistantMsg = {
       id: "msg-asst-001",
       role: "assistant",
@@ -163,7 +163,7 @@ Given(
   }
 );
 
-Then("each ToolCallPart must map to:", function (table: any) {
+Then("each ToolCallPart must map to:", (table: any) => {
   assert.ok(convertedResult, "toVercelMessage returned null for AssistantMessage");
 
   const msg = convertedResult as any;
@@ -195,11 +195,11 @@ Then("each ToolCallPart must map to:", function (table: any) {
 
 // --- Scenario 3: Converters use Core types, not ad-hoc casts ---
 
-Given("a converter function in the driver layer", function () {
+Given("a converter function in the driver layer", () => {
   // Read the converter source file for static analysis
 });
 
-Then("it must import and use Core message types directly:", function (table: any) {
+Then("it must import and use Core message types directly:", (table: any) => {
   const converterPath = resolve(ROOT, "packages/mono-driver/src/converters.ts");
   const source = readFileSync(converterPath, "utf-8");
 
@@ -210,14 +210,13 @@ Then("it must import and use Core message types directly:", function (table: any
     // Check that the "don't" pattern is NOT in the source
     if (forbidden && source.includes(forbidden)) {
       assert.fail(
-        `converters.ts contains forbidden pattern: "${forbidden}"\n` +
-          `  Should use: "${row["do"]}"`
+        `converters.ts contains forbidden pattern: "${forbidden}"\n` + `  Should use: "${row.do}"`
       );
     }
   }
 });
 
-Then("type-safe access prevents silent undefined bugs", function () {
+Then("type-safe access prevents silent undefined bugs", () => {
   // Verify by attempting conversion with a real ToolResultMessage
   // If field paths were wrong, output would be undefined
   const msg: ToolResultMessage = {
@@ -247,11 +246,11 @@ Then("type-safe access prevents silent undefined bugs", function () {
 
 // --- Scenario 4: Tool result round-trips through session storage ---
 
-Given("a tool executes and returns a result", function () {
+Given("a tool executes and returns a result", () => {
   // The messageAssemblerProcessor creates ToolResultMessage — tested via converter
 });
 
-When("the engine creates a ToolResultMessage via messageAssemblerProcessor", function () {
+When("the engine creates a ToolResultMessage via messageAssemblerProcessor", () => {
   // Simulate what messageAssemblerProcessor produces (line 372-379 in core)
   toolResultMsg = {
     id: "msg-roundtrip",
@@ -271,22 +270,22 @@ When("the engine creates a ToolResultMessage via messageAssemblerProcessor", fun
   };
 });
 
-Then("the message is stored in the session repository", function () {
+Then("the message is stored in the session repository", () => {
   // Simulate serialization round-trip (JSON serialize/deserialize like SQLite would)
   const serialized = JSON.stringify(toolResultMsg);
   toolResultMsg = JSON.parse(serialized) as ToolResultMessage;
 });
 
-Then("when the driver loads history for the next LLM call", function () {
+Then("when the driver loads history for the next LLM call", () => {
   // toVercelMessages handles the full array
   convertedResults = toVercelMessages([toolResultMsg]);
 });
 
-Then("toVercelMessages\\() converts each stored message", function () {
+Then("toVercelMessages\\() converts each stored message", () => {
   assert.strictEqual(convertedResults.length, 1, "Expected 1 converted message");
 });
 
-Then("the ToolResultOutput arrives at the AI SDK intact", function () {
+Then("the ToolResultOutput arrives at the AI SDK intact", () => {
   const result = convertedResults[0] as any;
   assert.strictEqual(result.role, "tool");
 
@@ -397,7 +396,7 @@ let sdkStreamEvents: Array<{ type: string; data?: any }>;
 let driverEvents: DriverStreamEvent[];
 let assembledMessages: Array<{ type: string; data: any }>;
 
-Given("a multi-step tool execution produces stream events in order:", function (_table: any) {
+Given("a multi-step tool execution produces stream events in order:", (_table: any) => {
   // Construct AI SDK stream events matching the full sequence:
   // tool-input-start → tool-input-delta → tool-call → tool-result
   sdkStreamEvents = [
@@ -419,7 +418,7 @@ Given("a multi-step tool execution produces stream events in order:", function (
   ];
 });
 
-When("the driver translates these to engine events", function () {
+When("the driver translates these to engine events", () => {
   driverEvents = simulateDriverTranslation(sdkStreamEvents);
 
   // Now feed driver events through the messageAssemblerProcessor
@@ -435,7 +434,7 @@ When("the driver translates these to engine events", function () {
   }
 });
 
-Then("the engine events must include message_stop before tool_result", function () {
+Then("the engine events must include message_stop before tool_result", () => {
   // Find indices of message_stop and tool_result in driverEvents
   const eventTypes = driverEvents.map((e) => e.type);
 
@@ -458,7 +457,7 @@ Then("the engine events must include message_stop before tool_result", function 
   );
 });
 
-Then("the resulting message sequence is:", function (table: any) {
+Then("the resulting message sequence is:", (table: any) => {
   const rows = table.hashes();
 
   assert.strictEqual(
@@ -544,60 +543,57 @@ Then("the resulting message sequence is:", function (table: any) {
 let schemaTestMessages: Message[];
 let schemaTestConverted: Array<ModelMessage | null>;
 
-Given(
-  "a complete conversation with user, assistant \\(text+tool-calls), and tool results",
-  function () {
-    schemaTestMessages = [
-      // 1. User message
-      {
-        id: "msg-u1",
-        role: "user",
-        subtype: "user",
-        content: "Hello",
-        timestamp: Date.now(),
+Given("a complete conversation with user, assistant \\(text+tool-calls), and tool results", () => {
+  schemaTestMessages = [
+    // 1. User message
+    {
+      id: "msg-u1",
+      role: "user",
+      subtype: "user",
+      content: "Hello",
+      timestamp: Date.now(),
+    },
+    // 2. Assistant with tool call
+    {
+      id: "msg-a1",
+      role: "assistant",
+      subtype: "assistant",
+      content: [
+        { type: "text", text: "Let me check." },
+        { type: "tool-call", id: "call-001", name: "bash_tool", input: { command: "ls" } },
+      ],
+      timestamp: Date.now(),
+    },
+    // 3. Tool result
+    {
+      id: "msg-t1",
+      role: "tool",
+      subtype: "tool-result",
+      toolCallId: "call-001",
+      toolResult: {
+        type: "tool-result",
+        id: "call-001",
+        name: "bash_tool",
+        output: { type: "text", value: "file1.txt\nfile2.txt" },
       },
-      // 2. Assistant with tool call
-      {
-        id: "msg-a1",
-        role: "assistant",
-        subtype: "assistant",
-        content: [
-          { type: "text", text: "Let me check." },
-          { type: "tool-call", id: "call-001", name: "bash_tool", input: { command: "ls" } },
-        ],
-        timestamp: Date.now(),
-      },
-      // 3. Tool result
-      {
-        id: "msg-t1",
-        role: "tool",
-        subtype: "tool-result",
-        toolCallId: "call-001",
-        toolResult: {
-          type: "tool-result",
-          id: "call-001",
-          name: "bash_tool",
-          output: { type: "text", value: "file1.txt\nfile2.txt" },
-        },
-        timestamp: Date.now(),
-      },
-      // 4. Final assistant text
-      {
-        id: "msg-a2",
-        role: "assistant",
-        subtype: "assistant",
-        content: "Here are your files.",
-        timestamp: Date.now(),
-      },
-    ] as Message[];
-  }
-);
+      timestamp: Date.now(),
+    },
+    // 4. Final assistant text
+    {
+      id: "msg-a2",
+      role: "assistant",
+      subtype: "assistant",
+      content: "Here are your files.",
+      timestamp: Date.now(),
+    },
+  ] as Message[];
+});
 
-When("each message is converted via toVercelMessage\\()", function () {
+When("each message is converted via toVercelMessage\\()", () => {
   schemaTestConverted = schemaTestMessages.map((m) => toVercelMessage(m));
 });
 
-Then("every converted message must pass the AI SDK modelMessageSchema", function () {
+Then("every converted message must pass the AI SDK modelMessageSchema", () => {
   for (let i = 0; i < schemaTestConverted.length; i++) {
     const converted = schemaTestConverted[i];
     if (!converted) continue;
@@ -619,7 +615,7 @@ Then("every converted message must pass the AI SDK modelMessageSchema", function
 let fullConvoHistory: Message[];
 let fullConvoVercelMessages: ModelMessage[];
 
-Given("a session stores the following conversation history:", function (_table: any) {
+Given("a session stores the following conversation history:", (_table: any) => {
   // Build the exact message sequence that would be stored in the session
   // after: user→text, user→bash tool→result, then user follow-up
   fullConvoHistory = [
@@ -687,23 +683,20 @@ Given("a session stores the following conversation history:", function (_table: 
   ] as Message[];
 });
 
-When(
-  "the driver loads history and prepares the next request with {string}",
-  function (userText: string) {
-    // This is exactly what MonoDriver.receive() does:
-    // 1. Load history from session
-    // 2. Convert via toVercelMessages()
-    // 3. Add new user message
-    const converted = toVercelMessages(fullConvoHistory);
-    converted.push({
-      role: "user",
-      content: userText,
-    });
-    fullConvoVercelMessages = converted;
-  }
-);
+When("the driver loads history and prepares the next request with {string}", (userText: string) => {
+  // This is exactly what MonoDriver.receive() does:
+  // 1. Load history from session
+  // 2. Convert via toVercelMessages()
+  // 3. Add new user message
+  const converted = toVercelMessages(fullConvoHistory);
+  converted.push({
+    role: "user",
+    content: userText,
+  });
+  fullConvoVercelMessages = converted;
+});
 
-Then("the full message array must pass AI SDK modelMessageSchema validation", function () {
+Then("the full message array must pass AI SDK modelMessageSchema validation", () => {
   for (let i = 0; i < fullConvoVercelMessages.length; i++) {
     const msg = fullConvoVercelMessages[i];
     const result = modelMessageSchema.safeParse(msg);
@@ -717,7 +710,7 @@ Then("the full message array must pass AI SDK modelMessageSchema validation", fu
   }
 });
 
-Then("the Anthropic provider must be able to convert all messages without error", function () {
+Then("the Anthropic provider must be able to convert all messages without error", () => {
   // Validate the message sequence follows Anthropic's rules:
   // - Messages must alternate user/assistant (tool messages count as user)
   // - No consecutive messages of the same role (except tool after assistant)

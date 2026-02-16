@@ -1,5 +1,5 @@
-import { openDatabase, type Database } from "commonxjs/sqlite";
 import path from "node:path";
+import { type Database, openDatabase } from "commonxjs/sqlite";
 
 let db: Database | null = null;
 

@@ -1,14 +1,6 @@
 "use client";
 
 import {
-  WebPreview,
-  WebPreviewBody,
-  WebPreviewConsole,
-  WebPreviewNavigation,
-  WebPreviewNavigationButton,
-  WebPreviewUrl,
-} from "@/components/ai-elements/web-preview";
-import {
   ArrowLeftIcon,
   ArrowRightIcon,
   ExternalLinkIcon,
@@ -17,6 +9,14 @@ import {
   RefreshCcwIcon,
 } from "lucide-react";
 import { useCallback, useState } from "react";
+import {
+  WebPreview,
+  WebPreviewBody,
+  WebPreviewConsole,
+  WebPreviewNavigation,
+  WebPreviewNavigationButton,
+  WebPreviewUrl,
+} from "@/components/ai-elements/web-preview";
 
 const handleUrlChange = (url: string) => {
   console.log("URL changed to:", url);

@@ -5,14 +5,14 @@
  * Uses MockEventBus to simulate Driver behavior.
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import { createAgent } from "../createAgent";
 import type {
   AgentEventBus,
-  UserMessage,
-  StreamEvent,
   AgentOutput,
   CreateAgentOptions,
+  StreamEvent,
+  UserMessage,
 } from "../types";
 
 /**
@@ -484,7 +484,7 @@ describe("createAgent", () => {
       agent.use(async (message, next) => {
         const modified: UserMessage = {
           ...message,
-          content: message.content + " MODIFIED",
+          content: `${message.content} MODIFIED`,
         };
         await next(modified);
       });

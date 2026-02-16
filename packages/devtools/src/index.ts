@@ -40,40 +40,35 @@
  * ```
  */
 
+// Fixtures
+export {
+  BUILTIN_FIXTURES,
+  EMPTY_RESPONSE,
+  ERROR_RESPONSE,
+  getFixture,
+  LONG_REPLY,
+  listFixtures,
+  SIMPLE_REPLY,
+  TOOL_CALL,
+} from "../fixtures";
 // Devtools SDK (recommended)
 export {
-  Devtools,
   createDevtools,
   createVcrCreateDriver,
+  Devtools,
   type DevtoolsConfig,
   type DriverOptions,
   type VcrCreateDriverConfig,
 } from "./Devtools";
-
-// Mock Driver (low-level)
-export { MockDriver, createMockDriver } from "./mock/MockDriver";
-
-// Recording Driver (low-level)
-export {
-  RecordingDriver,
-  createRecordingDriver,
-  type RecordingDriverOptions,
-} from "./recorder/RecordingDriver";
-
 // Environment
 export { env } from "./env";
-
+// Mock Driver (low-level)
+export { createMockDriver, MockDriver } from "./mock/MockDriver";
+// Recording Driver (low-level)
+export {
+  createRecordingDriver,
+  RecordingDriver,
+  type RecordingDriverOptions,
+} from "./recorder/RecordingDriver";
 // Types
 export type { Fixture, FixtureEvent, MockDriverOptions } from "./types";
-
-// Fixtures
-export {
-  BUILTIN_FIXTURES,
-  SIMPLE_REPLY,
-  LONG_REPLY,
-  TOOL_CALL,
-  ERROR_RESPONSE,
-  EMPTY_RESPONSE,
-  getFixture,
-  listFixtures,
-} from "../fixtures";

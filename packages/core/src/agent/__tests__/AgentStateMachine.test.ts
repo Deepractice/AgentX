@@ -5,9 +5,9 @@
  * driven by StateEvents from the MealyMachine.
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import { AgentStateMachine } from "../AgentStateMachine";
-import type { AgentState, StateChange, AgentOutput } from "../types";
+import type { AgentOutput, AgentState, StateChange } from "../types";
 
 // Helper to create test events
 function createStateEvent(type: string, data: unknown = {}): AgentOutput {

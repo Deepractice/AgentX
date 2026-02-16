@@ -4,31 +4,28 @@
  * UI-friendly data model and state management.
  */
 
-export type {
-  Block,
-  TextBlock,
-  ToolBlock,
-  ImageBlock,
-  TokenUsage,
-  Conversation,
-  UserConversation,
-  AssistantConversation,
-  ErrorConversation,
-  PresentationState,
-} from "./types";
-
-export { initialPresentationState } from "./types";
-
 export {
-  presentationReducer,
+  Presentation,
+  type PresentationErrorHandler,
+  type PresentationOptions,
+  type PresentationUpdateHandler,
+} from "./Presentation";
+export {
   addUserConversation,
   createInitialState,
   messagesToConversations,
+  presentationReducer,
 } from "./reducer";
-
-export {
-  Presentation,
-  type PresentationOptions,
-  type PresentationUpdateHandler,
-  type PresentationErrorHandler,
-} from "./Presentation";
+export type {
+  AssistantConversation,
+  Block,
+  Conversation,
+  ErrorConversation,
+  ImageBlock,
+  PresentationState,
+  TextBlock,
+  TokenUsage,
+  ToolBlock,
+  UserConversation,
+} from "./types";
+export { initialPresentationState } from "./types";

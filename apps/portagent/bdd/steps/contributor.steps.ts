@@ -6,12 +6,12 @@
  * - UI testing (@ui): accumulate steps → agentUiTester runs them all
  */
 
-import { Given, When, Then, Before, After, BeforeAll, AfterAll } from "@cucumber/cucumber";
 import { strict as assert } from "node:assert";
 import { existsSync, readFileSync } from "node:fs";
-import { resolve, dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { agentUiTester, startDevServer, stopDevServer } from "@agentxjs/devtools/bdd";
+import { After, AfterAll, Before, BeforeAll, Given, Then, When } from "@cucumber/cucumber";
 import { openDatabase } from "commonxjs/sqlite";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -29,7 +29,7 @@ let uiInstructions: string[] = [];
 // Lifecycle
 // ============================================================================
 
-BeforeAll({ timeout: 180000 }, async function () {
+BeforeAll({ timeout: 180000 }, async () => {
   // Check if server is already running
   try {
     const res = await fetch(`${BASE_URL}/api/health`);
@@ -50,11 +50,11 @@ BeforeAll({ timeout: 180000 }, async function () {
   });
 });
 
-Before(function () {
+Before(() => {
   uiInstructions = [];
 });
 
-After({ tags: "@ui", timeout: 300000 }, function () {
+After({ tags: "@ui", timeout: 300000 }, () => {
   if (uiInstructions.length === 0) return;
 
   const prompt = [
@@ -69,7 +69,7 @@ After({ tags: "@ui", timeout: 300000 }, function () {
   assert.ok(result.passed, `UI test failed:\n${result.output}`);
 });
 
-AfterAll(function () {
+AfterAll(() => {
   stopDevServer();
 });
 
@@ -77,25 +77,25 @@ AfterAll(function () {
 // File Verification Steps (non-UI)
 // ============================================================================
 
-Given("the portagent app is configured", function () {
+Given("the portagent app is configured", () => {
   assert.ok(existsSync(resolve(APP_DIR, "package.json")));
 });
 
-Given("the portagent project", function () {
+Given("the portagent project", () => {
   assert.ok(existsSync(resolve(APP_DIR, "package.json")));
 });
 
-Then("package.json should have {string} dependency", function (dep: string) {
+Then("package.json should have {string} dependency", (dep: string) => {
   const pkg = JSON.parse(readFileSync(resolve(APP_DIR, "package.json"), "utf-8"));
   assert.ok(pkg.dependencies?.[dep] || pkg.devDependencies?.[dep], `Missing dependency: ${dep}`);
 });
 
-Then("package.json should have {string} devDependency", function (dep: string) {
+Then("package.json should have {string} devDependency", (dep: string) => {
   const pkg = JSON.parse(readFileSync(resolve(APP_DIR, "package.json"), "utf-8"));
   assert.ok(pkg.devDependencies?.[dep], `Missing devDependency: ${dep}`);
 });
 
-Then("{string} should exist", function (filePath: string) {
+Then("{string} should exist", (filePath: string) => {
   assert.ok(existsSync(resolve(APP_DIR, filePath)), `File not found: ${filePath}`);
 });
 
@@ -103,11 +103,11 @@ Then("{string} should exist", function (filePath: string) {
 // Bootstrap Steps
 // ============================================================================
 
-When("I start the portagent dev server", function () {
+When("I start the portagent dev server", () => {
   // Dev server started in BeforeAll
 });
 
-Then("the server should be running on port {int}", async function (port: number) {
+Then("the server should be running on port {int}", async (port: number) => {
   const res = await fetch(`http://localhost:${port}/api/health`);
   assert.ok(res.ok, `Server not responding on port ${port}`);
 });
@@ -127,27 +127,24 @@ function resetDatabase() {
   db.close();
 }
 
-Given("a fresh installation", function () {
+Given("a fresh installation", () => {
   resetDatabase();
   uiInstructions.push("Starting from a fresh installation (database was just reset)");
 });
 
-Given(
-  "the system has admin {string} with password {string}",
-  function (email: string, password: string) {
-    resetDatabase();
-    uiInstructions.push(
-      `First, set up admin account: navigate to ${BASE_URL}/setup, fill email "${email}" and password "${password}", click Setup, verify redirect to /`,
-      "Then log out (click Logout button or clear session)"
-    );
-  }
-);
+Given("the system has admin {string} with password {string}", (email: string, password: string) => {
+  resetDatabase();
+  uiInstructions.push(
+    `First, set up admin account: navigate to ${BASE_URL}/setup, fill email "${email}" and password "${password}", click Setup, verify redirect to /`,
+    "Then log out (click Logout button or clear session)"
+  );
+});
 
-Given("I am not logged in", function () {
+Given("I am not logged in", () => {
   uiInstructions.push("Ensure not logged in (clear cookies if needed)");
 });
 
-Given("I am logged in as admin {string}", function (email: string) {
+Given("I am logged in as admin {string}", (email: string) => {
   resetDatabase();
   uiInstructions.push(
     `Set up admin: navigate to ${BASE_URL}/setup, fill email "${email}" and password "admin123", click Setup`,
@@ -155,7 +152,7 @@ Given("I am logged in as admin {string}", function (email: string) {
   );
 });
 
-Given("I am logged in as user {string}", function (email: string) {
+Given("I am logged in as user {string}", (email: string) => {
   resetDatabase();
   uiInstructions.push(
     `First set up admin: navigate to ${BASE_URL}/setup, fill email "admin@test.com" password "admin123", click Setup`,
@@ -170,55 +167,55 @@ Given("I am logged in as user {string}", function (email: string) {
 // Shared UI When/Then Steps
 // ============================================================================
 
-When("I visit the homepage", function () {
+When("I visit the homepage", () => {
   uiInstructions.push(`Navigate to ${BASE_URL}`);
 });
 
-When("I visit {string}", function (path: string) {
+When("I visit {string}", (path: string) => {
   uiInstructions.push(`Navigate to ${BASE_URL}${path}`);
 });
 
-When("I fill in email {string}", function (email: string) {
+When("I fill in email {string}", (email: string) => {
   uiInstructions.push(`Fill in the email field with "${email}"`);
 });
 
-When("I fill in password {string}", function (password: string) {
+When("I fill in password {string}", (password: string) => {
   uiInstructions.push(`Fill in the password field with "${password}"`);
 });
 
-When("I click {string}", function (buttonText: string) {
+When("I click {string}", (buttonText: string) => {
   uiInstructions.push(`Click the "${buttonText}" button`);
 });
 
-When("I refresh the page", function () {
+When("I refresh the page", () => {
   uiInstructions.push("Refresh the page");
 });
 
-When("I copy the invite code", function () {
+When("I copy the invite code", () => {
   uiInstructions.push("Copy/note the displayed invite code");
 });
 
-When("I paste the invite code", function () {
+When("I paste the invite code", () => {
   uiInstructions.push("Paste the invite code into the invite code field");
 });
 
-When("I logout", function () {
+When("I logout", () => {
   uiInstructions.push("Click Logout");
 });
 
-When("I click the sidebar toggle", function () {
+When("I click the sidebar toggle", () => {
   uiInstructions.push("Click the sidebar toggle button");
 });
 
-When("I type {string} in the prompt", function (text: string) {
+When("I type {string} in the prompt", (text: string) => {
   uiInstructions.push(`Type "${text}" in the prompt input`);
 });
 
-When("I press Enter", function () {
+When("I press Enter", () => {
   uiInstructions.push("Press Enter");
 });
 
-When("I click the first session", function () {
+When("I click the first session", () => {
   uiInstructions.push("Click the first session in the sidebar");
 });
 
@@ -226,111 +223,111 @@ When("I click the first session", function () {
 // Shared UI Then Steps
 // ============================================================================
 
-Then("I should be on {string}", function (path: string) {
+Then("I should be on {string}", (path: string) => {
   uiInstructions.push(`Verify the current URL path is "${path}"`);
 });
 
-Then("I should still be on {string}", function (path: string) {
+Then("I should still be on {string}", (path: string) => {
   uiInstructions.push(`Verify still on "${path}"`);
 });
 
-Then("I should be redirected to {string}", function (path: string) {
+Then("I should be redirected to {string}", (path: string) => {
   uiInstructions.push(`Verify redirected to "${path}"`);
 });
 
-Then("I should see {string}", function (text: string) {
+Then("I should see {string}", (text: string) => {
   uiInstructions.push(`Verify the text "${text}" is visible on the page`);
 });
 
-Then("I should see {string} prompt", function (text: string) {
+Then("I should see {string} prompt", (text: string) => {
   uiInstructions.push(`Verify a "${text}" prompt/placeholder is visible`);
 });
 
-Then("I should NOT see {string}", function (text: string) {
+Then("I should NOT see {string}", (text: string) => {
   uiInstructions.push(`Verify the text "${text}" is NOT visible on the page`);
 });
 
-Then("I should be logged in as {string}", function (role: string) {
+Then("I should be logged in as {string}", (role: string) => {
   uiInstructions.push(`Verify logged in as "${role}" (check for role indicator)`);
 });
 
-Then("I should see the chat interface", function () {
+Then("I should see the chat interface", () => {
   uiInstructions.push("Verify the chat interface is visible");
 });
 
-Then("I should see a new invite code", function () {
+Then("I should see a new invite code", () => {
   uiInstructions.push("Verify a new invite code is displayed");
 });
 
-Then("I should see a collapsible sidebar", function () {
+Then("I should see a collapsible sidebar", () => {
   uiInstructions.push("Verify a collapsible sidebar is visible");
 });
 
-Then("I should see a main conversation area", function () {
+Then("I should see a main conversation area", () => {
   uiInstructions.push("Verify a main conversation area is visible");
 });
 
-Then("I should see a prompt input at the bottom", function () {
+Then("I should see a prompt input at the bottom", () => {
   uiInstructions.push("Verify a prompt input is at the bottom");
 });
 
-Then("the sidebar should collapse", function () {
+Then("the sidebar should collapse", () => {
   uiInstructions.push("Verify the sidebar has collapsed");
 });
 
-Then("the main area should expand", function () {
+Then("the main area should expand", () => {
   uiInstructions.push("Verify the main area has expanded");
 });
 
-Then("the sidebar should expand", function () {
+Then("the sidebar should expand", () => {
   uiInstructions.push("Verify the sidebar has expanded");
 });
 
-Then("my message should appear in conversation", function () {
+Then("my message should appear in conversation", () => {
   uiInstructions.push("Verify my message appears in the conversation");
 });
 
-Then("the input should be cleared", function () {
+Then("the input should be cleared", () => {
   uiInstructions.push("Verify the input is cleared");
 });
 
-Then("this session should appear in sidebar", function () {
+Then("this session should appear in sidebar", () => {
   uiInstructions.push("Verify this session appears in the sidebar");
 });
 
-Then("the conversation area should be empty", function () {
+Then("the conversation area should be empty", () => {
   uiInstructions.push("Verify the conversation area is empty");
 });
 
-Then("I should see two sessions in sidebar", function () {
+Then("I should see two sessions in sidebar", () => {
   uiInstructions.push("Verify there are two sessions in the sidebar");
 });
 
-Then("I should see {string} in conversation", function (text: string) {
+Then("I should see {string} in conversation", (text: string) => {
   uiInstructions.push(`Verify "${text}" appears in the conversation`);
 });
 
-Then("I should see {string} in sidebar", function (text: string) {
+Then("I should see {string} in sidebar", (text: string) => {
   uiInstructions.push(`Verify "${text}" is visible in the sidebar`);
 });
 
-Then("I should NOT see {string} in sidebar", function (text: string) {
+Then("I should NOT see {string} in sidebar", (text: string) => {
   uiInstructions.push(`Verify "${text}" is NOT visible in the sidebar`);
 });
 
-Then("I should see {string} option", function (text: string) {
+Then("I should see {string} option", (text: string) => {
   uiInstructions.push(`Verify "${text}" option is visible`);
 });
 
-Then("I should see my email in sidebar", function () {
+Then("I should see my email in sidebar", () => {
   uiInstructions.push("Verify user email is visible in the sidebar");
 });
 
-Then("I should see logout option", function () {
+Then("I should see logout option", () => {
   uiInstructions.push("Verify logout option is visible");
 });
 
-Then("{string} should appear in conversation", function (text: string) {
+Then("{string} should appear in conversation", (text: string) => {
   uiInstructions.push(`Verify "${text}" appears in the conversation`);
 });
 
@@ -338,35 +335,35 @@ Then("{string} should appear in conversation", function (text: string) {
 // System Settings Steps (06)
 // ============================================================================
 
-When("I fill in API key {string}", function (key: string) {
+When("I fill in API key {string}", (key: string) => {
   uiInstructions.push(`Fill in the API Key field with "${key}"`);
 });
 
-When("I fill in model {string}", function (model: string) {
+When("I fill in model {string}", (model: string) => {
   uiInstructions.push(`Fill in the Model field with "${model}"`);
 });
 
-When("I fill in system prompt {string}", function (prompt: string) {
+When("I fill in system prompt {string}", (prompt: string) => {
   uiInstructions.push(`Fill in the System Prompt field with "${prompt}"`);
 });
 
-When("I fill in server name {string}", function (name: string) {
+When("I fill in server name {string}", (name: string) => {
   uiInstructions.push(`Fill in the server name field with "${name}"`);
 });
 
-When("I fill in command {string}", function (cmd: string) {
+When("I fill in command {string}", (cmd: string) => {
   uiInstructions.push(`Fill in the command field with "${cmd}"`);
 });
 
-When("I fill in args {string}", function (args: string) {
+When("I fill in args {string}", (args: string) => {
   uiInstructions.push(`Fill in the args field with "${args}"`);
 });
 
-Given("the system has MCP server {string}", function (name: string) {
+Given("the system has MCP server {string}", (name: string) => {
   uiInstructions.push(`Precondition: MCP server "${name}" should already be configured`);
 });
 
-When("I click {string} on {string}", function (action: string, target: string) {
+When("I click {string} on {string}", (action: string, target: string) => {
   uiInstructions.push(`Click "${action}" on the "${target}" item`);
 });
 
@@ -374,13 +371,13 @@ When("I click {string} on {string}", function (action: string, target: string) {
 // Agent Connection Steps (05)
 // ============================================================================
 
-Then("I should see an AI response in conversation", function () {
+Then("I should see an AI response in conversation", () => {
   uiInstructions.push(
     "Wait for an AI/assistant response to appear in the conversation (may take a few seconds for streaming to complete)"
   );
 });
 
-Then("I should see the response appearing progressively", function () {
+Then("I should see the response appearing progressively", () => {
   uiInstructions.push(
     "Verify the AI response text appears progressively (streaming), not all at once"
   );

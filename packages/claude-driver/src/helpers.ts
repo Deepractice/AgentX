@@ -2,7 +2,7 @@
  * Helper functions for Claude Driver
  */
 
-import type { UserMessage, ContentPart, TextPart, ImagePart, FilePart } from "@agentxjs/core/agent";
+import type { ContentPart, FilePart, ImagePart, TextPart, UserMessage } from "@agentxjs/core/agent";
 import type { SDKUserMessage } from "@anthropic-ai/claude-agent-sdk";
 
 /**

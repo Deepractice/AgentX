@@ -3,9 +3,8 @@
  * Loads .env.local from monorepo root
  */
 
-import { resolve, dirname } from "node:path";
 import { existsSync, readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
 
 function findMonorepoRoot(startDir: string): string | null {
   let dir = startDir;

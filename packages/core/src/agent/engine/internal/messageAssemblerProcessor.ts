@@ -18,29 +18,29 @@
  * - tool_result_message (Message - tool execution result)
  */
 
-import type { Processor, ProcessorDefinition } from "../mealy";
 import type {
-  // Input: StreamEvent (from agent layer)
-  StreamEvent,
-  MessageStartEvent,
-  TextDeltaEvent,
-  ToolUseStartEvent,
-  InputJsonDeltaEvent,
-  ToolResultEvent,
-  MessageStopEvent,
-  // Output: Message events
-  AssistantMessageEvent,
-  ToolResultMessageEvent,
-  ErrorMessageEvent,
   // Message types
   AssistantMessage,
-  ToolResultMessage,
+  // Output: Message events
+  AssistantMessageEvent,
   ErrorMessage,
+  ErrorMessageEvent,
+  InputJsonDeltaEvent,
+  MessageStartEvent,
+  MessageStopEvent,
+  // Input: StreamEvent (from agent layer)
+  StreamEvent,
+  TextDeltaEvent,
   // Content parts
   TextPart,
   ToolCallPart,
+  ToolResultEvent,
+  ToolResultMessage,
+  ToolResultMessageEvent,
   ToolResultPart,
+  ToolUseStartEvent,
 } from "../../types";
+import type { Processor, ProcessorDefinition } from "../mealy";
 
 // ===== State Types =====
 

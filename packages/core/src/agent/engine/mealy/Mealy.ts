@@ -31,10 +31,10 @@
  * ```
  */
 
-import type { Processor } from "./Processor";
-import type { Store } from "./Store";
-import type { Sink, SinkDefinition } from "./Sink";
 import { createLogger } from "commonxjs/logger";
+import type { Processor } from "./Processor";
+import type { Sink, SinkDefinition } from "./Sink";
+import type { Store } from "./Store";
 
 const logger = createLogger("engine/Mealy");
 

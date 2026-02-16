@@ -2,11 +2,11 @@
  * Mealy.test.ts - Unit tests for Mealy Machine runtime
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
-import { Mealy, createMealy, type MealyConfig } from "../../../engine/mealy/Mealy";
-import { MemoryStore } from "../../../engine/mealy/Store";
+import { beforeEach, describe, expect, it } from "bun:test";
+import { createMealy, Mealy, type MealyConfig } from "../../../engine/mealy/Mealy";
 import type { Processor } from "../../../engine/mealy/Processor";
 import type { Sink, SinkDefinition } from "../../../engine/mealy/Sink";
+import { MemoryStore } from "../../../engine/mealy/Store";
 
 // Test types
 interface TestState {

@@ -1,5 +1,6 @@
 "use client";
 
+import { ImageIcon, SearchIcon } from "lucide-react";
 import {
   ChainOfThought,
   ChainOfThoughtContent,
@@ -10,7 +11,6 @@ import {
   ChainOfThoughtStep,
 } from "@/components/ai-elements/chain-of-thought";
 import { Image } from "@/components/ai-elements/image";
-import { ImageIcon, SearchIcon } from "lucide-react";
 
 const exampleImage = {
   base64:

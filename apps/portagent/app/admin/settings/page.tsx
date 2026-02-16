@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,7 @@ export default function SettingsPage() {
   const [accessDenied, setAccessDenied] = useState(false);
   const [apiKeyPlaceholder, setApiKeyPlaceholder] = useState("");
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: loadSettings defined after useEffect
   useEffect(() => {
     loadSettings();
   }, []);

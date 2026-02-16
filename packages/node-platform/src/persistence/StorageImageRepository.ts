@@ -4,9 +4,9 @@
  * Uses unstorage for backend-agnostic storage (Memory, Redis, SQLite, etc.)
  */
 
-import type { Storage } from "unstorage";
-import type { ImageRepository, ImageRecord, ImageMetadata } from "@agentxjs/core/persistence";
+import type { ImageMetadata, ImageRecord, ImageRepository } from "@agentxjs/core/persistence";
 import { createLogger } from "commonxjs/logger";
+import type { Storage } from "unstorage";
 
 const logger = createLogger("node-platform/ImageRepository");
 

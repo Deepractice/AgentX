@@ -3,13 +3,13 @@
  */
 
 import { useKeyboard } from "@opentui/solid";
+import { createLogger } from "commonxjs/logger";
 import { createSignal } from "solid-js";
-import { useTheme } from "../context/theme";
 import { useAgentX } from "../context/agentx";
 import { useDialog } from "../context/dialog";
 import { useRoute } from "../context/route";
+import { useTheme } from "../context/theme";
 import { useToast } from "../context/toast";
-import { createLogger } from "commonxjs/logger";
 
 const logger = createLogger("cli/dialog-new-session");
 

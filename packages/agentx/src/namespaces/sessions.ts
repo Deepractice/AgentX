@@ -2,10 +2,10 @@
  * Session namespace factories (messaging)
  */
 
-import type { AgentXRuntime } from "@agentxjs/core/runtime";
-import type { UserContentPart, Message } from "@agentxjs/core/agent";
+import type { Message, UserContentPart } from "@agentxjs/core/agent";
 import type { RpcClient } from "@agentxjs/core/network";
-import type { SessionNamespace, MessageSendResponse, BaseResponse, AgentInfo } from "../types";
+import type { AgentXRuntime } from "@agentxjs/core/runtime";
+import type { AgentInfo, BaseResponse, MessageSendResponse, SessionNamespace } from "../types";
 
 /**
  * Create local session namespace backed by embedded runtime

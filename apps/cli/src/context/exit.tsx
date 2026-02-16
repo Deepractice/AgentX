@@ -2,7 +2,7 @@
  * Exit Provider - Handle application exit
  */
 
-import { createContext, useContext, type ParentProps } from "solid-js";
+import { createContext, type ParentProps, useContext } from "solid-js";
 
 type ExitFn = () => void;
 

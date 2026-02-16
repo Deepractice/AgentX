@@ -4,9 +4,9 @@
  * Provides consistent path resolution across all packages.
  */
 
-import { resolve, dirname } from "node:path";
-import { existsSync, mkdtempSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { dirname, resolve } from "node:path";
 
 // ============================================================================
 // Path Resolution

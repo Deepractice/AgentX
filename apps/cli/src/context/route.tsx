@@ -2,7 +2,7 @@
  * Route Provider - Simple screen navigation
  */
 
-import { createContext, useContext, type ParentProps } from "solid-js";
+import { createContext, type ParentProps, useContext } from "solid-js";
 import { createStore } from "solid-js/store";
 
 export type RouteData = { type: "home" } | { type: "session"; sessionId: string };

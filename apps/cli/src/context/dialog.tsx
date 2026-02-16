@@ -3,10 +3,10 @@
  */
 
 import { useKeyboard, useTerminalDimensions } from "@opentui/solid";
-import { createContext, useContext, Show, type ParentProps, type JSX } from "solid-js";
+import { createLogger } from "commonxjs/logger";
+import { createContext, type JSX, type ParentProps, Show, useContext } from "solid-js";
 import { createStore } from "solid-js/store";
 import { useTheme } from "./theme";
-import { createLogger } from "commonxjs/logger";
 
 const logger = createLogger("cli/dialog");
 

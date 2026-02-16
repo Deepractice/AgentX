@@ -11,25 +11,25 @@
  * - RPC Notification (no id): Server → Client (stream events)
  */
 
-import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type { CreateDriver } from "@agentxjs/core/driver";
-import type { ChannelConnection } from "@agentxjs/core/network";
 import type { BusEvent, SystemEvent } from "@agentxjs/core/event";
-import { createAgentXRuntime } from "@agentxjs/core/runtime";
+import type { ChannelConnection } from "@agentxjs/core/network";
 import {
-  parseMessage,
-  isRequest,
-  isNotification,
-  createSuccessResponse,
   createErrorResponse,
   createStreamEvent,
+  createSuccessResponse,
+  isNotification,
+  isRequest,
+  parseMessage,
   RpcErrorCodes,
   type RpcMethod,
 } from "@agentxjs/core/network";
+import type { AgentXPlatform } from "@agentxjs/core/runtime";
+import { createAgentXRuntime } from "@agentxjs/core/runtime";
 import {
-  WebSocketServer,
-  isDeferredPlatform,
   type DeferredPlatformConfig,
+  isDeferredPlatform,
+  WebSocketServer,
 } from "@agentxjs/node-platform";
 import { createLogger } from "commonxjs/logger";
 import { CommandHandler } from "./CommandHandler";

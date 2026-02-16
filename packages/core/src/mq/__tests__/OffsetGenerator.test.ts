@@ -2,7 +2,7 @@
  * OffsetGenerator.test.ts - Unit tests for OffsetGenerator
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import { OffsetGenerator } from "../OffsetGenerator";
 
 describe("OffsetGenerator", () => {

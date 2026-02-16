@@ -1,19 +1,19 @@
-import { Hono, type Context, type Next } from "hono";
+import { type Context, Hono, type Next } from "hono";
+import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { handle } from "hono/vercel";
-import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import {
-  hashPassword,
-  verifyPassword,
   createSession,
-  verifySession,
-  SESSION_COOKIE_NAME,
   getSessionCookieOptions,
+  hashPassword,
+  SESSION_COOKIE_NAME,
   type SessionPayload,
+  verifyPassword,
+  verifySession,
 } from "@/lib/auth";
 import {
+  InviteCodeRepository,
   SystemConfigRepository,
   UserRepository,
-  InviteCodeRepository,
 } from "@/lib/db/repositories";
 
 // ============================================================================
@@ -307,7 +307,7 @@ app.get("/admin/invites", requireAdmin, (c) => {
 
 function maskApiKey(key: string): string {
   if (!key || key.length <= 8) return key ? "****" : "";
-  return key.slice(0, 4) + "****" + key.slice(-4);
+  return `${key.slice(0, 4)}****${key.slice(-4)}`;
 }
 
 app.get("/admin/settings", requireAdmin, (c) => {

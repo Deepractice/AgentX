@@ -46,7 +46,7 @@ function readPackageJson(pkg: string): PackageJson {
 
 function writePackageJson(pkg: string, content: PackageJson): void {
   const path = join(getPackagePath(pkg), "package.json");
-  writeFileSync(path, JSON.stringify(content, null, 2) + "\n", "utf-8");
+  writeFileSync(path, `${JSON.stringify(content, null, 2)}\n`, "utf-8");
 }
 
 function replaceWorkspaceRefs(
@@ -179,7 +179,7 @@ async function main() {
     }
   }
 
-  console.log("\n" + "=".repeat(50));
+  console.log(`\n${"=".repeat(50)}`);
   console.log(`✅ Published: ${successCount}`);
   console.log(`❌ Failed: ${failCount}`);
   console.log(`📦 Total: ${PACKAGES.length}`);

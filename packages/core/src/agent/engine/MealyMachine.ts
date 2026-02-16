@@ -45,14 +45,14 @@
  * ```
  */
 
+import { createLogger } from "commonxjs/logger";
+import type { AgentOutput, StreamEvent } from "../types";
 import {
+  type AgentEngineState,
   agentProcessor,
   createInitialAgentEngineState,
-  type AgentEngineState,
 } from "./AgentProcessor";
 import { MemoryStore } from "./mealy";
-import type { AgentOutput, StreamEvent } from "../types";
-import { createLogger } from "commonxjs/logger";
 
 const logger = createLogger("engine/MealyMachine");
 

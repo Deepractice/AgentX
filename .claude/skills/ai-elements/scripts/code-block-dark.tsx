@@ -1,5 +1,6 @@
 "use client";
 
+import { FileIcon } from "lucide-react";
 import {
   CodeBlock,
   CodeBlockActions,
@@ -8,7 +9,6 @@ import {
   CodeBlockHeader,
   CodeBlockTitle,
 } from "@/components/ai-elements/code-block";
-import { FileIcon } from "lucide-react";
 
 const handleCopy = () => {
   console.log("Copied code to clipboard");

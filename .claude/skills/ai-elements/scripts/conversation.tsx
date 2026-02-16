@@ -1,5 +1,8 @@
 "use client";
 
+import { MessageSquareIcon } from "lucide-react";
+import { nanoid } from "nanoid";
+import { useEffect, useState } from "react";
 import {
   Conversation,
   ConversationContent,
@@ -8,9 +11,6 @@ import {
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import { Message, MessageContent } from "@/components/ai-elements/message";
-import { MessageSquareIcon } from "lucide-react";
-import { nanoid } from "nanoid";
-import { useEffect, useState } from "react";
 
 const messages: {
   key: string;

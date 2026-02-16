@@ -14,24 +14,24 @@
  * matching the mainstream API pattern (Anthropic, OpenAI).
  */
 
+import type {
+  AssistantMessage,
+  ErrorMessage,
+  Message,
+  ToolCallPart,
+  ToolResultMessage,
+  ToolResultOutput,
+  UserMessage,
+} from "@agentxjs/core/agent";
 import type { BusEvent } from "@agentxjs/core/event";
 import type {
-  Message,
-  UserMessage,
-  AssistantMessage,
-  ToolResultMessage,
-  ErrorMessage,
-  ToolResultOutput,
-  ToolCallPart,
-} from "@agentxjs/core/agent";
-import type {
-  PresentationState,
-  Conversation,
   AssistantConversation,
-  TextBlock,
-  ToolBlock,
   Block,
+  Conversation,
+  PresentationState,
+  TextBlock,
   TokenUsage,
+  ToolBlock,
 } from "./types";
 import { initialPresentationState } from "./types";
 

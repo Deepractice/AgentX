@@ -7,15 +7,15 @@
  */
 
 import "dotenv/config";
+import { connect } from "node:net";
+import type { CreateDriver } from "@agentxjs/core/driver";
+import { createMonoDriver } from "@agentxjs/mono-driver";
+import { FileLoggerFactory, nodePlatform } from "@agentxjs/node-platform";
+import { createServer } from "@agentxjs/server";
+import { createLogger, setLoggerFactory } from "commonxjs/logger";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { tui } from "./app";
-import { createServer } from "@agentxjs/server";
-import { nodePlatform, FileLoggerFactory } from "@agentxjs/node-platform";
-import { createMonoDriver } from "@agentxjs/mono-driver";
-import type { CreateDriver } from "@agentxjs/core/driver";
-import { createLogger, setLoggerFactory } from "commonxjs/logger";
-import { connect } from "net";
 
 // Configure file logging early (before any logger is used)
 const dataPath = process.env.DATA_PATH ?? "./.agentx";

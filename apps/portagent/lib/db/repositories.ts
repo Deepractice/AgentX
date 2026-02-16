@@ -1,5 +1,5 @@
-import { getDatabase } from "./index";
 import { generateId } from "commonxjs/id";
+import { getDatabase } from "./index";
 
 // ============================================================================
 // Types

@@ -2,13 +2,13 @@
  * Container namespace factories
  */
 
-import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type { RpcClient } from "@agentxjs/core/network";
+import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type {
-  ContainerNamespace,
   ContainerCreateResponse,
   ContainerGetResponse,
   ContainerListResponse,
+  ContainerNamespace,
 } from "../types";
 
 /**

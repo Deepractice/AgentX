@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import {
   Terminal,
   TerminalActions,
@@ -10,7 +11,6 @@ import {
   TerminalStatus,
   TerminalTitle,
 } from "@/components/ai-elements/terminal";
-import { useCallback, useEffect, useState } from "react";
 
 const handleTerminalCopy = () => {
   console.log("Copied!");

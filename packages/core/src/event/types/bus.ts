@@ -8,8 +8,8 @@ import type { BusEvent } from "./base";
 import type {
   CommandEventMap,
   CommandRequestType,
-  ResponseEventFor,
   RequestDataFor,
+  ResponseEventFor,
 } from "./command";
 
 // ============================================================================

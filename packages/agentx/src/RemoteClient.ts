@@ -5,24 +5,24 @@
  * This class focuses on business logic, not protocol details.
  */
 
-import type { BusEvent, EventBus, BusEventHandler, Unsubscribe } from "@agentxjs/core/event";
+import type { BusEvent, BusEventHandler, EventBus, Unsubscribe } from "@agentxjs/core/event";
 import { EventBusImpl } from "@agentxjs/core/event";
 import { RpcClient } from "@agentxjs/core/network";
 import { createLogger } from "commonxjs/logger";
+import { createRemoteAgents } from "./namespaces/agents";
+import { createRemoteContainers } from "./namespaces/containers";
+import { createRemoteImages } from "./namespaces/images";
+import { createPresentations } from "./namespaces/presentations";
+import { createRemoteSessions } from "./namespaces/sessions";
 import type {
+  AgentNamespace,
   AgentX,
   AgentXConfig,
   ContainerNamespace,
   ImageNamespace,
-  AgentNamespace,
-  SessionNamespace,
   PresentationNamespace,
+  SessionNamespace,
 } from "./types";
-import { createRemoteContainers } from "./namespaces/containers";
-import { createRemoteImages } from "./namespaces/images";
-import { createRemoteAgents } from "./namespaces/agents";
-import { createRemoteSessions } from "./namespaces/sessions";
-import { createPresentations } from "./namespaces/presentations";
 
 const logger = createLogger("agentx/RemoteClient");
 

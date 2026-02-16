@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -22,6 +22,7 @@ export default function InvitesPage() {
   const [accessDenied, setAccessDenied] = useState(false);
 
   // Load invites on mount
+  // biome-ignore lint/correctness/useExhaustiveDependencies: loadInvites defined after useEffect
   useEffect(() => {
     loadInvites();
   }, []);

@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+
 /**
  * Record Fixture Script
  *
@@ -9,11 +10,11 @@
  *   bun run scripts/record-fixture.ts "Hello, how are you?" my-greeting
  */
 
-import { createRecordingDriver } from "../src/recorder/RecordingDriver";
-import { createClaudeDriverFactory } from "@agentxjs/claude-driver";
-import { EventBusImpl } from "@agentxjs/core/event";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createClaudeDriverFactory } from "@agentxjs/claude-driver";
+import { EventBusImpl } from "@agentxjs/core/event";
+import { createRecordingDriver } from "../src/recorder/RecordingDriver";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

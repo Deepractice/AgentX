@@ -5,13 +5,13 @@
  * from Stream Layer events.
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import {
-  messageAssemblerProcessor,
   createInitialMessageAssemblerState,
-  type MessageAssemblerState,
   type MessageAssemblerInput,
   type MessageAssemblerOutput,
+  type MessageAssemblerState,
+  messageAssemblerProcessor,
 } from "../../../engine/internal/messageAssemblerProcessor";
 
 // Helper to create test events
@@ -251,7 +251,7 @@ describe("messageAssemblerProcessor", () => {
       expect(newState.pendingContents[0].parsedInput).toEqual({ x: 10, y: 20 });
 
       // Should add to pending tool calls
-      expect(newState.pendingToolCalls["tool_123"]).toEqual({
+      expect(newState.pendingToolCalls.tool_123).toEqual({
         id: "tool_123",
         name: "calculate",
       });
@@ -289,7 +289,7 @@ describe("messageAssemblerProcessor", () => {
   describe("tool_result event", () => {
     it("should emit tool_result_message event", () => {
       // Setup: pending tool call
-      state.pendingToolCalls["tool_123"] = {
+      state.pendingToolCalls.tool_123 = {
         id: "tool_123",
         name: "calculate",
       };
@@ -315,11 +315,11 @@ describe("messageAssemblerProcessor", () => {
       expect(toolResultMessage.toolResult.output.value).toBe("42");
 
       // Should remove from pending tool calls
-      expect(newState.pendingToolCalls["tool_123"]).toBeUndefined();
+      expect(newState.pendingToolCalls.tool_123).toBeUndefined();
     });
 
     it("should handle error results", () => {
-      state.pendingToolCalls["tool_123"] = {
+      state.pendingToolCalls.tool_123 = {
         id: "tool_123",
         name: "test",
       };
@@ -410,7 +410,7 @@ describe("messageAssemblerProcessor", () => {
 
     it("should preserve pending tool calls when stopReason is tool_use", () => {
       state.currentMessageId = "msg_123";
-      state.pendingToolCalls["tool_123"] = { id: "tool_123", name: "test" };
+      state.pendingToolCalls.tool_123 = { id: "tool_123", name: "test" };
       state.pendingContents = [
         {
           type: "tool_use",
@@ -434,12 +434,12 @@ describe("messageAssemblerProcessor", () => {
       expect(content[0].type).toBe("tool-call");
       expect(content[0].id).toBe("tool_123");
 
-      expect(newState.pendingToolCalls["tool_123"]).toBeDefined();
+      expect(newState.pendingToolCalls.tool_123).toBeDefined();
     });
 
     it("should clear pending tool calls for non-tool_use stop reason", () => {
       state.currentMessageId = "msg_123";
-      state.pendingToolCalls["tool_123"] = { id: "tool_123", name: "test" };
+      state.pendingToolCalls.tool_123 = { id: "tool_123", name: "test" };
       state.pendingContents = [
         {
           type: "text",

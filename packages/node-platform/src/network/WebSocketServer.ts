@@ -6,15 +6,15 @@
  * - Attached mode (attach to existing HTTP server)
  */
 
-import type { WebSocket as WS, WebSocketServer as WSS } from "ws";
 import type {
-  ChannelServer,
   ChannelConnection,
+  ChannelServer,
   ChannelServerOptions,
   MinimalHTTPServer,
   Unsubscribe,
 } from "@agentxjs/core/network";
 import { createLogger } from "commonxjs/logger";
+import type { WebSocket as WS, WebSocketServer as WSS } from "ws";
 import { WebSocketConnection } from "./WebSocketConnection";
 
 const logger = createLogger("node-platform/WebSocketServer");

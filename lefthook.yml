@@ -1,4 +1,4 @@
-# Lefthook configuration for ProjectOctober
+# Lefthook configuration for AgentX
 # https://lefthook.dev/configuration/
 
 commit-msg:
@@ -8,35 +8,12 @@ commit-msg:
 
 pre-commit:
   commands:
-    format-fix:
-      glob: "*.{js,ts,jsx,tsx,json,md,yml,yaml}"
-      run: bun prettier --write {staged_files} && git add {staged_files}
-
-    lint-fix:
-      glob: "*.{js,ts,jsx,tsx}"
-      run: bun eslint --fix {staged_files} && git add {staged_files}
+    biome:
+      glob: "*.{js,ts,jsx,tsx,json}"
+      run: bun biome check --write {staged_files} && git add {staged_files}
 
 pre-push:
-  parallel: false
   commands:
-    format:
-      run: bun format:check
-
-    lint:
-      run: bun lint
-
-    install-check:
-      run: bun install --frozen-lockfile
-      fail_text: "Lockfile is outdated. Run 'bun install' to update it."
-
-    # typecheck moved to CI - saves ~10s on every push
-    # typecheck:
-    #   run: bun typecheck
-
-    # Optional: enable when you want to run test/build before push
-    # CI will catch these issues anyway
-    # test:
-    #   run: pnpm test
-    #
-    # build:
-    #   run: pnpm build
+    check:
+      run: bun biome check .
+    # typecheck moved to CI — too slow for pre-push, causes SSH timeout

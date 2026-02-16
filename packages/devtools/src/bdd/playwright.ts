@@ -10,7 +10,7 @@
  * - resetPage() clears state between scenarios
  */
 
-import { chromium, Browser, Page } from "@playwright/test";
+import { type Browser, chromium, type Page } from "@playwright/test";
 
 export interface BrowserOptions {
   headless?: boolean;

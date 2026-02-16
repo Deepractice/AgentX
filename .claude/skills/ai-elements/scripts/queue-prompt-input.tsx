@@ -1,7 +1,7 @@
 "use client";
 
-import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
-import type { QueueTodo } from "@/components/ai-elements/queue";
+import { CheckIcon, GlobeIcon, Trash2 } from "lucide-react";
+import { memo, useCallback, useRef, useState } from "react";
 
 import {
   Attachment,
@@ -22,6 +22,7 @@ import {
   ModelSelectorName,
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
+import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import {
   PromptInput,
   PromptInputActionAddAttachments,
@@ -37,6 +38,7 @@ import {
   PromptInputTools,
   usePromptInputAttachments,
 } from "@/components/ai-elements/prompt-input";
+import type { QueueTodo } from "@/components/ai-elements/queue";
 import {
   Queue,
   QueueItem,
@@ -48,8 +50,6 @@ import {
   QueueSection,
   QueueSectionContent,
 } from "@/components/ai-elements/queue";
-import { CheckIcon, GlobeIcon, Trash2 } from "lucide-react";
-import { memo, useCallback, useRef, useState } from "react";
 
 const models = [
   {

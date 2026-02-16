@@ -1,10 +1,10 @@
 "use client";
 
+import { nanoid } from "nanoid";
+import { Fragment, memo, useCallback, useState } from "react";
 import { Checkpoint, CheckpointIcon, CheckpointTrigger } from "@/components/ai-elements/checkpoint";
 import { Conversation, ConversationContent } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
-import { nanoid } from "nanoid";
-import { Fragment, memo, useCallback, useState } from "react";
 
 interface MessageType {
   id: string;

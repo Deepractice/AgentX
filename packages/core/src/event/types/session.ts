@@ -13,38 +13,35 @@ import type { SystemEvent } from "./base";
 /**
  * Base SessionLifecycleEvent
  */
-interface BaseSessionLifecycleEvent<T extends string, D = unknown> extends SystemEvent<
-  T,
-  D,
-  "session",
-  "lifecycle",
-  "notification"
-> {}
+interface BaseSessionLifecycleEvent<T extends string, D = unknown>
+  extends SystemEvent<T, D, "session", "lifecycle", "notification"> {}
 
 /**
  * SessionCreatedEvent - Session was created
  */
-export interface SessionCreatedEvent extends BaseSessionLifecycleEvent<
-  "session_created",
-  {
-    sessionId: string;
-    imageId: string;
-    containerId: string;
-    title?: string;
-    createdAt: number;
-  }
-> {}
+export interface SessionCreatedEvent
+  extends BaseSessionLifecycleEvent<
+    "session_created",
+    {
+      sessionId: string;
+      imageId: string;
+      containerId: string;
+      title?: string;
+      createdAt: number;
+    }
+  > {}
 
 /**
  * SessionDestroyedEvent - Session was destroyed
  */
-export interface SessionDestroyedEvent extends BaseSessionLifecycleEvent<
-  "session_destroyed",
-  {
-    sessionId: string;
-    reason?: string;
-  }
-> {}
+export interface SessionDestroyedEvent
+  extends BaseSessionLifecycleEvent<
+    "session_destroyed",
+    {
+      sessionId: string;
+      reason?: string;
+    }
+  > {}
 
 /**
  * SessionLifecycleEvent - All session lifecycle events
@@ -68,72 +65,66 @@ export function isSessionLifecycleEvent(event: {
 /**
  * Base SessionPersistRequest
  */
-interface BaseSessionPersistRequest<T extends string, D = unknown> extends SystemEvent<
-  T,
-  D,
-  "session",
-  "persist",
-  "request"
-> {}
+interface BaseSessionPersistRequest<T extends string, D = unknown>
+  extends SystemEvent<T, D, "session", "persist", "request"> {}
 
 /**
  * Base SessionPersistResult
  */
-interface BaseSessionPersistResult<T extends string, D = unknown> extends SystemEvent<
-  T,
-  D,
-  "session",
-  "persist",
-  "result"
-> {}
+interface BaseSessionPersistResult<T extends string, D = unknown>
+  extends SystemEvent<T, D, "session", "persist", "result"> {}
 
 /**
  * SessionSaveRequest - Request to save session
  */
-export interface SessionSaveRequest extends BaseSessionPersistRequest<
-  "session_save_request",
-  {
-    sessionId: string;
-    title?: string;
-    metadata?: Record<string, unknown>;
-  }
-> {}
+export interface SessionSaveRequest
+  extends BaseSessionPersistRequest<
+    "session_save_request",
+    {
+      sessionId: string;
+      title?: string;
+      metadata?: Record<string, unknown>;
+    }
+  > {}
 
 /**
  * SessionSavedEvent - Session was saved
  */
-export interface SessionSavedEvent extends BaseSessionPersistResult<
-  "session_saved",
-  {
-    sessionId: string;
-    savedAt: number;
-  }
-> {}
+export interface SessionSavedEvent
+  extends BaseSessionPersistResult<
+    "session_saved",
+    {
+      sessionId: string;
+      savedAt: number;
+    }
+  > {}
 
 /**
  * MessagePersistRequest - Request to persist a message
  */
-export interface MessagePersistRequest extends BaseSessionPersistRequest<
-  "message_persist_request",
-  {
-    sessionId: string;
-    messageId: string;
-    role: "user" | "assistant" | "tool_call" | "tool_result";
-    content: unknown;
-  }
-> {}
+export interface MessagePersistRequest
+  extends BaseSessionPersistRequest<
+    "message_persist_request",
+    {
+      sessionId: string;
+      messageId: string;
+      role: "user" | "assistant" | "tool_call" | "tool_result";
+      content: unknown;
+    }
+  > {}
 
 /**
  * MessagePersistedEvent - Message was persisted
  */
-export interface MessagePersistedEvent extends BaseSessionPersistResult<
-  "message_persisted",
-  {
-    sessionId: string;
-    messageId: string;
-    savedAt: number;
-  }
-> {}
+export interface MessagePersistedEvent
+  extends BaseSessionPersistResult<
+    "message_persisted",
+    {
+      sessionId: string;
+      messageId: string;
+      savedAt: number;
+    }
+  > {}
 
 /**
  * SessionPersistEvent - All session persist events
@@ -171,94 +162,90 @@ export function isSessionPersistEvent(event: {
 /**
  * Base SessionActionRequest
  */
-interface BaseSessionActionRequest<T extends string, D = unknown> extends SystemEvent<
-  T,
-  D,
-  "session",
-  "action",
-  "request"
-> {}
+interface BaseSessionActionRequest<T extends string, D = unknown>
+  extends SystemEvent<T, D, "session", "action", "request"> {}
 
 /**
  * Base SessionActionResult
  */
-interface BaseSessionActionResult<T extends string, D = unknown> extends SystemEvent<
-  T,
-  D,
-  "session",
-  "action",
-  "result"
-> {}
+interface BaseSessionActionResult<T extends string, D = unknown>
+  extends SystemEvent<T, D, "session", "action", "result"> {}
 
 /**
  * SessionResumeRequest - Request to resume a session
  */
-export interface SessionResumeRequest extends BaseSessionActionRequest<
-  "session_resume_request",
-  {
-    sessionId: string;
-    containerId?: string;
-  }
-> {}
+export interface SessionResumeRequest
+  extends BaseSessionActionRequest<
+    "session_resume_request",
+    {
+      sessionId: string;
+      containerId?: string;
+    }
+  > {}
 
 /**
  * SessionResumedEvent - Session was resumed
  */
-export interface SessionResumedEvent extends BaseSessionActionResult<
-  "session_resumed",
-  {
-    sessionId: string;
-    agentId: string;
-    resumedAt: number;
-  }
-> {}
+export interface SessionResumedEvent
+  extends BaseSessionActionResult<
+    "session_resumed",
+    {
+      sessionId: string;
+      agentId: string;
+      resumedAt: number;
+    }
+  > {}
 
 /**
  * SessionForkRequest - Request to fork a session
  */
-export interface SessionForkRequest extends BaseSessionActionRequest<
-  "session_fork_request",
-  {
-    sessionId: string;
-    newTitle?: string;
-  }
-> {}
+export interface SessionForkRequest
+  extends BaseSessionActionRequest<
+    "session_fork_request",
+    {
+      sessionId: string;
+      newTitle?: string;
+    }
+  > {}
 
 /**
  * SessionForkedEvent - Session was forked
  */
-export interface SessionForkedEvent extends BaseSessionActionResult<
-  "session_forked",
-  {
-    originalSessionId: string;
-    newSessionId: string;
-    newImageId: string;
-    forkedAt: number;
-  }
-> {}
+export interface SessionForkedEvent
+  extends BaseSessionActionResult<
+    "session_forked",
+    {
+      originalSessionId: string;
+      newSessionId: string;
+      newImageId: string;
+      forkedAt: number;
+    }
+  > {}
 
 /**
  * SessionTitleUpdateRequest - Request to update session title
  */
-export interface SessionTitleUpdateRequest extends BaseSessionActionRequest<
-  "session_title_update_request",
-  {
-    sessionId: string;
-    title: string;
-  }
-> {}
+export interface SessionTitleUpdateRequest
+  extends BaseSessionActionRequest<
+    "session_title_update_request",
+    {
+      sessionId: string;
+      title: string;
+    }
+  > {}
 
 /**
  * SessionTitleUpdatedEvent - Session title was updated
  */
-export interface SessionTitleUpdatedEvent extends BaseSessionActionResult<
-  "session_title_updated",
-  {
-    sessionId: string;
-    title: string;
-    updatedAt: number;
-  }
-> {}
+export interface SessionTitleUpdatedEvent
+  extends BaseSessionActionResult<
+    "session_title_updated",
+    {
+      sessionId: string;
+      title: string;
+      updatedAt: number;
+    }
+  > {}
 
 /**
  * SessionActionEvent - All session action events

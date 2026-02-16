@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { ChatLayout } from "@/components/chat/chat-layout";
 import type { User } from "@/components/chat/types";
 

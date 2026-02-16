@@ -2,15 +2,15 @@
  * Image namespace factories
  */
 
-import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type { RpcClient } from "@agentxjs/core/network";
+import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type {
-  ImageNamespace,
+  BaseResponse,
   ImageCreateResponse,
   ImageGetResponse,
   ImageListResponse,
+  ImageNamespace,
   ImageUpdateResponse,
-  BaseResponse,
 } from "../types";
 
 /**

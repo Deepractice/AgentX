@@ -1,9 +1,9 @@
 "use client";
 
+import { AlertCircleIcon, CheckCircleIcon, LoaderIcon, WrenchIcon } from "lucide-react";
 import * as React from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { LoaderIcon, CheckCircleIcon, AlertCircleIcon, WrenchIcon } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Message, ToolInfo } from "./types";
 
@@ -17,7 +17,7 @@ export function ChatMessages({ messages, isThinking }: ChatMessagesProps) {
 
   React.useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, []);
 
   if (messages.length === 0) {
     return (

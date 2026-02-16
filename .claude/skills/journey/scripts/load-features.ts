@@ -5,8 +5,8 @@
  * Roles: maintainer, contributor, developer
  */
 
-import { readdirSync, readFileSync, existsSync } from "node:fs";
-import { resolve, basename, dirname } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 
 const role = process.argv[2];
 

@@ -2,13 +2,13 @@
  * Session View - Chat session interface
  */
 
-import { useTerminalDimensions, useKeyboard } from "@opentui/solid";
-import { createSignal, onMount, Show, For, createEffect } from "solid-js";
-import { useTheme } from "../context/theme";
+import { useKeyboard, useTerminalDimensions } from "@opentui/solid";
+import { createLogger } from "commonxjs/logger";
+import { createSignal, For, onMount, Show } from "solid-js";
 import { useAgentX } from "../context/agentx";
 import { useRoute } from "../context/route";
+import { useTheme } from "../context/theme";
 import { useToast } from "../context/toast";
-import { createLogger } from "commonxjs/logger";
 
 const logger = createLogger("cli/session");
 
@@ -92,7 +92,7 @@ export function SessionView(props: SessionViewProps) {
       setInput((s) => s + evt.name);
       evt.preventDefault();
     } else if (evt.name === "space") {
-      setInput((s) => s + " ");
+      setInput((s) => `${s} `);
       evt.preventDefault();
     }
   });

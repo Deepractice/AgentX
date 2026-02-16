@@ -15,8 +15,8 @@
  * ```
  */
 
-import { createStorage, type Storage, type Driver } from "unstorage";
-import { openDatabase, type Database } from "commonxjs/sqlite";
+import { type Database, openDatabase } from "commonxjs/sqlite";
+import { createStorage, type Driver, type Storage } from "unstorage";
 import type { PersistenceDriver } from "./types";
 
 export interface SqliteDriverOptions {

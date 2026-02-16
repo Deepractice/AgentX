@@ -2,7 +2,7 @@
  * EventBus.test.ts - Unit tests for EventBus implementation
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import { EventBusImpl as EventBus } from "../EventBus";
 import type { BusEvent } from "../types";
 

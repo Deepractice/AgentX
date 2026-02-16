@@ -2,7 +2,7 @@
  * Store.test.ts - Unit tests for MemoryStore
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import { MemoryStore, type Store } from "../../../engine/mealy/Store";
 
 describe("MemoryStore", () => {

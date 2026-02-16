@@ -19,7 +19,7 @@
  */
 
 export {
-  RecordingDriver,
   createRecordingDriver,
+  RecordingDriver,
   type RecordingDriverOptions,
 } from "./RecordingDriver";

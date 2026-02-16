@@ -2,7 +2,7 @@
  * Theme Provider - Terminal color theming
  */
 
-import { createContext, useContext, createMemo, type ParentProps } from "solid-js";
+import { createContext, createMemo, type ParentProps, useContext } from "solid-js";
 import { createStore } from "solid-js/store";
 
 /**

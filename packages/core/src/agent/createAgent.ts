@@ -21,29 +21,29 @@
  * ```
  */
 
-import type {
-  AgentEngine,
-  AgentState,
-  AgentOutputCallback,
-  UserMessage,
-  MessageQueue,
-  StateChangeHandler,
-  EventHandlerMap,
-  ReactHandlerMap,
-  AgentOutput,
-  CreateAgentOptions,
-  AgentSource,
-  AgentPresenter,
-  AgentEventBus,
-  StreamEvent,
-  Unsubscribe,
-  AgentMiddleware,
-  AgentInterceptor,
-} from "./types";
-import { MealyMachine } from "./engine/MealyMachine";
-import { AgentStateMachine } from "./AgentStateMachine";
 import { createLogger } from "commonxjs/logger";
 import { isDriveableEvent } from "../event";
+import { AgentStateMachine } from "./AgentStateMachine";
+import { MealyMachine } from "./engine/MealyMachine";
+import type {
+  AgentEngine,
+  AgentEventBus,
+  AgentInterceptor,
+  AgentMiddleware,
+  AgentOutput,
+  AgentOutputCallback,
+  AgentPresenter,
+  AgentSource,
+  AgentState,
+  CreateAgentOptions,
+  EventHandlerMap,
+  MessageQueue,
+  ReactHandlerMap,
+  StateChangeHandler,
+  StreamEvent,
+  Unsubscribe,
+  UserMessage,
+} from "./types";
 
 const logger = createLogger("agent/AgentEngine");
 

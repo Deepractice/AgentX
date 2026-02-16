@@ -9,13 +9,13 @@
  * - Message persistence (user + assistant + tool messages)
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { createAgentXRuntime } from "../AgentXRuntime";
-import { EventBusImpl as EventBus } from "../../event/EventBus";
-import type { AgentXPlatform } from "../../platform/types";
+import { afterEach, describe, expect, it } from "bun:test";
 import type { Message } from "../../agent/types";
-import type { BusEvent } from "../../event/types";
 import type { DriverStreamEvent } from "../../driver/types";
+import { EventBusImpl as EventBus } from "../../event/EventBus";
+import type { BusEvent } from "../../event/types";
+import type { AgentXPlatform } from "../../platform/types";
+import { createAgentXRuntime } from "../AgentXRuntime";
 
 // ============================================================================
 // Mock Helpers

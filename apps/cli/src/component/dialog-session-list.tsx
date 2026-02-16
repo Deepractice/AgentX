@@ -3,12 +3,12 @@
  */
 
 import { useKeyboard, useTerminalDimensions } from "@opentui/solid";
-import { createSignal, For, onMount, Show, createEffect } from "solid-js";
-import { useTheme } from "../context/theme";
+import type { ImageRecord } from "agentxjs";
+import { createSignal, For, onMount, Show } from "solid-js";
 import { useAgentX } from "../context/agentx";
 import { useDialog } from "../context/dialog";
 import { useRoute } from "../context/route";
-import type { ImageRecord } from "agentxjs";
+import { useTheme } from "../context/theme";
 
 export function DialogSessionList() {
   const { theme } = useTheme();

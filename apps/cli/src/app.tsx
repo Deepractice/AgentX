@@ -4,19 +4,19 @@
  * Main entry point for the terminal UI.
  */
 
-import { render, useTerminalDimensions, useKeyboard } from "@opentui/solid";
-import { ErrorBoundary, Switch, Match, createSignal } from "solid-js";
-import { ThemeProvider, useTheme } from "./context/theme";
-import { AgentXProvider, useAgentX } from "./context/agentx";
-import { DialogProvider, useDialog } from "./context/dialog";
-import { ToastProvider } from "./context/toast";
-import { RouteProvider, useRoute } from "./context/route";
-import { ExitProvider, useExit } from "./context/exit";
-import { Home } from "./routes/home";
-import { SessionView } from "./routes/session";
+import { render, useKeyboard, useTerminalDimensions } from "@opentui/solid";
+import { createLogger } from "commonxjs/logger";
+import { createSignal, ErrorBoundary, Match, Switch } from "solid-js";
 import { DialogNewSession } from "./component/dialog-new-session";
 import { DialogSessionList } from "./component/dialog-session-list";
-import { createLogger } from "commonxjs/logger";
+import { AgentXProvider, useAgentX } from "./context/agentx";
+import { DialogProvider, useDialog } from "./context/dialog";
+import { ExitProvider, useExit } from "./context/exit";
+import { RouteProvider, useRoute } from "./context/route";
+import { ThemeProvider, useTheme } from "./context/theme";
+import { ToastProvider } from "./context/toast";
+import { Home } from "./routes/home";
+import { SessionView } from "./routes/session";
 
 const logger = createLogger("cli/app");
 

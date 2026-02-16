@@ -13,14 +13,14 @@
  * @packageDocumentation
  */
 
-import type { UserMessage } from "./message";
 import type {
-  AgentState,
   AgentOutput,
+  AgentOutputCallback,
+  AgentState,
   StreamEvent,
   Unsubscribe,
-  AgentOutputCallback,
 } from "./event";
+import type { UserMessage } from "./message";
 
 // =============================================================================
 // Message Queue

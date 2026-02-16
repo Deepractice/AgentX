@@ -32,13 +32,12 @@
  * ```
  */
 
+export { ContainerImpl, createContainer, getOrCreateContainer, loadContainer } from "./Container";
 export type {
-  ContainerRecord,
-  ContainerConfig,
-  ContainerRepository,
   Container,
+  ContainerConfig,
   ContainerContext,
   ContainerCreateConfig,
+  ContainerRecord,
+  ContainerRepository,
 } from "./types";
-
-export { ContainerImpl, createContainer, loadContainer, getOrCreateContainer } from "./Container";

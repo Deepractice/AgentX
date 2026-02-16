@@ -8,9 +8,9 @@
  *   tail -f .agentx/logs/app.log
  */
 
-import { appendFileSync, mkdirSync, existsSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { Logger, LoggerFactory, LogContext, LogLevel } from "commonxjs/logger";
+import type { LogContext, Logger, LoggerFactory, LogLevel } from "commonxjs/logger";
 
 export interface FileLoggerOptions {
   level?: LogLevel;
@@ -111,7 +111,7 @@ class FileLogger implements Logger {
     let logLine = parts.join(" ");
 
     if (context && Object.keys(context).length > 0) {
-      logLine += " " + JSON.stringify(context);
+      logLine += ` ${JSON.stringify(context)}`;
     }
 
     logLine += "\n";

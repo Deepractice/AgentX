@@ -16,7 +16,7 @@
  * - New chat = create new image + agent
  */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // ============================================================================
 // Local type definitions (mirroring agentxjs types to avoid importing the
@@ -263,7 +263,7 @@ export function useAgentX({ userId }: UseAgentXOptions): UseAgentXReturn {
         setConnected(false);
       }
     };
-  }, [userId]);
+  }, []);
 
   // Activate a session: create agent + presentation if not yet loaded
   const activateSession = useCallback(
@@ -387,7 +387,7 @@ export function useAgentX({ userId }: UseAgentXOptions): UseAgentXReturn {
 
         // Auto-update title if not manually renamed
         if (!activeSession.renamed) {
-          const title = text.length > 30 ? text.slice(0, 30) + "..." : text;
+          const title = text.length > 30 ? `${text.slice(0, 30)}...` : text;
           setSessions((prev) =>
             prev.map((s) => (s.imageId === activeSession.imageId ? { ...s, title } : s))
           );

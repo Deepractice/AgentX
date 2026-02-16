@@ -5,12 +5,12 @@
  */
 
 import type {
-  UserMessage,
   AssistantMessage,
-  ToolResultMessage,
   ErrorMessage,
+  ToolResultMessage,
+  UserMessage,
 } from "../../agent/types";
-import type { SystemEvent, EventContext } from "./base";
+import type { EventContext, SystemEvent } from "./base";
 import type { StopReason } from "./driver";
 
 // ============================================================================
@@ -27,11 +27,8 @@ export type AgentEventCategory = "stream" | "state" | "message" | "turn";
  *
  * Extends SystemEvent with fixed source and intent.
  */
-export interface BaseAgentEvent<
-  T extends string,
-  D,
-  C extends AgentEventCategory,
-> extends SystemEvent<T, D, "agent", C, "notification"> {
+export interface BaseAgentEvent<T extends string, D, C extends AgentEventCategory>
+  extends SystemEvent<T, D, "agent", C, "notification"> {
   /**
    * Runtime context (optional, added by Presenter)
    */
@@ -53,91 +50,99 @@ export type AgentStopReason = StopReason;
 /**
  * AgentMessageStartEvent - Streaming message begins
  */
-export interface AgentMessageStartEvent extends AgentStreamEventBase<
-  "message_start",
-  {
-    messageId: string;
-    model: string;
-  }
-> {}
+export interface AgentMessageStartEvent
+  extends AgentStreamEventBase<
+    "message_start",
+    {
+      messageId: string;
+      model: string;
+    }
+  > {}
 
 /**
  * AgentMessageDeltaEvent - Message-level updates (usage info)
  */
-export interface AgentMessageDeltaEvent extends AgentStreamEventBase<
-  "message_delta",
-  {
-    usage?: {
-      inputTokens: number;
-      outputTokens: number;
-    };
-  }
-> {}
+export interface AgentMessageDeltaEvent
+  extends AgentStreamEventBase<
+    "message_delta",
+    {
+      usage?: {
+        inputTokens: number;
+        outputTokens: number;
+      };
+    }
+  > {}
 
 /**
  * AgentMessageStopEvent - Streaming message completes
  */
-export interface AgentMessageStopEvent extends AgentStreamEventBase<
-  "message_stop",
-  {
-    stopReason?: StopReason;
-  }
-> {}
+export interface AgentMessageStopEvent
+  extends AgentStreamEventBase<
+    "message_stop",
+    {
+      stopReason?: StopReason;
+    }
+  > {}
 
 /**
  * AgentTextDeltaEvent - Incremental text output
  */
-export interface AgentTextDeltaEvent extends AgentStreamEventBase<
-  "text_delta",
-  {
-    text: string;
-  }
-> {}
+export interface AgentTextDeltaEvent
+  extends AgentStreamEventBase<
+    "text_delta",
+    {
+      text: string;
+    }
+  > {}
 
 /**
  * AgentToolUseStartEvent - Tool use block started
  */
-export interface AgentToolUseStartEvent extends AgentStreamEventBase<
-  "tool_use_start",
-  {
-    toolCallId: string;
-    toolName: string;
-  }
-> {}
+export interface AgentToolUseStartEvent
+  extends AgentStreamEventBase<
+    "tool_use_start",
+    {
+      toolCallId: string;
+      toolName: string;
+    }
+  > {}
 
 /**
  * AgentInputJsonDeltaEvent - Incremental tool input JSON
  */
-export interface AgentInputJsonDeltaEvent extends AgentStreamEventBase<
-  "input_json_delta",
-  {
-    partialJson: string;
-  }
-> {}
+export interface AgentInputJsonDeltaEvent
+  extends AgentStreamEventBase<
+    "input_json_delta",
+    {
+      partialJson: string;
+    }
+  > {}
 
 /**
  * AgentToolUseStopEvent - Tool use block completed
  */
-export interface AgentToolUseStopEvent extends AgentStreamEventBase<
-  "tool_use_stop",
-  {
-    toolCallId: string;
-    toolName: string;
-    input: Record<string, unknown>;
-  }
-> {}
+export interface AgentToolUseStopEvent
+  extends AgentStreamEventBase<
+    "tool_use_stop",
+    {
+      toolCallId: string;
+      toolName: string;
+      input: Record<string, unknown>;
+    }
+  > {}
 
 /**
  * AgentToolResultEvent - Tool execution result
  */
-export interface AgentToolResultEvent extends AgentStreamEventBase<
-  "tool_result",
-  {
-    toolCallId: string;
-    result: unknown;
-    isError?: boolean;
-  }
-> {}
+export interface AgentToolResultEvent
+  extends AgentStreamEventBase<
+    "tool_result",
+    {
+      toolCallId: string;
+      result: unknown;
+      isError?: boolean;
+    }
+  > {}
 
 /**
  * AgentErrorReceivedEvent - Error received from environment
@@ -146,15 +151,16 @@ export interface AgentToolResultEvent extends AgentStreamEventBase<
  * - error_occurred (StateEvent)
  * - error_message (MessageEvent)
  */
-export interface AgentErrorReceivedEvent extends AgentStreamEventBase<
-  "error_received",
-  {
-    /** Error message (human-readable) */
-    message: string;
-    /** Error code (e.g., "rate_limit_error", "api_error") */
-    errorCode?: string;
-  }
-> {}
+export interface AgentErrorReceivedEvent
+  extends AgentStreamEventBase<
+    "error_received",
+    {
+      /** Error message (human-readable) */
+      message: string;
+      /** Error code (e.g., "rate_limit_error", "api_error") */
+      errorCode?: string;
+    }
+  > {}
 
 /**
  * AgentStreamEvent - All stream events
@@ -198,120 +204,125 @@ export interface AgentStateEventBase<T extends string, D> extends BaseAgentEvent
 /**
  * ConversationQueuedEvent - Message queued for processing
  */
-export interface ConversationQueuedEvent extends AgentStateEventBase<
-  "conversation_queued",
-  {
-    messageId: string;
-  }
-> {}
+export interface ConversationQueuedEvent
+  extends AgentStateEventBase<
+    "conversation_queued",
+    {
+      messageId: string;
+    }
+  > {}
 
 /**
  * ConversationStartEvent - Conversation started
  */
-export interface ConversationStartEvent extends AgentStateEventBase<
-  "conversation_start",
-  {
-    messageId: string;
-  }
-> {}
+export interface ConversationStartEvent
+  extends AgentStateEventBase<
+    "conversation_start",
+    {
+      messageId: string;
+    }
+  > {}
 
 /**
  * ConversationThinkingEvent - Agent is thinking
  */
-export interface ConversationThinkingEvent extends AgentStateEventBase<
-  "conversation_thinking",
-  Record<string, never>
-> {}
+export interface ConversationThinkingEvent
+  extends AgentStateEventBase<"conversation_thinking", Record<string, never>> {}
 
 /**
  * ConversationRespondingEvent - Agent is responding
  */
-export interface ConversationRespondingEvent extends AgentStateEventBase<
-  "conversation_responding",
-  Record<string, never>
-> {}
+export interface ConversationRespondingEvent
+  extends AgentStateEventBase<"conversation_responding", Record<string, never>> {}
 
 /**
  * ConversationEndEvent - Conversation ended
  */
-export interface ConversationEndEvent extends AgentStateEventBase<
-  "conversation_end",
-  {
-    reason: "completed" | "interrupted" | "error";
-  }
-> {}
+export interface ConversationEndEvent
+  extends AgentStateEventBase<
+    "conversation_end",
+    {
+      reason: "completed" | "interrupted" | "error";
+    }
+  > {}
 
 /**
  * ConversationInterruptedEvent - Conversation interrupted
  */
-export interface ConversationInterruptedEvent extends AgentStateEventBase<
-  "conversation_interrupted",
-  {
-    reason: string;
-  }
-> {}
+export interface ConversationInterruptedEvent
+  extends AgentStateEventBase<
+    "conversation_interrupted",
+    {
+      reason: string;
+    }
+  > {}
 
 // Tool Events
 /**
  * ToolPlannedEvent - Tool use planned
  */
-export interface ToolPlannedEvent extends AgentStateEventBase<
-  "tool_planned",
-  {
-    toolId: string;
-    toolName: string;
-  }
-> {}
+export interface ToolPlannedEvent
+  extends AgentStateEventBase<
+    "tool_planned",
+    {
+      toolId: string;
+      toolName: string;
+    }
+  > {}
 
 /**
  * ToolExecutingEvent - Tool is executing
  */
-export interface ToolExecutingEvent extends AgentStateEventBase<
-  "tool_executing",
-  {
-    toolId: string;
-    toolName: string;
-    input: Record<string, unknown>;
-  }
-> {}
+export interface ToolExecutingEvent
+  extends AgentStateEventBase<
+    "tool_executing",
+    {
+      toolId: string;
+      toolName: string;
+      input: Record<string, unknown>;
+    }
+  > {}
 
 /**
  * ToolCompletedEvent - Tool execution completed
  */
-export interface ToolCompletedEvent extends AgentStateEventBase<
-  "tool_completed",
-  {
-    toolId: string;
-    toolName: string;
-    result: unknown;
-  }
-> {}
+export interface ToolCompletedEvent
+  extends AgentStateEventBase<
+    "tool_completed",
+    {
+      toolId: string;
+      toolName: string;
+      result: unknown;
+    }
+  > {}
 
 /**
  * ToolFailedEvent - Tool execution failed
  */
-export interface ToolFailedEvent extends AgentStateEventBase<
-  "tool_failed",
-  {
-    toolId: string;
-    toolName: string;
-    error: string;
-  }
-> {}
+export interface ToolFailedEvent
+  extends AgentStateEventBase<
+    "tool_failed",
+    {
+      toolId: string;
+      toolName: string;
+      error: string;
+    }
+  > {}
 
 // Error Events (State)
 /**
  * ErrorOccurredEvent - Error occurred during processing
  */
-export interface ErrorOccurredEvent extends AgentStateEventBase<
-  "error_occurred",
-  {
-    code: string;
-    message: string;
-    recoverable: boolean;
-    category?: string;
-  }
-> {}
+export interface ErrorOccurredEvent
+  extends AgentStateEventBase<
+    "error_occurred",
+    {
+      code: string;
+      message: string;
+      recoverable: boolean;
+      category?: string;
+    }
+  > {}
 
 /**
  * AgentStateEvent - All state events
@@ -354,11 +365,8 @@ export function isAgentStateEvent(event: {
 /**
  * Base type for message events
  */
-export interface AgentMessageEventBase<T extends string, D> extends BaseAgentEvent<
-  T,
-  D,
-  "message"
-> {}
+export interface AgentMessageEventBase<T extends string, D>
+  extends BaseAgentEvent<T, D, "message"> {}
 
 /**
  * UserMessageEvent - User sent a message
@@ -370,19 +378,15 @@ export interface UserMessageEvent extends AgentMessageEventBase<"user_message", 
  * AssistantMessageEvent - Assistant response message
  * Data: Complete AssistantMessage object
  */
-export interface AssistantMessageEvent extends AgentMessageEventBase<
-  "assistant_message",
-  AssistantMessage
-> {}
+export interface AssistantMessageEvent
+  extends AgentMessageEventBase<"assistant_message", AssistantMessage> {}
 
 /**
  * ToolResultMessageEvent - Tool result message
  * Data: Complete ToolResultMessage object
  */
-export interface ToolResultMessageEvent extends AgentMessageEventBase<
-  "tool_result_message",
-  ToolResultMessage
-> {}
+export interface ToolResultMessageEvent
+  extends AgentMessageEventBase<"tool_result_message", ToolResultMessage> {}
 
 /**
  * ErrorMessageEvent - Error message displayed in chat
@@ -438,31 +442,33 @@ export interface TokenUsage {
 /**
  * TurnRequestEvent - Turn started (user message received)
  */
-export interface TurnRequestEvent extends AgentTurnEventBase<
-  "turn_request",
-  {
-    turnId: string;
-    messageId: string;
-    content: string;
-    timestamp: number;
-  }
-> {}
+export interface TurnRequestEvent
+  extends AgentTurnEventBase<
+    "turn_request",
+    {
+      turnId: string;
+      messageId: string;
+      content: string;
+      timestamp: number;
+    }
+  > {}
 
 /**
  * TurnResponseEvent - Turn completed (assistant response finished)
  */
-export interface TurnResponseEvent extends AgentTurnEventBase<
-  "turn_response",
-  {
-    turnId: string;
-    messageId: string;
-    duration: number;
-    usage?: TokenUsage;
-    model?: string;
-    stopReason?: string;
-    timestamp: number;
-  }
-> {}
+export interface TurnResponseEvent
+  extends AgentTurnEventBase<
+    "turn_response",
+    {
+      turnId: string;
+      messageId: string;
+      duration: number;
+      usage?: TokenUsage;
+      model?: string;
+      stopReason?: string;
+      timestamp: number;
+    }
+  > {}
 
 /**
  * AgentTurnEvent - All turn events

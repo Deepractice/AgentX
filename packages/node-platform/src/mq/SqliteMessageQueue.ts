@@ -6,11 +6,11 @@
  * - Consumer offset tracking for at-least-once delivery
  */
 
+import type { MessageQueue, QueueConfig, QueueEntry, Unsubscribe } from "@agentxjs/core/mq";
+import { createLogger } from "commonxjs/logger";
+import { type Database, openDatabase } from "commonxjs/sqlite";
 import { Subject } from "rxjs";
 import { filter } from "rxjs/operators";
-import type { MessageQueue, QueueEntry, QueueConfig, Unsubscribe } from "@agentxjs/core/mq";
-import { createLogger } from "commonxjs/logger";
-import { openDatabase, type Database } from "commonxjs/sqlite";
 import { OffsetGenerator } from "./OffsetGenerator";
 
 const logger = createLogger("node-platform/SqliteMessageQueue");

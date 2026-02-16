@@ -4,10 +4,10 @@
  * Converts between AgentX types and Vercel AI SDK v6 types
  */
 
-import { tool, jsonSchema } from "ai";
-import type { ModelMessage, ToolSet } from "ai";
 import type { Message, ToolResultMessage } from "@agentxjs/core/agent";
 import type { DriverStreamEvent, StopReason, ToolDefinition } from "@agentxjs/core/driver";
+import type { ModelMessage, ToolSet } from "ai";
+import { jsonSchema, tool } from "ai";
 
 // ============================================================================
 // Message Converters (AgentX → Vercel AI SDK v6)

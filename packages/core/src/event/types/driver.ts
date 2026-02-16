@@ -83,13 +83,8 @@ export function isStopReason(value: string): value is StopReason {
  * - requestId: correlation with the original request
  * - context: agent/image/session scope (inherited from SystemEvent)
  */
-interface BaseStreamEvent<T extends string, D = unknown> extends SystemEvent<
-  T,
-  D,
-  "driver",
-  "stream",
-  "notification"
-> {
+interface BaseStreamEvent<T extends string, D = unknown>
+  extends SystemEvent<T, D, "driver", "stream", "notification"> {
   /**
    * Content block index (for multi-block responses)
    */
@@ -105,68 +100,68 @@ interface BaseStreamEvent<T extends string, D = unknown> extends SystemEvent<
 /**
  * MessageStartEvent - Emitted when streaming message begins
  */
-export interface MessageStartEvent extends BaseStreamEvent<
-  "message_start",
-  {
-    message: {
-      id: string;
-      model: string;
-    };
-  }
-> {}
+export interface MessageStartEvent
+  extends BaseStreamEvent<
+    "message_start",
+    {
+      message: {
+        id: string;
+        model: string;
+      };
+    }
+  > {}
 
 /**
  * MessageDeltaEvent - Emitted with message-level updates
  */
-export interface MessageDeltaEvent extends BaseStreamEvent<
-  "message_delta",
-  {
-    usage?: {
-      inputTokens: number;
-      outputTokens: number;
-    };
-  }
-> {}
+export interface MessageDeltaEvent
+  extends BaseStreamEvent<
+    "message_delta",
+    {
+      usage?: {
+        inputTokens: number;
+        outputTokens: number;
+      };
+    }
+  > {}
 
 /**
  * MessageStopEvent - Emitted when streaming message completes
  */
-export interface MessageStopEvent extends BaseStreamEvent<
-  "message_stop",
-  {
-    stopReason?: StopReason;
-    stopSequence?: string;
-  }
-> {}
+export interface MessageStopEvent
+  extends BaseStreamEvent<
+    "message_stop",
+    {
+      stopReason?: StopReason;
+      stopSequence?: string;
+    }
+  > {}
 
 // Text Content Block Events
 /**
  * TextContentBlockStartEvent - Text block started
  */
-export interface TextContentBlockStartEvent extends BaseStreamEvent<
-  "text_content_block_start",
-  Record<string, never>
-> {
+export interface TextContentBlockStartEvent
+  extends BaseStreamEvent<"text_content_block_start", Record<string, never>> {
   index: number;
 }
 
 /**
  * TextDeltaEvent - Incremental text output
  */
-export interface TextDeltaEvent extends BaseStreamEvent<
-  "text_delta",
-  {
-    text: string;
-  }
-> {}
+export interface TextDeltaEvent
+  extends BaseStreamEvent<
+    "text_delta",
+    {
+      text: string;
+    }
+  > {}
 
 /**
  * TextContentBlockStopEvent - Text block completed
  */
-export interface TextContentBlockStopEvent extends BaseStreamEvent<
-  "text_content_block_stop",
-  Record<string, never>
-> {
+export interface TextContentBlockStopEvent
+  extends BaseStreamEvent<"text_content_block_stop", Record<string, never>> {
   index: number;
 }
 
@@ -174,35 +169,35 @@ export interface TextContentBlockStopEvent extends BaseStreamEvent<
 /**
  * ToolUseContentBlockStartEvent - Tool use block started
  */
-export interface ToolUseContentBlockStartEvent extends BaseStreamEvent<
-  "tool_use_content_block_start",
-  {
-    id: string;
-    name: string;
-  }
-> {
+export interface ToolUseContentBlockStartEvent
+  extends BaseStreamEvent<
+    "tool_use_content_block_start",
+    {
+      id: string;
+      name: string;
+    }
+  > {
   index: number;
 }
 
 /**
  * InputJsonDeltaEvent - Incremental tool input JSON
  */
-export interface InputJsonDeltaEvent extends BaseStreamEvent<
-  "input_json_delta",
-  {
-    partialJson: string;
-  }
-> {
+export interface InputJsonDeltaEvent
+  extends BaseStreamEvent<
+    "input_json_delta",
+    {
+      partialJson: string;
+    }
+  > {
   index: number;
 }
 
 /**
  * ToolUseContentBlockStopEvent - Tool use block completed
  */
-export interface ToolUseContentBlockStopEvent extends BaseStreamEvent<
-  "tool_use_content_block_stop",
-  Record<string, never>
-> {
+export interface ToolUseContentBlockStopEvent
+  extends BaseStreamEvent<"tool_use_content_block_stop", Record<string, never>> {
   index: number;
 }
 
@@ -210,37 +205,40 @@ export interface ToolUseContentBlockStopEvent extends BaseStreamEvent<
 /**
  * ToolCallEvent - Tool call ready for execution
  */
-export interface ToolCallEvent extends BaseStreamEvent<
-  "tool_call",
-  {
-    id: string;
-    name: string;
-    input: Record<string, unknown>;
-  }
-> {}
+export interface ToolCallEvent
+  extends BaseStreamEvent<
+    "tool_call",
+    {
+      id: string;
+      name: string;
+      input: Record<string, unknown>;
+    }
+  > {}
 
 /**
  * ToolResultEvent - Tool execution result
  */
-export interface ToolResultEvent extends BaseStreamEvent<
-  "tool_result",
-  {
-    toolUseId: string;
-    result: unknown;
-    isError?: boolean;
-  }
-> {}
+export interface ToolResultEvent
+  extends BaseStreamEvent<
+    "tool_result",
+    {
+      toolUseId: string;
+      result: unknown;
+      isError?: boolean;
+    }
+  > {}
 
 // Interrupt Event
 /**
  * InterruptedEvent - Stream interrupted
  */
-export interface InterruptedEvent extends BaseStreamEvent<
-  "interrupted",
-  {
-    reason: "user_interrupt" | "timeout" | "error" | "system";
-  }
-> {}
+export interface InterruptedEvent
+  extends BaseStreamEvent<
+    "interrupted",
+    {
+      reason: "user_interrupt" | "timeout" | "error" | "system";
+    }
+  > {}
 
 // Error Event (Environment)
 /**
@@ -250,15 +248,16 @@ export interface InterruptedEvent extends BaseStreamEvent<
  * - error_occurred (StateEvent) -> state transitions to "error"
  * - error_message (MessageEvent) -> displayed in chat
  */
-export interface ErrorReceivedEvent extends BaseStreamEvent<
-  "error_received",
-  {
-    /** Error message (human-readable) */
-    message: string;
-    /** Error code (e.g., "rate_limit_error", "api_error", "overloaded_error") */
-    errorCode?: string;
-  }
-> {}
+export interface ErrorReceivedEvent
+  extends BaseStreamEvent<
+    "error_received",
+    {
+      /** Error message (human-readable) */
+      message: string;
+      /** Error code (e.g., "rate_limit_error", "api_error", "overloaded_error") */
+      errorCode?: string;
+    }
+  > {}
 
 /**
  * DriveableEvent - All events that can drive Agent
@@ -306,48 +305,46 @@ export function isDriveableEvent(event: {
 /**
  * Base interface for all connection events
  */
-interface BaseConnectionEvent<T extends string, D = unknown> extends SystemEvent<
-  T,
-  D,
-  "driver",
-  "connection",
-  "notification"
-> {}
+interface BaseConnectionEvent<T extends string, D = unknown>
+  extends SystemEvent<T, D, "driver", "connection", "notification"> {}
 
 /**
  * ConnectedEvent - Connection established
  */
-export interface ConnectedEvent extends BaseConnectionEvent<
-  "connected",
-  {
-    url?: string;
-    reconnectAttempt?: number;
-  }
-> {}
+export interface ConnectedEvent
+  extends BaseConnectionEvent<
+    "connected",
+    {
+      url?: string;
+      reconnectAttempt?: number;
+    }
+  > {}
 
 /**
  * DisconnectedEvent - Connection lost
  */
-export interface DisconnectedEvent extends BaseConnectionEvent<
-  "disconnected",
-  {
-    reason?: string;
-    code?: number;
-    willReconnect?: boolean;
-  }
-> {}
+export interface DisconnectedEvent
+  extends BaseConnectionEvent<
+    "disconnected",
+    {
+      reason?: string;
+      code?: number;
+      willReconnect?: boolean;
+    }
+  > {}
 
 /**
  * ReconnectingEvent - Attempting to reconnect
  */
-export interface ReconnectingEvent extends BaseConnectionEvent<
-  "reconnecting",
-  {
-    attempt: number;
-    maxAttempts?: number;
-    delayMs: number;
-  }
-> {}
+export interface ReconnectingEvent
+  extends BaseConnectionEvent<
+    "reconnecting",
+    {
+      attempt: number;
+      maxAttempts?: number;
+      delayMs: number;
+    }
+  > {}
 
 /**
  * ConnectionEvent - All network status events
@@ -401,37 +398,38 @@ export type EnvironmentEvent = DriveableEvent | ConnectionEvent;
  * };
  * ```
  */
-export interface SystemError extends SystemEvent<
-  "system_error",
-  {
-    /**
-     * Error message (human-readable)
-     */
-    message: string;
+export interface SystemError
+  extends SystemEvent<
+    "system_error",
+    {
+      /**
+       * Error message (human-readable)
+       */
+      message: string;
 
-    /**
-     * Associated request ID (if error is related to a request)
-     */
-    requestId?: string;
+      /**
+       * Associated request ID (if error is related to a request)
+       */
+      requestId?: string;
 
-    /**
-     * Error severity
-     * - info: Informational, no action needed
-     * - warn: Warning, operation succeeded but with issues
-     * - error: Error, operation failed
-     * - fatal: Fatal error, system unstable
-     */
-    severity?: "info" | "warn" | "error" | "fatal";
+      /**
+       * Error severity
+       * - info: Informational, no action needed
+       * - warn: Warning, operation succeeded but with issues
+       * - error: Error, operation failed
+       * - fatal: Fatal error, system unstable
+       */
+      severity?: "info" | "warn" | "error" | "fatal";
 
-    /**
-     * Additional error details (stack trace, error code, etc.)
-     */
-    details?: unknown;
-  },
-  "agent" | "container" | "driver" | "session" | "sandbox" | "command",
-  "error",
-  "notification"
-> {}
+      /**
+       * Additional error details (stack trace, error code, etc.)
+       */
+      details?: unknown;
+    },
+    "agent" | "container" | "driver" | "session" | "sandbox" | "command",
+    "error",
+    "notification"
+  > {}
 
 /**
  * Error event map - will grow as we add specific error types

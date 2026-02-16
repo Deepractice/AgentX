@@ -2,15 +2,15 @@
  * AgentX Provider - Connect to AgentX server
  */
 
+import { type AgentX, createAgentX } from "agentxjs";
 import {
   createContext,
-  useContext,
-  onMount,
-  onCleanup,
   createSignal,
+  onCleanup,
+  onMount,
   type ParentProps,
+  useContext,
 } from "solid-js";
-import { createAgentX, type AgentX } from "agentxjs";
 
 interface AgentXContext {
   client: AgentX | null;

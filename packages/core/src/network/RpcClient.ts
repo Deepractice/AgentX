@@ -25,19 +25,19 @@
  * ```
  */
 
+import type { SystemEvent } from "../event/types/base";
 import {
-  createRequest,
   createNotification,
-  parseMessage,
-  isSuccessResponse,
+  createRequest,
   isErrorResponse,
   isNotification,
   isStreamEvent,
-  type RpcMethod,
+  isSuccessResponse,
   type NotificationMethod,
+  parseMessage,
+  type RpcMethod,
   type StreamEventParams,
 } from "./jsonrpc";
-import type { SystemEvent } from "../event/types/base";
 
 // ============================================================================
 // Types

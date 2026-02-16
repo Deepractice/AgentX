@@ -22,17 +22,15 @@
  * ```
  */
 
-// Types
-export type { PersistenceDriver, Persistence } from "./types";
+export { memoryDriver } from "./memory";
 
 // Factory
 export { createPersistence } from "./Persistence";
-
-// Drivers
-export { sqliteDriver, type SqliteDriverOptions } from "./sqlite";
-export { memoryDriver } from "./memory";
-
 // Repositories (for advanced use cases)
 export { StorageContainerRepository } from "./StorageContainerRepository";
 export { StorageImageRepository } from "./StorageImageRepository";
 export { StorageSessionRepository } from "./StorageSessionRepository";
+// Drivers
+export { type SqliteDriverOptions, sqliteDriver } from "./sqlite";
+// Types
+export type { Persistence, PersistenceDriver } from "./types";

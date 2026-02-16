@@ -1,7 +1,7 @@
 "use client";
 
-import { Terminal } from "@/components/ai-elements/terminal";
 import { useEffect, useState } from "react";
+import { Terminal } from "@/components/ai-elements/terminal";
 
 const lines = [
   "\u001B[36m$\u001B[0m npm install",

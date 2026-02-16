@@ -2,15 +2,15 @@
  * combinators.test.ts - Unit tests for Mealy processor combinators
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-  combineProcessors,
-  combineInitialStates,
   chainProcessors,
+  combineInitialStates,
+  combineProcessors,
   filterProcessor,
+  identityProcessor,
   mapOutput,
   withLogging,
-  identityProcessor,
 } from "../../../engine/mealy/combinators";
 import type { Processor } from "../../../engine/mealy/Processor";
 

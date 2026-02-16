@@ -12,65 +12,62 @@
  * - @agentxjs/cloudflare: Durable Objects WebSocket
  */
 
-// Types
-export type {
-  Unsubscribe,
-  MinimalHTTPServer,
-  SendReliableOptions,
-  ConnectionState,
-  ChannelConnection,
-  ChannelServer,
-  ChannelServerOptions,
-  ChannelClient,
-  ChannelClientOptions,
-  ChannelServerProvider,
-  ChannelClientProvider,
-} from "./types";
-
-// Protocol (reliable delivery)
-export type { ReliableWrapper, AckMessage } from "./protocol";
-export {
-  isReliableWrapper,
-  isAckMessage,
-  wrapMessage,
-  createAck,
-  unwrapMessage,
-  generateMessageId,
-} from "./protocol";
-
 // JSON-RPC 2.0 Protocol
 export type {
-  RpcMethod,
+  ControlAckParams,
   NotificationMethod,
+  RpcErrorResponse,
+  RpcMethod,
+  RpcNotification,
   RpcRequest,
   RpcSuccessResponse,
-  RpcErrorResponse,
-  RpcNotification,
   StreamEventParams,
-  ControlAckParams,
 } from "./jsonrpc";
 export {
-  JsonRpcError,
-  RpcErrorCodes,
-  createRequest,
-  createNotification,
-  createStreamEvent,
   createAckNotification,
-  createSuccessResponse,
   createErrorResponse,
-  parseMessage,
-  parseMessageObject,
-  isRequest,
-  isNotification,
-  isSuccessResponse,
+  createNotification,
+  createRequest,
+  createStreamEvent,
+  createSuccessResponse,
+  eventTypeToRpcMethod,
+  isControlAck,
   isErrorResponse,
   isInvalid,
+  isNotification,
+  isRequest,
   isStreamEvent,
-  isControlAck,
-  eventTypeToRpcMethod,
+  isSuccessResponse,
+  JsonRpcError,
+  parseMessage,
+  parseMessageObject,
+  RpcErrorCodes,
   rpcMethodToResponseType,
 } from "./jsonrpc";
-
+// Protocol (reliable delivery)
+export type { AckMessage, ReliableWrapper } from "./protocol";
+export {
+  createAck,
+  generateMessageId,
+  isAckMessage,
+  isReliableWrapper,
+  unwrapMessage,
+  wrapMessage,
+} from "./protocol";
 // RPC Client
 export type { RpcClientConfig, RpcClientState, WebSocketFactory } from "./RpcClient";
 export { RpcClient } from "./RpcClient";
+// Types
+export type {
+  ChannelClient,
+  ChannelClientOptions,
+  ChannelClientProvider,
+  ChannelConnection,
+  ChannelServer,
+  ChannelServerOptions,
+  ChannelServerProvider,
+  ConnectionState,
+  MinimalHTTPServer,
+  SendReliableOptions,
+  Unsubscribe,
+} from "./types";

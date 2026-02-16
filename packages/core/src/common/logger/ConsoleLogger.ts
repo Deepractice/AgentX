@@ -5,7 +5,7 @@
  * Used as fallback when no custom LoggerFactory is provided.
  */
 
-import type { Logger, LogContext, LogLevel } from "./types";
+import type { LogContext, Logger, LogLevel } from "./types";
 
 export interface ConsoleLoggerOptions {
   level?: LogLevel;

@@ -5,12 +5,12 @@
  * Each driver provides a createStorage() method that returns an unstorage Storage instance.
  */
 
-import type { Storage } from "unstorage";
 import { createLogger } from "commonxjs/logger";
-import type { Persistence, PersistenceDriver } from "./types";
+import type { Storage } from "unstorage";
 import { StorageContainerRepository } from "./StorageContainerRepository";
 import { StorageImageRepository } from "./StorageImageRepository";
 import { StorageSessionRepository } from "./StorageSessionRepository";
+import type { Persistence, PersistenceDriver } from "./types";
 
 const logger = createLogger("node-platform/Persistence");
 

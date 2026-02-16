@@ -4,10 +4,10 @@
  * Uses unstorage for backend-agnostic storage (Memory, Redis, SQLite, etc.)
  */
 
-import type { Storage } from "unstorage";
-import type { SessionRepository, SessionRecord } from "@agentxjs/core/persistence";
 import type { Message } from "@agentxjs/core/agent";
+import type { SessionRecord, SessionRepository } from "@agentxjs/core/persistence";
 import { createLogger } from "commonxjs/logger";
+import type { Storage } from "unstorage";
 
 const logger = createLogger("node-platform/SessionRepository");
 

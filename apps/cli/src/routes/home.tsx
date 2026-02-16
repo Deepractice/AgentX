@@ -4,8 +4,8 @@
 
 import { useTerminalDimensions } from "@opentui/solid";
 import { Show } from "solid-js";
-import { useTheme } from "../context/theme";
 import { useAgentX } from "../context/agentx";
+import { useTheme } from "../context/theme";
 
 export function Home() {
   const dimensions = useTerminalDimensions();

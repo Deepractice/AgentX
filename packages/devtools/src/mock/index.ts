@@ -20,4 +20,4 @@
  * ```
  */
 
-export { MockDriver, createMockDriver } from "./MockDriver";
+export { createMockDriver, MockDriver } from "./MockDriver";

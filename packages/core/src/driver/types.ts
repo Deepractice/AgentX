@@ -170,85 +170,95 @@ export interface StreamEvent<T extends string = string, D = unknown> {
 }
 
 // Stream Event Types
-export interface MessageStartEvent extends StreamEvent<
-  "message_start",
-  {
-    messageId: string;
-    model: string;
-  }
-> {}
+export interface MessageStartEvent
+  extends StreamEvent<
+    "message_start",
+    {
+      messageId: string;
+      model: string;
+    }
+  > {}
 
-export interface MessageStopEvent extends StreamEvent<
-  "message_stop",
-  {
-    stopReason: StopReason;
-  }
-> {}
+export interface MessageStopEvent
+  extends StreamEvent<
+    "message_stop",
+    {
+      stopReason: StopReason;
+    }
+  > {}
 
-export interface TextDeltaEvent extends StreamEvent<
-  "text_delta",
-  {
-    text: string;
-  }
-> {}
+export interface TextDeltaEvent
+  extends StreamEvent<
+    "text_delta",
+    {
+      text: string;
+    }
+  > {}
 
-export interface ToolUseStartEvent extends StreamEvent<
-  "tool_use_start",
-  {
-    toolCallId: string;
-    toolName: string;
-  }
-> {}
+export interface ToolUseStartEvent
+  extends StreamEvent<
+    "tool_use_start",
+    {
+      toolCallId: string;
+      toolName: string;
+    }
+  > {}
 
-export interface InputJsonDeltaEvent extends StreamEvent<
-  "input_json_delta",
-  {
-    partialJson: string;
-  }
-> {}
+export interface InputJsonDeltaEvent
+  extends StreamEvent<
+    "input_json_delta",
+    {
+      partialJson: string;
+    }
+  > {}
 
-export interface ToolUseStopEvent extends StreamEvent<
-  "tool_use_stop",
-  {
-    toolCallId: string;
-    toolName: string;
-    input: Record<string, unknown>;
-  }
-> {}
+export interface ToolUseStopEvent
+  extends StreamEvent<
+    "tool_use_stop",
+    {
+      toolCallId: string;
+      toolName: string;
+      input: Record<string, unknown>;
+    }
+  > {}
 
-export interface ToolResultEvent extends StreamEvent<
-  "tool_result",
-  {
-    toolCallId: string;
-    result: unknown;
-    isError?: boolean;
-  }
-> {}
+export interface ToolResultEvent
+  extends StreamEvent<
+    "tool_result",
+    {
+      toolCallId: string;
+      result: unknown;
+      isError?: boolean;
+    }
+  > {}
 
-export interface ErrorEvent extends StreamEvent<
-  "error",
-  {
-    message: string;
-    errorCode?: string;
-  }
-> {}
+export interface ErrorEvent
+  extends StreamEvent<
+    "error",
+    {
+      message: string;
+      errorCode?: string;
+    }
+  > {}
 
-export interface MessageDeltaEvent extends StreamEvent<
-  "message_delta",
-  {
-    usage?: {
-      inputTokens: number;
-      outputTokens: number;
-    };
-  }
-> {}
+export interface MessageDeltaEvent
+  extends StreamEvent<
+    "message_delta",
+    {
+      usage?: {
+        inputTokens: number;
+        outputTokens: number;
+      };
+    }
+  > {}
 
-export interface InterruptedEvent extends StreamEvent<
-  "interrupted",
-  {
-    reason: "user" | "timeout" | "error";
-  }
-> {}
+export interface InterruptedEvent
+  extends StreamEvent<
+    "interrupted",
+    {
+      reason: "user" | "timeout" | "error";
+    }
+  > {}
 
 /**
  * DriverStreamEvent - Union of all stream events from Driver

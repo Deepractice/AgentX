@@ -5,22 +5,22 @@
  * Uses RxJS Subject for reactive event distribution.
  */
 
-import type {
-  EventBus,
-  EventProducer,
-  EventConsumer,
-  Unsubscribe,
-  BusEventHandler,
-  SubscribeOptions,
-  BusEvent,
-  CommandEventMap,
-  CommandRequestType,
-  ResponseEventFor,
-  RequestDataFor,
-  CommandRequestResponseMap,
-} from "./types";
-import { Subject } from "rxjs";
 import { createLogger } from "commonxjs/logger";
+import { Subject } from "rxjs";
+import type {
+  BusEvent,
+  BusEventHandler,
+  CommandEventMap,
+  CommandRequestResponseMap,
+  CommandRequestType,
+  EventBus,
+  EventConsumer,
+  EventProducer,
+  RequestDataFor,
+  ResponseEventFor,
+  SubscribeOptions,
+  Unsubscribe,
+} from "./types";
 
 const logger = createLogger("event/EventBus");
 

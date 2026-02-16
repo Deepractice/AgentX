@@ -7,13 +7,13 @@
  * - message_stop  → turn_response
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import {
-  turnTrackerProcessor,
   createInitialTurnTrackerState,
-  type TurnTrackerState,
   type TurnTrackerInput,
   type TurnTrackerOutput,
+  type TurnTrackerState,
+  turnTrackerProcessor,
 } from "../../../engine/internal/turnTrackerProcessor";
 
 // Helper to create test events
@@ -77,7 +77,7 @@ describe("turnTrackerProcessor", () => {
       const [state2] = turnTrackerProcessor(state1, createMessageStopEvent("end_turn"));
 
       // Start new turn
-      const [state3, outputs3] = turnTrackerProcessor(state2, createMessageStartEvent("msg_2"));
+      const [_state3, outputs3] = turnTrackerProcessor(state2, createMessageStartEvent("msg_2"));
 
       expect(outputs1[0].data.turnId).not.toBe(outputs3[0].data.turnId);
     });

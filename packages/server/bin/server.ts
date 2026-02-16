@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+
 /**
  * AgentX Server - Standalone server startup script
  *
@@ -14,11 +15,11 @@
  *   LOG_LEVEL - Log level: debug/info/warn/error (default: info)
  */
 
-import { createServer } from "../src";
-import { nodePlatform } from "@agentxjs/node-platform";
-import { createMonoDriver } from "@agentxjs/mono-driver";
 import type { CreateDriver } from "@agentxjs/core/driver";
+import { createMonoDriver } from "@agentxjs/mono-driver";
+import { nodePlatform } from "@agentxjs/node-platform";
 import { createLogger } from "commonxjs/logger";
+import { createServer } from "../src";
 
 const logger = createLogger("server/bin");
 

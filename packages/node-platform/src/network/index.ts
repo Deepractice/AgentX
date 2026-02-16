@@ -27,6 +27,6 @@
  * ```
  */
 
-export { WebSocketServer } from "./WebSocketServer";
 export { WebSocketConnection } from "./WebSocketConnection";
 export { createNodeWebSocket } from "./WebSocketFactory";
+export { WebSocketServer } from "./WebSocketServer";

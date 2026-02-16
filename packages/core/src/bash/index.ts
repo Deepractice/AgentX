@@ -17,5 +17,5 @@
  * ```
  */
 
-export type { BashProvider, BashResult, BashOptions } from "./types";
 export { createBashTool } from "./tool";
+export type { BashOptions, BashProvider, BashResult } from "./types";

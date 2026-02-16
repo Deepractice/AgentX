@@ -5,14 +5,14 @@
  * All journeys use VCR recording for reproducible, offline tests.
  */
 
-import { Given, When, Then, After } from "@cucumber/cucumber";
 import { strict as assert } from "node:assert";
-import { mkdirSync, existsSync } from "node:fs";
-import type { DataTable } from "@cucumber/cucumber";
-import type { AgentXWorld } from "../support/world";
+import { existsSync, mkdirSync } from "node:fs";
 import type { BusEvent } from "@agentxjs/core/event";
-import { getFixturesPath, ensureDir } from "@agentxjs/devtools/bdd";
 import { env } from "@agentxjs/devtools";
+import { ensureDir, getFixturesPath } from "@agentxjs/devtools/bdd";
+import type { DataTable } from "@cucumber/cucumber";
+import { After, Given, Then, When } from "@cucumber/cucumber";
+import type { AgentXWorld } from "../support/world";
 
 // ============================================================================
 // State for developer journey
@@ -120,7 +120,7 @@ When(
         // Ensure directories exist for filesystem MCP servers
         if (args) {
           const lastArg = args[args.length - 1];
-          if (lastArg && lastArg.startsWith("/") && !lastArg.includes(".")) {
+          if (lastArg?.startsWith("/") && !lastArg.includes(".")) {
             if (!existsSync(lastArg)) {
               mkdirSync(lastArg, { recursive: true });
             }
@@ -191,7 +191,7 @@ Then("I should receive a non-empty reply", function (this: AgentXWorld) {
 Then("the reply should contain {string}", function (this: AgentXWorld, expected: string) {
   const state = getState(this);
   assert.ok(
-    state.lastReplyText && state.lastReplyText.includes(expected),
+    state.lastReplyText?.includes(expected),
     `Reply should contain "${expected}", got: "${state.lastReplyText}"`
   );
 });
@@ -379,7 +379,7 @@ Then(
         for (const block of conv.blocks) {
           if (block.type === "tool" && block.status === "completed") {
             assert.ok(
-              block.toolResult && block.toolResult.includes(expected),
+              block.toolResult?.includes(expected),
               `Tool block toolResult should contain "${expected}", got: ${JSON.stringify(block.toolResult)}`
             );
             return;
@@ -463,7 +463,7 @@ When(
       let value: unknown = row.value;
       if (value === "true") value = true;
       else if (value === "false") value = false;
-      else if (!isNaN(Number(value))) value = Number(value);
+      else if (!Number.isNaN(Number(value))) value = Number(value);
       customData[row.key] = value;
     }
 
@@ -485,7 +485,7 @@ When("I update the image customData:", async function (this: AgentXWorld, table:
     let value: unknown = row.value;
     if (value === "true") value = true;
     else if (value === "false") value = false;
-    else if (!isNaN(Number(value))) value = Number(value);
+    else if (!Number.isNaN(Number(value))) value = Number(value);
     customData[row.key] = value;
   }
 
@@ -614,7 +614,7 @@ function stopConsoleCapture() {
   consoleIntercepted = false;
 }
 
-After(function () {
+After(() => {
   stopConsoleCapture();
 });
 
@@ -638,7 +638,7 @@ When(
   }
 );
 
-Then("console output should contain no AgentX logs", function () {
+Then("console output should contain no AgentX logs", () => {
   stopConsoleCapture();
 
   // Filter for AgentX runtime log patterns (INFO/DEBUG/WARN/ERROR with component names)
@@ -655,7 +655,7 @@ Then("console output should contain no AgentX logs", function () {
   );
 });
 
-Then("console output should contain {string}", function (expected: string) {
+Then("console output should contain {string}", (expected: string) => {
   stopConsoleCapture();
 
   const hasMatch = capturedLogs.some((line) => line.includes(expected));

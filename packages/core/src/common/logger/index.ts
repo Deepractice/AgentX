@@ -16,11 +16,11 @@
  * ```
  */
 
-export type { Logger, LoggerFactory, LogContext, LogLevel } from "./types";
 export { ConsoleLogger, type ConsoleLoggerOptions } from "./ConsoleLogger";
 export {
-  LoggerFactoryImpl,
-  type LoggerFactoryConfig,
-  setLoggerFactory,
   createLogger,
+  type LoggerFactoryConfig,
+  LoggerFactoryImpl,
+  setLoggerFactory,
 } from "./LoggerFactoryImpl";
+export type { LogContext, Logger, LoggerFactory, LogLevel } from "./types";

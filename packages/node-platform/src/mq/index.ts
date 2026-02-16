@@ -26,5 +26,5 @@
  * ```
  */
 
-export { SqliteMessageQueue } from "./SqliteMessageQueue";
 export { OffsetGenerator } from "./OffsetGenerator";
+export { SqliteMessageQueue } from "./SqliteMessageQueue";

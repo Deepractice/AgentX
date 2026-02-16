@@ -124,13 +124,8 @@ export interface ImageListItem extends ImageRecord {
 /**
  * Base interface for Command request events
  */
-interface BaseCommandRequest<T extends string, D = unknown> extends SystemEvent<
-  T,
-  D,
-  "command",
-  "request",
-  "request"
-> {}
+interface BaseCommandRequest<T extends string, D = unknown>
+  extends SystemEvent<T, D, "command", "request", "request"> {}
 
 /**
  * Base interface for Command response events
@@ -139,10 +134,8 @@ interface BaseCommandRequest<T extends string, D = unknown> extends SystemEvent<
  * - Consistent structure (requestId, error)
  * - Automatic client-side handling (__subscriptions, etc.)
  */
-interface BaseCommandResponse<
-  T extends string,
-  D extends AgentXResponse = AgentXResponse,
-> extends SystemEvent<T, D, "command", "response", "result"> {}
+interface BaseCommandResponse<T extends string, D extends AgentXResponse = AgentXResponse>
+  extends SystemEvent<T, D, "command", "response", "result"> {}
 
 // ============================================================================
 // Container Commands
@@ -151,65 +144,71 @@ interface BaseCommandResponse<
 /**
  * Request to create a container
  */
-export interface ContainerCreateRequest extends BaseCommandRequest<
-  "container_create_request",
-  {
-    requestId: string;
-    containerId: string;
-  }
-> {}
+export interface ContainerCreateRequest
+  extends BaseCommandRequest<
+    "container_create_request",
+    {
+      requestId: string;
+      containerId: string;
+    }
+  > {}
 
 /**
  * Response to container creation
  */
-export interface ContainerCreateResponse extends BaseCommandResponse<
-  "container_create_response",
-  AgentXResponse & {
-    containerId: string;
-  }
-> {}
+export interface ContainerCreateResponse
+  extends BaseCommandResponse<
+    "container_create_response",
+    AgentXResponse & {
+      containerId: string;
+    }
+  > {}
 
 /**
  * Request to get a container
  */
-export interface ContainerGetRequest extends BaseCommandRequest<
-  "container_get_request",
-  {
-    requestId: string;
-    containerId: string;
-  }
-> {}
+export interface ContainerGetRequest
+  extends BaseCommandRequest<
+    "container_get_request",
+    {
+      requestId: string;
+      containerId: string;
+    }
+  > {}
 
 /**
  * Response to container get
  */
-export interface ContainerGetResponse extends BaseCommandResponse<
-  "container_get_response",
-  AgentXResponse & {
-    containerId?: string;
-    exists: boolean;
-  }
-> {}
+export interface ContainerGetResponse
+  extends BaseCommandResponse<
+    "container_get_response",
+    AgentXResponse & {
+      containerId?: string;
+      exists: boolean;
+    }
+  > {}
 
 /**
  * Request to list containers
  */
-export interface ContainerListRequest extends BaseCommandRequest<
-  "container_list_request",
-  {
-    requestId: string;
-  }
-> {}
+export interface ContainerListRequest
+  extends BaseCommandRequest<
+    "container_list_request",
+    {
+      requestId: string;
+    }
+  > {}
 
 /**
  * Response to container list
  */
-export interface ContainerListResponse extends BaseCommandResponse<
-  "container_list_response",
-  AgentXResponse & {
-    containerIds: string[];
-  }
-> {}
+export interface ContainerListResponse
+  extends BaseCommandResponse<
+    "container_list_response",
+    AgentXResponse & {
+      containerIds: string[];
+    }
+  > {}
 
 // ============================================================================
 // Agent Commands
@@ -218,144 +217,156 @@ export interface ContainerListResponse extends BaseCommandResponse<
 /**
  * Request to get an agent
  */
-export interface AgentGetRequest extends BaseCommandRequest<
-  "agent_get_request",
-  {
-    requestId: string;
-    agentId: string;
-  }
-> {}
+export interface AgentGetRequest
+  extends BaseCommandRequest<
+    "agent_get_request",
+    {
+      requestId: string;
+      agentId: string;
+    }
+  > {}
 
 /**
  * Response to agent get
  */
-export interface AgentGetResponse extends BaseCommandResponse<
-  "agent_get_response",
-  AgentXResponse & {
-    agentId?: string;
-    containerId?: string;
-    exists: boolean;
-  }
-> {}
+export interface AgentGetResponse
+  extends BaseCommandResponse<
+    "agent_get_response",
+    AgentXResponse & {
+      agentId?: string;
+      containerId?: string;
+      exists: boolean;
+    }
+  > {}
 
 /**
  * Request to list agents
  */
-export interface AgentListRequest extends BaseCommandRequest<
-  "agent_list_request",
-  {
-    requestId: string;
-    containerId: string;
-  }
-> {}
+export interface AgentListRequest
+  extends BaseCommandRequest<
+    "agent_list_request",
+    {
+      requestId: string;
+      containerId: string;
+    }
+  > {}
 
 /**
  * Response to agent list
  */
-export interface AgentListResponse extends BaseCommandResponse<
-  "agent_list_response",
-  AgentXResponse & {
-    agents: Array<{ agentId: string; containerId: string; imageId: string }>;
-  }
-> {}
+export interface AgentListResponse
+  extends BaseCommandResponse<
+    "agent_list_response",
+    AgentXResponse & {
+      agents: Array<{ agentId: string; containerId: string; imageId: string }>;
+    }
+  > {}
 
 /**
  * Request to destroy an agent
  */
-export interface AgentDestroyRequest extends BaseCommandRequest<
-  "agent_destroy_request",
-  {
-    requestId: string;
-    agentId: string;
-  }
-> {}
+export interface AgentDestroyRequest
+  extends BaseCommandRequest<
+    "agent_destroy_request",
+    {
+      requestId: string;
+      agentId: string;
+    }
+  > {}
 
 /**
  * Response to agent destroy
  */
-export interface AgentDestroyResponse extends BaseCommandResponse<
-  "agent_destroy_response",
-  AgentXResponse & {
-    agentId: string;
-    success: boolean;
-  }
-> {}
+export interface AgentDestroyResponse
+  extends BaseCommandResponse<
+    "agent_destroy_response",
+    AgentXResponse & {
+      agentId: string;
+      success: boolean;
+    }
+  > {}
 
 /**
  * Request to destroy all agents in a container
  */
-export interface AgentDestroyAllRequest extends BaseCommandRequest<
-  "agent_destroy_all_request",
-  {
-    requestId: string;
-    containerId: string;
-  }
-> {}
+export interface AgentDestroyAllRequest
+  extends BaseCommandRequest<
+    "agent_destroy_all_request",
+    {
+      requestId: string;
+      containerId: string;
+    }
+  > {}
 
 /**
  * Response to destroy all agents
  */
-export interface AgentDestroyAllResponse extends BaseCommandResponse<
-  "agent_destroy_all_response",
-  AgentXResponse & {
-    containerId: string;
-  }
-> {}
+export interface AgentDestroyAllResponse
+  extends BaseCommandResponse<
+    "agent_destroy_all_response",
+    AgentXResponse & {
+      containerId: string;
+    }
+  > {}
 
 /**
  * Request to send a message
  * Can use either imageId (preferred) or agentId
  * If using imageId and agent is not running, it will be auto-activated
  */
-export interface MessageSendRequest extends BaseCommandRequest<
-  "message_send_request",
-  {
-    requestId: string;
-    /** Image ID (preferred) - will auto-activate if offline */
-    imageId?: string;
-    /** Agent ID (legacy) - must be already running */
-    agentId?: string;
-    /** Message content (text-only or multimodal) */
-    content: string | UserContentPart[];
-  }
-> {}
+export interface MessageSendRequest
+  extends BaseCommandRequest<
+    "message_send_request",
+    {
+      requestId: string;
+      /** Image ID (preferred) - will auto-activate if offline */
+      imageId?: string;
+      /** Agent ID (legacy) - must be already running */
+      agentId?: string;
+      /** Message content (text-only or multimodal) */
+      content: string | UserContentPart[];
+    }
+  > {}
 
 /**
  * Response to message send (acknowledges message received, not completion)
  */
-export interface MessageSendResponse extends BaseCommandResponse<
-  "message_send_response",
-  AgentXResponse & {
-    imageId?: string;
-    agentId: string;
-  }
-> {}
+export interface MessageSendResponse
+  extends BaseCommandResponse<
+    "message_send_response",
+    AgentXResponse & {
+      imageId?: string;
+      agentId: string;
+    }
+  > {}
 
 /**
  * Request to interrupt an agent
  * Can use either imageId or agentId
  */
-export interface AgentInterruptRequest extends BaseCommandRequest<
-  "agent_interrupt_request",
-  {
-    requestId: string;
-    /** Image ID (preferred) */
-    imageId?: string;
-    /** Agent ID (legacy) */
-    agentId?: string;
-  }
-> {}
+export interface AgentInterruptRequest
+  extends BaseCommandRequest<
+    "agent_interrupt_request",
+    {
+      requestId: string;
+      /** Image ID (preferred) */
+      imageId?: string;
+      /** Agent ID (legacy) */
+      agentId?: string;
+    }
+  > {}
 
 /**
  * Response to agent interrupt
  */
-export interface AgentInterruptResponse extends BaseCommandResponse<
-  "agent_interrupt_response",
-  AgentXResponse & {
-    imageId?: string;
-    agentId?: string;
-  }
-> {}
+export interface AgentInterruptResponse
+  extends BaseCommandResponse<
+    "agent_interrupt_response",
+    AgentXResponse & {
+      imageId?: string;
+      agentId?: string;
+    }
+  > {}
 
 // ============================================================================
 // Image Commands
@@ -364,19 +375,20 @@ export interface AgentInterruptResponse extends BaseCommandResponse<
 /**
  * Request to create a new image (conversation)
  */
-export interface ImageCreateRequest extends BaseCommandRequest<
-  "image_create_request",
-  {
-    requestId: string;
-    containerId: string;
-    config: {
-      name?: string;
-      description?: string;
-      systemPrompt?: string;
-      customData?: Record<string, unknown>;
-    };
-  }
-> {}
+export interface ImageCreateRequest
+  extends BaseCommandRequest<
+    "image_create_request",
+    {
+      requestId: string;
+      containerId: string;
+      config: {
+        name?: string;
+        description?: string;
+        systemPrompt?: string;
+        customData?: Record<string, unknown>;
+      };
+    }
+  > {}
 
 /**
  * Response to image creation
@@ -384,179 +396,194 @@ export interface ImageCreateRequest extends BaseCommandRequest<
  * Includes __subscriptions with the new image's sessionId for auto-subscription.
  * Note: record is optional because it may be undefined on error.
  */
-export interface ImageCreateResponse extends BaseCommandResponse<
-  "image_create_response",
-  AgentXResponse & {
-    record?: ImageRecord;
-  }
-> {}
+export interface ImageCreateResponse
+  extends BaseCommandResponse<
+    "image_create_response",
+    AgentXResponse & {
+      record?: ImageRecord;
+    }
+  > {}
 
 /**
  * Request to run an image (create or reuse agent)
  */
-export interface ImageRunRequest extends BaseCommandRequest<
-  "image_run_request",
-  {
-    requestId: string;
-    imageId: string;
-  }
-> {}
+export interface ImageRunRequest
+  extends BaseCommandRequest<
+    "image_run_request",
+    {
+      requestId: string;
+      imageId: string;
+    }
+  > {}
 
 /**
  * Response to image run
  */
-export interface ImageRunResponse extends BaseCommandResponse<
-  "image_run_response",
-  AgentXResponse & {
-    imageId: string;
-    agentId: string;
-    /** true if reusing existing agent, false if newly created */
-    reused: boolean;
-  }
-> {}
+export interface ImageRunResponse
+  extends BaseCommandResponse<
+    "image_run_response",
+    AgentXResponse & {
+      imageId: string;
+      agentId: string;
+      /** true if reusing existing agent, false if newly created */
+      reused: boolean;
+    }
+  > {}
 
 /**
  * Request to stop an image (destroy agent, keep image)
  */
-export interface ImageStopRequest extends BaseCommandRequest<
-  "image_stop_request",
-  {
-    requestId: string;
-    imageId: string;
-  }
-> {}
+export interface ImageStopRequest
+  extends BaseCommandRequest<
+    "image_stop_request",
+    {
+      requestId: string;
+      imageId: string;
+    }
+  > {}
 
 /**
  * Response to image stop
  */
-export interface ImageStopResponse extends BaseCommandResponse<
-  "image_stop_response",
-  AgentXResponse & {
-    imageId: string;
-  }
-> {}
+export interface ImageStopResponse
+  extends BaseCommandResponse<
+    "image_stop_response",
+    AgentXResponse & {
+      imageId: string;
+    }
+  > {}
 
 /**
  * Request to update an image (name, description, etc.)
  */
-export interface ImageUpdateRequest extends BaseCommandRequest<
-  "image_update_request",
-  {
-    requestId: string;
-    imageId: string;
-    updates: {
-      name?: string;
-      description?: string;
-      customData?: Record<string, unknown>;
-    };
-  }
-> {}
+export interface ImageUpdateRequest
+  extends BaseCommandRequest<
+    "image_update_request",
+    {
+      requestId: string;
+      imageId: string;
+      updates: {
+        name?: string;
+        description?: string;
+        customData?: Record<string, unknown>;
+      };
+    }
+  > {}
 
 /**
  * Response to image update
  *
  * Note: record is optional because it may be undefined on error.
  */
-export interface ImageUpdateResponse extends BaseCommandResponse<
-  "image_update_response",
-  AgentXResponse & {
-    record?: ImageRecord;
-  }
-> {}
+export interface ImageUpdateResponse
+  extends BaseCommandResponse<
+    "image_update_response",
+    AgentXResponse & {
+      record?: ImageRecord;
+    }
+  > {}
 
 /**
  * Request to list all images
  */
-export interface ImageListRequest extends BaseCommandRequest<
-  "image_list_request",
-  {
-    requestId: string;
-    containerId?: string;
-  }
-> {}
+export interface ImageListRequest
+  extends BaseCommandRequest<
+    "image_list_request",
+    {
+      requestId: string;
+      containerId?: string;
+    }
+  > {}
 
 /**
  * Response to image list
  *
  * Includes __subscriptions with all images' sessionIds for auto-subscription.
  */
-export interface ImageListResponse extends BaseCommandResponse<
-  "image_list_response",
-  AgentXResponse & {
-    records: ImageListItem[];
-  }
-> {}
+export interface ImageListResponse
+  extends BaseCommandResponse<
+    "image_list_response",
+    AgentXResponse & {
+      records: ImageListItem[];
+    }
+  > {}
 
 /**
  * Request to get an image by ID
  */
-export interface ImageGetRequest extends BaseCommandRequest<
-  "image_get_request",
-  {
-    requestId: string;
-    imageId: string;
-  }
-> {}
+export interface ImageGetRequest
+  extends BaseCommandRequest<
+    "image_get_request",
+    {
+      requestId: string;
+      imageId: string;
+    }
+  > {}
 
 /**
  * Response to image get
  *
  * Includes __subscriptions with the image's sessionId for auto-subscription.
  */
-export interface ImageGetResponse extends BaseCommandResponse<
-  "image_get_response",
-  AgentXResponse & {
-    record?: ImageListItem | null;
-  }
-> {}
+export interface ImageGetResponse
+  extends BaseCommandResponse<
+    "image_get_response",
+    AgentXResponse & {
+      record?: ImageListItem | null;
+    }
+  > {}
 
 /**
  * Request to delete an image
  */
-export interface ImageDeleteRequest extends BaseCommandRequest<
-  "image_delete_request",
-  {
-    requestId: string;
-    imageId: string;
-  }
-> {}
+export interface ImageDeleteRequest
+  extends BaseCommandRequest<
+    "image_delete_request",
+    {
+      requestId: string;
+      imageId: string;
+    }
+  > {}
 
 /**
  * Response to image delete
  */
-export interface ImageDeleteResponse extends BaseCommandResponse<
-  "image_delete_response",
-  AgentXResponse & {
-    imageId: string;
-  }
-> {}
+export interface ImageDeleteResponse
+  extends BaseCommandResponse<
+    "image_delete_response",
+    AgentXResponse & {
+      imageId: string;
+    }
+  > {}
 
 /**
  * Request to get messages for an image
  */
-export interface ImageMessagesRequest extends BaseCommandRequest<
-  "image_messages_request",
-  {
-    requestId: string;
-    imageId: string;
-  }
-> {}
+export interface ImageMessagesRequest
+  extends BaseCommandRequest<
+    "image_messages_request",
+    {
+      requestId: string;
+      imageId: string;
+    }
+  > {}
 
 /**
  * Response to image messages request
  */
-export interface ImageMessagesResponse extends BaseCommandResponse<
-  "image_messages_response",
-  AgentXResponse & {
-    imageId: string;
-    messages: Array<{
-      id: string;
-      role: "user" | "assistant" | "tool_call" | "tool_result";
-      content: unknown;
-      timestamp: number;
-    }>;
-  }
-> {}
+export interface ImageMessagesResponse
+  extends BaseCommandResponse<
+    "image_messages_response",
+    AgentXResponse & {
+      imageId: string;
+      messages: Array<{
+        id: string;
+        role: "user" | "assistant" | "tool_call" | "tool_result";
+        content: unknown;
+        timestamp: number;
+      }>;
+    }
+  > {}
 
 // ============================================================================
 // Command Union Types

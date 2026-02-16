@@ -5,9 +5,9 @@
  * error handling, and cross-platform shell support.
  */
 
-import { execa } from "execa";
-import type { BashProvider, BashResult, BashOptions } from "@agentxjs/core/bash";
+import type { BashOptions, BashProvider, BashResult } from "@agentxjs/core/bash";
 import { createLogger } from "commonxjs/logger";
+import { execa } from "execa";
 
 const logger = createLogger("node-platform/NodeBashProvider");
 

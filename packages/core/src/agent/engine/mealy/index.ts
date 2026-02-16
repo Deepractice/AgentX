@@ -16,30 +16,28 @@
 
 // ===== Core Components =====
 
-// Source - Input (input adapter)
-export { type Source, type SourceDefinition } from "./Source";
-
 // Processor - Processing (pure Mealy transition function)
-export { type Processor, type ProcessorResult, type ProcessorDefinition } from "./Processor";
-
+export type { Processor, ProcessorDefinition, ProcessorResult } from "./Processor";
 // Sink - Output (output adapter)
-export { type Sink, type SinkDefinition } from "./Sink";
+export type { Sink, SinkDefinition } from "./Sink";
+// Source - Input (input adapter)
+export type { Source, SourceDefinition } from "./Source";
 
 // Store - State storage
-export { type Store, MemoryStore } from "./Store";
+export { MemoryStore, type Store } from "./Store";
 
 // ===== Mealy Runtime =====
 
-export { Mealy, createMealy, type MealyConfig, type ProcessResult } from "./Mealy";
+export { createMealy, Mealy, type MealyConfig, type ProcessResult } from "./Mealy";
 
 // ===== Combinators =====
 
 export {
-  combineProcessors,
-  combineInitialStates,
   chainProcessors,
+  combineInitialStates,
+  combineProcessors,
   filterProcessor,
+  identityProcessor,
   mapOutput,
   withLogging,
-  identityProcessor,
 } from "./combinators";

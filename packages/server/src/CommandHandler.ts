@@ -7,9 +7,9 @@
  * - EventBus is only used for stream events (notifications)
  */
 
-import type { AgentXRuntime } from "@agentxjs/core/runtime";
 import type { UserContentPart } from "@agentxjs/core/agent";
 import type { RpcMethod } from "@agentxjs/core/network";
+import type { AgentXRuntime } from "@agentxjs/core/runtime";
 import { createLogger } from "commonxjs/logger";
 
 const logger = createLogger("server/CommandHandler");

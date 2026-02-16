@@ -13,17 +13,17 @@
  * - turn_response
  */
 
-import type { Processor, ProcessorDefinition } from "../mealy";
 import type {
-  StreamEvent,
   MessageStartEvent,
   MessageStopEvent,
+  StreamEvent,
+  // Data types
+  TokenUsage,
   // Output: Turn events
   TurnRequestEvent,
   TurnResponseEvent,
-  // Data types
-  TokenUsage,
 } from "../../types";
+import type { Processor, ProcessorDefinition } from "../mealy";
 
 // ===== State Types =====
 

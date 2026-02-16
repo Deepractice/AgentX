@@ -24,13 +24,12 @@
  * ```
  */
 
+export { createImage, ImageImpl, loadImage } from "./Image";
 export type {
-  ImageMetadata,
-  ImageRecord,
-  ImageRepository,
   Image,
   ImageContext,
   ImageCreateConfig,
+  ImageMetadata,
+  ImageRecord,
+  ImageRepository,
 } from "./types";
-
-export { ImageImpl, createImage, loadImage } from "./Image";

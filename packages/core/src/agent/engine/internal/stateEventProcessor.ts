@@ -18,25 +18,25 @@
  * - tool_executing
  */
 
-import type { Processor, ProcessorDefinition } from "../mealy";
+import { createLogger } from "commonxjs/logger";
 import type {
-  // Base type
-  EngineEvent,
-  // Input: StreamEvent (from agent layer)
-  StreamEvent,
-  MessageStartEvent,
-  MessageStopEvent,
-  ToolUseStartEvent,
-  // Output: State events
-  ConversationStartEvent,
-  ConversationRespondingEvent,
   ConversationEndEvent,
   ConversationInterruptedEvent,
-  ToolPlannedEvent,
-  ToolExecutingEvent,
+  ConversationRespondingEvent,
+  // Output: State events
+  ConversationStartEvent,
+  // Base type
+  EngineEvent,
   ErrorOccurredEvent,
+  MessageStartEvent,
+  MessageStopEvent,
+  // Input: StreamEvent (from agent layer)
+  StreamEvent,
+  ToolExecutingEvent,
+  ToolPlannedEvent,
+  ToolUseStartEvent,
 } from "../../types";
-import { createLogger } from "commonxjs/logger";
+import type { Processor, ProcessorDefinition } from "../mealy";
 
 const logger = createLogger("engine/stateEventProcessor");
 
@@ -50,9 +50,7 @@ const logger = createLogger("engine/stateEventProcessor");
  *
  * Currently empty - no context needed as all information comes from events.
  */
-export interface StateEventProcessorContext {
-  // Empty - all information comes from events
-}
+export type StateEventProcessorContext = {};
 
 /**
  * Initial context factory for StateEventProcessor

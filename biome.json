@@ -1,0 +1,68 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.0/schema.json",
+  "files": {
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/build",
+      "!**/out",
+      "!**/outputs",
+      "!**/.turbo",
+      "!**/temp",
+      "!**/tmp",
+      "!**/.bun-dts-*",
+      "!**/bun.lock",
+      "!**/CHANGELOG.md",
+      "!**/storybook-static",
+      "!**/.agentx",
+      "!**/.next",
+      "!**/.claude/skills",
+      "!**/*.css"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "lineEnding": "lf"
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "trailingCommas": "es5",
+      "semicolons": "always",
+      "arrowParentheses": "always"
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "a11y": {
+        "useMediaCaption": "off"
+      },
+      "complexity": {
+        "noBannedTypes": "off",
+        "noStaticOnlyClass": "off"
+      },
+      "correctness": {
+        "noUnusedVariables": "warn",
+        "noUnusedImports": "warn",
+        "noInvalidUseBeforeDeclaration": "off",
+        "useExhaustiveDependencies": "error"
+      },
+      "style": {
+        "noNonNullAssertion": "off"
+      },
+      "suspicious": {
+        "noExplicitAny": "off",
+        "noImplicitAnyLet": "off",
+        "noControlCharactersInRegex": "off",
+        "noDocumentCookie": "off",
+        "useIterableCallbackReturn": "off"
+      }
+    }
+  }
+}

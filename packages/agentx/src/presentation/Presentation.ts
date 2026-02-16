@@ -5,11 +5,11 @@
  * Wraps AgentX client and provides presentation state management.
  */
 
+import type { BusEvent, Unsubscribe } from "@agentxjs/core/event";
 import type { AgentX } from "../types";
-import type { Unsubscribe, BusEvent } from "@agentxjs/core/event";
-import type { PresentationState, Conversation } from "./types";
+import { addUserConversation, createInitialState, presentationReducer } from "./reducer";
+import type { Conversation, PresentationState } from "./types";
 import { initialPresentationState } from "./types";
-import { presentationReducer, addUserConversation, createInitialState } from "./reducer";
 
 /**
  * Presentation update handler

@@ -24,6 +24,7 @@
  * ```
  */
 
+import type { UserMessage } from "@agentxjs/core/agent";
 import type {
   Driver,
   DriverConfig,
@@ -31,10 +32,9 @@ import type {
   DriverStreamEvent,
   StopReason,
 } from "@agentxjs/core/driver";
-import type { UserMessage } from "@agentxjs/core/agent";
 import type { SDKMessage, SDKPartialAssistantMessage } from "@anthropic-ai/claude-agent-sdk";
-import { Subject } from "rxjs";
 import { createLogger } from "commonxjs/logger";
+import { Subject } from "rxjs";
 import { buildSDKUserMessage } from "./helpers";
 import { SDKQueryLifecycle } from "./SDKQueryLifecycle";
 
@@ -291,7 +291,7 @@ export class ClaudeDriver implements Driver {
    * Ensure SDK lifecycle is initialized
    */
   private async ensureLifecycle(): Promise<void> {
-    if (this.queryLifecycle && this.queryLifecycle.initialized) {
+    if (this.queryLifecycle?.initialized) {
       return;
     }
 

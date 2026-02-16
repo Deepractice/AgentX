@@ -1,5 +1,6 @@
 "use client";
 
+import { z } from "zod";
 import {
   Agent,
   AgentContent,
@@ -9,7 +10,6 @@ import {
   AgentTool,
   AgentTools,
 } from "@/components/ai-elements/agent";
-import { z } from "zod";
 
 const webSearchTool = {
   description: "Search the web for information",

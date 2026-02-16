@@ -1,22 +1,28 @@
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
 import {
-  PlusIcon,
-  ShieldIcon,
-  TicketIcon,
-  SettingsIcon,
-  LogOutIcon,
-  UserIcon,
   BotIcon,
-  StarIcon,
   LayoutGridIcon,
+  LogOutIcon,
   MoreHorizontalIcon,
-  PinIcon,
   PencilIcon,
+  PinIcon,
+  PlusIcon,
+  SettingsIcon,
+  ShieldIcon,
+  StarIcon,
+  TicketIcon,
   Trash2Icon,
+  UserIcon,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import * as React from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -31,12 +37,6 @@ import {
   SidebarSeparator,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import type { Session, User } from "./types";
 
 interface ChatSidebarProps {

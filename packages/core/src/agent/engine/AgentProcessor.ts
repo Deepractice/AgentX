@@ -5,24 +5,24 @@
  * Composes MessageAssembler, StateMachine, and TurnTracker processors.
  */
 
-import { combineProcessors, combineInitialStates, type Processor } from "./mealy";
+import type { AgentOutput } from "../types";
 // Note: StreamEventType and MessageEventType are part of AgentOutput (from Presenter)
 // They flow through the system but AgentProcessor doesn't need to import them directly
 import {
-  messageAssemblerProcessor,
-  stateEventProcessor,
-  turnTrackerProcessor,
   createInitialMessageAssemblerState,
   createInitialStateEventProcessorContext,
   createInitialTurnTrackerState,
-  type MessageAssemblerState,
-  type StateEventProcessorContext,
-  type TurnTrackerState,
   type MessageAssemblerOutput,
+  type MessageAssemblerState,
+  messageAssemblerProcessor,
+  type StateEventProcessorContext,
   type StateEventProcessorOutput,
+  stateEventProcessor,
   type TurnTrackerOutput,
+  type TurnTrackerState,
+  turnTrackerProcessor,
 } from "./internal";
-import type { AgentOutput } from "../types";
+import { combineInitialStates, combineProcessors, type Processor } from "./mealy";
 
 /**
  * Combined state type for the full agent engine

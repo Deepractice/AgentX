@@ -24,9 +24,9 @@
  * ```
  */
 
-import type { AgentXPlatform } from "../platform/types";
 import type { UserContentPart } from "../agent/types";
 import type { BusEvent } from "../event/types";
+import type { AgentXPlatform } from "../platform/types";
 
 // Re-export AgentXPlatform for backward compatibility
 export type { AgentXPlatform } from "../platform/types";

@@ -8,22 +8,14 @@
  * To re-record a scenario, delete its fixture file.
  */
 
-import {
-  setWorldConstructor,
-  World,
-  BeforeAll,
-  AfterAll,
-  Before,
-  After,
-  type IWorldOptions,
-} from "@cucumber/cucumber";
-import type { AgentX, BaseResponse, Presentation, PresentationState } from "agentxjs";
-import type { BusEvent, Unsubscribe } from "@agentxjs/core/event";
 import type { Driver, DriverStreamEvent } from "@agentxjs/core/driver";
+import type { BusEvent, Unsubscribe } from "@agentxjs/core/event";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
-import type { AgentXServer } from "@agentxjs/server";
-import { getFixturesPath, getTempPath, ensureDir } from "@agentxjs/devtools/bdd";
 import { env } from "@agentxjs/devtools";
+import { ensureDir, getFixturesPath, getTempPath } from "@agentxjs/devtools/bdd";
+import type { AgentXServer } from "@agentxjs/server";
+import { After, AfterAll, Before, BeforeAll, setWorldConstructor, World } from "@cucumber/cucumber";
+import type { AgentX, BaseResponse, Presentation, PresentationState } from "agentxjs";
 
 // Current scenario's fixture name (set by Before hook)
 let currentFixtureName: string | null = null;
@@ -37,9 +29,9 @@ export function setCurrentFixture(name: string): void {
 // ============================================================================
 
 let testServer: AgentXServer | null = null;
-let testPort: number = 15300;
+const testPort: number = 15300;
 
-BeforeAll({ timeout: 60000 }, async function () {
+BeforeAll({ timeout: 60000 }, async () => {
   const { createServer } = await import("@agentxjs/server");
   const { createNodePlatform } = await import("@agentxjs/node-platform");
 
@@ -81,7 +73,7 @@ BeforeAll({ timeout: 60000 }, async function () {
   console.log(`[BDD] Test server started on ws://localhost:${testPort}\n`);
 });
 
-AfterAll({ timeout: 30000 }, async function () {
+AfterAll({ timeout: 30000 }, async () => {
   if (testServer) {
     await testServer.dispose();
     testServer = null;
@@ -135,10 +127,6 @@ export class AgentXWorld extends World {
   docServerPort?: number;
   docClient?: AgentX;
   lastRpcResult?: unknown;
-
-  constructor(options: IWorldOptions) {
-    super(options);
-  }
 
   static getTestServerPort(): number {
     return testPort;

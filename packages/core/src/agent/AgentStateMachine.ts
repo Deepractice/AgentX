@@ -13,15 +13,15 @@
  * - Notify state change subscribers
  */
 
+import { createLogger } from "commonxjs/logger";
 import type {
+  AgentOutput,
   AgentState,
   StateChange,
   StateChangeHandler,
-  AgentOutput,
   Unsubscribe,
 } from "./types";
 import { isStateEvent } from "./types";
-import { createLogger } from "commonxjs/logger";
 
 const logger = createLogger("agent/AgentStateMachine");
 

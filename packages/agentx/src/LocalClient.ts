@@ -5,22 +5,22 @@
  * Implements the same AgentX interface as RemoteClient.
  */
 
-import type { BusEvent, EventBus, BusEventHandler, Unsubscribe } from "@agentxjs/core/event";
+import type { BusEvent, BusEventHandler, EventBus, Unsubscribe } from "@agentxjs/core/event";
 import type { AgentXRuntime } from "@agentxjs/core/runtime";
 import { createLogger } from "commonxjs/logger";
+import { createLocalAgents } from "./namespaces/agents";
+import { createLocalContainers } from "./namespaces/containers";
+import { createLocalImages } from "./namespaces/images";
+import { createPresentations } from "./namespaces/presentations";
+import { createLocalSessions } from "./namespaces/sessions";
 import type {
+  AgentNamespace,
   AgentX,
   ContainerNamespace,
   ImageNamespace,
-  AgentNamespace,
-  SessionNamespace,
   PresentationNamespace,
+  SessionNamespace,
 } from "./types";
-import { createLocalContainers } from "./namespaces/containers";
-import { createLocalImages } from "./namespaces/images";
-import { createLocalAgents } from "./namespaces/agents";
-import { createLocalSessions } from "./namespaces/sessions";
-import { createPresentations } from "./namespaces/presentations";
 
 const logger = createLogger("agentx/LocalClient");
 

@@ -13,11 +13,11 @@
  */
 
 import type {
-  UserMessage,
   AssistantMessage,
-  ToolResultMessage,
   ErrorMessage,
   TokenUsage,
+  ToolResultMessage,
+  UserMessage,
 } from "./message";
 
 // =============================================================================
@@ -234,13 +234,9 @@ export interface ConversationStartData {
   messageId: string;
 }
 
-export interface ConversationThinkingData {
-  // Empty
-}
+export type ConversationThinkingData = {};
 
-export interface ConversationRespondingData {
-  // Empty
-}
+export type ConversationRespondingData = {};
 
 export interface ConversationEndData {
   reason: "completed" | "interrupted" | "error";

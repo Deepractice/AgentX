@@ -43,6 +43,6 @@ export class OffsetGenerator {
     const timeDiff = parseInt(aTime, 36) - parseInt(bTime, 36);
     if (timeDiff !== 0) return timeDiff;
 
-    return parseInt(aSeq) - parseInt(bSeq);
+    return parseInt(aSeq, 10) - parseInt(bSeq, 10);
   }
 }

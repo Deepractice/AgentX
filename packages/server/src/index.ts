@@ -20,6 +20,6 @@
  * ```
  */
 
+export { CommandHandler } from "./CommandHandler";
 export { createServer, type ServerConfig } from "./Server";
 export type { AgentXServer } from "./types";
-export { CommandHandler } from "./CommandHandler";

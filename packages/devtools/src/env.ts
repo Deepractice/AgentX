@@ -20,7 +20,7 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 
 // ============================================================================
 // Auto-load .env files from monorepo root

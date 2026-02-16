@@ -7,8 +7,8 @@
  * - External LoggerFactory can be injected via Runtime
  */
 
-import type { Logger, LoggerFactory, LogContext, LogLevel } from "./types";
 import { ConsoleLogger, type ConsoleLoggerOptions } from "./ConsoleLogger";
+import type { LogContext, Logger, LoggerFactory, LogLevel } from "./types";
 
 // External factory injected via Runtime
 let externalFactory: LoggerFactory | null = null;
@@ -36,22 +36,22 @@ export class LoggerFactoryImpl {
   static getLogger(nameOrClass: string | (new (...args: unknown[]) => unknown)): Logger {
     const name = typeof nameOrClass === "string" ? nameOrClass : nameOrClass.name;
 
-    if (this.loggers.has(name)) {
-      return this.loggers.get(name)!;
+    if (LoggerFactoryImpl.loggers.has(name)) {
+      return LoggerFactoryImpl.loggers.get(name)!;
     }
 
-    const lazyLogger = this.createLazyLogger(name);
-    this.loggers.set(name, lazyLogger);
+    const lazyLogger = LoggerFactoryImpl.createLazyLogger(name);
+    LoggerFactoryImpl.loggers.set(name, lazyLogger);
     return lazyLogger;
   }
 
   static configure(config: LoggerFactoryConfig): void {
-    this.config = { ...this.config, ...config };
+    LoggerFactoryImpl.config = { ...LoggerFactoryImpl.config, ...config };
   }
 
   static reset(): void {
-    this.loggers.clear();
-    this.config = { defaultLevel: "info" };
+    LoggerFactoryImpl.loggers.clear();
+    LoggerFactoryImpl.config = { defaultLevel: "info" };
     externalFactory = null;
     factoryVersion++; // Invalidate all cached real loggers
   }
@@ -63,7 +63,7 @@ export class LoggerFactoryImpl {
     const getRealLogger = (): Logger => {
       // Recreate logger if factory version changed (setLoggerFactory was called)
       if (!realLogger || loggerVersion !== factoryVersion) {
-        realLogger = this.createLogger(name);
+        realLogger = LoggerFactoryImpl.createLogger(name);
         loggerVersion = factoryVersion;
       }
       return realLogger;
@@ -71,7 +71,7 @@ export class LoggerFactoryImpl {
 
     return {
       name,
-      level: this.config.defaultLevel || "info",
+      level: LoggerFactoryImpl.config.defaultLevel || "info",
       debug: (message: string, context?: LogContext) => getRealLogger().debug(message, context),
       info: (message: string, context?: LogContext) => getRealLogger().info(message, context),
       warn: (message: string, context?: LogContext) => getRealLogger().warn(message, context),
@@ -89,13 +89,13 @@ export class LoggerFactoryImpl {
       return externalFactory.getLogger(name);
     }
 
-    if (this.config.defaultImplementation) {
-      return this.config.defaultImplementation(name);
+    if (LoggerFactoryImpl.config.defaultImplementation) {
+      return LoggerFactoryImpl.config.defaultImplementation(name);
     }
 
     return new ConsoleLogger(name, {
-      level: this.config.defaultLevel,
-      ...this.config.consoleOptions,
+      level: LoggerFactoryImpl.config.defaultLevel,
+      ...LoggerFactoryImpl.config.consoleOptions,
     });
   }
 }

@@ -4,7 +4,7 @@
  * Start and stop dev servers during test runs.
  */
 
-import { spawn, ChildProcess } from "node:child_process";
+import { type ChildProcess, spawn } from "node:child_process";
 import { waitForUrl } from "./playwright";
 
 export interface DevServerOptions {

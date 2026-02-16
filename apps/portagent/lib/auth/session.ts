@@ -2,7 +2,7 @@
  * JWT session management using jose library
  */
 
-import { SignJWT, jwtVerify, type JWTPayload } from "jose";
+import { type JWTPayload, jwtVerify, SignJWT } from "jose";
 
 export interface SessionPayload extends JWTPayload {
   userId: string;

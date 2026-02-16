@@ -4,13 +4,13 @@
  * Tests the stateless event transformer: Stream Events -> State Events
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import {
-  stateEventProcessor,
   createInitialStateEventProcessorContext,
   type StateEventProcessorContext,
   type StateEventProcessorInput,
   type StateEventProcessorOutput,
+  stateEventProcessor,
 } from "../../../engine/internal/stateEventProcessor";
 
 // Helper to create test events
@@ -67,7 +67,7 @@ describe("stateEventProcessor", () => {
     it("should emit conversation_end for end_turn stop reason", () => {
       const event = createStreamEvent("message_stop", { stopReason: "end_turn" });
 
-      const [newContext, outputs] = stateEventProcessor(context, event);
+      const [_newContext, outputs] = stateEventProcessor(context, event);
 
       expect(outputs).toHaveLength(1);
       expect(outputs[0].type).toBe("conversation_end");
@@ -106,7 +106,7 @@ describe("stateEventProcessor", () => {
     it("should emit conversation_responding event", () => {
       const event = createStreamEvent("text_delta", { text: "Hello" });
 
-      const [newContext, outputs] = stateEventProcessor(context, event);
+      const [_newContext, outputs] = stateEventProcessor(context, event);
 
       expect(outputs).toHaveLength(1);
       expect(outputs[0].type).toBe("conversation_responding");
@@ -122,7 +122,7 @@ describe("stateEventProcessor", () => {
         toolName: "search",
       });
 
-      const [newContext, outputs] = stateEventProcessor(context, event);
+      const [_newContext, outputs] = stateEventProcessor(context, event);
 
       expect(outputs).toHaveLength(2);
 
@@ -157,7 +157,7 @@ describe("stateEventProcessor", () => {
         errorCode: "rate_limit",
       });
 
-      const [newContext, outputs] = stateEventProcessor(context, event);
+      const [_newContext, outputs] = stateEventProcessor(context, event);
 
       expect(outputs).toHaveLength(1);
       expect(outputs[0].type).toBe("error_occurred");

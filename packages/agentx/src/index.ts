@@ -33,8 +33,8 @@
  * ```
  */
 
-import { RemoteClient } from "./RemoteClient";
 import { LocalClient } from "./LocalClient";
+import { RemoteClient } from "./RemoteClient";
 import type { AgentX, AgentXConfig } from "./types";
 
 /**
@@ -141,54 +141,52 @@ async function createLocalClient(config: AgentXConfig): Promise<AgentX> {
   return new LocalClient(runtime);
 }
 
-// Re-export types
-export type {
-  AgentX,
-  AgentXConfig,
-  LLMProvider,
-  MaybeAsync,
-  AgentInfo,
-  ImageRecord,
-  ContainerInfo,
-  ContainerNamespace,
-  ImageNamespace,
-  AgentNamespace,
-  SessionNamespace,
-  PresentationNamespace,
-  AgentCreateResponse,
-  AgentGetResponse,
-  AgentListResponse,
-  ImageCreateResponse,
-  ImageGetResponse,
-  ImageListResponse,
-  ContainerCreateResponse,
-  ContainerGetResponse,
-  ContainerListResponse,
-  MessageSendResponse,
-  BaseResponse,
-} from "./types";
-
 // Re-export Presentation types and classes
 export type {
+  AssistantConversation,
   Block,
+  Conversation,
+  ErrorConversation,
+  ImageBlock,
+  PresentationErrorHandler,
+  PresentationOptions,
+  PresentationState,
+  PresentationUpdateHandler,
   TextBlock,
   ToolBlock,
-  ImageBlock,
-  Conversation,
   UserConversation,
-  AssistantConversation,
-  ErrorConversation,
-  PresentationState,
-  PresentationOptions,
-  PresentationUpdateHandler,
-  PresentationErrorHandler,
 } from "./presentation";
-
 export {
-  Presentation,
-  presentationReducer,
   addUserConversation,
   createInitialState,
   initialPresentationState,
   messagesToConversations,
+  Presentation,
+  presentationReducer,
 } from "./presentation";
+// Re-export types
+export type {
+  AgentCreateResponse,
+  AgentGetResponse,
+  AgentInfo,
+  AgentListResponse,
+  AgentNamespace,
+  AgentX,
+  AgentXConfig,
+  BaseResponse,
+  ContainerCreateResponse,
+  ContainerGetResponse,
+  ContainerInfo,
+  ContainerListResponse,
+  ContainerNamespace,
+  ImageCreateResponse,
+  ImageGetResponse,
+  ImageListResponse,
+  ImageNamespace,
+  ImageRecord,
+  LLMProvider,
+  MaybeAsync,
+  MessageSendResponse,
+  PresentationNamespace,
+  SessionNamespace,
+} from "./types";

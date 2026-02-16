@@ -2,10 +2,10 @@
  * AgentX Client SDK Types
  */
 
-import type { BusEvent, EventBus, Unsubscribe, BusEventHandler } from "@agentxjs/core/event";
-import type { CreateDriver } from "@agentxjs/core/driver";
-import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type { Message } from "@agentxjs/core/agent";
+import type { CreateDriver } from "@agentxjs/core/driver";
+import type { BusEvent, BusEventHandler, EventBus, Unsubscribe } from "@agentxjs/core/event";
+import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type { Presentation, PresentationOptions } from "./presentation";
 
 // ============================================================================

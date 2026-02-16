@@ -4,11 +4,11 @@
  * Tests the recording chain: MonoDriver → AI SDK → Deepractice Relay → LLM
  */
 
-import { Given, When, Then, BeforeAll } from "@cucumber/cucumber";
 import { strict as assert } from "node:assert";
-import { env } from "../../src/env";
-import type { DriverStreamEvent } from "@agentxjs/core/driver";
 import type { UserMessage } from "@agentxjs/core/agent";
+import type { DriverStreamEvent } from "@agentxjs/core/driver";
+import { BeforeAll, Given, Then, When } from "@cucumber/cucumber";
+import { env } from "../../src/env";
 
 // ============================================================================
 // Shared state
@@ -17,9 +17,9 @@ import type { UserMessage } from "@agentxjs/core/agent";
 let events: DriverStreamEvent[] = [];
 let recordingFixture: any = null;
 
-BeforeAll(function () {
+BeforeAll(() => {
   console.log(
-    `\n[VCR BDD] API Key: ${env.apiKey ? "set (" + env.apiKey.length + " chars)" : "NOT SET"}`
+    `\n[VCR BDD] API Key: ${env.apiKey ? `set (${env.apiKey.length} chars)` : "NOT SET"}`
   );
   console.log(`[VCR BDD] Base URL: ${env.baseUrl || "NOT SET"}`);
   console.log(`[VCR BDD] Model: ${env.model}\n`);
@@ -29,13 +29,13 @@ BeforeAll(function () {
 // Scenario 1: MonoDriver direct
 // ============================================================================
 
-Given("a MonoDriver configured with Deepractice API credentials", function () {
+Given("a MonoDriver configured with Deepractice API credentials", () => {
   assert.ok(env.apiKey, "DEEPRACTICE_API_KEY is not set");
   assert.ok(env.baseUrl, "DEEPRACTICE_BASE_URL is not set");
   events = [];
 });
 
-When("I send a simple message {string}", { timeout: 60000 }, async function (text: string) {
+When("I send a simple message {string}", { timeout: 60000 }, async (text: string) => {
   const { createMonoDriver } = await import("@agentxjs/mono-driver");
 
   const driver = createMonoDriver({
@@ -73,22 +73,22 @@ When("I send a simple message {string}", { timeout: 60000 }, async function (tex
   await driver.dispose();
 });
 
-Then("the driver should emit a message_start event", function () {
+Then("the driver should emit a message_start event", () => {
   const found = events.some((e) => e.type === "message_start");
   assert.ok(found, `No message_start event. Events: [${events.map((e) => e.type).join(", ")}]`);
 });
 
-Then("the driver should emit at least one text_delta event", function () {
+Then("the driver should emit at least one text_delta event", () => {
   const found = events.some((e) => e.type === "text_delta");
   assert.ok(found, `No text_delta event. Events: [${events.map((e) => e.type).join(", ")}]`);
 });
 
-Then("the driver should emit a message_stop event", function () {
+Then("the driver should emit a message_stop event", () => {
   const found = events.some((e) => e.type === "message_stop");
   assert.ok(found, `No message_stop event. Events: [${events.map((e) => e.type).join(", ")}]`);
 });
 
-Then("there should be no error events", function () {
+Then("there should be no error events", () => {
   const errors = events.filter((e) => e.type === "error");
   assert.equal(
     errors.length,
@@ -101,7 +101,7 @@ Then("there should be no error events", function () {
 // Scenario 2: RecordingDriver
 // ============================================================================
 
-Given("a RecordingDriver wrapping a MonoDriver with Deepractice credentials", function () {
+Given("a RecordingDriver wrapping a MonoDriver with Deepractice credentials", () => {
   assert.ok(env.apiKey, "DEEPRACTICE_API_KEY is not set");
   assert.ok(env.baseUrl, "DEEPRACTICE_BASE_URL is not set");
   events = [];
@@ -110,57 +110,53 @@ Given("a RecordingDriver wrapping a MonoDriver with Deepractice credentials", fu
 
 // "When I send a simple message" is reused from Scenario 1,
 // but we need a different version that uses RecordingDriver
-When(
-  "I send a simple message {string} via recorder",
-  { timeout: 60000 },
-  async function (text: string) {
-    const { createMonoDriver } = await import("@agentxjs/mono-driver");
-    const { RecordingDriver } = await import("../../src/recorder/RecordingDriver");
+When("I send a simple message {string} via recorder", { timeout: 60000 }, async (text: string) => {
+  const { createMonoDriver } = await import("@agentxjs/mono-driver");
+  const { RecordingDriver } = await import("../../src/recorder/RecordingDriver");
 
-    const realDriver = createMonoDriver({
-      apiKey: env.apiKey!,
-      baseUrl: env.baseUrl!,
-      model: env.model,
-      provider: "anthropic",
-      systemPrompt: "You are a helpful assistant. Reply very briefly.",
-      tools: {},
-    });
+  const realDriver = createMonoDriver({
+    apiKey: env.apiKey!,
+    baseUrl: env.baseUrl!,
+    model: env.model,
+    provider: "anthropic",
+    systemPrompt: "You are a helpful assistant. Reply very briefly.",
+    tools: {},
+  });
 
-    const recorder = new RecordingDriver({
-      driver: realDriver,
-      name: "vcr-test",
-      description: "BDD test recording",
-    });
+  const recorder = new RecordingDriver({
+    driver: realDriver,
+    name: "vcr-test",
+    description: "BDD test recording",
+  });
 
-    await recorder.initialize({} as any);
+  await recorder.initialize({} as any);
 
-    const userMessage: UserMessage = {
-      role: "user",
-      subtype: "user",
-      content: text,
-      timestamp: Date.now(),
-    };
+  const userMessage: UserMessage = {
+    role: "user",
+    subtype: "user",
+    content: text,
+    timestamp: Date.now(),
+  };
 
-    events = [];
-    try {
-      for await (const event of recorder.receive(userMessage)) {
-        events.push(event);
-        console.log(
-          `  [Recorded Event] ${event.type}`,
-          event.type === "error" ? (event.data as any).message : ""
-        );
-      }
-    } catch (err) {
-      console.error("  [Recorder Error]", err);
+  events = [];
+  try {
+    for await (const event of recorder.receive(userMessage)) {
+      events.push(event);
+      console.log(
+        `  [Recorded Event] ${event.type}`,
+        event.type === "error" ? (event.data as any).message : ""
+      );
     }
-
-    recordingFixture = recorder.getFixture();
-    console.log(`  [Total recorded events] ${recordingFixture.events.length}`);
-    await recorder.dispose();
+  } catch (err) {
+    console.error("  [Recorder Error]", err);
   }
-);
 
-Then("the recording should contain a message_start event", function () {
+  recordingFixture = recorder.getFixture();
+  console.log(`  [Total recorded events] ${recordingFixture.events.length}`);
+  await recorder.dispose();
+});
+
+Then("the recording should contain a message_start event", () => {
   assert.ok(recordingFixture, "No recording fixture");
   const found = recordingFixture.events.some((e: any) => e.type === "message_start");
   assert.ok(
@@ -169,7 +165,7 @@ Then("the recording should contain a message_start event", function () {
   );
 });
 
-Then("the recording should contain at least one text_delta event", function () {
+Then("the recording should contain at least one text_delta event", () => {
   assert.ok(recordingFixture, "No recording fixture");
   const found = recordingFixture.events.some((e: any) => e.type === "text_delta");
   assert.ok(
@@ -178,7 +174,7 @@ Then("the recording should contain at least one text_delta event", function () {
   );
 });
 
-Then("the recording should contain a message_stop event", function () {
+Then("the recording should contain a message_stop event", () => {
   assert.ok(recordingFixture, "No recording fixture");
   const found = recordingFixture.events.some((e: any) => e.type === "message_stop");
   assert.ok(
@@ -187,7 +183,7 @@ Then("the recording should contain a message_stop event", function () {
   );
 });
 
-Then("the recorded fixture should be saveable to disk", function () {
+Then("the recorded fixture should be saveable to disk", () => {
   assert.ok(recordingFixture, "No recording fixture");
   // Just verify the fixture is valid JSON-serializable
   const json = JSON.stringify(recordingFixture);

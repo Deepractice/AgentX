@@ -1,14 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { ChatSidebar } from "./chat-sidebar";
-import { ChatMessages } from "./chat-messages";
-import { ChatStatusBar } from "./chat-status-bar";
-import { ChatInput } from "./chat-input";
-import { useAgentX } from "@/hooks/use-agentx";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { PresentationStateLocal } from "@/hooks/use-agentx";
-import type { Session, Message, User } from "./types";
+import { useAgentX } from "@/hooks/use-agentx";
+import { ChatInput } from "./chat-input";
+import { ChatMessages } from "./chat-messages";
+import { ChatSidebar } from "./chat-sidebar";
+import { ChatStatusBar } from "./chat-status-bar";
+import type { Message, Session, User } from "./types";
 
 interface ChatLayoutProps {
   user: User;

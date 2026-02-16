@@ -6,14 +6,14 @@
  * - Block 2: programmatic steps verify CONTRIBUTING.md accuracy against reality
  */
 
-import { Given, When, Then, Before, After } from "@cucumber/cucumber";
 import { strict as assert } from "node:assert";
-import { existsSync, readFileSync, readdirSync, statSync, mkdtempSync, rmSync } from "node:fs";
-import { resolve, dirname } from "node:path";
-import { tmpdir } from "node:os";
 import { execSync } from "node:child_process";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { agentDocTester } from "@agentxjs/devtools/bdd";
+import { After, Before, Given, Then, When } from "@cucumber/cucumber";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../..");
@@ -28,7 +28,7 @@ let docRequirements: string[] = [];
 let tempDir = "";
 let lastExitCode = 0;
 
-Before(function () {
+Before(() => {
   contributingContent = "";
   contributingPath = "";
   docRequirements = [];
@@ -75,18 +75,18 @@ function collectScripts(): Set<string> {
 // Block 1: CONTRIBUTING.md quality (doc-tested via @pending)
 // ============================================================================
 
-Given("I am a new contributor who just cloned the repo", function () {
+Given("I am a new contributor who just cloned the repo", () => {
   docRequirements.push(
     "Written for someone who just cloned the repo and knows nothing about the project"
   );
 });
 
-When("I read CONTRIBUTING.md", function () {
+When("I read CONTRIBUTING.md", () => {
   contributingPath = resolve(ROOT, "CONTRIBUTING.md");
   assert.ok(existsSync(contributingPath), "CONTRIBUTING.md not found");
 });
 
-Then("I should not need to read any other file to get started", function () {
+Then("I should not need to read any other file to get started", () => {
   docRequirements.push(
     "Self-contained: a contributor can set up and start working without reading other files"
   );
@@ -96,11 +96,11 @@ Then("I should not need to read any other file to get started", function () {
 // Block 2: CONTRIBUTING.md accuracy (programmatic verification)
 // ============================================================================
 
-Given("the CONTRIBUTING.md file", function () {
+Given("the CONTRIBUTING.md file", () => {
   readContributing();
 });
 
-Then("it should recommend {string} as the package manager", function (pm: string) {
+Then("it should recommend {string} as the package manager", (pm: string) => {
   const content = readContributing();
   assert.ok(
     content.includes(`${pm} install`) || content.includes(`${pm} build`),
@@ -110,7 +110,7 @@ Then("it should recommend {string} as the package manager", function (pm: string
 
 Then(
   "it should not mention {string} or {string} or {string} as the package manager",
-  function (pm1: string, pm2: string, pm3: string) {
+  (pm1: string, pm2: string, pm3: string) => {
     const content = readContributing();
     for (const pm of [pm1, pm2, pm3]) {
       const pattern = new RegExp(`${pm}\\s+(install|build|dev|run|test)`, "i");
@@ -122,14 +122,14 @@ Then(
   }
 );
 
-Then("the project should have a bun lock file", function () {
+Then("the project should have a bun lock file", () => {
   assert.ok(
     existsSync(resolve(ROOT, "bun.lock")) || existsSync(resolve(ROOT, "bun.lockb")),
     "No bun.lock or bun.lockb found"
   );
 });
 
-Then("these scripts mentioned should exist in package.json:", function (table: any) {
+Then("these scripts mentioned should exist in package.json:", (table: any) => {
   const allScripts = collectScripts();
   const expected = table.hashes().map((r: any) => r.script);
   const missing: string[] = [];
@@ -147,7 +147,7 @@ Then("these scripts mentioned should exist in package.json:", function (table: a
   );
 });
 
-Then("it should describe these directories that actually exist:", function (table: any) {
+Then("it should describe these directories that actually exist:", (table: any) => {
   const content = readContributing();
   for (const row of table.hashes()) {
     const dir = row.directory.replace(/\/$/, "");
@@ -163,7 +163,7 @@ Then("it should describe these directories that actually exist:", function (tabl
   }
 });
 
-Then("it should mention these environment variables:", function (table: any) {
+Then("it should mention these environment variables:", (table: any) => {
   const content = readContributing();
   const expected = table.hashes().map((r: any) => r.variable);
   const missing: string[] = [];
@@ -181,7 +181,7 @@ Then("it should mention these environment variables:", function (table: any) {
   );
 });
 
-Then("it should state Bun minimum version as {string}", function (version: string) {
+Then("it should state Bun minimum version as {string}", (version: string) => {
   const content = readContributing();
   const pattern = new RegExp(`[Bb]un[*]*\\s+${version.replace(/\./g, "\\.")}`);
   assert.ok(
@@ -190,7 +190,7 @@ Then("it should state Bun minimum version as {string}", function (version: strin
   );
 });
 
-Then("it should state Node.js minimum version as {string}", function (version: string) {
+Then("it should state Node.js minimum version as {string}", (version: string) => {
   const content = readContributing();
   const pattern = new RegExp(`[Nn]ode\\.?j?s?[*]*\\s+${version.replace(/\./g, "\\.")}`);
   assert.ok(
@@ -203,7 +203,7 @@ Then("it should state Node.js minimum version as {string}", function (version: s
 // Block 3: Bootstrap smoke test (@slow)
 // ============================================================================
 
-Given("a fresh clone of the repository in a temp directory", { timeout: 120000 }, function () {
+Given("a fresh clone of the repository in a temp directory", { timeout: 120000 }, () => {
   tempDir = mkdtempSync(resolve(tmpdir(), "agentx-smoke-"));
   // Clone committed state, then overlay uncommitted changes
   execSync(`git clone --depth 1 file://${ROOT} ${tempDir}`, { stdio: "pipe" });
@@ -218,7 +218,7 @@ Given("a fresh clone of the repository in a temp directory", { timeout: 120000 }
   );
 });
 
-When("I run {string} in the temp directory", { timeout: 300000 }, function (command: string) {
+When("I run {string} in the temp directory", { timeout: 300000 }, (command: string) => {
   // Clean env to simulate a real contributor's terminal:
   // - Remove NODE_ENV: bun auto-loads .env.local which may set NODE_ENV=development,
   //   causing Next.js build workers to prerender in dev mode and crash on React context.
@@ -241,11 +241,11 @@ When("I run {string} in the temp directory", { timeout: 300000 }, function (comm
   }
 });
 
-Then("the command should succeed", function () {
+Then("the command should succeed", () => {
   assert.strictEqual(lastExitCode, 0, `Last command failed with exit code ${lastExitCode}`);
 });
 
-Then("the temp directory is cleaned up", function () {
+Then("the temp directory is cleaned up", () => {
   if (tempDir && existsSync(tempDir)) {
     rmSync(tempDir, { recursive: true, force: true });
     tempDir = "";
@@ -256,7 +256,7 @@ Then("the temp directory is cleaned up", function () {
 // After — Run agentDocTester for @pending scenarios + cleanup temp dir
 // ============================================================================
 
-After({ timeout: 120000 }, async function () {
+After({ timeout: 120000 }, async () => {
   // Cleanup temp dir if test failed before reaching cleanup step
   if (tempDir && existsSync(tempDir)) {
     rmSync(tempDir, { recursive: true, force: true });

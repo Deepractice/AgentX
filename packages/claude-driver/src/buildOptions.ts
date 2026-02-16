@@ -4,9 +4,9 @@
  * Converts driver configuration to Claude SDK Options format.
  */
 
-import type { Options, McpServerConfig } from "@anthropic-ai/claude-agent-sdk";
-import { createLogger } from "commonxjs/logger";
 import { createRequire } from "node:module";
+import type { McpServerConfig, Options } from "@anthropic-ai/claude-agent-sdk";
+import { createLogger } from "commonxjs/logger";
 
 const logger = createLogger("claude-driver/buildOptions");
 

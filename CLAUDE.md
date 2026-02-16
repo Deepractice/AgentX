@@ -31,6 +31,8 @@ bun install && bun build        # Setup
 bun run bdd                     # Run tests
 bun run bdd:ui                  # Run UI tests
 bun run bdd:docs                # Run doc tests
+bun run check                   # Lint + format check (Biome)
+bun run check:fix               # Auto-fix lint + format
 ```
 
 ## Environment

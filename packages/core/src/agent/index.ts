@@ -30,8 +30,8 @@
 // Core API
 // ============================================================================
 
-export { createAgent } from "./createAgent";
 export { AgentStateMachine } from "./AgentStateMachine";
+export { createAgent } from "./createAgent";
 export type { AgentEngine, CreateAgentOptions } from "./types";
 
 // ============================================================================
@@ -44,63 +44,61 @@ export * from "./types";
 // Engine (Stateless)
 // ============================================================================
 
-// MealyMachine
-export { MealyMachine, createMealyMachine } from "./engine/MealyMachine";
-
 // AgentProcessor (for advanced use cases)
 export {
-  agentProcessor,
-  createInitialAgentEngineState,
   type AgentEngineState,
   type AgentProcessorInput,
   type AgentProcessorOutput,
+  agentProcessor,
+  createInitialAgentEngineState,
 } from "./engine/AgentProcessor";
-
 // Internal Processors (for advanced use cases)
 export {
-  // MessageAssembler
-  messageAssemblerProcessor,
-  messageAssemblerProcessorDef,
+  createInitialMessageAssemblerState,
+  createInitialStateEventProcessorContext,
+  createInitialTurnTrackerState,
   type MessageAssemblerInput,
   type MessageAssemblerOutput,
   type MessageAssemblerState,
+  // MessageAssembler
+  messageAssemblerProcessor,
+  messageAssemblerProcessorDef,
   type PendingContent,
-  createInitialMessageAssemblerState,
+  type PendingTurn,
+  type StateEventProcessorContext,
+  type StateEventProcessorInput,
+  type StateEventProcessorOutput,
   // StateEventProcessor
   stateEventProcessor,
   stateEventProcessorDef,
-  type StateEventProcessorInput,
-  type StateEventProcessorOutput,
-  type StateEventProcessorContext,
-  createInitialStateEventProcessorContext,
-  // TurnTracker
-  turnTrackerProcessor,
-  turnTrackerProcessorDef,
   type TurnTrackerInput,
   type TurnTrackerOutput,
   type TurnTrackerState,
-  type PendingTurn,
-  createInitialTurnTrackerState,
+  // TurnTracker
+  turnTrackerProcessor,
+  turnTrackerProcessorDef,
 } from "./engine/internal";
+// MealyMachine
+export { createMealyMachine, MealyMachine } from "./engine/MealyMachine";
 
 // Mealy Machine Core (for building custom processors)
 export {
+  chainProcessors,
+  combineInitialStates,
+  // Combinators
+  combineProcessors,
+  filterProcessor,
+  identityProcessor,
+  MemoryStore,
+  mapOutput,
+  type Processor,
+  type ProcessorDefinition,
+  type ProcessorResult,
+  type Sink,
+  type SinkDefinition,
   // Core types
   type Source,
   type SourceDefinition,
-  type Processor,
-  type ProcessorResult,
-  type ProcessorDefinition,
-  type Sink,
-  type SinkDefinition,
   type Store,
-  MemoryStore,
-  // Combinators
-  combineProcessors,
-  combineInitialStates,
-  chainProcessors,
-  filterProcessor,
-  mapOutput,
   withLogging,
-  identityProcessor,
 } from "./engine/mealy";

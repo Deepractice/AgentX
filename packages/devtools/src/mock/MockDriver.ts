@@ -22,11 +22,11 @@
  * ```
  */
 
-import type { Driver, DriverConfig, DriverState, DriverStreamEvent } from "@agentxjs/core/driver";
 import type { UserMessage } from "@agentxjs/core/agent";
-import type { Fixture, FixtureEvent, MockDriverOptions } from "../types";
-import { BUILTIN_FIXTURES } from "../../fixtures";
+import type { Driver, DriverConfig, DriverState, DriverStreamEvent } from "@agentxjs/core/driver";
 import { createLogger } from "commonxjs/logger";
+import { BUILTIN_FIXTURES } from "../../fixtures";
+import type { Fixture, FixtureEvent, MockDriverOptions } from "../types";
 
 const logger = createLogger("devtools/MockDriver");
 

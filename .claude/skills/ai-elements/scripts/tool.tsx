@@ -1,7 +1,8 @@
 "use client";
 
 import type { ToolUIPart } from "ai";
-
+import { CheckIcon, XIcon } from "lucide-react";
+import { nanoid } from "nanoid";
 import {
   Confirmation,
   ConfirmationAccepted,
@@ -18,8 +19,6 @@ import {
   ToolInput,
   ToolOutput,
 } from "@/components/ai-elements/tool";
-import { CheckIcon, XIcon } from "lucide-react";
-import { nanoid } from "nanoid";
 
 const handleReject = () => {
   // In production, call addConfirmationResponse

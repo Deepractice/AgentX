@@ -29,16 +29,15 @@
  * ```
  */
 
+export { AgentXRuntimeImpl, createAgentXRuntime } from "./AgentXRuntime";
 export type {
-  AgentLifecycle,
-  RuntimeAgent,
-  AgentXPlatform,
-  CreateAgentOptions,
   AgentEventHandler,
-  Subscription,
+  AgentLifecycle,
+  AgentXPlatform,
   AgentXRuntime,
   AgentXRuntimeConfig,
+  CreateAgentOptions,
   CreateAgentXRuntime,
+  RuntimeAgent,
+  Subscription,
 } from "./types";
-
-export { AgentXRuntimeImpl, createAgentXRuntime } from "./AgentXRuntime";

@@ -32,28 +32,26 @@
  * ```
  */
 
-// Main exports
-export {
-  ClaudeDriver,
-  createClaudeDriver,
-  type ClaudeDriverOptions,
-  type ClaudeDriverConfig,
-} from "./ClaudeDriver";
-
 // Re-export types from core for convenience
 export type {
+  CreateDriver,
   Driver,
   DriverConfig,
   DriverState,
-  CreateDriver,
   DriverStreamEvent,
   StopReason,
 } from "@agentxjs/core/driver";
-
+// Main exports
+export {
+  ClaudeDriver,
+  type ClaudeDriverConfig,
+  type ClaudeDriverOptions,
+  createClaudeDriver,
+} from "./ClaudeDriver";
+export { buildSDKContent, buildSDKUserMessage } from "./helpers";
 // Internal utilities (for advanced usage)
 export {
-  SDKQueryLifecycle,
   type SDKQueryCallbacks,
   type SDKQueryConfig,
+  SDKQueryLifecycle,
 } from "./SDKQueryLifecycle";
-export { buildSDKContent, buildSDKUserMessage } from "./helpers";

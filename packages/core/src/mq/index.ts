@@ -7,12 +7,11 @@
  * - OffsetGenerator: Utility for generating monotonic offsets
  */
 
+export { OffsetGenerator } from "./OffsetGenerator";
 export type {
-  QueueEntry,
-  QueueConfig,
-  Unsubscribe,
   MessageQueue,
   MessageQueueProvider,
+  QueueConfig,
+  QueueEntry,
+  Unsubscribe,
 } from "./types";
-
-export { OffsetGenerator } from "./OffsetGenerator";

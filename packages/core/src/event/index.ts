@@ -39,8 +39,7 @@
  * ```
  */
 
-// Type definitions from types directory
-export * from "./types";
-
 // Implementation
 export { EventBusImpl } from "./EventBus";
+// Type definitions from types directory
+export * from "./types";
