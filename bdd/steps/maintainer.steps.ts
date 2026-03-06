@@ -10,7 +10,7 @@ import { strict as assert } from "node:assert";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { Given, Then, When } from "@cucumber/cucumber";
+import { Given, Then, When } from "@deepracticex/bdd";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../..");

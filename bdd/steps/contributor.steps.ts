@@ -13,7 +13,7 @@ import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { agentDocTester } from "@agentxjs/devtools/bdd";
-import { After, Before, Given, Then, When } from "@cucumber/cucumber";
+import { After, Before, Given, Then, When } from "@deepracticex/bdd";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../..");

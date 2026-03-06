@@ -19,9 +19,7 @@
     "format:check": "biome format .",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
-    "test:bdd": "bun bdd/test-manager.ts",
-    "bdd": "bdd",
-    "bdd:docs": "bdd --profile docs",
+    "test:bdd": "bun test bdd/",
     "clean": "turbo clean && rm -rf node_modules",
     "prepare": "lefthook install || true",
     "docs": "typedoc",
@@ -60,7 +58,8 @@
     "typescript": "^5.9.3",
     "vite": "7.3.1",
     "wait-on": "^8.0.4",
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "@deepracticex/bdd": "^0.3.0"
   },
   "engines": {
     "node": ">=22.0.0",

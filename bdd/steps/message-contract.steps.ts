@@ -26,7 +26,7 @@ import {
   toVercelMessage,
   toVercelMessages,
 } from "@agentxjs/mono-driver";
-import { Given, Then, When } from "@cucumber/cucumber";
+import { Given, Then, When } from "@deepracticex/bdd";
 import type { ModelMessage } from "ai";
 import { modelMessageSchema } from "ai";
 

@@ -9,7 +9,7 @@ import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { agentDocTester } from "@agentxjs/devtools/bdd";
-import { Before, Given, Then, When } from "@cucumber/cucumber";
+import { Before, Given, Then, When } from "@deepracticex/bdd";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MONOREPO_ROOT = resolve(__dirname, "../..");
@@ -165,7 +165,7 @@ Then("the first paragraph should clearly state:", (table: any) => {
 // After — Run agentDocTester with accumulated requirements
 // ============================================================================
 
-import { After } from "@cucumber/cucumber";
+import { After } from "@deepracticex/bdd";
 
 After({ timeout: 120000 }, async () => {
   if (!currentReadme || docRequirements.length === 0) return;
