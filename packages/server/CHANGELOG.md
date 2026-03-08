@@ -1,5 +1,12 @@
 # @agentxjs/server
 
+## 2.0.3
+
+### Patch Changes
+
+- 56aa5b9: Make @agentxjs/server platform-agnostic by removing @agentxjs/node-platform dependency. ServerConfig.platform now accepts AgentXPlatform directly. Replace commonxjs/logger with @deepracticex/logger.
+  - @agentxjs/core@2.0.3
+
 ## 2.0.2
 
 ### Patch Changes

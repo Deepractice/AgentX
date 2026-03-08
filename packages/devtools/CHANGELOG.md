@@ -1,5 +1,13 @@
 # @agentxjs/devtools
 
+## 2.0.3
+
+### Patch Changes
+
+- agentxjs@2.0.3
+- @agentxjs/core@2.0.3
+- @agentxjs/claude-driver@2.0.3
+
 ## 2.0.2
 
 ### Patch Changes
