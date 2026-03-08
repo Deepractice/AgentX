@@ -55,7 +55,7 @@ export {
   wrapMessage,
 } from "./protocol";
 // RPC Client
-export type { RpcClientConfig, RpcClientState, WebSocketFactory } from "./RpcClient";
+export type { ChannelClientFactory, RpcClientConfig, RpcClientState } from "./RpcClient";
 export { RpcClient } from "./RpcClient";
 // Types
 export type {

@@ -26,11 +26,7 @@ import {
 } from "@agentxjs/core/network";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import { createAgentXRuntime } from "@agentxjs/core/runtime";
-import {
-  type DeferredPlatformConfig,
-  isDeferredPlatform,
-  WebSocketServer,
-} from "@agentxjs/node-platform";
+import { type DeferredPlatformConfig, isDeferredPlatform } from "@agentxjs/node-platform";
 import { createLogger } from "commonxjs/logger";
 import { CommandHandler } from "./CommandHandler";
 import type { AgentXServer } from "./types";
@@ -51,6 +47,8 @@ interface ConnectionState {
 export interface ServerConfig {
   /**
    * AgentX Platform (can be AgentXPlatform or DeferredPlatformConfig)
+   *
+   * Must provide `channelServer` for accepting WebSocket connections.
    */
   platform: AgentXPlatform | DeferredPlatformConfig;
 
@@ -99,12 +97,11 @@ export async function createServer(config: ServerConfig): Promise<AgentXServer> 
   // Create runtime from platform + driver
   const runtime = createAgentXRuntime(platform, config.createDriver);
 
-  // Create WebSocket server
-  const wsServer = new WebSocketServer({
-    heartbeat: true,
-    heartbeatInterval: 30000,
-    debug: config.debug,
-  });
+  // Get channel server from platform
+  const wsServer = platform.channelServer;
+  if (!wsServer) {
+    throw new Error("Platform must provide channelServer for server mode");
+  }
 
   // Create command handler (no longer needs eventBus)
   const commandHandler = new CommandHandler(runtime);

@@ -23,7 +23,8 @@ import type { BashProvider } from "../bash/types";
 import type { ContainerRepository } from "../container/types";
 import type { EventBus } from "../event/types";
 import type { ImageRepository } from "../image/types";
-import type { WebSocketFactory } from "../network/RpcClient";
+import type { ChannelClientFactory } from "../network/RpcClient";
+import type { ChannelServer } from "../network/types";
 import type { SessionRepository } from "../session/types";
 
 // ============================================================================
@@ -75,10 +76,19 @@ export interface AgentXPlatform {
   readonly bashProvider?: BashProvider;
 
   /**
-   * WebSocket factory for creating client connections
+   * Channel server for accepting client connections (server-side)
+   *
+   * Optional — only needed for server scenarios.
+   * Node.js platform provides ws-based implementation.
+   * Cloudflare platform provides DO Hibernation API implementation.
+   */
+  readonly channelServer?: ChannelServer;
+
+  /**
+   * Channel client factory for creating connections (client-side)
    *
    * Optional — browser uses native WebSocket by default.
    * Node.js platform provides ws-based implementation.
    */
-  readonly webSocketFactory?: WebSocketFactory;
+  readonly channelClient?: ChannelClientFactory;
 }
