@@ -1,18 +1,5 @@
 # @agentxjs/server
 
-## 3.0.0
-
-### Minor Changes
-
-- 87453dc: Inject channel server/client via Platform DI. Rename WebSocketFactory → ChannelClientFactory, webSocketFactory → channelClient. Server reads channelServer from Platform instead of importing WebSocketServer directly, enabling non-Node platforms (e.g. Cloudflare DO) to provide their own ChannelServer implementation.
-
-### Patch Changes
-
-- Updated dependencies [87453dc]
-  - @agentxjs/core@3.0.0
-  - @agentxjs/node-platform@3.0.0
-  - @agentxjs/mono-driver@3.0.0
-
 ## 2.0.1
 
 ### Patch Changes
