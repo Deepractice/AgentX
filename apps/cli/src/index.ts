@@ -73,11 +73,12 @@ async function getServerUrl(port: number): Promise<{ url: string; cleanup?: () =
     });
   };
 
+  const platform = await nodePlatform({
+    dataPath,
+    // logDir already configured at startup
+  }).resolve();
   const server = await createServer({
-    platform: nodePlatform({
-      dataPath,
-      // logDir already configured at startup
-    }),
+    platform,
     createDriver: wrappedCreateDriver,
     port,
     host: "127.0.0.1",
