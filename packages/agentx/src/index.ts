@@ -69,11 +69,11 @@ export async function createAgentX(config: AgentXConfig): Promise<AgentX> {
 /**
  * Resolve platform for remote mode
  *
- * In Node.js: auto-import node-platform to get webSocketFactory
+ * In Node.js: auto-import node-platform to get channelClient
  * In browser: no platform needed (native WebSocket is the default)
  */
 async function resolvePlatformForRemote(config: AgentXConfig): Promise<AgentXConfig> {
-  if (config.customPlatform?.webSocketFactory) {
+  if (config.customPlatform?.channelClient) {
     return config;
   }
 
@@ -82,14 +82,14 @@ async function resolvePlatformForRemote(config: AgentXConfig): Promise<AgentXCon
     return config;
   }
 
-  // Node.js — auto-resolve webSocketFactory from node-platform
+  // Node.js — auto-resolve channelClient from node-platform
   try {
     const { createNodeWebSocket } = await import("@agentxjs/node-platform/network");
     return {
       ...config,
       customPlatform: {
         ...config.customPlatform,
-        webSocketFactory: createNodeWebSocket,
+        channelClient: createNodeWebSocket,
       } as any,
     };
   } catch {

@@ -110,8 +110,15 @@ export async function createNodePlatform(
   // Create event bus
   const eventBus = new EventBusImpl();
 
-  // Create WebSocket factory (uses ws library for Node.js)
+  // Create channel client factory (uses ws library for Node.js)
   const { createNodeWebSocket } = await import("./network/WebSocketFactory");
+
+  // Create channel server (uses ws library for Node.js)
+  const { WebSocketServer } = await import("./network");
+  const channelServer = new WebSocketServer({
+    heartbeat: true,
+    heartbeatInterval: 30000,
+  });
 
   return {
     containerRepository: persistence.containers,
@@ -119,7 +126,8 @@ export async function createNodePlatform(
     sessionRepository: persistence.sessions,
     eventBus,
     bashProvider,
-    webSocketFactory: createNodeWebSocket,
+    channelServer,
+    channelClient: createNodeWebSocket,
   };
 }
 

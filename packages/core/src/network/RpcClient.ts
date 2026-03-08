@@ -44,12 +44,12 @@ import {
 // ============================================================================
 
 /**
- * Factory function for creating WebSocket instances.
- * Platform layer provides the implementation:
- * - Browser: native WebSocket (default)
+ * Factory for creating client-side WebSocket connections.
+ * Injected via Platform:
+ * - Browser: native WebSocket (default fallback)
  * - Node.js: ws library (via @agentxjs/node-platform)
  */
-export type WebSocketFactory = (url: string) => WebSocket;
+export type ChannelClientFactory = (url: string) => WebSocket;
 
 /**
  * RpcClient configuration
@@ -64,7 +64,7 @@ export interface RpcClientConfig {
    * Factory for creating WebSocket instances.
    * If not provided, falls back to the global WebSocket constructor.
    */
-  createWebSocket?: WebSocketFactory;
+  createWebSocket?: ChannelClientFactory;
 
   /**
    * Request timeout in milliseconds (default: 30000)
