@@ -1,5 +1,12 @@
 # @agentxjs/mono-driver
 
+## 2.0.1
+
+### Patch Changes
+
+- d63ad17: Remove MCP dependency from MonoDriver for platform-agnostic compatibility. MCP tool discovery will be handled at the Platform level (like BashProvider), not inside the Driver.
+  - @agentxjs/core@2.0.1
+
 ## 2.0.0
 
 ### Major Changes
@@ -7,6 +14,7 @@
 - 3b764d8: feat: AgentX v2.0 — architectural overhaul
 
   Major restructuring from 9 packages to 15 (7 packages + 2 apps). Key changes:
+
   - New `@agentxjs/core` package consolidating agent lifecycle, event system, runtime, and platform abstractions
   - New `@agentxjs/node-platform` for Node.js-specific implementations (persistence, MQ, network)
   - New `@agentxjs/server` for WebSocket server with platform support
