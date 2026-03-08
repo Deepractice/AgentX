@@ -1,5 +1,14 @@
 # @agentxjs/devtools
 
+## 3.0.0
+
+### Patch Changes
+
+- Updated dependencies [87453dc]
+  - @agentxjs/core@3.0.0
+  - agentxjs@3.0.0
+  - @agentxjs/claude-driver@3.0.0
+
 ## 2.0.1
 
 ### Patch Changes
