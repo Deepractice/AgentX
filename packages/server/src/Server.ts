@@ -26,8 +26,7 @@ import {
 } from "@agentxjs/core/network";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import { createAgentXRuntime } from "@agentxjs/core/runtime";
-import { type DeferredPlatformConfig, isDeferredPlatform } from "@agentxjs/node-platform";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import { CommandHandler } from "./CommandHandler";
 import type { AgentXServer } from "./types";
 
@@ -46,11 +45,9 @@ interface ConnectionState {
  */
 export interface ServerConfig {
   /**
-   * AgentX Platform (can be AgentXPlatform or DeferredPlatformConfig)
-   *
-   * Must provide `channelServer` for accepting WebSocket connections.
+   * AgentX Platform — must provide `channelServer` for accepting WebSocket connections.
    */
-  platform: AgentXPlatform | DeferredPlatformConfig;
+  platform: AgentXPlatform;
 
   /**
    * LLM Driver factory function - creates Driver per Agent
@@ -88,11 +85,7 @@ export interface ServerConfig {
  */
 export async function createServer(config: ServerConfig): Promise<AgentXServer> {
   const { wsPath = "/ws" } = config;
-
-  // Resolve deferred platform if needed
-  const platform: AgentXPlatform = isDeferredPlatform(config.platform)
-    ? await config.platform.resolve()
-    : config.platform;
+  const platform = config.platform;
 
   // Create runtime from platform + driver
   const runtime = createAgentXRuntime(platform, config.createDriver);

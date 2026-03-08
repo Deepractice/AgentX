@@ -18,7 +18,7 @@
 import type { CreateDriver } from "@agentxjs/core/driver";
 import { createMonoDriver } from "@agentxjs/mono-driver";
 import { nodePlatform } from "@agentxjs/node-platform";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import { createServer } from "../src";
 
 const logger = createLogger("server/bin");
@@ -61,11 +61,9 @@ async function main() {
   };
 
   // Create server with nodePlatform + driver
+  const platform = await nodePlatform({ dataPath, logDir }).resolve();
   const server = await createServer({
-    platform: nodePlatform({
-      dataPath,
-      logDir,
-    }),
+    platform,
     createDriver: wrappedCreateDriver,
     port,
     host,

@@ -101,8 +101,9 @@ export async function startAgentXServer(): Promise<void> {
         hasApiKey: !!initialConfig.apiKey,
       });
 
+      const platform = await nodePlatform({ dataPath }).resolve();
       const config: ServerConfig = {
-        platform: nodePlatform({ dataPath }),
+        platform,
         createDriver: (driverConfig: DriverConfig) => {
           // Read latest config from DB on each agent creation
           const llm = getLLMConfigFromDB();

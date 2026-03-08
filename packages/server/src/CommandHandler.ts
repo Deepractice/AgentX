@@ -10,7 +10,7 @@
 import type { UserContentPart } from "@agentxjs/core/agent";
 import type { RpcMethod } from "@agentxjs/core/network";
 import type { AgentXRuntime } from "@agentxjs/core/runtime";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 
 const logger = createLogger("server/CommandHandler");
 
