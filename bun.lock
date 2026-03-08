@@ -41,7 +41,7 @@
     },
     "apps/cli": {
       "name": "@agentxjs/cli",
-      "version": "0.0.2",
+      "version": "0.0.4",
       "bin": {
         "agentx": "./bin/agentx",
       },
@@ -65,7 +65,7 @@
     },
     "apps/portagent": {
       "name": "@agentx/portagent",
-      "version": "0.1.1",
+      "version": "0.1.3",
       "dependencies": {
         "@agentxjs/mono-driver": "workspace:*",
         "@agentxjs/node-platform": "workspace:*",
@@ -101,7 +101,7 @@
     },
     "packages/agentx": {
       "name": "agentxjs",
-      "version": "2.0.0",
+      "version": "2.0.2",
       "dependencies": {
         "@agentxjs/core": "workspace:*",
         "@agentxjs/mono-driver": "workspace:*",
@@ -119,7 +119,7 @@
     },
     "packages/claude-driver": {
       "name": "@agentxjs/claude-driver",
-      "version": "2.0.0",
+      "version": "2.0.2",
       "dependencies": {
         "@agentxjs/core": "workspace:*",
         "@anthropic-ai/claude-agent-sdk": "^0.2.29",
@@ -132,7 +132,7 @@
     },
     "packages/core": {
       "name": "@agentxjs/core",
-      "version": "2.0.0",
+      "version": "2.0.2",
       "dependencies": {
         "commonxjs": "^0.1.1",
         "jsonrpc-lite": "2.2.0",
@@ -144,7 +144,7 @@
     },
     "packages/devtools": {
       "name": "@agentxjs/devtools",
-      "version": "2.0.0",
+      "version": "2.0.2",
       "bin": {
         "bdd": "./dist/bdd/cli.js",
       },
@@ -172,7 +172,7 @@
     },
     "packages/mono-driver": {
       "name": "@agentxjs/mono-driver",
-      "version": "2.0.0",
+      "version": "2.0.2",
       "dependencies": {
         "@agentxjs/core": "workspace:*",
         "@ai-sdk/anthropic": "^3.0.36",
@@ -191,7 +191,7 @@
     },
     "packages/node-platform": {
       "name": "@agentxjs/node-platform",
-      "version": "2.0.0",
+      "version": "2.0.2",
       "dependencies": {
         "@agentxjs/core": "workspace:*",
         "commonxjs": "^0.1.1",
@@ -207,17 +207,17 @@
     },
     "packages/server": {
       "name": "@agentxjs/server",
-      "version": "2.0.0",
+      "version": "2.0.2",
       "bin": {
         "agentx-server": "./bin/server.ts",
       },
       "dependencies": {
         "@agentxjs/core": "workspace:*",
-        "@agentxjs/mono-driver": "workspace:*",
-        "@agentxjs/node-platform": "workspace:*",
-        "commonxjs": "^0.1.1",
+        "@deepracticex/logger": "^1.2.0",
       },
       "devDependencies": {
+        "@agentxjs/mono-driver": "workspace:*",
+        "@agentxjs/node-platform": "workspace:*",
         "typescript": "^5.3.3",
       },
     },
@@ -422,6 +422,8 @@
     "@cucumber/messages": ["@cucumber/messages@27.2.0", "", { "dependencies": { "@types/uuid": "10.0.0", "class-transformer": "0.5.1", "reflect-metadata": "0.2.2", "uuid": "11.0.5" } }, "sha512-f2o/HqKHgsqzFLdq6fAhfG1FNOQPdBdyMGpKwhb7hZqg0yZtx9BVqkTyuoNk83Fcvk3wjMVfouFXXHNEk4nddA=="],
 
     "@deepracticex/bdd": ["@deepracticex/bdd@0.3.0", "", { "dependencies": { "@cucumber/cucumber-expressions": "^18.0.1", "@cucumber/gherkin": "^31.0.0", "@cucumber/messages": "^27.2.0" } }, "sha512-JNljvjAJIZknE8MBjzLfhPr/WRGe/hz6d+nYaEY7TqPVtWiXRPnN2iT8vP7DqTdDqIOw6B5NiUHh8g+V5Ffy+A=="],
+
+    "@deepracticex/logger": ["@deepracticex/logger@1.2.0", "", {}, "sha512-p9dvgAeZmb8q+lBNpcKnJWxsIa75J5j0nsscCFW4mLPW3LnaUVE5enIkVluNbI2UoKMSI/0m44+58u/EaJOGaw=="],
 
     "@dimforge/rapier2d-simd-compat": ["@dimforge/rapier2d-simd-compat@0.17.3", "", {}, "sha512-bijvwWz6NHsNj5e5i1vtd3dU2pDhthSaTUZSh14DUGGKJfw8eMnlWZsxwHBxB/a3AXVNDjL9abuHw1k9FGR+jg=="],
 
