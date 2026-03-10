@@ -1,5 +1,14 @@
 # @agentx/portagent
 
+## 0.1.5
+
+### Patch Changes
+
+- Updated dependencies [7eeeeaa]
+  - agentxjs@2.0.4
+  - @agentxjs/node-platform@2.0.4
+  - @agentxjs/mono-driver@2.0.4
+
 ## 0.1.4
 
 ### Patch Changes
