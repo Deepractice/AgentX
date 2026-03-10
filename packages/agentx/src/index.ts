@@ -1,146 +1,158 @@
 /**
  * agentxjs - AgentX Client SDK
  *
- * Unified entry point supporting local and remote modes.
+ * Fluent API supporting local, remote, and server modes.
  *
- * @example Local mode (embedded runtime)
+ * @example Local mode
  * ```typescript
  * import { createAgentX } from "agentxjs";
+ * import { node } from "@agentxjs/node-platform";
  *
- * const agentx = await createAgentX({
- *   apiKey: process.env.ANTHROPIC_API_KEY,
- *   provider: "anthropic",
- * });
- *
- * await agentx.containers.create("my-app");
- * const { record: image } = await agentx.images.create({
- *   containerId: "my-app",
- *   systemPrompt: "You are helpful",
- * });
- * const { agentId } = await agentx.agents.create({ imageId: image.imageId });
- *
- * agentx.on("text_delta", (e) => process.stdout.write(e.data.text));
- * await agentx.sessions.send(agentId, "Hello!");
+ * const ax = createAgentX(node({ createDriver }));
+ * await ax.agent.create({ imageId: "..." });
  * ```
  *
- * @example Remote mode (WebSocket client)
+ * @example Remote mode
  * ```typescript
- * import { createAgentX } from "agentxjs";
+ * const ax = createAgentX();
+ * const client = await ax.connect("ws://localhost:5200");
+ * ```
  *
- * const agentx = await createAgentX({
- *   serverUrl: "ws://localhost:5200",
- * });
+ * @example Server mode
+ * ```typescript
+ * const ax = createAgentX(node({ createDriver }));
+ * const server = await ax.serve({ port: 5200 });
  * ```
  */
 
+import type { CreateDriver } from "@agentxjs/core/driver";
+import type { AgentXPlatform } from "@agentxjs/core/runtime";
+import { createAgentXRuntime } from "@agentxjs/core/runtime";
 import { LocalClient } from "./LocalClient";
 import { RemoteClient } from "./RemoteClient";
-import type { AgentX, AgentXConfig } from "./types";
+import type { AgentX, AgentXBuilder, AgentXServer, ConnectOptions, ServeConfig } from "./types";
 
 /**
- * Create an AgentX client
- *
- * Mode detection:
- * - `serverUrl` present → **Remote mode** (WebSocket client)
- * - `apiKey` present → **Local mode** (embedded Runtime + MonoDriver)
- *
- * @param config - Client configuration
- * @returns Connected AgentX client
+ * Platform configuration for createAgentX
  */
-export async function createAgentX(config: AgentXConfig): Promise<AgentX> {
-  if (config.serverUrl) {
-    // Remote mode — resolve platform for WebSocket factory if needed
-    const resolvedConfig = await resolvePlatformForRemote(config);
-    const client = new RemoteClient(resolvedConfig);
-    await client.connect();
-    return client;
-  }
-
-  if (config.apiKey || config.createDriver || config.customPlatform) {
-    // Local mode
-    return createLocalClient(config);
-  }
-
-  throw new Error(
-    "Invalid AgentX config: provide either 'serverUrl' (remote mode) or 'apiKey' (local mode)"
-  );
+export interface PlatformConfig {
+  platform: AgentXPlatform;
+  createDriver: CreateDriver;
 }
 
 /**
- * Resolve platform for remote mode
+ * Create an AgentX builder
  *
- * In Node.js: auto-import node-platform to get channelClient
- * In browser: no platform needed (native WebSocket is the default)
+ * @param config - Platform configuration (optional). Without it, only connect() is available.
+ * @returns AgentXBuilder — local AgentX + connect() + serve()
  */
-async function resolvePlatformForRemote(config: AgentXConfig): Promise<AgentXConfig> {
-  if (config.customPlatform?.channelClient) {
-    return config;
+export function createAgentX(config?: PlatformConfig): AgentXBuilder {
+  let localClient: LocalClient | null = null;
+
+  function getLocalClient(): LocalClient {
+    if (localClient) return localClient;
+    if (!config) {
+      throw new Error(
+        "Local mode requires a platform. Pass a PlatformConfig to createAgentX(), or use connect() for remote mode."
+      );
+    }
+    const runtime = createAgentXRuntime(config.platform, config.createDriver);
+    localClient = new LocalClient(runtime);
+    return localClient;
   }
 
-  // In browser, native WebSocket works — no platform needed
-  if (typeof globalThis !== "undefined" && (globalThis as any).window?.document !== undefined) {
-    return config;
+  if (config) {
+    getLocalClient();
   }
 
-  // Node.js — auto-resolve channelClient from node-platform
-  try {
-    const { createNodeWebSocket } = await import("@agentxjs/node-platform/network");
-    return {
-      ...config,
-      customPlatform: {
-        ...config.customPlatform,
-        channelClient: createNodeWebSocket,
-      } as any,
-    };
-  } catch {
-    // node-platform not available, fall back to global WebSocket
-    return config;
-  }
-}
+  return {
+    get connected() {
+      return localClient?.connected ?? false;
+    },
 
-/**
- * Create a local client with embedded runtime
- */
-async function createLocalClient(config: AgentXConfig): Promise<AgentX> {
-  const { createAgentXRuntime } = await import("@agentxjs/core/runtime");
+    get events() {
+      return getLocalClient().events;
+    },
 
-  // Resolve platform
-  let platform;
-  if (config.customPlatform) {
-    platform = config.customPlatform;
-  } else {
-    const { createNodePlatform } = await import("@agentxjs/node-platform");
-    platform = await createNodePlatform({
-      dataPath: config.dataPath ?? ":memory:",
-      logLevel: config.logLevel ?? (config.debug ? "debug" : undefined),
-    });
-  }
+    get container() {
+      return getLocalClient().container;
+    },
 
-  // Resolve createDriver
-  let createDriver = config.createDriver;
-  if (!createDriver) {
-    const { createMonoDriver } = await import("@agentxjs/mono-driver");
-    createDriver = (driverConfig: import("@agentxjs/core/driver").DriverConfig) => {
-      const existingOptions = (driverConfig as any).options ?? {};
-      return createMonoDriver({
-        ...driverConfig,
-        apiKey: config.apiKey ?? driverConfig.apiKey,
-        baseUrl: config.baseUrl ?? driverConfig.baseUrl,
-        model: config.model ?? driverConfig.model,
-        options: {
-          ...existingOptions,
-          provider: config.provider ?? existingOptions.provider ?? "anthropic",
-        },
+    get image() {
+      return getLocalClient().image;
+    },
+
+    get agent() {
+      return getLocalClient().agent;
+    },
+
+    get session() {
+      return getLocalClient().session;
+    },
+
+    get presentation() {
+      return getLocalClient().presentation;
+    },
+
+    on(type, handler) {
+      return getLocalClient().on(type, handler);
+    },
+
+    onAny(handler) {
+      return getLocalClient().onAny(handler);
+    },
+
+    subscribe(sessionId) {
+      getLocalClient().subscribe(sessionId);
+    },
+
+    async disconnect() {
+      await localClient?.disconnect();
+    },
+
+    async dispose() {
+      await localClient?.dispose();
+      localClient = null;
+    },
+
+    async connect(serverUrl: string, options?: ConnectOptions): Promise<AgentX> {
+      const remoteClient = new RemoteClient({
+        serverUrl,
+        headers: options?.headers as Record<string, string> | undefined,
+        context: options?.context,
+        timeout: options?.timeout,
+        autoReconnect: options?.autoReconnect,
+        customPlatform: config?.platform,
       });
-    };
-  }
+      await remoteClient.connect();
+      return remoteClient;
+    },
 
-  // Create runtime
-  const runtime = createAgentXRuntime(platform, createDriver);
+    async serve(serveConfig?: ServeConfig): Promise<AgentXServer> {
+      if (!config) {
+        throw new Error("serve() requires a platform. Pass a PlatformConfig to createAgentX().");
+      }
+      if (!config.platform.channelServer) {
+        throw new Error(
+          "serve() requires platform.channelServer. Ensure your platform supports server mode."
+        );
+      }
 
-  return new LocalClient(runtime);
+      const { createServer } = await import("./server");
+      return createServer({
+        platform: config.platform,
+        createDriver: config.createDriver,
+        port: serveConfig?.port,
+        host: serveConfig?.host,
+        server: serveConfig?.server as any,
+        wsPath: serveConfig?.wsPath,
+      });
+    },
+  };
 }
 
+// Re-export server
+export { CommandHandler } from "./CommandHandler";
 // Re-export Presentation types and classes
 export type {
   AssistantConversation,
@@ -164,6 +176,7 @@ export {
   Presentation,
   presentationReducer,
 } from "./presentation";
+export { createServer, type ServerConfig } from "./server";
 // Re-export types
 export type {
   AgentCreateResponse,
@@ -172,8 +185,10 @@ export type {
   AgentListResponse,
   AgentNamespace,
   AgentX,
-  AgentXConfig,
+  AgentXBuilder,
+  AgentXServer,
   BaseResponse,
+  ConnectOptions,
   ContainerCreateResponse,
   ContainerGetResponse,
   ContainerInfo,
@@ -184,9 +199,9 @@ export type {
   ImageListResponse,
   ImageNamespace,
   ImageRecord,
-  LLMProvider,
   MaybeAsync,
   MessageSendResponse,
   PresentationNamespace,
+  ServeConfig,
   SessionNamespace,
 } from "./types";

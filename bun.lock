@@ -41,7 +41,7 @@
     },
     "apps/cli": {
       "name": "@agentxjs/cli",
-      "version": "0.0.4",
+      "version": "0.0.5",
       "bin": {
         "agentx": "./bin/agentx",
       },
@@ -49,7 +49,6 @@
         "@agentxjs/core": "workspace:*",
         "@agentxjs/mono-driver": "workspace:*",
         "@agentxjs/node-platform": "workspace:*",
-        "@agentxjs/server": "workspace:*",
         "@opentui/core": "^0.1.77",
         "@opentui/solid": "^0.1.77",
         "agentxjs": "workspace:*",
@@ -65,11 +64,10 @@
     },
     "apps/portagent": {
       "name": "@agentx/portagent",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "dependencies": {
         "@agentxjs/mono-driver": "workspace:*",
         "@agentxjs/node-platform": "workspace:*",
-        "@agentxjs/server": "workspace:*",
         "@tailwindcss/typography": "0.5.19",
         "agentxjs": "workspace:*",
         "class-variance-authority": "0.7.1",
@@ -101,17 +99,15 @@
     },
     "packages/agentx": {
       "name": "agentxjs",
-      "version": "2.0.2",
+      "version": "2.0.3",
       "dependencies": {
         "@agentxjs/core": "workspace:*",
-        "@agentxjs/mono-driver": "workspace:*",
-        "@agentxjs/node-platform": "workspace:*",
+        "@deepracticex/logger": "^1.2.0",
         "reconnecting-websocket": "^4.4.0",
         "ws": "^8.18.0",
       },
       "devDependencies": {
         "@agentxjs/devtools": "workspace:*",
-        "@agentxjs/server": "workspace:*",
         "@types/ws": "^8.5.10",
         "tsx": "^4.19.0",
         "typescript": "^5.3.3",
@@ -119,7 +115,7 @@
     },
     "packages/claude-driver": {
       "name": "@agentxjs/claude-driver",
-      "version": "2.0.2",
+      "version": "2.0.3",
       "dependencies": {
         "@agentxjs/core": "workspace:*",
         "@anthropic-ai/claude-agent-sdk": "^0.2.29",
@@ -132,7 +128,7 @@
     },
     "packages/core": {
       "name": "@agentxjs/core",
-      "version": "2.0.2",
+      "version": "2.0.3",
       "dependencies": {
         "commonxjs": "^0.1.1",
         "jsonrpc-lite": "2.2.0",
@@ -144,7 +140,7 @@
     },
     "packages/devtools": {
       "name": "@agentxjs/devtools",
-      "version": "2.0.2",
+      "version": "2.0.3",
       "bin": {
         "bdd": "./dist/bdd/cli.js",
       },
@@ -172,7 +168,7 @@
     },
     "packages/mono-driver": {
       "name": "@agentxjs/mono-driver",
-      "version": "2.0.2",
+      "version": "2.0.3",
       "dependencies": {
         "@agentxjs/core": "workspace:*",
         "@ai-sdk/anthropic": "^3.0.36",
@@ -191,7 +187,7 @@
     },
     "packages/node-platform": {
       "name": "@agentxjs/node-platform",
-      "version": "2.0.2",
+      "version": "2.0.3",
       "dependencies": {
         "@agentxjs/core": "workspace:*",
         "commonxjs": "^0.1.1",
@@ -202,22 +198,6 @@
       },
       "devDependencies": {
         "@types/ws": "^8.5.10",
-        "typescript": "^5.3.3",
-      },
-    },
-    "packages/server": {
-      "name": "@agentxjs/server",
-      "version": "2.0.2",
-      "bin": {
-        "agentx-server": "./bin/server.ts",
-      },
-      "dependencies": {
-        "@agentxjs/core": "workspace:*",
-        "@deepracticex/logger": "^1.2.0",
-      },
-      "devDependencies": {
-        "@agentxjs/mono-driver": "workspace:*",
-        "@agentxjs/node-platform": "workspace:*",
         "typescript": "^5.3.3",
       },
     },
@@ -236,8 +216,6 @@
     "@agentxjs/mono-driver": ["@agentxjs/mono-driver@workspace:packages/mono-driver"],
 
     "@agentxjs/node-platform": ["@agentxjs/node-platform@workspace:packages/node-platform"],
-
-    "@agentxjs/server": ["@agentxjs/server@workspace:packages/server"],
 
     "@ai-sdk/anthropic": ["@ai-sdk/anthropic@3.0.36", "", { "dependencies": { "@ai-sdk/provider": "3.0.7", "@ai-sdk/provider-utils": "4.0.13" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-GHQccfwC0j1JltN9M47RSlBpOyHoUam0mvbYMf8zpE0UD1tzIX5sDw2m/8nRlrTz6wGuKfaDxmoC3XH7uhTrXg=="],
 

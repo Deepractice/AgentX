@@ -49,6 +49,7 @@ Given(
     const { createAgentX } = await import("agentxjs");
     const { createVcrCreateDriver } = await import("@agentxjs/devtools");
     const { createMonoDriver } = await import("@agentxjs/mono-driver");
+    const { createNodePlatform } = await import("@agentxjs/node-platform");
 
     const fixtureName = this.scenarioName;
     const fixturesDir = ensureDir(getFixturesPath("recording/journey"));
@@ -65,10 +66,10 @@ Given(
       onSaved: (name, count) => console.log(`[Journey VCR] Saved: ${name} (${count} events)`),
     });
 
-    this.localAgentX = await createAgentX({
+    const platform = await createNodePlatform({ dataPath: ".tmp" });
+    this.localAgentX = createAgentX({
+      platform,
       createDriver: vcrCreateDriver,
-      provider: provider as any,
-      dataPath: ".tmp",
     });
   }
 );
@@ -78,14 +79,14 @@ Given(
 // ============================================================================
 
 When("I create a container {string}", async function (this: AgentXWorld, containerId: string) {
-  const result = await this.localAgentX!.containers.create(containerId);
+  const result = await this.localAgentX!.container.create(containerId);
   getState(this).containerId = result.containerId;
 });
 
 When(
   "I create an image {string} in {string} with prompt {string}",
   async function (this: AgentXWorld, name: string, containerId: string, systemPrompt: string) {
-    const result = await this.localAgentX!.images.create({
+    const result = await this.localAgentX!.image.create({
       containerId,
       name,
       systemPrompt,
@@ -135,7 +136,7 @@ When(
       }
     }
 
-    const result = await this.localAgentX!.images.create({
+    const result = await this.localAgentX!.image.create({
       containerId,
       name,
       systemPrompt,
@@ -149,7 +150,7 @@ When(
 
 When("I run the image as an agent", { timeout: 30000 }, async function (this: AgentXWorld) {
   const state = getState(this);
-  const result = await this.localAgentX!.agents.create({
+  const result = await this.localAgentX!.agent.create({
     imageId: state.imageId!,
   });
   state.agentId = result.agentId;
@@ -171,7 +172,7 @@ When(
     });
     state.unsubscribes.push(unsub);
 
-    await this.localAgentX!.sessions.send(state.agentId!, message);
+    await this.localAgentX!.session.send(state.agentId!, message);
     await new Promise((r) => setTimeout(r, 200));
 
     // Extract reply text from text_delta events
@@ -211,7 +212,7 @@ When(
   { timeout: 10000 },
   async function (this: AgentXWorld) {
     const state = getState(this);
-    const presentation = await this.localAgentX!.presentations.create(state.agentId!);
+    const presentation = await this.localAgentX!.presentation.create(state.agentId!);
     state.presentation = presentation;
   }
 );
@@ -268,7 +269,7 @@ Then(
 
 When("I check the session messages", async function (this: AgentXWorld) {
   const state = getState(this);
-  const messages = await this.localAgentX!.sessions.getMessages(state.agentId!);
+  const messages = await this.localAgentX!.session.getMessages(state.agentId!);
   (state as any).sessionMessages = messages;
 });
 
@@ -444,7 +445,7 @@ Then("each tool block should have non-empty toolInput", function (this: AgentXWo
 When(
   "I create an image {string} in {string}",
   async function (this: AgentXWorld, name: string, containerId: string) {
-    const result = await this.localAgentX!.images.create({
+    const result = await this.localAgentX!.image.create({
       containerId,
       name,
     });
@@ -467,7 +468,7 @@ When(
       customData[row.key] = value;
     }
 
-    const result = await this.localAgentX!.images.create({
+    const result = await this.localAgentX!.image.create({
       containerId,
       name,
       customData,
@@ -489,7 +490,7 @@ When("I update the image customData:", async function (this: AgentXWorld, table:
     customData[row.key] = value;
   }
 
-  const result = await this.localAgentX!.images.update(state.imageId!, {
+  const result = await this.localAgentX!.image.update(state.imageId!, {
     customData,
   });
   state.imageId = result.record.imageId;
@@ -497,13 +498,13 @@ When("I update the image customData:", async function (this: AgentXWorld, table:
 
 When("I reload the image by id", async function (this: AgentXWorld) {
   const state = getState(this);
-  const result = await this.localAgentX!.images.get(state.imageId!);
+  const result = await this.localAgentX!.image.get(state.imageId!);
   assert.ok(result.record, "Image should exist after reload");
 });
 
 When("I list images in {string}", async function (this: AgentXWorld, containerId: string) {
   const state = getState(this);
-  const result = await this.localAgentX!.images.list(containerId);
+  const result = await this.localAgentX!.image.list(containerId);
   (state as any).imageList = result.records;
 });
 
@@ -511,7 +512,7 @@ Then(
   "the image customData {string} should be {string}",
   async function (this: AgentXWorld, key: string, expected: string) {
     const state = getState(this);
-    const result = await this.localAgentX!.images.get(state.imageId!);
+    const result = await this.localAgentX!.image.get(state.imageId!);
     assert.ok(result.record, "Image should exist");
     assert.ok(result.record!.customData, "Image should have customData");
     assert.equal(
@@ -524,7 +525,7 @@ Then(
 
 Then("the image should have no customData", async function (this: AgentXWorld) {
   const state = getState(this);
-  const result = await this.localAgentX!.images.get(state.imageId!);
+  const result = await this.localAgentX!.image.get(state.imageId!);
   assert.ok(result.record, "Image should exist");
   const cd = result.record!.customData;
   assert.ok(!cd || Object.keys(cd).length === 0, "Image should have no customData");
@@ -576,12 +577,12 @@ When("I destroy the agent", async function (this: AgentXWorld) {
     state.presentation = undefined;
   }
 
-  await this.localAgentX!.agents.destroy(state.agentId!);
+  await this.localAgentX!.agent.destroy(state.agentId!);
 });
 
 Then("the agent should no longer exist", async function (this: AgentXWorld) {
   const state = getState(this);
-  const result = await this.localAgentX!.agents.get(state.agentId!);
+  const result = await this.localAgentX!.agent.get(state.agentId!);
   assert.ok(!result.exists, "Agent should no longer exist");
 });
 
@@ -623,17 +624,26 @@ When(
   { timeout: 30000 },
   async function (this: AgentXWorld, logLevel: string) {
     const { createAgentX } = await import("agentxjs");
+    const { createMonoDriver } = await import("@agentxjs/mono-driver");
+    const { createNodePlatform } = await import("@agentxjs/node-platform");
 
     // Start capturing BEFORE creating AgentX so we catch all init logs
     startConsoleCapture();
 
-    this.localAgentX = await createAgentX({
-      apiKey: env.apiKey,
-      provider: "anthropic" as any,
-      model: env.model,
-      baseUrl: env.baseUrl,
-      logLevel: logLevel as any,
+    const platform = await createNodePlatform({
       dataPath: ":memory:",
+      logLevel: logLevel as any,
+    });
+    this.localAgentX = createAgentX({
+      platform,
+      createDriver: (driverConfig) =>
+        createMonoDriver({
+          ...driverConfig,
+          apiKey: env.apiKey ?? driverConfig.apiKey,
+          baseUrl: env.baseUrl ?? driverConfig.baseUrl,
+          model: env.model ?? driverConfig.model,
+          options: { ...(driverConfig as any).options, provider: "anthropic" },
+        }),
     });
   }
 );

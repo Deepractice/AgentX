@@ -13,9 +13,8 @@ import type { BusEvent, Unsubscribe } from "@agentxjs/core/event";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import { env } from "@agentxjs/devtools";
 import { ensureDir, getFixturesPath, getTempPath } from "@agentxjs/devtools/bdd";
-import type { AgentXServer } from "@agentxjs/server";
 import { After, AfterAll, Before, BeforeAll, setWorldConstructor, World } from "@cucumber/cucumber";
-import type { AgentX, BaseResponse, Presentation, PresentationState } from "agentxjs";
+import type { AgentX, AgentXServer, BaseResponse, Presentation, PresentationState } from "agentxjs";
 
 // Current scenario's fixture name (set by Before hook)
 let currentFixtureName: string | null = null;
@@ -32,7 +31,7 @@ let testServer: AgentXServer | null = null;
 const testPort: number = 15300;
 
 BeforeAll({ timeout: 60000 }, async () => {
-  const { createServer } = await import("@agentxjs/server");
+  const { createServer } = await import("agentxjs");
   const { createNodePlatform } = await import("@agentxjs/node-platform");
 
   const tempDir = getTempPath("agentx-bdd-");

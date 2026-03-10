@@ -76,30 +76,35 @@ export async function agentDocTester(
   ].join("\n");
 
   // Dynamic import to avoid circular dependency (devtools ↔ agentxjs)
-  // Use variable to prevent TypeScript DTS from resolving the module
   const moduleName = "agentxjs";
   const agentxjs: any = await import(/* @vite-ignore */ moduleName);
-  const createAgentX: (...args: any[]) => Promise<any> = agentxjs.createAgentX;
+  const { createNodePlatform } = await import("@agentxjs/node-platform");
+  const { createMonoDriver } = await import("@agentxjs/mono-driver");
 
   let agentx: any = null;
 
   try {
-    agentx = await createAgentX({
-      apiKey,
-      provider,
-      model,
-      baseUrl,
-      logLevel: "silent",
+    const platform = await createNodePlatform({ dataPath: ":memory:", logLevel: "silent" });
+    agentx = agentxjs.createAgentX({
+      platform,
+      createDriver: (driverConfig: any) =>
+        createMonoDriver({
+          ...driverConfig,
+          apiKey: apiKey ?? driverConfig.apiKey,
+          baseUrl: baseUrl ?? driverConfig.baseUrl,
+          model: model ?? driverConfig.model,
+          options: { ...driverConfig.options, provider },
+        }),
     });
 
-    await agentx.containers.create("doc-tester");
+    await agentx.container.create("doc-tester");
 
-    const { record: image } = await agentx.images.create({
+    const { record: image } = await agentx.image.create({
       containerId: "doc-tester",
       systemPrompt: SYSTEM_PROMPT,
     });
 
-    const { agentId } = await agentx.agents.create({ imageId: image.imageId });
+    const { agentId } = await agentx.agent.create({ imageId: image.imageId });
 
     // Collect response text
     let output = "";
@@ -109,7 +114,7 @@ export async function agentDocTester(
 
     // Send prompt and wait for completion
     await Promise.race([
-      agentx.sessions.send(agentId, userPrompt),
+      agentx.session.send(agentId, userPrompt),
       new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeout)),
     ]);
 
@@ -121,9 +126,9 @@ export async function agentDocTester(
   } finally {
     if (agentx) {
       try {
-        await agentx.shutdown();
+        await agentx.dispose();
       } catch {
-        // ignore shutdown errors
+        // ignore dispose errors
       }
     }
   }

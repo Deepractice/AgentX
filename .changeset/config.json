@@ -9,7 +9,6 @@
       "@agentxjs/node-platform",
       "@agentxjs/mono-driver",
       "@agentxjs/claude-driver",
-      "@agentxjs/server",
       "@agentxjs/devtools"
     ]
   ],

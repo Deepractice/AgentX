@@ -11,8 +11,10 @@ export default defineConfig({
     "@agentxjs/core",
     "@agentxjs/mono-driver",
     "@agentxjs/node-platform",
+    "@deepracticex/logger",
     "reconnecting-websocket",
     "ws",
     "commonxjs",
+    "jsonrpc-lite",
   ],
 });

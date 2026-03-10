@@ -35,10 +35,10 @@ interface ImageRecord {
 
 interface AgentXClient {
   connected: boolean;
-  containers: {
+  container: {
     create(containerId: string): Promise<{ containerId: string }>;
   };
-  images: {
+  image: {
     create(params: {
       containerId: string;
       name?: string;
@@ -58,12 +58,12 @@ interface AgentXClient {
     }>;
     delete(imageId: string): Promise<{ requestId: string }>;
   };
-  agents: {
+  agent: {
     create(params: { imageId: string }): Promise<{
       agentId: string;
     }>;
   };
-  presentations: {
+  presentation: {
     create(
       agentId: string,
       options?: {
@@ -170,10 +170,8 @@ async function createRemoteClient(wsUrl: string): Promise<AgentXClient> {
   // Use dynamic import with webpackIgnore to prevent webpack from analyzing
   // the agentxjs module tree (which includes Node.js-only dependencies)
   const mod = await import("agentxjs");
-  const client = await mod.createAgentX({
-    serverUrl: wsUrl,
-    timeout: 120000,
-  });
+  const ax = mod.createAgentX();
+  const client = await ax.connect(wsUrl, { timeout: 120000 });
   return client as unknown as AgentXClient;
 }
 
@@ -222,10 +220,10 @@ export function useAgentX({ userId }: UseAgentXOptions): UseAgentXReturn {
         setConnected(true);
 
         // Ensure container exists
-        await client.containers.create(containerId);
+        await client.container.create(containerId);
 
         // Load existing images (sessions) from server
-        const imageRes = await client.images.list(containerId);
+        const imageRes = await client.image.list(containerId);
         if (disposed) return;
 
         if (imageRes.records.length > 0) {
@@ -282,11 +280,11 @@ export function useAgentX({ userId }: UseAgentXOptions): UseAgentXReturn {
 
       try {
         // Create agent for this image (resumes existing session history)
-        const agentRes = await client.agents.create({ imageId });
+        const agentRes = await client.agent.create({ imageId });
         const agentId = agentRes.agentId;
 
         // Create presentation (loads history from session)
-        const presentation = await client.presentations.create(agentId, {
+        const presentation = await client.presentation.create(agentId, {
           onUpdate: (state) => {
             setPresentationState(state);
           },
@@ -316,7 +314,7 @@ export function useAgentX({ userId }: UseAgentXOptions): UseAgentXReturn {
 
     try {
       // Create a new image
-      const imageRes = await client.images.create({
+      const imageRes = await client.image.create({
         containerId: containerIdRef.current,
         name: "New Chat",
         systemPrompt: systemPromptRef.current,
@@ -326,11 +324,11 @@ export function useAgentX({ userId }: UseAgentXOptions): UseAgentXReturn {
       const sessionId = imageRes.record.sessionId;
 
       // Create an agent from the image
-      const agentRes = await client.agents.create({ imageId });
+      const agentRes = await client.agent.create({ imageId });
       const agentId = agentRes.agentId;
 
       // Create a Presentation for this agent
-      const presentation = await client.presentations.create(agentId, {
+      const presentation = await client.presentation.create(agentId, {
         onUpdate: (state) => {
           setPresentationState(state);
         },
@@ -392,7 +390,7 @@ export function useAgentX({ userId }: UseAgentXOptions): UseAgentXReturn {
             prev.map((s) => (s.imageId === activeSession.imageId ? { ...s, title } : s))
           );
           // Sync to AgentX
-          client?.images.update(activeSession.imageId, { name: title }).catch(() => {});
+          client?.image.update(activeSession.imageId, { name: title }).catch(() => {});
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
@@ -413,7 +411,7 @@ export function useAgentX({ userId }: UseAgentXOptions): UseAgentXReturn {
           session.presentation.dispose();
         }
 
-        await client.images.delete(imageId);
+        await client.image.delete(imageId);
 
         setSessions((prev) => prev.filter((s) => s.imageId !== imageId));
 
@@ -440,7 +438,7 @@ export function useAgentX({ userId }: UseAgentXOptions): UseAgentXReturn {
 
       const newPinned = !session.pinned;
       try {
-        await client.images.update(imageId, {
+        await client.image.update(imageId, {
           customData: { pinned: newPinned, renamed: session.renamed || false },
         });
 
@@ -472,7 +470,7 @@ export function useAgentX({ userId }: UseAgentXOptions): UseAgentXReturn {
       if (!session) return;
 
       try {
-        await client.images.update(imageId, {
+        await client.image.update(imageId, {
           name: newTitle,
           customData: { pinned: session.pinned || false, renamed: true },
         });

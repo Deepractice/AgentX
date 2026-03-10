@@ -669,7 +669,7 @@ Then("each application should use the SDK, not import core directly for runtime 
   for (const d of appDirs()) {
     const pkg = pkgJson(`apps/${d}`);
     const deps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
-    if (deps.agentxjs || deps["@agentxjs/server"]) {
+    if (deps.agentxjs) {
       // Has SDK — good
     }
     // Not all apps necessarily need agentx, so no assertion

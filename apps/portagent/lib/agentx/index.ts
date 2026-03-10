@@ -8,7 +8,7 @@
  * Architecture:
  *   Browser (agentxjs RemoteClient)
  *     -> WebSocket /ws
- *     -> @agentxjs/server (JSON-RPC 2.0)
+ *     -> agentxjs server (JSON-RPC 2.0)
  *     -> MonoDriver
  *     -> Claude API (or other LLM)
  */
@@ -18,7 +18,7 @@ import type { DriverConfig } from "@agentxjs/core/driver";
 import type { MonoDriverOptions } from "@agentxjs/mono-driver";
 import { createMonoDriver } from "@agentxjs/mono-driver";
 import { nodePlatform } from "@agentxjs/node-platform";
-import { createServer, type ServerConfig } from "@agentxjs/server";
+import { createServer, type ServerConfig } from "agentxjs";
 import { createLogger } from "commonxjs/logger";
 import { SystemConfigRepository } from "@/lib/db/repositories";
 

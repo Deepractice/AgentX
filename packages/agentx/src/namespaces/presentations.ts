@@ -14,7 +14,7 @@ import type { AgentX, PresentationNamespace } from "../types";
 export function createPresentations(agentx: AgentX): PresentationNamespace {
   return {
     async create(agentId: string, options?: PresentationOptions): Promise<Presentation> {
-      const messages = await agentx.sessions.getMessages(agentId);
+      const messages = await agentx.session.getMessages(agentId);
       const conversations = messagesToConversations(messages);
       return new Presentation(agentx, agentId, options, conversations);
     },

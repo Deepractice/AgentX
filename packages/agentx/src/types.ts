@@ -3,7 +3,6 @@
  */
 
 import type { Message } from "@agentxjs/core/agent";
-import type { CreateDriver } from "@agentxjs/core/driver";
 import type { BusEvent, BusEventHandler, EventBus, Unsubscribe } from "@agentxjs/core/event";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type { Presentation, PresentationOptions } from "./presentation";
@@ -18,105 +17,16 @@ import type { Presentation, PresentationOptions } from "./presentation";
 export type MaybeAsync<T> = T | (() => T) | (() => Promise<T>);
 
 /**
- * LLM provider identifier
+ * Internal config passed to RemoteClient
+ * @internal
  */
-export type LLMProvider = "anthropic" | "openai" | "google" | "xai" | "deepseek" | "mistral";
-
-/**
- * AgentX unified configuration
- *
- * Supports two modes:
- * - **Local mode**: `apiKey` present → embedded Runtime + MonoDriver
- * - **Remote mode**: `serverUrl` present → WebSocket client
- */
-export interface AgentXConfig {
-  // ===== Local Mode =====
-
-  /**
-   * API key for LLM provider (local mode)
-   * If present, enables local mode with embedded Runtime
-   */
-  apiKey?: string;
-
-  /**
-   * LLM provider (local mode)
-   * @default "anthropic"
-   */
-  provider?: LLMProvider;
-
-  /**
-   * Model ID (local mode)
-   */
-  model?: string;
-
-  /**
-   * Base URL for API endpoint (local mode, for proxy/private deployments)
-   */
-  baseUrl?: string;
-
-  /**
-   * Data storage path (local mode)
-   * @default ":memory:" (in-memory storage)
-   */
-  dataPath?: string;
-
-  /**
-   * Custom CreateDriver factory (local mode, advanced)
-   * If provided, overrides the default MonoDriver
-   */
-  createDriver?: CreateDriver;
-
-  /**
-   * Custom AgentXPlatform (local mode, advanced)
-   * If provided, overrides the default NodePlatform
-   */
-  customPlatform?: AgentXPlatform;
-
-  // ===== Remote Mode =====
-
-  /**
-   * WebSocket server URL (remote mode)
-   * If present, enables remote mode
-   */
-  serverUrl?: string;
-
-  /**
-   * Headers for authentication (remote mode, static or dynamic)
-   * In Node.js: sent during WebSocket handshake
-   * In browsers: sent as first auth message (WebSocket API limitation)
-   */
+export interface RemoteClientConfig {
+  serverUrl: string;
   headers?: MaybeAsync<Record<string, string>>;
-
-  /**
-   * Business context injected into all requests (remote mode)
-   * Useful for passing userId, tenantId, permissions, etc.
-   */
   context?: MaybeAsync<Record<string, unknown>>;
-
-  // ===== Common =====
-
-  /**
-   * Log level for AgentX runtime
-   * Controls verbosity of console/file logging.
-   * @default "info"
-   */
-  logLevel?: "debug" | "info" | "warn" | "error" | "silent";
-
-  /**
-   * Request timeout in milliseconds (default: 30000)
-   */
   timeout?: number;
-
-  /**
-   * Enable debug logging
-   * @deprecated Use `logLevel: "debug"` instead
-   */
-  debug?: boolean;
-
-  /**
-   * Auto reconnect on connection loss (default: true, remote mode only)
-   */
   autoReconnect?: boolean;
+  customPlatform?: AgentXPlatform;
 }
 
 // ============================================================================
@@ -375,7 +285,7 @@ export interface PresentationNamespace {
    *
    * @example
    * ```typescript
-   * const pres = agentx.presentations.create(agentId, {
+   * const pres = agentx.presentation.create(agentId, {
    *   onUpdate: (state) => renderUI(state),
    *   onError: (error) => console.error(error),
    * });
@@ -392,11 +302,11 @@ export interface PresentationNamespace {
 // ============================================================================
 
 /**
- * AgentX Client SDK
+ * AgentX Client SDK — unified interface for local, remote, and server modes
  */
 export interface AgentX {
   /**
-   * Check if connected to server
+   * Check if connected/active
    */
   readonly connected: boolean;
 
@@ -407,59 +317,96 @@ export interface AgentX {
 
   // ==================== Namespaced Operations ====================
 
-  /**
-   * Container operations
-   */
-  readonly containers: ContainerNamespace;
-
-  /**
-   * Image operations
-   */
-  readonly images: ImageNamespace;
-
-  /**
-   * Agent operations
-   */
-  readonly agents: AgentNamespace;
-
-  /**
-   * Session operations (messaging)
-   */
-  readonly sessions: SessionNamespace;
-
-  /**
-   * Presentation operations (UI integration)
-   */
-  readonly presentations: PresentationNamespace;
+  readonly container: ContainerNamespace;
+  readonly image: ImageNamespace;
+  readonly agent: AgentNamespace;
+  readonly session: SessionNamespace;
+  readonly presentation: PresentationNamespace;
 
   // ==================== Event Subscription ====================
 
-  /**
-   * Subscribe to specific event type
-   */
   on<T extends string>(type: T, handler: BusEventHandler<BusEvent & { type: T }>): Unsubscribe;
-
-  /**
-   * Subscribe to all events
-   */
   onAny(handler: BusEventHandler): Unsubscribe;
-
-  /**
-   * Subscribe to session events
-   */
   subscribe(sessionId: string): void;
 
   // ==================== Lifecycle ====================
 
-  /**
-   * Disconnect from server
-   */
   disconnect(): Promise<void>;
+  dispose(): Promise<void>;
+}
+
+// ============================================================================
+// Fluent Builder Interface
+// ============================================================================
+
+/**
+ * Options for connecting to a remote AgentX server
+ */
+export interface ConnectOptions {
+  /** Authentication headers */
+  headers?: MaybeAsync<Record<string, string>>;
+  /** Business context injected into requests */
+  context?: MaybeAsync<Record<string, unknown>>;
+  /** Request timeout in ms (default: 30000) */
+  timeout?: number;
+  /** Auto reconnect on disconnect (default: true) */
+  autoReconnect?: boolean;
+}
+
+/**
+ * Configuration for serving as an AgentX server
+ */
+export interface ServeConfig {
+  /** Port to listen on (default: 5200) */
+  port?: number;
+  /** Host to bind to (default: "0.0.0.0") */
+  host?: string;
+  /** Existing HTTP server to attach to */
+  server?: unknown;
+  /** WebSocket path when attached (default: "/ws") */
+  wsPath?: string;
+}
+
+/**
+ * Server instance returned by serve()
+ */
+export interface AgentXServer {
+  listen(port?: number, host?: string): Promise<void>;
+  close(): Promise<void>;
+  dispose(): Promise<void>;
+}
+
+/**
+ * AgentXBuilder — fluent API entry point
+ *
+ * Created by `createAgentX(platform?)`. The builder itself is an AgentX
+ * instance (local mode). Call `.connect()` to get a remote client,
+ * or `.serve()` to start a server.
+ *
+ * @example
+ * ```typescript
+ * const ax = createAgentX(node({ createDriver }))
+ *
+ * // Local use
+ * await ax.agent.create({ imageId: "..." })
+ *
+ * // Connect to remote server
+ * const client = await ax.connect("wss://...")
+ *
+ * // Serve as server
+ * const server = await ax.serve({ port: 3100 })
+ * ```
+ */
+export interface AgentXBuilder extends AgentX {
+  /**
+   * Connect to a remote AgentX server
+   */
+  connect(serverUrl: string, options?: ConnectOptions): Promise<AgentX>;
 
   /**
-   * Dispose and cleanup
+   * Start serving as an AgentX server
    */
-  dispose(): Promise<void>;
+  serve(config?: ServeConfig): Promise<AgentXServer>;
 }
 
 // ============================================================================

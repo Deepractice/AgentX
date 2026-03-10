@@ -3,11 +3,12 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   serverExternalPackages: [
-    "@agentxjs/server",
     "@agentxjs/node-platform",
     "@agentxjs/mono-driver",
     "@agentxjs/core",
+    "@deepracticex/logger",
     "commonxjs",
+    "jsonrpc-lite",
     "ws",
   ],
   turbopack: {

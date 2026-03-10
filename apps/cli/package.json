@@ -17,7 +17,6 @@
     "@opentui/solid": "^0.1.77",
     "solid-js": "^1.9.10",
     "agentxjs": "workspace:*",
-    "@agentxjs/server": "workspace:*",
     "@agentxjs/node-platform": "workspace:*",
     "@agentxjs/mono-driver": "workspace:*",
     "@agentxjs/core": "workspace:*",

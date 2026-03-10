@@ -31,21 +31,21 @@ export class LocalClient implements AgentX {
   private readonly runtime: AgentXRuntime;
   private isDisposed = false;
 
-  readonly containers: ContainerNamespace;
-  readonly images: ImageNamespace;
-  readonly agents: AgentNamespace;
-  readonly sessions: SessionNamespace;
-  readonly presentations: PresentationNamespace;
+  readonly container: ContainerNamespace;
+  readonly image: ImageNamespace;
+  readonly agent: AgentNamespace;
+  readonly session: SessionNamespace;
+  readonly presentation: PresentationNamespace;
 
   constructor(runtime: AgentXRuntime) {
     this.runtime = runtime;
     const platform = runtime.platform;
 
-    this.containers = createLocalContainers(platform);
-    this.images = createLocalImages(platform);
-    this.agents = createLocalAgents(runtime);
-    this.sessions = createLocalSessions(runtime);
-    this.presentations = createPresentations(this);
+    this.container = createLocalContainers(platform);
+    this.image = createLocalImages(platform);
+    this.agent = createLocalAgents(runtime);
+    this.session = createLocalSessions(runtime);
+    this.presentation = createPresentations(this);
 
     logger.info("LocalClient initialized");
   }

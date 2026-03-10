@@ -11,7 +11,7 @@ import { connect } from "node:net";
 import type { CreateDriver } from "@agentxjs/core/driver";
 import { createMonoDriver } from "@agentxjs/mono-driver";
 import { FileLoggerFactory, nodePlatform } from "@agentxjs/node-platform";
-import { createServer } from "@agentxjs/server";
+import { createServer } from "agentxjs";
 import { createLogger, setLoggerFactory } from "commonxjs/logger";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";

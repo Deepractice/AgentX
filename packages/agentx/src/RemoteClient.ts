@@ -17,10 +17,10 @@ import { createRemoteSessions } from "./namespaces/sessions";
 import type {
   AgentNamespace,
   AgentX,
-  AgentXConfig,
   ContainerNamespace,
   ImageNamespace,
   PresentationNamespace,
+  RemoteClientConfig,
   SessionNamespace,
 } from "./types";
 
@@ -30,23 +30,23 @@ const logger = createLogger("agentx/RemoteClient");
  * RemoteClient implementation using JSON-RPC 2.0
  */
 export class RemoteClient implements AgentX {
-  private readonly config: AgentXConfig;
+  private readonly config: RemoteClientConfig;
   private readonly eventBus: EventBus;
   private readonly rpcClient: RpcClient;
 
-  readonly containers: ContainerNamespace;
-  readonly images: ImageNamespace;
-  readonly agents: AgentNamespace;
-  readonly sessions: SessionNamespace;
-  readonly presentations: PresentationNamespace;
+  readonly container: ContainerNamespace;
+  readonly image: ImageNamespace;
+  readonly agent: AgentNamespace;
+  readonly session: SessionNamespace;
+  readonly presentation: PresentationNamespace;
 
-  constructor(config: AgentXConfig) {
+  constructor(config: RemoteClientConfig) {
     this.config = config;
     this.eventBus = new EventBusImpl();
 
     // Create RPC client (WebSocket factory from platform if available)
     this.rpcClient = new RpcClient({
-      url: config.serverUrl!,
+      url: config.serverUrl,
       createWebSocket: config.customPlatform?.channelClient,
       timeout: config.timeout ?? 30000,
       autoReconnect: config.autoReconnect ?? true,
@@ -61,11 +61,11 @@ export class RemoteClient implements AgentX {
     });
 
     // Assemble namespaces
-    this.containers = createRemoteContainers(this.rpcClient);
-    this.images = createRemoteImages(this.rpcClient, (sessionId) => this.subscribe(sessionId));
-    this.agents = createRemoteAgents(this.rpcClient);
-    this.sessions = createRemoteSessions(this.rpcClient);
-    this.presentations = createPresentations(this);
+    this.container = createRemoteContainers(this.rpcClient);
+    this.image = createRemoteImages(this.rpcClient, (sessionId) => this.subscribe(sessionId));
+    this.agent = createRemoteAgents(this.rpcClient);
+    this.session = createRemoteSessions(this.rpcClient);
+    this.presentation = createPresentations(this);
   }
 
   // ==================== Properties ====================
