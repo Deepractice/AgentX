@@ -1,5 +1,15 @@
 # @agentxjs/cli
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies [7eeeeaa]
+  - agentxjs@3.0.0
+  - @agentxjs/core@3.0.0
+  - @agentxjs/node-platform@3.0.0
+  - @agentxjs/mono-driver@3.0.0
+
 ## 0.0.5
 
 ### Patch Changes
