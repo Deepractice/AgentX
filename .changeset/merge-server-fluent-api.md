@@ -1,10 +1,10 @@
 ---
-"agentxjs": minor
-"@agentxjs/core": minor
-"@agentxjs/node-platform": minor
-"@agentxjs/mono-driver": minor
-"@agentxjs/claude-driver": minor
-"@agentxjs/devtools": minor
+"agentxjs": patch
+"@agentxjs/core": patch
+"@agentxjs/node-platform": patch
+"@agentxjs/mono-driver": patch
+"@agentxjs/claude-driver": patch
+"@agentxjs/devtools": patch
 ---
 
 Fluent builder API and server merge
