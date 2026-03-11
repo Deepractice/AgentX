@@ -27,7 +27,7 @@ export function DialogSessionList() {
     if (!agentx.client) return;
 
     try {
-      const result = await agentx.client.images.list();
+      const result = await agentx.client.image.list();
       setSessions(result.records);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

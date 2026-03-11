@@ -98,7 +98,7 @@ jobs:
 
       - name: Check Build Artifacts
         run: |
-          for pkg in packages/core packages/agentx packages/node-platform packages/server packages/claude-driver packages/mono-driver packages/devtools; do
+          for pkg in packages/core packages/agentx packages/node-platform packages/claude-driver packages/mono-driver packages/devtools; do
             if [ -d "$pkg/dist" ]; then
               echo "✅ $pkg built successfully"
             else

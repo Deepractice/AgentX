@@ -29,8 +29,8 @@ export function AgentXProvider(props: ParentProps<{ serverUrl: string }>) {
   async function connect() {
     try {
       setError(null);
-      const agentx = await createAgentX({
-        serverUrl: props.serverUrl,
+      const builder = createAgentX();
+      const agentx = await builder.connect(props.serverUrl, {
         autoReconnect: true,
       });
       setClient(agentx);

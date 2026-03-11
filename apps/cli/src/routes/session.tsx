@@ -40,8 +40,10 @@ export function SessionView(props: SessionViewProps) {
     try {
       // Get image by session ID
       logger.info("Fetching images...");
-      const images = await agentx.client.images.list();
-      const image = images.records.find((r) => r.sessionId === props.sessionId);
+      const images = await agentx.client.image.list();
+      const image = images.records.find(
+        (r: { sessionId: string }) => r.sessionId === props.sessionId
+      );
 
       if (!image) {
         logger.error("Session not found", { sessionId: props.sessionId });
@@ -52,7 +54,7 @@ export function SessionView(props: SessionViewProps) {
 
       // Create agent
       logger.info("Creating agent...", { imageId: image.imageId });
-      const result = await agentx.client.agents.create({ imageId: image.imageId });
+      const result = await agentx.client.agent.create({ imageId: image.imageId });
       setAgentId(result.agentId);
       logger.info("Agent created", { agentId: result.agentId });
 
@@ -109,7 +111,7 @@ export function SessionView(props: SessionViewProps) {
 
     try {
       logger.info("Sending message to agent...");
-      await agentx.client.sessions.send(agentId()!, content);
+      await agentx.client.session.send(agentId()!, content);
       logger.info("Message sent");
     } catch (err) {
       logger.error("Failed to send message", {

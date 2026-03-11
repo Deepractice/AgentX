@@ -32,10 +32,10 @@ export function DialogNewSession() {
 
     try {
       logger.info("Creating container...");
-      await agentx.client.containers.create("default");
+      await agentx.client.container.create("default");
 
       logger.info("Creating image...");
-      const result = await agentx.client.images.create({
+      const result = await agentx.client.image.create({
         containerId: "default",
         name: `Chat ${new Date().toLocaleString()}`,
         systemPrompt: "You are a helpful assistant.",
