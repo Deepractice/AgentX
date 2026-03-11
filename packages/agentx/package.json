@@ -26,13 +26,10 @@
   },
   "dependencies": {
     "@agentxjs/core": "workspace:*",
-    "@deepracticex/logger": "^1.2.0",
-    "reconnecting-websocket": "^4.4.0",
-    "ws": "^8.18.0"
+    "@deepracticex/logger": "^1.2.0"
   },
   "devDependencies": {
     "@agentxjs/devtools": "workspace:*",
-    "@types/ws": "^8.5.10",
     "tsx": "^4.19.0",
     "typescript": "^5.3.3"
   },

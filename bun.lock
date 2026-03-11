@@ -41,7 +41,7 @@
     },
     "apps/cli": {
       "name": "@agentxjs/cli",
-      "version": "0.0.5",
+      "version": "0.0.7",
       "bin": {
         "agentx": "./bin/agentx",
       },
@@ -64,7 +64,7 @@
     },
     "apps/portagent": {
       "name": "@agentx/portagent",
-      "version": "0.1.4",
+      "version": "0.1.6",
       "dependencies": {
         "@agentxjs/mono-driver": "workspace:*",
         "@agentxjs/node-platform": "workspace:*",
@@ -99,23 +99,20 @@
     },
     "packages/agentx": {
       "name": "agentxjs",
-      "version": "2.0.3",
+      "version": "2.0.5",
       "dependencies": {
         "@agentxjs/core": "workspace:*",
         "@deepracticex/logger": "^1.2.0",
-        "reconnecting-websocket": "^4.4.0",
-        "ws": "^8.18.0",
       },
       "devDependencies": {
         "@agentxjs/devtools": "workspace:*",
-        "@types/ws": "^8.5.10",
         "tsx": "^4.19.0",
         "typescript": "^5.3.3",
       },
     },
     "packages/claude-driver": {
       "name": "@agentxjs/claude-driver",
-      "version": "2.0.3",
+      "version": "2.0.5",
       "dependencies": {
         "@agentxjs/core": "workspace:*",
         "@anthropic-ai/claude-agent-sdk": "^0.2.29",
@@ -128,7 +125,7 @@
     },
     "packages/core": {
       "name": "@agentxjs/core",
-      "version": "2.0.3",
+      "version": "2.0.5",
       "dependencies": {
         "commonxjs": "^0.1.1",
         "jsonrpc-lite": "2.2.0",
@@ -140,7 +137,7 @@
     },
     "packages/devtools": {
       "name": "@agentxjs/devtools",
-      "version": "2.0.3",
+      "version": "2.0.5",
       "bin": {
         "bdd": "./dist/bdd/cli.js",
       },
@@ -151,13 +148,14 @@
       "devDependencies": {
         "@agentxjs/claude-driver": "workspace:*",
         "@agentxjs/mono-driver": "workspace:*",
+        "@agentxjs/node-platform": "workspace:*",
         "typescript": "^5.3.3",
       },
       "peerDependencies": {
-        "@agentxjs/claude-driver": "workspace:*",
+        "@agentxjs/claude-driver": ">=2.0.0",
         "@cucumber/cucumber": "^11.0.0",
         "@playwright/test": "^1.50.0",
-        "agentxjs": "workspace:*",
+        "agentxjs": ">=2.0.0",
       },
       "optionalPeers": [
         "@agentxjs/claude-driver",
@@ -168,7 +166,7 @@
     },
     "packages/mono-driver": {
       "name": "@agentxjs/mono-driver",
-      "version": "2.0.3",
+      "version": "2.0.5",
       "dependencies": {
         "@agentxjs/core": "workspace:*",
         "@ai-sdk/anthropic": "^3.0.36",
@@ -187,7 +185,7 @@
     },
     "packages/node-platform": {
       "name": "@agentxjs/node-platform",
-      "version": "2.0.3",
+      "version": "2.0.5",
       "dependencies": {
         "@agentxjs/core": "workspace:*",
         "commonxjs": "^0.1.1",
@@ -1784,8 +1782,6 @@
     "readable-web-to-node-stream": ["readable-web-to-node-stream@3.0.4", "", { "dependencies": { "readable-stream": "^4.7.0" } }, "sha512-9nX56alTf5bwXQ3ZDipHJhusu9NTQJ/CVPtb/XHAJCXihZeitfJvIRS4GqQ/mfIoOE3IelHMrpayVrosdHBuLw=="],
 
     "readdirp": ["readdirp@3.6.0", "", { "dependencies": { "picomatch": "^2.2.1" } }, "sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA=="],
-
-    "reconnecting-websocket": ["reconnecting-websocket@4.4.0", "", {}, "sha512-D2E33ceRPga0NvTDhJmphEgJ7FUYF0v4lr1ki0csq06OdlxKfugGzN0dSkxM/NfqCxYELK4KcaTOUOjTV6Dcng=="],
 
     "reflect-metadata": ["reflect-metadata@0.2.2", "", {}, "sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q=="],
 
