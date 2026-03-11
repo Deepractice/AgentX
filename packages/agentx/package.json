@@ -1,6 +1,6 @@
 {
   "name": "agentxjs",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "AgentX Client SDK - Local and remote AI agent management",
   "license": "MIT",
   "type": "module",

@@ -1,5 +1,11 @@
 # @agentxjs/mono-driver
 
+## 2.1.1
+
+### Patch Changes
+
+- @agentxjs/core@2.1.1
+
 ## 2.1.0
 
 ### Patch Changes

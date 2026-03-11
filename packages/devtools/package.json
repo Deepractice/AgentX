@@ -1,6 +1,6 @@
 {
   "name": "@agentxjs/devtools",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "description": "Development tools for AgentX - MockDriver, RecordingDriver, Fixtures",
   "type": "module",
   "main": "./dist/index.js",
