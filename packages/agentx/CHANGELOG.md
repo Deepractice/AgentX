@@ -1,5 +1,20 @@
 # agentxjs
 
+## 2.1.0
+
+### Minor Changes
+
+- ac62a6a: feat: add universal rpc() method to AgentX interface
+
+  Add ax.rpc(method, params) as a transport-agnostic JSON-RPC entry point
+  that works across all modes (Local, Remote, Builder). Enables custom
+  transport scenarios like Cloudflare Workers/DO without requiring internal APIs.
+
+### Patch Changes
+
+- Updated dependencies [ac62a6a]
+  - @agentxjs/core@2.1.0
+
 ## 2.0.5
 
 ### Patch Changes
