@@ -1,6 +1,6 @@
 ---
 "agentxjs": minor
-"@agentxjs/core": patch
+"@agentxjs/core": minor
 ---
 
 feat: add universal rpc() method to AgentX interface
