@@ -57,8 +57,8 @@
     "typescript": "^5.3.3"
   },
   "peerDependencies": {
-    "agentxjs": "workspace:*",
-    "@agentxjs/claude-driver": "workspace:*",
+    "agentxjs": ">=2.0.0",
+    "@agentxjs/claude-driver": ">=2.0.0",
     "@playwright/test": "^1.50.0",
     "@cucumber/cucumber": "^11.0.0"
   },

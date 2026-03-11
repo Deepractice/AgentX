@@ -8,8 +8,7 @@
       "@agentxjs/core",
       "@agentxjs/node-platform",
       "@agentxjs/mono-driver",
-      "@agentxjs/claude-driver",
-      "@agentxjs/devtools"
+      "@agentxjs/claude-driver"
     ]
   ],
   "linked": [],
