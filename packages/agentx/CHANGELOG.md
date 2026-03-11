@@ -1,5 +1,19 @@
 # agentxjs
 
+## 2.0.5
+
+### Patch Changes
+
+- b867690: fix: await assistant message persistence in receive() and add image.getMessages API
+
+  - runtime.receive() now awaits all pending message persists before returning,
+    ensuring assistant messages are fully written in serverless environments
+  - Added image.getMessages(imageId) to ImageNamespace for querying message
+    history by imageId without requiring a live agentId
+
+- Updated dependencies [b867690]
+  - @agentxjs/core@2.0.5
+
 ## 2.0.4
 
 ### Patch Changes
