@@ -1,5 +1,12 @@
 # @agentxjs/node-platform
 
+## 2.1.0
+
+### Patch Changes
+
+- Updated dependencies [ac62a6a]
+  - @agentxjs/core@2.1.0
+
 ## 2.0.5
 
 ### Patch Changes
