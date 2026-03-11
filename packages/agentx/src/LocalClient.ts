@@ -6,8 +6,10 @@
  */
 
 import type { BusEvent, BusEventHandler, EventBus, Unsubscribe } from "@agentxjs/core/event";
+import type { RpcMethod } from "@agentxjs/core/network";
 import type { AgentXRuntime } from "@agentxjs/core/runtime";
 import { createLogger } from "commonxjs/logger";
+import { CommandHandler } from "./CommandHandler";
 import { createLocalAgents } from "./namespaces/agents";
 import { createLocalContainers } from "./namespaces/containers";
 import { createLocalImages } from "./namespaces/images";
@@ -29,6 +31,7 @@ const logger = createLogger("agentx/LocalClient");
  */
 export class LocalClient implements AgentX {
   private readonly runtime: AgentXRuntime;
+  private commandHandler: CommandHandler | null = null;
   private isDisposed = false;
 
   readonly container: ContainerNamespace;
@@ -72,6 +75,19 @@ export class LocalClient implements AgentX {
 
   subscribe(_sessionId: string): void {
     // No-op for local mode - already subscribed via eventBus
+  }
+
+  // ==================== RPC ====================
+
+  async rpc<T = unknown>(method: string, params?: unknown): Promise<T> {
+    if (!this.commandHandler) {
+      this.commandHandler = new CommandHandler(this.runtime);
+    }
+    const result = await this.commandHandler.handle(method as RpcMethod, params);
+    if (result.success) {
+      return result.data as T;
+    }
+    throw new Error(result.message);
   }
 
   // ==================== Lifecycle ====================

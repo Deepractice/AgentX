@@ -148,6 +148,10 @@ export function createAgentX(config?: PlatformConfig): AgentXBuilder {
         wsPath: serveConfig?.wsPath,
       });
     },
+
+    async rpc<T = unknown>(method: string, params?: unknown): Promise<T> {
+      return getLocalClient().rpc<T>(method, params);
+    },
   };
 }
 

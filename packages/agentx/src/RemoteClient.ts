@@ -110,4 +110,10 @@ export class RemoteClient implements AgentX {
     this.rpcClient.subscribe(sessionId);
     logger.debug("Subscribed to session", { sessionId });
   }
+
+  // ==================== RPC ====================
+
+  async rpc<T = unknown>(method: string, params?: unknown): Promise<T> {
+    return this.rpcClient.call<T>(method, params);
+  }
 }

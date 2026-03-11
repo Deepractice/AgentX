@@ -334,6 +334,21 @@ export interface AgentX {
   onAny(handler: BusEventHandler): Unsubscribe;
   subscribe(sessionId: string): void;
 
+  // ==================== RPC ====================
+
+  /**
+   * Universal JSON-RPC entry point — works in all modes:
+   * - Local: dispatches to CommandHandler directly
+   * - Remote: forwards to the remote server via RPC client
+   *
+   * @example
+   * ```typescript
+   * const result = await ax.rpc("container.create", { containerId: "default" });
+   * const { records } = await ax.rpc<{ records: ImageRecord[] }>("image.list");
+   * ```
+   */
+  rpc<T = unknown>(method: string, params?: unknown): Promise<T>;
+
   // ==================== Lifecycle ====================
 
   disconnect(): Promise<void>;
