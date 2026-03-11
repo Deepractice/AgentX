@@ -229,6 +229,11 @@ export interface ImageNamespace {
    * Delete image
    */
   delete(imageId: string): Promise<BaseResponse>;
+
+  /**
+   * Get message history for an image
+   */
+  getMessages(imageId: string): Promise<Message[]>;
 }
 
 /**

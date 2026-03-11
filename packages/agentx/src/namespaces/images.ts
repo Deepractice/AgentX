@@ -2,6 +2,7 @@
  * Image namespace factories
  */
 
+import type { Message } from "@agentxjs/core/agent";
 import type { RpcClient } from "@agentxjs/core/network";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type {
@@ -100,6 +101,12 @@ export function createLocalImages(platform: AgentXPlatform): ImageNamespace {
 
       return { requestId: "" };
     },
+
+    async getMessages(imageId: string): Promise<Message[]> {
+      const imageRecord = await platform.imageRepository.findImageById(imageId);
+      if (!imageRecord) return [];
+      return platform.sessionRepository.getMessages(imageRecord.sessionId);
+    },
   };
 }
 
@@ -175,6 +182,11 @@ export function createRemoteImages(
     async delete(imageId: string): Promise<BaseResponse> {
       const result = await rpcClient.call<BaseResponse>("image.delete", { imageId });
       return { ...result, requestId: "" };
+    },
+
+    async getMessages(imageId: string): Promise<Message[]> {
+      const result = await rpcClient.call<{ messages: Message[] }>("image.messages", { imageId });
+      return result.messages ?? [];
     },
   };
 }

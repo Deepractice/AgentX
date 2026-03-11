@@ -56,6 +56,8 @@ interface AgentState {
   engine: AgentEngine;
   /** Flag to track if a receive operation is in progress */
   isReceiving: boolean;
+  /** Pending message persist promises — flushed at end of receive() */
+  pendingPersists: Promise<void>[];
 }
 
 /**
@@ -174,11 +176,16 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
         } as BusEvent);
 
         // Persist message events to SessionRepository
+        // Promises are collected in pendingPersists and flushed at end of receive()
         if (category === "message" && output.type !== "user_message") {
           const message = output.data as Message;
-          sessionRepository.addMessage(sessionId, message).catch((err) => {
+          const persistPromise = sessionRepository.addMessage(sessionId, message).catch((err) => {
             logger.error("Failed to persist message", { type: output.type, error: err });
           });
+          const agentState = this.agents.get(agentId);
+          if (agentState) {
+            agentState.pendingPersists.push(persistPromise);
+          }
         }
       },
     };
@@ -209,6 +216,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       driver,
       engine,
       isReceiving: false,
+      pendingPersists: [],
     };
     this.agents.set(agentId, state);
 
@@ -428,6 +436,11 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       );
       throw error;
     } finally {
+      // Flush all pending message persists before returning
+      if (state.pendingPersists.length > 0) {
+        await Promise.all(state.pendingPersists);
+        state.pendingPersists = [];
+      }
       state.isReceiving = false;
     }
   }
