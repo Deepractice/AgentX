@@ -1,5 +1,13 @@
 # @agentxjs/core
 
+## 2.3.1
+
+### Patch Changes
+
+- fix(core): inject LLM provider config into DriverConfig during createAgent
+
+  Runtime now reads the container's default LLM provider and injects apiKey, baseUrl, and model into DriverConfig before calling createDriver. Previously these fields were empty, causing requests to hit wrong endpoints with wrong credentials.
+
 ## 2.3.0
 
 ### Minor Changes
