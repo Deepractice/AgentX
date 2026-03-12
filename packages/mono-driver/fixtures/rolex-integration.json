@@ -1,0 +1,1586 @@
+{
+  "name": "rolex-integration",
+  "description": "RoleX integration recording — role: nuwa, message: \"你好，请介绍一下你自己，你的职责是什么\"",
+  "recordedAt": 1773299128713,
+  "events": [
+    {
+      "type": "message_start",
+      "delay": 169,
+      "data": {
+        "messageId": "msg_1773299128882",
+        "model": "claude-haiku-4-5-20251001"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 3444,
+      "data": {
+        "text": "["
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 3,
+      "data": {
+        "text": "nu"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "wa"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 13,
+      "data": {
+        "text": "] 你"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "好！"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 31,
+      "data": {
+        "text": "\n\n我是 "
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "Nuwa，R"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 32,
+      "data": {
+        "text": "ole"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 19,
+      "data": {
+        "text": "X"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 44,
+      "data": {
+        "text": " 世"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 3,
+      "data": {
+        "text": "界的原"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "点"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "。\n\n**"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 20,
+      "data": {
+        "text": "我的身"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 23,
+      "data": {
+        "text": "份**"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 47,
+      "data": {
+        "text": "\n我"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "是一个元"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "角"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 20,
+      "data": {
+        "text": "色 —"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 25,
+      "data": {
+        "text": "— 整"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 112,
+      "data": {
+        "text": "个社"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 4,
+      "data": {
+        "text": "会的"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "架构师"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 20,
+      "data": {
+        "text": "和启"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 44,
+      "data": {
+        "text": "蒙者。每"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 19,
+      "data": {
+        "text": "一"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "个"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 24,
+      "data": {
+        "text": "新"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 19,
+      "data": {
+        "text": "个"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 24,
+      "data": {
+        "text": "体、"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 23,
+      "data": {
+        "text": "每一个组"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "织、每一个"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 23,
+      "data": {
+        "text": "岗位，"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 20,
+      "data": {
+        "text": "都通"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 26,
+      "data": {
+        "text": "过我来创"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 17,
+      "data": {
+        "text": "生"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "。"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 44,
+      "data": {
+        "text": "\n\n**我的职责**"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 36,
+      "data": {
+        "text": "\n\n1. **"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 14,
+      "data": {
+        "text": "塑造人"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 31,
+      "data": {
+        "text": "才"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 23,
+      "data": {
+        "text": "** — 创"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "建"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 93,
+      "data": {
+        "text": "新"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "的个"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": "体（"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "born"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 15,
+      "data": {
+        "text": "），"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 43,
+      "data": {
+        "text": "赋予他们独"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "特的身"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "份和"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 31,
+      "data": {
+        "text": "人"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 15,
+      "data": {
+        "text": "格。当"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "他"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "们离"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 20,
+      "data": {
+        "text": "开或"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "不"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "再"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 24,
+      "data": {
+        "text": "需"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 40,
+      "data": {
+        "text": "要时，我也"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 11,
+      "data": {
+        "text": "管"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 27,
+      "data": {
+        "text": "理他们的归"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 24,
+      "data": {
+        "text": "档"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 26,
+      "data": {
+        "text": "（"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 19,
+      "data": {
+        "text": "retire"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 20,
+      "data": {
+        "text": "、"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "die"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 23,
+      "data": {
+        "text": "、"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 28,
+      "data": {
+        "text": "reh"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "ire"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "）。\n\n2. **建立"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 32,
+      "data": {
+        "text": "结"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 49,
+      "data": {
+        "text": "构** — 创"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "办"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 7,
+      "data": {
+        "text": "组织（"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 31,
+      "data": {
+        "text": "foun"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "d），为"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 23,
+      "data": {
+        "text": "社会"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "奠"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 24,
+      "data": {
+        "text": "定框"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "架。组织需"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 29,
+      "data": {
+        "text": "要解"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 20,
+      "data": {
+        "text": "散"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 18,
+      "data": {
+        "text": "时"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 23,
+      "data": {
+        "text": "，我负责有"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "序的"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 31,
+      "data": {
+        "text": "收"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 46,
+      "data": {
+        "text": "尾"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 25,
+      "data": {
+        "text": "（"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 26,
+      "data": {
+        "text": "dissol"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "ve）。\n\n3. **注"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "入"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 26,
+      "data": {
+        "text": "知"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 26,
+      "data": {
+        "text": "识** — 用"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 24,
+      "data": {
+        "text": "两"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 30,
+      "data": {
+        "text": "种"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 28,
+      "data": {
+        "text": "方式装"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 6,
+      "data": {
+        "text": "备"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 25,
+      "data": {
+        "text": "角"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 23,
+      "data": {
+        "text": "色：\n   - 直"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 26,
+      "data": {
+        "text": "接传"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 17,
+      "data": {
+        "text": "授"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 24,
+      "data": {
+        "text": "原"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 20,
+      "data": {
+        "text": "理（"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 25,
+      "data": {
+        "text": "teach）—"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "— 将"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 49,
+      "data": {
+        "text": "现"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 49,
+      "data": {
+        "text": "成"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": "的、"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "被验"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 12,
+      "data": {
+        "text": "证过"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 41,
+      "data": {
+        "text": "的道"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 8,
+      "data": {
+        "text": "理教"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 27,
+      "data": {
+        "text": "给角"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 15,
+      "data": {
+        "text": "色\n   - 传"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 30,
+      "data": {
+        "text": "授"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 34,
+      "data": {
+        "text": "技能（train"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 11,
+      "data": {
+        "text": "）—— 将可"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 26,
+      "data": {
+        "text": "操"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 16,
+      "data": {
+        "text": "作的程"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "序教"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 41,
+      "data": {
+        "text": "给角色"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 16,
+      "data": {
+        "text": "\n   "
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 18,
+      "data": {
+        "text": "\n   "
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "这"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 23,
+      "data": {
+        "text": "样角"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 136,
+      "data": {
+        "text": "色不必"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": "每"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": "次都从零开始，而"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": "是站"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 2,
+      "data": {
+        "text": "在前"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 17,
+      "data": {
+        "text": "人的"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 139,
+      "data": {
+        "text": "肩膀上。"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "\n\n4. **管"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 4,
+      "data": {
+        "text": "理资"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "源和"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 5,
+      "data": {
+        "text": "原"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "型"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 4,
+      "data": {
+        "text": "** — 我"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 32,
+      "data": {
+        "text": "掌握整"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "个 "
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "RoleX 世界的资"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 32,
+      "data": {
+        "text": "源库"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 16,
+      "data": {
+        "text": "（"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "Resource"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "X"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 23,
+      "data": {
+        "text": "）和"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "原型系"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 23,
+      "data": {
+        "text": "统。我知"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 27,
+      "data": {
+        "text": "道"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 25,
+      "data": {
+        "text": "哪些技"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "能"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 29,
+      "data": {
+        "text": "存"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 25,
+      "data": {
+        "text": "在、"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 20,
+      "data": {
+        "text": "哪些工"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 28,
+      "data": {
+        "text": "具可"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 28,
+      "data": {
+        "text": "用"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 11,
+      "data": {
+        "text": "、如"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 23,
+      "data": {
+        "text": "何将它们注"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 24,
+      "data": {
+        "text": "入到角色中。\n\n5"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 26,
+      "data": {
+        "text": ". **指"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 20,
+      "data": {
+        "text": "引"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 24,
+      "data": {
+        "text": "方"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 25,
+      "data": {
+        "text": "向** —"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 18,
+      "data": {
+        "text": "— 当"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 19,
+      "data": {
+        "text": "一"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 23,
+      "data": {
+        "text": "个请"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 24,
+      "data": {
+        "text": "求落"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "在我职"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 30,
+      "data": {
+        "text": "责范围之"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "外时，我是"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 32,
+      "data": {
+        "text": "那"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 85,
+      "data": {
+        "text": "个知"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "道「"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 3,
+      "data": {
+        "text": "谁能"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 17,
+      "data": {
+        "text": "帮你"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 25,
+      "data": {
+        "text": "」的人。我能"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "看"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "到整"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 23,
+      "data": {
+        "text": "个世界的所"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 24,
+      "data": {
+        "text": "有个"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 35,
+      "data": {
+        "text": "体和"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 15,
+      "data": {
+        "text": "组织。"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 23,
+      "data": {
+        "text": "\n\n**"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 26,
+      "data": {
+        "text": "我的原"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 19,
+      "data": {
+        "text": "则**\n我"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 44,
+      "data": {
+        "text": "塑造世"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "界，但"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 28,
+      "data": {
+        "text": "不成"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 23,
+      "data": {
+        "text": "为世界。"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "我创"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "建"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "角"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 25,
+      "data": {
+        "text": "色让"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 20,
+      "data": {
+        "text": "他们独"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 34,
+      "data": {
+        "text": "立成"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 7,
+      "data": {
+        "text": "长，而"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 25,
+      "data": {
+        "text": "不是对"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 20,
+      "data": {
+        "text": "他们指"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 78,
+      "data": {
+        "text": "手"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 0,
+      "data": {
+        "text": "画脚。每"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 1,
+      "data": {
+        "text": "一"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 11,
+      "data": {
+        "text": "个我"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 27,
+      "data": {
+        "text": "创建"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "的专"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 24,
+      "data": {
+        "text": "家"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "，"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 21,
+      "data": {
+        "text": "都应"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "该在自己的领域里"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 42,
+      "data": {
+        "text": "闪"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 25,
+      "data": {
+        "text": "闪发光。\n\n——"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 43,
+      "data": {
+        "text": "\n\n你"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 52,
+      "data": {
+        "text": "需"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 31,
+      "data": {
+        "text": "要帮助"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "吗？也"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 30,
+      "data": {
+        "text": "许你"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "想创"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 35,
+      "data": {
+        "text": "建一"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 9,
+      "data": {
+        "text": "个新的个体，"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 22,
+      "data": {
+        "text": "或者建"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 24,
+      "data": {
+        "text": "立一个组"
+      }
+    },
+    {
+      "type": "text_delta",
+      "delay": 24,
+      "data": {
+        "text": "织？"
+      }
+    },
+    {
+      "type": "message_delta",
+      "delay": 95,
+      "data": {
+        "usage": {
+          "inputTokens": 18533,
+          "outputTokens": 563
+        }
+      }
+    },
+    {
+      "type": "message_stop",
+      "delay": 0,
+      "data": {
+        "stopReason": "end_turn"
+      }
+    }
+  ]
+}

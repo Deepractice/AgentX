@@ -37,6 +37,7 @@ import type { ToolSet } from "ai";
 import { stepCountIs, streamText } from "ai";
 import { createLogger } from "commonxjs/logger";
 import { createEvent, toStopReason, toVercelMessages, toVercelTools } from "./converters";
+import { RolexBridge } from "./rolex-bridge";
 import type { MonoDriverConfig, MonoProvider, OpenAICompatibleConfig } from "./types";
 
 const logger = createLogger("mono-driver/MonoDriver");
@@ -57,13 +58,20 @@ export class MonoDriver implements Driver {
   private readonly provider: MonoProvider;
   private readonly maxSteps: number;
   private readonly compatibleConfig?: OpenAICompatibleConfig;
+  private readonly rolexBridge: RolexBridge | null;
 
   constructor(config: MonoDriverConfig) {
     this.config = config;
     this.session = config.session;
-    this.provider = config.options?.provider ?? "anthropic";
-    this.maxSteps = config.options?.maxSteps ?? 10;
-    this.compatibleConfig = config.options?.compatibleConfig;
+    this.provider = config.provider ?? "anthropic";
+    this.maxSteps = config.maxSteps ?? 10;
+    this.compatibleConfig = config.compatibleConfig;
+    this.rolexBridge = config.rolex
+      ? new RolexBridge({
+          platform: config.rolex.platform,
+          roleId: config.rolex.roleId,
+        })
+      : null;
   }
 
   // ============================================================================
@@ -91,6 +99,12 @@ export class MonoDriver implements Driver {
       agentId: this.config.agentId,
       provider: this.provider,
     });
+
+    // Initialize RoleX bridge if configured
+    if (this.rolexBridge) {
+      await this.rolexBridge.initialize();
+      logger.info("RoleX bridge initialized");
+    }
 
     // Generate a session ID for tracking
     this._sessionId = `mono_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -157,10 +171,16 @@ export class MonoDriver implements Driver {
         agentId: this.config.agentId,
       });
 
+      // Build three-layer system prompt:
+      // Layer 1: System Prompt (fixed, from Image config)
+      // Layer 2: Role Context (dynamic, RoleX projection)
+      // Layer 3: Message Context (conversation history, already in messages)
+      const systemPrompt = await this.buildSystemPrompt();
+
       // Call Vercel AI SDK (v6)
       const result = streamText({
         model: this.getModel(),
-        system: this.config.systemPrompt,
+        system: systemPrompt,
         messages,
         tools: this.getTools(),
         stopWhen: stepCountIs(this.maxSteps),
@@ -310,11 +330,41 @@ export class MonoDriver implements Driver {
 
   /**
    * Convert config tools to Vercel AI SDK ToolSet.
-   * Tools are injected via DriverConfig.tools (from Platform providers like BashProvider).
+   * Merges platform tools (from DriverConfig.tools) with RoleX tools (from bridge).
    */
   private getTools(): ToolSet | undefined {
-    if (!this.config.tools?.length) return undefined;
-    return toVercelTools(this.config.tools);
+    const allTools = [...(this.config.tools ?? [])];
+
+    // Merge RoleX tools if bridge is active
+    if (this.rolexBridge) {
+      allTools.push(...this.rolexBridge.getTools());
+    }
+
+    if (allTools.length === 0) return undefined;
+    return toVercelTools(allTools);
+  }
+
+  /**
+   * Build the three-layer system prompt.
+   *
+   * Layer 1: System Prompt (fixed, from Image config) — global, RoleX-independent
+   * Layer 2: Role Context (dynamic, refreshed each turn) — world instructions + role state
+   */
+  private async buildSystemPrompt(): Promise<string | undefined> {
+    const parts: string[] = [];
+
+    // Layer 1: System Prompt (global, from Image config)
+    if (this.config.systemPrompt) {
+      parts.push(this.config.systemPrompt);
+    }
+
+    // Layer 2: Role Context (world instructions + role state projection)
+    if (this.rolexBridge) {
+      const roleContext = await this.rolexBridge.getRoleContext();
+      parts.push(`<role-context>\n${roleContext}\n</role-context>`);
+    }
+
+    return parts.length > 0 ? parts.join("\n\n") : undefined;
   }
 
   private getModel() {

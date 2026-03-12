@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "test": "echo 'No tests yet'"
+    "test": "bun test"
   },
   "dependencies": {
     "@agentxjs/core": "workspace:*",
@@ -30,10 +30,13 @@
     "@ai-sdk/openai": "^3.0.25",
     "@ai-sdk/openai-compatible": "2.0.27",
     "@ai-sdk/xai": "3.0.47",
+    "@rolexjs/local-platform": "1.5.0-dev-20260310044915",
     "ai": "^6.0.70",
-    "commonxjs": "^0.1.1"
+    "commonxjs": "^0.1.1",
+    "rolexjs": "1.5.0-dev-20260310044915"
   },
   "devDependencies": {
+    "@agentxjs/devtools": "workspace:*",
     "typescript": "^5.3.3"
   }
 }

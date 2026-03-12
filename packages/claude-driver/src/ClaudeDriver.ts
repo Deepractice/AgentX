@@ -307,7 +307,7 @@ export class ClaudeDriver implements Driver {
         resumeSessionId: this.config.resumeSessionId,
         mcpServers: this.config.mcpServers,
         // Pass driver-specific options
-        claudeCodePath: this.config.options?.claudeCodePath,
+        claudeCodePath: this.config.claudeCodePath,
       },
       {
         onSessionIdCaptured: (sessionId) => {

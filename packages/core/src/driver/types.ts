@@ -312,7 +312,10 @@ export type DriverStreamEventType = DriverStreamEvent["type"];
  * };
  * ```
  */
-export interface DriverConfig<TOptions = Record<string, unknown>> {
+/**
+ * Base driver configuration fields shared by all drivers
+ */
+export interface DriverConfigBase {
   // === Provider Configuration ===
 
   /**
@@ -374,12 +377,6 @@ export interface DriverConfig<TOptions = Record<string, unknown>> {
    * Stateless drivers (like MonoDriver) use this to read conversation history.
    * Stateful drivers (like ClaudeDriver) may ignore this as they manage
    * history internally via SDK.
-   *
-   * @example
-   * ```typescript
-   * // MonoDriver reads history from Session
-   * const history = await config.session?.getMessages();
-   * ```
    */
   session?: Session;
 
@@ -398,31 +395,33 @@ export interface DriverConfig<TOptions = Record<string, unknown>> {
    * Save this ID to enable session resume later.
    */
   onSessionIdCaptured?: (sessionId: string) => void;
-
-  // === Driver-Specific Options ===
-
-  /**
-   * Driver-specific options
-   *
-   * Each driver implementation can define its own options type.
-   * This allows drivers to have custom configuration without
-   * polluting the base DriverConfig interface.
-   *
-   * @example
-   * ```typescript
-   * // ClaudeDriver options
-   * interface ClaudeDriverOptions {
-   *   claudeCodePath?: string;
-   * }
-   *
-   * const config: DriverConfig<ClaudeDriverOptions> = {
-   *   apiKey: "...",
-   *   options: { claudeCodePath: "/usr/bin/claude" }
-   * };
-   * ```
-   */
-  options?: TOptions;
 }
+
+/**
+ * DriverConfig - All configuration for creating a Driver
+ *
+ * Base fields are shared by all drivers. The type parameter TOptions
+ * adds driver-specific fields directly onto the config (flat, no nesting).
+ *
+ * @typeParam TOptions - Driver-specific fields merged into the config.
+ *
+ * @example
+ * ```typescript
+ * interface MonoDriverOptions {
+ *   provider?: string;
+ *   maxSteps?: number;
+ * }
+ *
+ * // MonoDriverConfig = DriverConfigBase & MonoDriverOptions
+ * const config: DriverConfig<MonoDriverOptions> = {
+ *   apiKey: "...",
+ *   agentId: "my-agent",
+ *   provider: "anthropic",  // flat, not nested under options
+ *   maxSteps: 10,
+ * };
+ * ```
+ */
+export type DriverConfig<TOptions = Record<string, unknown>> = DriverConfigBase & TOptions;
 
 // ============================================================================
 // Driver State

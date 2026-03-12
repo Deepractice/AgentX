@@ -49,6 +49,10 @@ export class ImageImpl implements Image {
     return this.record.mcpServers;
   }
 
+  get roleId(): string | undefined {
+    return this.record.roleId;
+  }
+
   get customData(): Record<string, unknown> | undefined {
     return this.record.customData;
   }
