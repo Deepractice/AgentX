@@ -105,20 +105,24 @@ The Runtime doesn't just relay raw driver events — it processes them through a
 ```
 Driver Stream Events (raw)
   │
-  ├── message_start, text_delta, tool_use_start, message_stop ...
+  ├── message_start, text_delta, tool_use_start, message_stop, error ...
   │
   ▼
 MealyMachine  ── pure (state, event) → [newState, outputs]
   │
   ├── MessageAssembler  ── stream → message events
-  │     └── assistant_message, tool_call_message, tool_result_message, error_message
+  │     ├── assistant_message, tool_call_message, tool_result_message
+  │     └── error_message  ← driver error → ErrorConversation in Presentation
   │
   ├── StateEventProcessor  ── stream → state events
-  │     └── conversation_start, conversation_responding, conversation_end
+  │     ├── conversation_start, conversation_responding, conversation_end
+  │     └── error_occurred  ← driver error → state transition
   │
   └── TurnTracker  ── stream → turn events
         └── turn_request (from message_start), turn_response (from message_stop)
 ```
+
+**Error flow**: When a driver emits an `error` event (e.g., LLM API returns 403), the engine produces both an `error_message` (becomes `ErrorConversation` in the Presentation layer for UI display) and an `error_occurred` (triggers state transition back to idle).
 
 **Key design**: only raw `StreamEvent`s enter the MealyMachine. All message, state, and turn events are **derived** — never injected from outside. Processors can chain: outputs from one processor feed into others (e.g., TurnTracker reads `message_start` / `message_stop` from the stream layer).
 

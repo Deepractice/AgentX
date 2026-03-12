@@ -120,7 +120,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       defaultTools.push(createBashTool(this.platform.bashProvider));
     }
 
-    // Create driver config (apiKey/baseUrl are provided by the createDriver closure)
+    // Create driver config
     const driverConfig: DriverConfig = {
       apiKey: "",
       agentId,
@@ -135,22 +135,32 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       },
     };
 
+    // Inject LLM provider config (apiKey, baseUrl, model) from container's default provider
+    const defaultProvider = this.platform.llmProviderRepository
+      ? await this.platform.llmProviderRepository.findDefaultLLMProvider(imageRecord.containerId)
+      : null;
+
+    if (defaultProvider) {
+      driverConfig.apiKey = defaultProvider.apiKey;
+      if (defaultProvider.baseUrl) {
+        driverConfig.baseUrl = defaultProvider.baseUrl;
+      }
+      if (defaultProvider.model) {
+        driverConfig.model = defaultProvider.model;
+      }
+    }
+
     // Create driver using the injected CreateDriver function
     const driver = this.createDriver(driverConfig);
 
     // Validate LLM provider protocol against driver's supported protocols
-    if (this.platform.llmProviderRepository) {
-      const defaultProvider = await this.platform.llmProviderRepository.findDefaultLLMProvider(
-        imageRecord.containerId
-      );
-      if (defaultProvider) {
-        const supported = driver.supportedProtocols;
-        if (!supported.includes(defaultProvider.protocol)) {
-          throw new Error(
-            `Protocol mismatch: LLM provider "${defaultProvider.name}" uses protocol "${defaultProvider.protocol}", ` +
-              `but driver "${driver.name}" only supports [${supported.join(", ")}]`
-          );
-        }
+    if (defaultProvider) {
+      const supported = driver.supportedProtocols;
+      if (!supported.includes(defaultProvider.protocol)) {
+        throw new Error(
+          `Protocol mismatch: LLM provider "${defaultProvider.name}" uses protocol "${defaultProvider.protocol}", ` +
+            `but driver "${driver.name}" only supports [${supported.join(", ")}]`
+        );
       }
     }
 

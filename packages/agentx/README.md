@@ -178,25 +178,54 @@ const response = await ax.rpc(request.method, request.params);
 
 ### Error Handling
 
-Top-level error handler — receives structured `AgentXError` from all layers (driver, persistence, connection, runtime). Independent of stream events and Presentation API.
+AgentX has two layers of error handling, serving different purposes:
+
+| Layer | Purpose | Who uses it | How errors arrive |
+| ----- | ------- | ----------- | ----------------- |
+| **Presentation** | Show errors to end users in chat | UI developers | `ErrorConversation` in `state.conversations` |
+| **`ax.onError`** | Programmatic monitoring & alerting | Platform operators | `AgentXError` callback |
+
+Most applications only need the Presentation layer. `ax.onError` is for advanced scenarios like Sentry integration or custom circuit-breaker logic.
+
+#### Presentation Errors (recommended)
+
+When an LLM call fails (e.g., 403 Forbidden, network timeout), the error automatically appears in `state.conversations` as an `ErrorConversation`:
 
 ```typescript
-import { AgentXError } from "agentxjs";
+const presentation = await ax.presentation.create(agentId, {
+  onUpdate: (state) => {
+    for (const conv of state.conversations) {
+      if (conv.role === "user") {
+        renderUserMessage(conv);
+      } else if (conv.role === "assistant") {
+        renderAssistantMessage(conv);
+      } else if (conv.role === "error") {
+        // LLM errors show up here automatically
+        renderErrorMessage(conv.message);
+        // e.g. "403 Forbidden: Invalid API key"
+      }
+    }
+  },
+});
+```
 
+The flow is fully automatic — no extra code needed:
+
+```
+LLM API fails → Driver emits error → Engine creates ErrorConversation
+  → Presentation state updates → onUpdate fires → UI renders error
+```
+
+`state.streaming` resets to `null` and `state.status` returns to `"idle"`, so the UI naturally stops showing loading indicators.
+
+#### `ax.onError` (advanced)
+
+For monitoring, logging, or custom recovery logic. Receives structured `AgentXError` from all layers (driver, persistence, connection). Independent of Presentation — fires even without a Presentation instance.
+
+```typescript
 ax.onError((error) => {
+  reportToSentry(error);
   console.error(`[${error.category}] ${error.code}: ${error.message}`);
-
-  if (error.code === "CIRCUIT_OPEN") {
-    // Too many consecutive LLM failures — stop sending requests
-  }
-
-  if (error.code === "PERSISTENCE_FAILED") {
-    // Message failed to save — conversation continues but data may be lost
-  }
-
-  if (!error.recoverable) {
-    // Fatal error — consider restarting the agent
-  }
 });
 ```
 
@@ -204,13 +233,13 @@ ax.onError((error) => {
 
 | Property      | Type     | Description                          |
 | ------------- | -------- | ------------------------------------ |
-| `code`        | string   | Error code (e.g. `PERSISTENCE_FAILED`) |
+| `code`        | string   | `DRIVER_ERROR`, `CIRCUIT_OPEN`, `PERSISTENCE_FAILED`, `CONNECTION_FAILED` |
 | `category`    | string   | `"driver"` \| `"persistence"` \| `"connection"` \| `"runtime"` |
 | `recoverable` | boolean  | Whether the caller should retry      |
 | `context`     | object   | `{ agentId?, sessionId?, imageId? }` |
 | `cause`       | Error?   | Original error                       |
 
-**Built-in circuit breaker:** After 5 consecutive driver failures, the circuit opens and rejects new requests. After 30s cooldown, one probe request is allowed through. Success closes the circuit.
+**Built-in circuit breaker:** After 5 consecutive driver failures, the circuit opens and rejects new requests for 30s. This is automatic — no code required.
 
 ### Stream Events
 
@@ -222,27 +251,36 @@ ax.onError((error) => {
 | `input_json_delta` | `{ partialJson }`          | Incremental tool input |
 | `tool_result`      | `{ toolCallId, result }`   | Tool execution result  |
 | `message_stop`     | `{ stopReason }`           | Response complete      |
-| `error`            | `{ message }`              | Error occurred         |
+| `error`            | `{ message }`              | Error during streaming |
+
+> **Note:** If you use the Presentation API, you don't need to handle the `error` stream event — it is automatically converted to an `ErrorConversation` in `state.conversations`.
 
 ### Presentation API
 
-High-level UI state management. Aggregates raw stream events into structured conversation state.
+High-level UI state management. Aggregates raw stream events into structured conversation state — the recommended way to build chat UIs.
 
 ```typescript
 const presentation = await ax.presentation.create(agentId, {
   onUpdate: (state) => {
-    // state.conversations — completed messages (includes history)
+    // state.conversations — completed messages (user, assistant, and error)
     // state.streaming — current streaming response (or null)
     // state.status — "idle" | "thinking" | "responding" | "executing"
     renderUI(state);
   },
-  onError: (error) => console.error(error),
 });
 
 await presentation.send("What is the weather?");
 const state = presentation.getState();
 presentation.dispose();
 ```
+
+**Conversation types in `state.conversations`:**
+
+| `role` | Type | Content |
+| ------ | ---- | ------- |
+| `"user"` | `UserConversation` | `blocks: [{ type: "text", content }]` |
+| `"assistant"` | `AssistantConversation` | `blocks: [{ type: "text", content }, { type: "tool_use", ... }]` |
+| `"error"` | `ErrorConversation` | `message: string` — the error description |
 
 For custom state management, use the exported reducer:
 
