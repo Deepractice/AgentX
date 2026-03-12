@@ -144,10 +144,10 @@
         "@ai-sdk/openai": "^3.0.25",
         "@ai-sdk/openai-compatible": "2.0.27",
         "@ai-sdk/xai": "3.0.47",
-        "@rolexjs/local-platform": "1.5.0-dev-20260312083443",
+        "@rolexjs/local-platform": "1.5.0-dev-20260312103329",
         "ai": "^6.0.70",
         "commonxjs": "^0.1.1",
-        "rolexjs": "1.5.0-dev-20260312083443",
+        "rolexjs": "1.5.0-dev-20260312103329",
       },
       "devDependencies": {
         "typescript": "^5.3.3",
@@ -633,15 +633,15 @@
 
     "@resourcexjs/node-provider": ["@resourcexjs/node-provider@2.22.0", "", { "dependencies": { "@resourcexjs/core": "^2.22.0" } }, "sha512-x8dtPF7YMGT2bJ8vwNKKfklNo4d4Da4Xw8tE52UHQ/CTuKgdwwt2nAdFI17daQMynVamLaff6gsMjKiJQSyl7g=="],
 
-    "@rolexjs/core": ["@rolexjs/core@1.5.0-dev-20260312083443", "", { "dependencies": { "@issuexjs/core": "^0.2.0", "@resourcexjs/core": "^2.14.0", "@rolexjs/parser": "1.5.0-dev-20260312083443", "@rolexjs/system": "1.5.0-dev-20260312083443", "issuexjs": "^0.2.0", "resourcexjs": "^2.14.0" } }, "sha512-3KlWW1F/o0otpdC6e20orYFTiq6TKLKNyFJK/JFdEeDYoWVZAXupCK4mP9DJiDgq3pnpOwyCro0XMZhPi84rFA=="],
+    "@rolexjs/core": ["@rolexjs/core@1.5.0-dev-20260312103329", "", { "dependencies": { "@issuexjs/core": "^0.2.0", "@resourcexjs/core": "^2.14.0", "@rolexjs/parser": "1.5.0-dev-20260312103329", "@rolexjs/system": "1.5.0-dev-20260312103329", "issuexjs": "^0.2.0", "resourcexjs": "^2.14.0" } }, "sha512-T6lmP9pSpUH0LKmI/SHTEDa/fd4JGF0VS9HrmaGPsCTyv5dq772vX40qWVx3AYgWIfs4jTAoYYErczYuXx4KZw=="],
 
-    "@rolexjs/genesis": ["@rolexjs/genesis@1.5.0-dev-20260312083443", "", { "dependencies": { "@rolexjs/core": "1.5.0-dev-20260312083443" } }, "sha512-OIqqOlqU7yHcdYb6MBiapYiHGcJ7AjL+94bxcTi3VLRt2zr3N+y5HmRLsTZEDQba/p0wSD6qVhx0w0YGSydG8w=="],
+    "@rolexjs/genesis": ["@rolexjs/genesis@1.5.0-dev-20260312103329", "", { "dependencies": { "@rolexjs/core": "1.5.0-dev-20260312103329" } }, "sha512-PS3Nf9qWsEYUPSgqru4Bi8Tr+0TrB3Fk1F3Qdz54000UxxmFMW+fJQ1DsNsfHSem/GqDkG/604Bn6LZvjPDEeQ=="],
 
-    "@rolexjs/local-platform": ["@rolexjs/local-platform@1.5.0-dev-20260312083443", "", { "dependencies": { "@deepracticex/drizzle": "^0.3.1", "@deepracticex/sqlite": "^0.2.0", "@issuexjs/node": "^0.2.0", "@resourcexjs/node-provider": "^2.14.0", "@rolexjs/core": "1.5.0-dev-20260312083443", "@rolexjs/system": "1.5.0-dev-20260312083443", "drizzle-orm": "^0.45.1" } }, "sha512-4/MZtTygL7Wx4VA2Fon4QyNBK6ti+LybEVul88YRLYWmgks2+RRiQioWldQR6+EM2X1ir9HXcjafKkX+pU1PFA=="],
+    "@rolexjs/local-platform": ["@rolexjs/local-platform@1.5.0-dev-20260312103329", "", { "dependencies": { "@deepracticex/drizzle": "^0.3.1", "@deepracticex/sqlite": "^0.2.0", "@issuexjs/node": "^0.2.0", "@resourcexjs/node-provider": "^2.14.0", "@rolexjs/core": "1.5.0-dev-20260312103329", "@rolexjs/system": "1.5.0-dev-20260312103329", "drizzle-orm": "^0.45.1" } }, "sha512-+Ww6YLmrCYPHsBD/oIA1/XR74JITHddeydCrib80/DUCSweUwptKufiEjr6l283RD6g/8N60fiDW4g2OnNYITw=="],
 
-    "@rolexjs/parser": ["@rolexjs/parser@1.5.0-dev-20260312083443", "", { "dependencies": { "@cucumber/gherkin": "^38.0.0", "@cucumber/messages": "^32.0.0" } }, "sha512-oFzDNhZZC+gHipgHrg+Fe8reiMvlMrlUFd1PrwS6JW3qvPdL3brz1tUU/Q+KaZlNL/GG/qWOVBbX88sF8gp8Uw=="],
+    "@rolexjs/parser": ["@rolexjs/parser@1.5.0-dev-20260312103329", "", { "dependencies": { "@cucumber/gherkin": "^38.0.0", "@cucumber/messages": "^32.0.0" } }, "sha512-8LaS8HrOa5aeSyuoabxyWk5aIaedfciQYgXEGLkDVDVwe66Lh0z5dlk02oB6DEOU/LU4B+dh4kk1MkeKMXrGKQ=="],
 
-    "@rolexjs/system": ["@rolexjs/system@1.5.0-dev-20260312083443", "", {}, "sha512-/Ts4B+ky68SfxDJQb1L0cocnTsXWZ+J1P+kxZD9TI5Ifkg0xnYTWCC8I23qOxJsmvNHZxRdGWMdo3x++9dF9mw=="],
+    "@rolexjs/system": ["@rolexjs/system@1.5.0-dev-20260312103329", "", {}, "sha512-nmA5ngzBLpHaJ08Ln7feEdB6UD2xZVc7l8A94+wbuDv6oPj0pS2U+sayoDapJfwijawFO0C7BBn9oVxwh0jIww=="],
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.0-beta.27", "", {}, "sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA=="],
 
@@ -1423,7 +1423,7 @@
 
     "reusify": ["reusify@1.1.0", "", {}, "sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw=="],
 
-    "rolexjs": ["rolexjs@1.5.0-dev-20260312083443", "", { "dependencies": { "@rolexjs/core": "1.5.0-dev-20260312083443", "@rolexjs/genesis": "1.5.0-dev-20260312083443", "@rolexjs/parser": "1.5.0-dev-20260312083443", "@rolexjs/system": "1.5.0-dev-20260312083443", "issuexjs": "^0.2.0", "resourcexjs": "^2.14.0" } }, "sha512-xrx/UlVm9InKP2yxA+QqWU5ndZOQvZ7NLDvLsNB5UccW3fzT/LNoa9a2RlsGqGinV1/afdBJyoRHzz2zGttbcw=="],
+    "rolexjs": ["rolexjs@1.5.0-dev-20260312103329", "", { "dependencies": { "@rolexjs/core": "1.5.0-dev-20260312103329", "@rolexjs/genesis": "1.5.0-dev-20260312103329", "@rolexjs/parser": "1.5.0-dev-20260312103329", "@rolexjs/system": "1.5.0-dev-20260312103329", "issuexjs": "^0.2.0", "resourcexjs": "^2.14.0" } }, "sha512-spsiRc27lxlrMFiFDDxjEJFAAMsdKTlpVCIrrDHZovzpxP+CI2ss2pl4yQQGEsLYcbkiam4x3ObvS63oFBlK0A=="],
 
     "rollup": ["rollup@4.54.0", "", { "dependencies": { "@types/estree": "1.0.8" }, "optionalDependencies": { "@rollup/rollup-android-arm-eabi": "4.54.0", "@rollup/rollup-android-arm64": "4.54.0", "@rollup/rollup-darwin-arm64": "4.54.0", "@rollup/rollup-darwin-x64": "4.54.0", "@rollup/rollup-freebsd-arm64": "4.54.0", "@rollup/rollup-freebsd-x64": "4.54.0", "@rollup/rollup-linux-arm-gnueabihf": "4.54.0", "@rollup/rollup-linux-arm-musleabihf": "4.54.0", "@rollup/rollup-linux-arm64-gnu": "4.54.0", "@rollup/rollup-linux-arm64-musl": "4.54.0", "@rollup/rollup-linux-loong64-gnu": "4.54.0", "@rollup/rollup-linux-ppc64-gnu": "4.54.0", "@rollup/rollup-linux-riscv64-gnu": "4.54.0", "@rollup/rollup-linux-riscv64-musl": "4.54.0", "@rollup/rollup-linux-s390x-gnu": "4.54.0", "@rollup/rollup-linux-x64-gnu": "4.54.0", "@rollup/rollup-linux-x64-musl": "4.54.0", "@rollup/rollup-openharmony-arm64": "4.54.0", "@rollup/rollup-win32-arm64-msvc": "4.54.0", "@rollup/rollup-win32-ia32-msvc": "4.54.0", "@rollup/rollup-win32-x64-gnu": "4.54.0", "@rollup/rollup-win32-x64-msvc": "4.54.0", "fsevents": "~2.3.2" }, "bin": { "rollup": "dist/bin/rollup" } }, "sha512-3nk8Y3a9Ea8szgKhinMlGMhGMw89mqule3KWczxhIzqudyHdCIOHw8WJlj/r329fACjKLEh13ZSk7oE22kyeIw=="],
 

@@ -49,7 +49,7 @@ export class RolexBridge {
    */
   async initialize(): Promise<void> {
     this.rx = createRoleX({ platform: this.platform });
-    this.role = await this.rx.role.activate({ individual: this.roleId });
+    this.role = await this.rx.individual.activate({ individual: this.roleId });
     logger.info("RoleX bridge initialized", { roleId: this.roleId });
   }
 
@@ -131,14 +131,14 @@ export class RolexBridge {
     switch (name) {
       case "activate": {
         const roleId = args.roleId as string;
-        this.role = await this.rx.role.activate({ individual: roleId });
+        this.role = await this.rx.individual.activate({ individual: roleId });
         logger.info("Role activated", { roleId });
         return this.role.project();
       }
       case "inspect":
-        return this.rx.role.inspect({ id: args.id as string });
+        return this.rx.inspect({ id: args.id as string });
       case "survey":
-        return this.rx.role.survey({ type: args.type as string | undefined });
+        return this.rx.survey({ type: args.type as string | undefined });
       case "direct": {
         const command = args.command as string;
         const cmdArgs = args.args as Record<string, unknown> | undefined;
