@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "dev": "bun dev/dev-manager.ts",
-    "start": "bun apps/portagent/bin/portagent.js",
+    "start": "echo 'No default start script'",
     "build": "PATH=$(echo \"$PATH\" | tr ':' '\\n' | grep -v bun-node | paste -sd: -) turbo build --filter='!@agentxjs/cli'",
     "check": "biome check .",
     "check:fix": "biome check --write .",
