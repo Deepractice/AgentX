@@ -8,7 +8,7 @@
 import type { AgentXError } from "@agentxjs/core/error";
 import type { BusEvent, BusEventHandler, EventBus, Unsubscribe } from "@agentxjs/core/event";
 import { EventBusImpl } from "@agentxjs/core/event";
-import { RpcClient } from "@agentxjs/core/network";
+import { RpcClient, type RpcMethod } from "@agentxjs/core/network";
 import { createLogger } from "commonxjs/logger";
 import { createRemoteAgents } from "./namespaces/agents";
 import { createRemoteContainers } from "./namespaces/containers";
@@ -127,6 +127,6 @@ export class RemoteClient implements AgentX {
   // ==================== RPC ====================
 
   async rpc<T = unknown>(method: string, params?: unknown): Promise<T> {
-    return this.rpcClient.call<T>(method, params);
+    return this.rpcClient.call<T>(method as RpcMethod, params);
   }
 }
