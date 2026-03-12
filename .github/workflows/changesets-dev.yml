@@ -1,0 +1,89 @@
+name: Changesets (Dev)
+
+on:
+  push:
+    branches:
+      - dev
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release-dev:
+    name: Release Dev
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js (for npm publish)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check for changesets
+        id: check
+        run: |
+          if ls .changeset/*.md 1>/dev/null 2>&1; then
+            COUNT=$(ls .changeset/*.md | grep -v README.md | wc -l)
+            if [ "$COUNT" -gt 0 ]; then
+              echo "has_changesets=true" >> $GITHUB_OUTPUT
+            else
+              echo "has_changesets=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "has_changesets=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Snapshot Version
+        if: steps.check.outputs.has_changesets == 'true'
+        run: bunx changeset version --snapshot dev
+
+      - name: Replace workspace protocol
+        if: steps.check.outputs.has_changesets == 'true'
+        run: |
+          for pkg in packages/*/package.json apps/*/package.json; do
+            if grep -q '"workspace:\*"' "$pkg" 2>/dev/null; then
+              # For each workspace:* dep, find actual version from monorepo
+              for dep in $(jq -r '(.dependencies // {}) + (.devDependencies // {}) | to_entries[] | select(.value == "workspace:*") | .key' "$pkg"); do
+                DEP_VERSION=$(find packages apps -name "package.json" -path "*/package.json" -exec jq -r --arg name "$dep" 'select(.name == $name) | .version' {} \; 2>/dev/null | head -1)
+                if [ -n "$DEP_VERSION" ]; then
+                  jq --arg dep "$dep" --arg ver "${DEP_VERSION}" '
+                    if .dependencies[$dep] == "workspace:*" then .dependencies[$dep] = $ver else . end |
+                    if .devDependencies[$dep] == "workspace:*" then .devDependencies[$dep] = $ver else . end
+                  ' "$pkg" > tmp && mv tmp "$pkg"
+                fi
+              done
+            fi
+          done
+
+      - name: Build Packages
+        if: steps.check.outputs.has_changesets == 'true'
+        run: bun run build
+
+      - name: Publish Dev
+        if: steps.check.outputs.has_changesets == 'true'
+        run: bunx changeset publish --tag dev
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.ORG_NPM_TOKEN }}
+
+      - name: Summary
+        if: steps.check.outputs.has_changesets == 'true'
+        run: |
+          VERSION=$(jq -r '.version' packages/core/package.json)
+          echo "## Dev Snapshot Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${VERSION}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Install: \`bun add agentxjs@dev\`" >> $GITHUB_STEP_SUMMARY

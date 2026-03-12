@@ -120,12 +120,21 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       defaultTools.push(createBashTool(this.platform.bashProvider));
     }
 
+    // Create context if Image has a contextId and platform provides a ContextProvider
+    let context: import("../context/types").Context | undefined;
+    if (imageRecord.contextId && this.platform.contextProvider) {
+      context = await this.platform.contextProvider.create(imageRecord.contextId);
+      // Merge context tools into default tools
+      defaultTools.push(...context.getTools());
+    }
+
     // Create driver config
     const driverConfig: DriverConfig = {
       apiKey: "",
       agentId,
       systemPrompt: imageRecord.systemPrompt,
       mcpServers: imageRecord.mcpServers,
+      context,
       tools: defaultTools.length > 0 ? defaultTools : undefined,
       session, // Inject Session for stateless drivers
       resumeSessionId: imageRecord.metadata?.driverSessionId as string | undefined,

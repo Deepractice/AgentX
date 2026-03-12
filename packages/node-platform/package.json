@@ -37,8 +37,10 @@
   },
   "dependencies": {
     "@agentxjs/core": "workspace:*",
+    "@rolexjs/local-platform": "1.5.0-dev-20260312103329",
     "commonxjs": "^0.1.1",
     "execa": "9.6.1",
+    "rolexjs": "1.5.0-dev-20260312103329",
     "rxjs": "^7.8.2",
     "unstorage": "^1.10.2",
     "ws": "^8.18.0"

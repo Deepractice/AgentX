@@ -21,6 +21,7 @@
 
 import type { BashProvider } from "../bash/types";
 import type { ContainerRepository } from "../container/types";
+import type { ContextProvider } from "../context/types";
 import type { EventBus } from "../event/types";
 import type { ImageRepository } from "../image/types";
 import type { LLMProviderRepository } from "../llm/types";
@@ -73,6 +74,15 @@ export interface AgentXPlatform {
    * When provided, enables ax.llm namespace for CRUD operations.
    */
   readonly llmProviderRepository?: LLMProviderRepository;
+
+  /**
+   * Context provider for cognitive context (Layer 2)
+   *
+   * Optional — when provided, Images with a contextId will have
+   * their context automatically created and injected into the Driver.
+   * RolexContext is the primary implementation.
+   */
+  readonly contextProvider?: ContextProvider;
 
   // === Optional Providers ===
 

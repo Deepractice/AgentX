@@ -37,7 +37,6 @@ import type { ToolSet } from "ai";
 import { stepCountIs, streamText } from "ai";
 import { createLogger } from "commonxjs/logger";
 import { createEvent, toStopReason, toVercelMessages, toVercelTools } from "./converters";
-import { RolexBridge } from "./rolex-bridge";
 import type { MonoDriverConfig, MonoProvider, OpenAICompatibleConfig } from "./types";
 
 const logger = createLogger("mono-driver/MonoDriver");
@@ -58,7 +57,6 @@ export class MonoDriver implements Driver {
   private readonly provider: MonoProvider;
   private readonly maxSteps: number;
   private readonly compatibleConfig?: OpenAICompatibleConfig;
-  private readonly rolexBridge: RolexBridge | null;
 
   constructor(config: MonoDriverConfig) {
     this.config = config;
@@ -66,12 +64,6 @@ export class MonoDriver implements Driver {
     this.provider = config.provider ?? "anthropic";
     this.maxSteps = config.maxSteps ?? 10;
     this.compatibleConfig = config.compatibleConfig;
-    this.rolexBridge = config.rolex
-      ? new RolexBridge({
-          platform: config.rolex.platform,
-          roleId: config.rolex.roleId,
-        })
-      : null;
   }
 
   // ============================================================================
@@ -99,12 +91,6 @@ export class MonoDriver implements Driver {
       agentId: this.config.agentId,
       provider: this.provider,
     });
-
-    // Initialize RoleX bridge if configured
-    if (this.rolexBridge) {
-      await this.rolexBridge.initialize();
-      logger.info("RoleX bridge initialized");
-    }
 
     // Generate a session ID for tracking
     this._sessionId = `mono_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -330,38 +316,42 @@ export class MonoDriver implements Driver {
 
   /**
    * Convert config tools to Vercel AI SDK ToolSet.
-   * Merges platform tools (from DriverConfig.tools) with RoleX tools (from bridge).
+   * Tools are pre-merged by the runtime before being passed to the driver.
    */
   private getTools(): ToolSet | undefined {
-    const allTools = [...(this.config.tools ?? [])];
-
-    // Merge RoleX tools if bridge is active
-    if (this.rolexBridge) {
-      allTools.push(...this.rolexBridge.getTools());
-    }
-
-    if (allTools.length === 0) return undefined;
-    return toVercelTools(allTools);
+    const tools = this.config.tools;
+    if (!tools || tools.length === 0) return undefined;
+    return toVercelTools(tools);
   }
 
   /**
    * Build the three-layer system prompt.
    *
-   * Layer 1: System Prompt (fixed, from Image config) — global, RoleX-independent
-   * Layer 2: Role Context (dynamic, refreshed each turn) — world instructions + role state
+   * Layer 1: System Prompt (fixed, from Image config)
+   * Layer 2: Context (dynamic, refreshed each turn — e.g. RoleX role projection)
+   * Layer 3: Messages (conversation history, in messages array)
    */
   private async buildSystemPrompt(): Promise<string | undefined> {
     const parts: string[] = [];
 
-    // Layer 1: System Prompt (global, from Image config)
+    // Layer 1: System Prompt (fixed, from Image config)
     if (this.config.systemPrompt) {
-      parts.push(this.config.systemPrompt);
+      parts.push(`<system>\n${this.config.systemPrompt}\n</system>`);
     }
 
-    // Layer 2: Role Context (world instructions + role state projection)
-    if (this.rolexBridge) {
-      const roleContext = await this.rolexBridge.getRoleContext();
-      parts.push(`<role-context>\n${roleContext}\n</role-context>`);
+    // Layer 2: Context (cognitive context from ContextProvider)
+    if (this.config.context) {
+      // Instructions — fixed cognitive framework
+      const instructions = this.config.context.instructions;
+      if (instructions) {
+        parts.push(`<instructions>\n${instructions}\n</instructions>`);
+      }
+
+      // Projection — dynamic state, refreshed each turn
+      const projection = await this.config.context.project();
+      if (projection) {
+        parts.push(`<context>\n${projection}\n</context>`);
+      }
     }
 
     return parts.length > 0 ? parts.join("\n\n") : undefined;

@@ -16,6 +16,8 @@
  */
 
 export type {
+  // Context
+  Context,
   CreateDriver,
   // Core Interface
   Driver,

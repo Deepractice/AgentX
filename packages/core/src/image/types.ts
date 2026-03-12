@@ -34,7 +34,7 @@ export interface Image {
   readonly description: string | undefined;
   readonly systemPrompt: string | undefined;
   readonly mcpServers: Record<string, McpServerConfig> | undefined;
-  readonly roleId: string | undefined;
+  readonly contextId: string | undefined;
   readonly customData: Record<string, unknown> | undefined;
   readonly createdAt: number;
   readonly updatedAt: number;
@@ -80,6 +80,6 @@ export interface ImageCreateConfig {
   description?: string;
   systemPrompt?: string;
   mcpServers?: Record<string, McpServerConfig>;
-  roleId?: string;
+  contextId?: string;
   customData?: Record<string, unknown>;
 }

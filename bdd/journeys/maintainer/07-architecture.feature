@@ -123,6 +123,36 @@ Feature: Monorepo Architecture
     Then the runtime checks that the provider's protocol is in driver.supportedProtocols
     And throws "Protocol mismatch" error if they don't match
 
+  Scenario: Context integration — three-layer system prompt
+    Given the Context interface in @agentxjs/core/context
+    Then it provides three things:
+      | property     | description                                     |
+      | instructions | World-level cognitive framework (fixed)           |
+      | project()    | Dynamic state projection (refreshed each turn)   |
+      | getTools()   | Capabilities the context brings (e.g. RoleX tools)|
+    And the system prompt is structured as:
+      | layer | tag             | source                    |
+      | 1     | <system>        | Image.systemPrompt        |
+      | 2     | <instructions>  | Context.instructions      |
+      | 2     | <context>       | Context.project()         |
+      | 3     | (messages)      | Session history           |
+
+  Scenario: ContextProvider is a platform-level factory
+    Given the ContextProvider interface in @agentxjs/core/context
+    Then it has a single method: create(contextId) → Context
+    And it is registered on AgentXPlatform.contextProvider
+    And Runtime calls it when ImageRecord has a contextId
+
+  Scenario: Node platform includes RoleX context by default
+    Given the @agentxjs/node-platform package
+    Then it creates a RolexContextProvider automatically
+    And default data paths are:
+      | component | path                    |
+      | AgentX    | ~/.deepractice/agentx   |
+      | RoleX     | ~/.deepractice/rolex    |
+    And both paths are configurable via dataPath and rolexDataPath options
+    And context provider can be disabled by setting contextProvider to null
+
   Scenario: All packages share base TypeScript config
     Given the file "tsconfig.base.json"
     Then all packages should extend it

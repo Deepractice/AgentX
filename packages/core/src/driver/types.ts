@@ -281,6 +281,10 @@ export type DriverStreamEvent =
  */
 export type DriverStreamEventType = DriverStreamEvent["type"];
 
+// Context — import and re-export from context module
+import type { Context } from "../context/types";
+export type { Context };
+
 // ============================================================================
 // Driver Configuration
 // ============================================================================
@@ -346,9 +350,22 @@ export interface DriverConfigBase {
   agentId: string;
 
   /**
-   * System prompt for the agent
+   * System prompt for the agent (Layer 1 — fixed)
    */
   systemPrompt?: string;
+
+  /**
+   * Dynamic context provider (Layer 2 — refreshed each turn)
+   *
+   * Provides cognitive context like role identity, world instructions,
+   * and current state projection. Separate from systemPrompt.
+   *
+   * @example
+   * ```typescript
+   * context: new RolexContext({ platform, roleId: "nuwa" })
+   * ```
+   */
+  context?: Context;
 
   /**
    * Current working directory for tool execution

@@ -1,88 +1,82 @@
-Feature: RoleX Integration in MonoDriver
-  MonoDriver integrates RoleX as a built-in tool ecosystem.
-  RoleX tools become MonoDriver tools, and Role Context becomes
-  a dedicated context layer refreshed on every receive() call.
+Feature: RoleX Context in AgentX
+  AgentX integrates RoleX through a generic Context abstraction.
+  RolexContext implements Context, providing instructions, tools,
+  and dynamic state projection for any Driver.
 
   Three-layer context model:
-    Layer 1: System Prompt (fixed, from Image config)
-    Layer 2: Role Context (dynamic, world instructions + role state, in <role-context> tags)
-    Layer 3: Message Context (conversation history, managed by Driver)
+    Layer 1: System Prompt (fixed, from Image config) — <system>
+    Layer 2: Context (dynamic, instructions + role state) — <instructions> + <context>
+    Layer 3: Message Context (conversation history, managed by Session)
 
-  Platform separation:
-    rolexPlatform is static — provided via MonoDriverOptions, captured in createDriver closure.
-    roleId is dynamic — flows from ImageRecord through customData per agent.
+  Architecture:
+    ContextProvider is on AgentXPlatform — a generic factory.
+    Node platform creates RolexContextProvider by default.
+    contextId on ImageRecord tells Runtime which context to create.
+    Context is created once per agent, projection refreshes each turn.
 
   Background:
-    Given a MonoDriver with rolexPlatform configured
-    And customData contains roleId "sean"
+    Given a node platform with default RoleX context provider
+    And an ImageRecord with contextId "nuwa"
 
   # ================================================================
   # RoleX Tool Registration
   # ================================================================
 
-  Scenario: RoleX tools are available as MonoDriver tools
-    When I inspect the driver's tool set
-    Then the tools should include RoleX tools "activate", "want", "plan", "todo", "finish"
-    And the tools should include RoleX tools "reflect", "realize", "master"
-    And the tools should include RoleX tools "inspect", "survey", "use", "direct"
-    And each RoleX tool should have a JSON Schema for its parameters
-    And each RoleX tool should have a description from detail()
+  Scenario: RoleX tools are provided via Context.getTools()
+    When Runtime creates an agent from the ImageRecord
+    Then the driver should have RoleX tools "activate", "want", "plan", "todo", "finish"
+    And the driver should have RoleX tools "reflect", "realize", "master"
+    And the driver should have RoleX tools "inspect", "survey", "use", "direct"
+    And each tool should have a JSON Schema for its parameters
 
   Scenario: RoleX tools coexist with platform tools
-    Given platform tools include "bash"
-    When I inspect the driver's tool set
-    Then both "bash" and "activate" should be available
+    Given the platform provides a "bash" tool
+    When Runtime creates an agent from the ImageRecord
+    Then both "bash" and "activate" should be in the tool set
     And there should be no name conflicts
 
   # ================================================================
-  # Role Context Layer
+  # Context Layer
   # ================================================================
 
-  Scenario: Role auto-activates on initialize
-    When I call driver.initialize()
-    Then the RolexBridge should activate roleId "sean" from customData
-    And the role should be ready for context projection
-
-  Scenario: Role Context is injected as Layer 2
+  Scenario: Context instructions are injected as Layer 2
     When I call receive with "Hello"
-    Then the LLM system prompt should contain the original systemPrompt (Layer 1)
-    And the LLM system prompt should contain a <role-context> block (Layer 2)
-    And the <role-context> block should contain world instructions
-    And the <role-context> block should contain the role's state projection
+    Then the system prompt should contain an <instructions> block with world instructions
+    And the system prompt should contain a <context> block with role state
 
-  Scenario: Role Context refreshes on every receive
+  Scenario: Context projection refreshes on every receive
     Given the LLM has called "want" to create a goal
     When I call receive with "Show my progress"
-    Then the Role Context should reflect the newly created goal
+    Then the <context> block should reflect the newly created goal
 
   # ================================================================
-  # Tool Execution & State Mutation
+  # Tool Execution
   # ================================================================
 
-  Scenario: Executing a RoleX tool returns rendered result
-    When the LLM calls "want" with id "ship-v1" and goal "Feature: Ship v1"
-    Then the tool result should contain the goal's state projection
-    And the role's internal state should include goal "ship-v1"
+  Scenario: RoleX tool calls are dispatched dynamically via RPC schema
+    When the LLM calls "want" with content "Feature: Ship v1"
+    Then the tool call should be dispatched via toArgs("role.want", args)
+    And the result should contain the goal's state projection
+
+  Scenario: Builder-level tools bypass role dispatch
+    When the LLM calls "inspect" with id "some-node"
+    Then the call should go directly to RoleXBuilder.inspect()
+    And not to the role instance
 
   # ================================================================
-  # Configuration — Platform Separation
+  # Configuration
   # ================================================================
 
-  Scenario: RoleX requires both rolexPlatform and roleId
-    Given a MonoDriverConfig with rolexPlatform but no roleId in customData
-    When I create a MonoDriver with this config
-    Then RoleX should NOT be initialized
-    And the driver should work without RoleX tools
-
-  Scenario: RoleX is optional - driver works without it
-    Given a MonoDriverConfig without rolexPlatform
-    When I create a MonoDriver with this config
+  Scenario: Context is optional — no contextId means no RoleX
+    Given an ImageRecord without contextId
+    When Runtime creates an agent from the ImageRecord
     Then no RoleX tools should be registered
-    And no Role Context should be injected
-    And the driver should work as before
+    And no context layers should be injected
+    And the driver should work normally
 
-  Scenario: roleId flows through customData
-    Given an ImageRecord with roleId "kant"
-    When Runtime creates a DriverConfig
-    Then customData should contain roleId "kant"
-    And MonoDriver should use this roleId to activate the role
+  Scenario: Context provider can be disabled
+    Given a node platform with contextProvider set to null
+    And an ImageRecord with contextId "nuwa"
+    When Runtime creates an agent from the ImageRecord
+    Then no context should be created
+    And the agent should work without RoleX

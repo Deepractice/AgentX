@@ -90,8 +90,8 @@ export interface ImageRecord {
   /** MCP servers configuration */
   mcpServers?: Record<string, McpServerConfig>;
 
-  /** RoleX role ID — the individual this image represents */
-  roleId?: string;
+  /** Context ID — identifies the cognitive context for this image (e.g. RoleX individual) */
+  contextId?: string;
 
   /** Provider-specific metadata */
   metadata?: ImageMetadata;

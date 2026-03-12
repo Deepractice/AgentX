@@ -40,9 +40,6 @@ export { stepCountIs } from "ai";
 export { createEvent, toStopReason, toVercelMessage, toVercelMessages } from "./converters";
 // Main exports
 export { createMonoDriver, MonoDriver } from "./MonoDriver";
-export type { RolexBridgeConfig } from "./rolex-bridge";
-// RoleX bridge
-export { createRolexBridge, RolexBridge } from "./rolex-bridge";
 // Types
 export type {
   MonoBuiltinProvider,

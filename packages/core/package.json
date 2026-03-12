@@ -84,6 +84,11 @@
       "types": "./dist/llm/index.d.ts",
       "import": "./dist/llm/index.js",
       "default": "./dist/llm/index.js"
+    },
+    "./context": {
+      "types": "./dist/context/index.d.ts",
+      "import": "./dist/context/index.js",
+      "default": "./dist/context/index.js"
     }
   },
   "files": [
@@ -98,6 +103,7 @@
   "dependencies": {
     "commonxjs": "^0.1.1",
     "jsonrpc-lite": "2.2.0",
+    "rolexjs": "1.5.0-dev-20260312103329",
     "rxjs": "^7.8.2"
   },
   "devDependencies": {

@@ -7,7 +7,6 @@
  */
 
 import type { DriverConfig } from "@agentxjs/core/driver";
-import type { Platform } from "rolexjs";
 
 /**
  * Built-in LLM providers
@@ -77,21 +76,6 @@ export interface MonoDriverOptions {
    * Required when provider is "openai-compatible"
    */
   compatibleConfig?: OpenAICompatibleConfig;
-
-  /**
-   * RoleX configuration
-   *
-   * When provided, RoleX tools are registered, the role is auto-activated
-   * on initialize(), and Role Context is injected as Layer 2 each turn.
-   *
-   * All-or-nothing: provide this to enable RoleX, omit to disable entirely.
-   */
-  rolex?: {
-    /** RoleX Platform instance (e.g. from localPlatform()) */
-    platform: Platform;
-    /** Role ID to auto-activate on initialize */
-    roleId: string;
-  };
 }
 
 /**
