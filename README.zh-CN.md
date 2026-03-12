@@ -6,10 +6,7 @@
   <p>Next-generation open-source AI agent development framework and runtime platform</p>
 
   <p>
-    <b>事件驱动</b> · <b>简易开发</b> · <b>界面简约</b> · <b>开箱即用</b>
-  </p>
-  <p>
-    <b>Event-driven Runtime</b> · <b>Simple Framework</b> · <b>Minimal UI</b> · <b>Ready-to-use Portal</b>
+    <b>事件驱动</b> · <b>多模型支持</b> · <b>RoleX 集成</b> · <b>TypeScript 优先</b>
   </p>
 
   <p>
@@ -17,7 +14,6 @@
     <img src="https://visitor-badge.laobi.icu/badge?page_id=Deepractice.AgentX" alt="Views"/>
     <a href="LICENSE"><img src="https://img.shields.io/github/license/Deepractice/AgentX?color=blue" alt="License"/></a>
     <a href="https://www.npmjs.com/package/agentxjs"><img src="https://img.shields.io/npm/v/agentxjs?color=cb3837&logo=npm" alt="npm"/></a>
-    <a href="https://hub.docker.com/r/deepracticexs/portagent"><img src="https://img.shields.io/docker/pulls/deepracticexs/portagent?logo=docker" alt="Docker"/></a>
   </p>
 
   <p>
@@ -30,107 +26,115 @@
 
 ## 🚀 快速开始
 
-### 方式一：npx（一键启动）
+### 本地模式（嵌入式）
 
-需要 Node.js 20+：
+几行 TypeScript 即可构建 AI Agent：
 
-```bash
-LLM_PROVIDER_KEY=sk-ant-xxxxx \
-LLM_PROVIDER_URL=https://api.anthropic.com \
-npx @agentxjs/portagent
+```typescript
+import { createAgentX } from "agentxjs";
+import { nodePlatform } from "@agentxjs/node-platform";
+import { createMonoDriver } from "@agentxjs/mono-driver";
+
+const createDriver = (config) => createMonoDriver({
+  ...config,
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  provider: "anthropic",
+});
+
+const platform = await nodePlatform({ createDriver }).resolve();
+const ax = createAgentX({ platform, createDriver });
+
+// 创建容器 → 镜像 → Agent → 对话
+await ax.container.create("my-app");
+const { record: image } = await ax.image.create({
+  containerId: "my-app",
+  systemPrompt: "你是一个有帮助的助手。",
+});
+const { agentId } = await ax.agent.create({ imageId: image.imageId });
+
+ax.on("text_delta", (e) => process.stdout.write(e.data.text));
+await ax.session.send(agentId, "你好！");
 ```
 
-### 方式二：Docker（生产环境推荐）
+### 服务端模式
 
-无需编译，开箱即用：
+将 Agent 暴露为 WebSocket 服务：
 
-```bash
-docker run -d \
-  --name portagent \
-  -p 5200:5200 \
-  -e LLM_PROVIDER_KEY=sk-ant-xxxxx \
-  -e LLM_PROVIDER_URL=https://api.anthropic.com \
-  -v ./data:/home/node/.agentx \
-  deepracticexs/portagent:latest
+```typescript
+import { createServer } from "agentxjs";
+
+const server = await createServer({
+  platform,
+  createDriver,
+  port: 5200,
+});
+await server.listen();
 ```
 
-打开 <http://localhost:5200> 开始对话！
+### 远程模式（WebSocket 客户端）
 
-![Portagent Demo](./apps/portagent/public/Portagent.gif)
+连接到运行中的 AgentX 服务：
 
-### 开箱即用
+```typescript
+import { createAgentX } from "agentxjs";
 
-- **多用户支持** - 用户注册（可选邀请码）
-- **会话持久化** - 随时恢复对话
-- **实时流式传输** - 基于 WebSocket 的通信
-- **Docker 就绪** - 生产级健康检查
+const ax = createAgentX();
+const client = await ax.connect("ws://localhost:5200");
 
-> **提示：** 添加 `-e INVITE_CODE_REQUIRED=true` 启用邀请码保护。
+// 与本地模式相同的 API
+await client.agent.create({ imageId: "..." });
+```
 
-👉 **[完整 Portagent 文档](./apps/portagent/README.md)** - 配置、部署、API 参考
+### CLI 终端
+
+交互式终端对话：
+
+```bash
+cd apps/cli
+cp .env.example .env.local  # 设置 DEEPRACTICE_API_KEY
+bun run dev
+```
 
 ---
 
-## 🛠️ 使用 AgentX 构建
+## 🛠️ 包
 
-AgentX 是一个基于事件驱动架构的 TypeScript 框架，用于构建 AI Agent 应用。
+| 包 | 说明 |
+|---|------|
+| **[agentxjs](./packages/agentx/README.md)** | 客户端 SDK — 本地、远程、服务端三种模式 |
+| **[@agentxjs/core](./packages/core/README.md)** | 核心抽象 — Container、Image、Session、Driver |
+| **[@agentxjs/node-platform](./packages/node-platform/README.md)** | Node.js 平台 — SQLite 持久化、WebSocket |
+| **[@agentxjs/mono-driver](./packages/mono-driver/README.md)** | 多模型统一驱动（Anthropic、OpenAI、Google 等） |
+| **[@agentxjs/claude-driver](./packages/claude-driver/README.md)** | Claude 专属驱动，支持扩展特性 |
+| **[@agentxjs/devtools](./packages/devtools/README.md)** | BDD 测试工具 — MockDriver、RecordingDriver、Fixtures |
 
-**服务端（Node.js）**
+### 多模型支持
 
-```typescript
-import { createServer } from "http";
-import { createAgentX, defineAgent } from "agentxjs";
+MonoDriver 通过 [Vercel AI SDK](https://sdk.vercel.ai/) 支持多个 LLM 提供商：
 
-// 定义你的 Agent
-const MyAgent = defineAgent({
-  name: "MyAgent",
-  systemPrompt: "你是一个有帮助的助手。",
-  mcpServers: {
-    // 可选：添加 MCP 服务器以获取工具能力
-    filesystem: {
-      command: "npx",
-      args: ["-y", "@anthropic/mcp-server-filesystem", "/tmp"],
-    },
-  },
-});
+- **Anthropic** (Claude) — `provider: "anthropic"`
+- **OpenAI** (GPT) — `provider: "openai"`
+- **Google** (Gemini) — `provider: "google"`
+- **DeepSeek** — `provider: "deepseek"`
+- **Mistral** — `provider: "mistral"`
+- **xAI** (Grok) — `provider: "xai"`
+- **OpenAI 兼容** — `provider: "openai-compatible"`
 
-// 创建 HTTP 服务器
-const server = createServer();
+### RoleX 集成
 
-// 创建 AgentX 实例
-const agentx = await createAgentX({
-  llm: {
-    apiKey: process.env.LLM_PROVIDER_KEY,
-    baseUrl: process.env.LLM_PROVIDER_URL,
-  },
-  agentxDir: "~/.agentx", // 自动配置 SQLite 存储
-  server, // 挂载 WebSocket 到 HTTP 服务器
-  defaultAgent: MyAgent, // 新对话的默认 Agent
-});
-
-// 启动服务器
-server.listen(5200, () => {
-  console.log("✓ 服务器运行在 http://localhost:5200");
-  console.log("✓ WebSocket 可用于 ws://localhost:5200/ws");
-});
-```
-
-**客户端（浏览器/React）**
+MonoDriver 集成了 [RoleX](https://github.com/AeonLabs/rolexjs) AI 角色管理系统 — 身份、目标、知识与认知成长循环：
 
 ```typescript
-import { useAgentX, ResponsiveStudio } from "@agentxjs/ui";
-import "@agentxjs/ui/styles.css";
+import { localPlatform } from "@rolexjs/local-platform";
 
-function App() {
-  const agentx = useAgentX("ws://localhost:5200/ws");
-
-  if (!agentx) return <div>连接中...</div>;
-
-  return <ResponsiveStudio agentx={agentx} />;
-}
+const driver = createMonoDriver({
+  ...config,
+  rolex: {
+    platform: localPlatform(),
+    roleId: "my-role",
+  },
+});
 ```
-
-👉 **[完整 AgentX 文档](./docs/README.md)** - 架构、API 参考、指南和示例
 
 ---
 
@@ -176,24 +180,23 @@ function App() {
                             [ RxJS Pub/Sub ]
 
 事件流:
-  → 输入:  客户端 → WebSocket → BUS → Claude SDK
-  ← 输出: SDK → BUS → AgentEngine → BUS → 客户端
+  → 输入:  客户端 → WebSocket → BUS → LLM Driver
+  ← 输出: Driver → BUS → AgentEngine → BUS → 客户端
 ```
 
 ---
 
 ## 💬 关于
 
-AgentX 处于早期开发阶段。我们欢迎您的想法、反馈和功能需求！
+AgentX 正在积极开发中。欢迎提出想法、反馈和贡献！
 
 ### 🌐 生态系统
 
-Deepractice AI 开发生态的一部分：
+[Deepractice](https://github.com/Deepractice) AI 基础设施的一部分：
 
-- **[PromptX](https://github.com/Deepractice/PromptX)** - 提示词工程和管理框架
-- **[DPML](https://github.com/Deepractice/dpml)** - Deepractice 标记语言（用于 AI 工作流）
-- **[DARP](https://github.com/Deepractice/DARP)** - Deepractice Agent 运行时协议
-- **[Lucid-UI](https://github.com/Deepractice/Lucid-UI)** - AI 驱动的 UI 组件库
+- **[RoleX](https://github.com/AeonLabs/rolexjs)** — AI 角色管理系统（身份、认知、成长）
+- **[ResourceX](https://github.com/Deepractice/ResourceX)** — 统一资源管理器
+- **[IssueX](https://github.com/AeonLabs/issuexjs)** — AI 协作的结构化问题追踪
 
 ### 📞 联系方式
 
