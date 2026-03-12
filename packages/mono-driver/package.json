@@ -1,6 +1,6 @@
 {
   "name": "@agentxjs/mono-driver",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "description": "Unified cross-platform Driver using Vercel AI SDK",
   "type": "module",
   "main": "./dist/index.js",
