@@ -93,7 +93,7 @@ export async function agentDocTester(
           apiKey: apiKey ?? driverConfig.apiKey,
           baseUrl: baseUrl ?? driverConfig.baseUrl,
           model: model ?? driverConfig.model,
-          options: { ...driverConfig.options, provider },
+          provider,
         }),
     });
 

@@ -69,7 +69,7 @@ async function getServerUrl(port: number): Promise<{ url: string; cleanup?: () =
       ...config,
       apiKey,
       baseUrl,
-      options: { provider: "anthropic" },
+      provider: "anthropic",
     });
   };
 

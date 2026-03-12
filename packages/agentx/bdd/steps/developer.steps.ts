@@ -642,7 +642,7 @@ When(
           apiKey: env.apiKey ?? driverConfig.apiKey,
           baseUrl: env.baseUrl ?? driverConfig.baseUrl,
           model: env.model ?? driverConfig.model,
-          options: { ...(driverConfig as any).options, provider: "anthropic" },
+          provider: "anthropic",
         }),
     });
   }
