@@ -5,7 +5,7 @@
  *   1. Convert RoleX ToolDef[] → AgentX ToolDefinition[]
  *   2. Manage RoleX instance lifecycle (create, activate)
  *   3. Provide Role Context projection for the three-layer context model
- *   4. Route tool calls to the active Role or RoleX instance
+ *   4. Route tool calls to the active Role or RoleX builder
  *
  * Three-layer context model:
  *   Layer 1: System Prompt (fixed, from Image config)
@@ -15,8 +15,8 @@
 
 import type { ToolDefinition } from "@agentxjs/core/driver";
 import { createLogger } from "commonxjs/logger";
-import type { ParamDef, Platform, Role, ToolDef } from "rolexjs";
-import { createRoleX, detail, protocol, type RoleX } from "rolexjs";
+import type { ParamDef, Platform, Role, RoleXBuilder, ToolDef } from "rolexjs";
+import { createRoleX } from "rolexjs";
 
 const logger = createLogger("mono-driver/rolex-bridge");
 
@@ -34,7 +34,7 @@ export interface RolexBridgeConfig {
  * RoleX Bridge — manages RoleX lifecycle and tool integration for MonoDriver
  */
 export class RolexBridge {
-  private rolex: RoleX | null = null;
+  private rx: RoleXBuilder | null = null;
   private role: Role | null = null;
   private readonly platform: Platform;
   private readonly roleId: string;
@@ -45,11 +45,11 @@ export class RolexBridge {
   }
 
   /**
-   * Initialize the RoleX instance and auto-activate the configured role
+   * Initialize the RoleX builder and auto-activate the configured role
    */
   async initialize(): Promise<void> {
-    this.rolex = await createRoleX(this.platform);
-    this.role = await this.rolex.activate(this.roleId);
+    this.rx = createRoleX({ platform: this.platform });
+    this.role = await this.rx.role.activate({ individual: this.roleId });
     logger.info("RoleX bridge initialized", { roleId: this.roleId });
   }
 
@@ -63,10 +63,14 @@ export class RolexBridge {
    * Always returns content when RoleX is enabled (world instructions are always present).
    */
   async getRoleContext(): Promise<string> {
+    if (!this.rx) {
+      throw new Error("RoleX not initialized");
+    }
+
     const parts: string[] = [];
 
     // World instructions — always present
-    parts.push(protocol.instructions);
+    parts.push(this.rx.protocol.instructions);
 
     // Role state projection — only when a role is activated
     if (this.role) {
@@ -81,7 +85,10 @@ export class RolexBridge {
    * Convert all RoleX tools to AgentX ToolDefinition[]
    */
   getTools(): ToolDefinition[] {
-    return protocol.tools.map((toolDef) => this.convertTool(toolDef));
+    if (!this.rx) {
+      throw new Error("RoleX not initialized");
+    }
+    return this.rx.protocol.tools.map((toolDef) => this.convertTool(toolDef));
   }
 
   /**
@@ -100,7 +107,7 @@ export class RolexBridge {
 
     return {
       name: toolDef.name,
-      description: detail(toolDef.name) || toolDef.name,
+      description: toolDef.description,
       parameters: {
         type: "object",
         properties,
@@ -116,7 +123,7 @@ export class RolexBridge {
    * Execute a RoleX tool call, routing to the appropriate method
    */
   private async executeTool(name: string, args: Record<string, unknown>): Promise<unknown> {
-    if (!this.rolex) {
+    if (!this.rx) {
       throw new Error("RoleX not initialized");
     }
 
@@ -124,16 +131,30 @@ export class RolexBridge {
     switch (name) {
       case "activate": {
         const roleId = args.roleId as string;
-        this.role = await this.rolex.activate(roleId);
+        this.role = await this.rx.role.activate({ individual: roleId });
         logger.info("Role activated", { roleId });
         return this.role.project();
       }
       case "inspect":
-        return this.rolex.inspect(args.id as string);
+        return this.rx.role.inspect({ id: args.id as string });
       case "survey":
-        return this.rolex.survey(args.type as string | undefined);
-      case "direct":
-        return this.rolex.direct(args.command as string, args.args as Record<string, unknown>);
+        return this.rx.role.survey({ type: args.type as string | undefined });
+      case "direct": {
+        const command = args.command as string;
+        const cmdArgs = args.args as Record<string, unknown> | undefined;
+        // Strip "!" prefix if present, then dispatch via JSON-RPC
+        const method = command.startsWith("!") ? command.slice(1) : command;
+        const response = await this.rx.rpc({
+          jsonrpc: "2.0",
+          method,
+          params: cmdArgs,
+          id: 1,
+        });
+        if (response.error) {
+          throw new Error(response.error.message);
+        }
+        return response.result;
+      }
     }
 
     // Tools that require an active role

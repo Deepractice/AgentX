@@ -76,7 +76,7 @@ describe("RoleX Context Structure", () => {
     expect(roleContextBlock).toContain("nuwa");
   });
 
-  it("tools have descriptions from detail()", async () => {
+  it("tools have embedded descriptions from ToolDef", async () => {
     const bridge = new RolexBridge({ platform, roleId: "nuwa" });
     await bridge.initialize();
 
@@ -86,7 +86,7 @@ describe("RoleX Context Structure", () => {
     for (const tool of tools) {
       expect(tool.description).toBeDefined();
       expect(tool.description!.length).toBeGreaterThan(0);
-      // detail() returns Gherkin Feature text
+      // ToolDef.description contains Gherkin Feature text
       expect(tool.description).toContain("Feature:");
     }
   });

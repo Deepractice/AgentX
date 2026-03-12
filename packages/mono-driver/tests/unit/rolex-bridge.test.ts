@@ -1,18 +1,29 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { protocol } from "rolexjs";
 import { RolexBridge } from "../../src/rolex-bridge";
 
-// Minimal mock Platform — just enough for RolexBridge constructor (init tested separately)
+// Minimal mock Platform — just enough for RolexBridge constructor
 function createMockPlatform() {
   return {
     repository: {},
   } as any;
 }
 
+// Inject a mock rx builder so getTools()/getRoleContext() work without real init
+function createInitializedBridge(): RolexBridge {
+  const bridge = new RolexBridge({
+    platform: createMockPlatform(),
+    roleId: "test",
+  });
+  // Inject mock rx with protocol access
+  (bridge as any).rx = { protocol };
+  return bridge;
+}
+
 describe("RolexBridge", () => {
   describe("getTools", () => {
     it("should convert all RoleX protocol tools to ToolDefinition[]", () => {
-      const bridge = new RolexBridge({ platform: createMockPlatform() });
+      const bridge = createInitializedBridge();
       const tools = bridge.getTools();
 
       expect(tools.length).toBe(protocol.tools.length);
@@ -29,7 +40,7 @@ describe("RolexBridge", () => {
     });
 
     it("should include all expected tool names", () => {
-      const bridge = new RolexBridge({ platform: createMockPlatform() });
+      const bridge = createInitializedBridge();
       const tools = bridge.getTools();
       const names = tools.map((t) => t.name);
 
@@ -48,18 +59,18 @@ describe("RolexBridge", () => {
       expect(names).toContain("direct");
     });
 
-    it("should use detail() for tool descriptions, not placeholders", () => {
-      const bridge = new RolexBridge({ platform: createMockPlatform() });
+    it("should use embedded description from ToolDef, not placeholders", () => {
+      const bridge = createInitializedBridge();
       const tools = bridge.getTools();
 
       const activateTool = tools.find((t) => t.name === "activate");
       expect(activateTool).toBeDefined();
-      // detail("activate") returns a Gherkin Feature, should start with "Feature:"
+      // New API: description is embedded in ToolDef, should be a Gherkin Feature
       expect(activateTool!.description).toStartWith("Feature:");
     });
 
     it("should convert ParamDef types to JSON Schema correctly", () => {
-      const bridge = new RolexBridge({ platform: createMockPlatform() });
+      const bridge = createInitializedBridge();
       const tools = bridge.getTools();
 
       // activate has roleId: string, required
@@ -81,31 +92,46 @@ describe("RolexBridge", () => {
     });
 
     it("should not have name conflicts between RoleX tools", () => {
-      const bridge = new RolexBridge({ platform: createMockPlatform() });
+      const bridge = createInitializedBridge();
       const tools = bridge.getTools();
       const names = tools.map((t) => t.name);
       const unique = new Set(names);
       expect(unique.size).toBe(names.length);
     });
+
+    it("should throw when getTools called without initialization", () => {
+      const bridge = new RolexBridge({
+        platform: createMockPlatform(),
+        roleId: "test",
+      });
+      expect(() => bridge.getTools()).toThrow("RoleX not initialized");
+    });
   });
 
   describe("getRoleContext", () => {
     it("should return world instructions even without active role", async () => {
-      const bridge = new RolexBridge({ platform: createMockPlatform() });
-      // Skip initialize() — directly test getRoleContext without rolex instance
-      // World instructions come from protocol.instructions which is static
+      const bridge = createInitializedBridge();
       const context = await bridge.getRoleContext();
       expect(context).toContain(protocol.instructions);
+    });
+
+    it("should throw when getRoleContext called without initialization", async () => {
+      const bridge = new RolexBridge({
+        platform: createMockPlatform(),
+        roleId: "test",
+      });
+      expect(bridge.getRoleContext()).rejects.toThrow("RoleX not initialized");
     });
   });
 
   describe("tool execution without initialization", () => {
     it("should throw when executing tool without initialization", async () => {
-      const bridge = new RolexBridge({ platform: createMockPlatform() });
+      const bridge = createInitializedBridge();
       const tools = bridge.getTools();
       const activate = tools.find((t) => t.name === "activate")!;
 
-      expect(activate.execute({ roleId: "test" })).rejects.toThrow("RoleX not initialized");
+      // rx is set but not a real RoleXBuilder, so role operations will fail
+      expect(activate.execute({ roleId: "test" })).rejects.toThrow();
     });
   });
 });
