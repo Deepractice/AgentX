@@ -23,56 +23,44 @@ Feature: Getting Started with AgentX SDK
   # ============================================================================
 
   Scenario: Developer creates first agent in local mode
-    Given I have installed agentxjs with "bun add agentxjs"
+    Given I have installed agentxjs with "bun add agentxjs @agentxjs/node-platform @agentxjs/mono-driver"
     And I have an Anthropic API key
     When I write this code:
       """
       import { createAgentX } from "agentxjs";
+      import { nodePlatform } from "@agentxjs/node-platform";
+      import { createMonoDriver } from "@agentxjs/mono-driver";
 
-      const agentx = await createAgentX({
+      const createDriver = (config) => createMonoDriver({
+        ...config,
         apiKey: process.env.ANTHROPIC_API_KEY,
+        options: { provider: "anthropic" },
       });
 
-      await agentx.containers.create("my-app");
+      const ax = createAgentX(nodePlatform({ createDriver }));
 
-      const { record: image } = await agentx.images.create({
+      await ax.container.create("my-app");
+
+      const { record: image } = await ax.image.create({
         containerId: "my-app",
         name: "Assistant",
         systemPrompt: "You are a helpful assistant.",
       });
 
-      const { agentId } = await agentx.agents.create({
+      const { agentId } = await ax.agent.create({
         imageId: image.imageId,
       });
 
-      agentx.on("text_delta", (e) => process.stdout.write(e.data.text));
-      agentx.on("message_stop", () => {
+      ax.on("text_delta", (e) => process.stdout.write(e.data.text));
+      ax.on("message_stop", () => {
         console.log();
-        agentx.dispose();
+        ax.dispose();
       });
 
-      await agentx.sessions.send(agentId, "Hello, who are you?");
+      await ax.session.send(agentId, "Hello, who are you?");
       """
     Then I should see a streaming response from the agent
     And no server or database is needed
-
-  Scenario: Developer understands local mode config options
-    Given I am using local mode
-    Then I can customize these options:
-      | option    | default      | purpose                        |
-      | apiKey    | (required)   | LLM provider API key           |
-      | provider  | "anthropic"  | LLM provider to use            |
-      | model     | (provider default) | Specific model to use    |
-      | baseUrl   | (provider default) | Custom API endpoint      |
-      | dataPath  | ":memory:"   | Where to persist data          |
-    And supported providers include:
-      | provider   |
-      | anthropic  |
-      | openai     |
-      | google     |
-      | deepseek   |
-      | mistral    |
-      | xai        |
 
   # ============================================================================
   # Remote Mode — Client/Server Architecture
@@ -85,40 +73,53 @@ Feature: Getting Started with AgentX SDK
       | Local  | Prototyping, CLI tools, single-user apps     |
       | Remote | Web apps, multi-tenant, shared infrastructure |
     And the client API is identical in both modes
-    # The only difference is the createAgentX config
 
-  Scenario: Developer sets up a remote server
+  Scenario: Developer sets up a server and connects a client
     Given I need multi-user support
     When I set up a server:
       """
-      import { createServer } from "@agentxjs/server";
-      import { createNodePlatform } from "@agentxjs/node-platform";
+      import { createAgentX } from "agentxjs";
+      import { nodePlatform } from "@agentxjs/node-platform";
       import { createMonoDriver } from "@agentxjs/mono-driver";
 
-      const server = await createServer({
-        platform: await createNodePlatform({ dataPath: "./data" }),
-        createDriver: (config) => createMonoDriver({
-          ...config,
-          apiKey: process.env.ANTHROPIC_API_KEY,
-          options: { provider: "anthropic" },
-        }),
-        port: 5200,
+      const createDriver = (config) => createMonoDriver({
+        ...config,
+        apiKey: process.env.ANTHROPIC_API_KEY,
+        options: { provider: "anthropic" },
       });
 
-      await server.listen();
+      const ax = createAgentX(nodePlatform({ createDriver }));
+      const server = await ax.serve({ port: 5200 });
       """
-    Then clients can connect via WebSocket
+    And I connect a client:
+      """
+      import { createAgentX } from "agentxjs";
 
-  Scenario: Developer connects a client to remote server
-    Given a server is running on port 5200
-    When I connect with:
+      const ax = createAgentX();
+      const client = await ax.connect("ws://localhost:5200");
+
+      // Same API as local mode
+      await client.container.create("my-app");
+      await client.agent.create({ imageId: "..." });
       """
-      const agentx = await createAgentX({
-        serverUrl: "ws://localhost:5200",
-      });
+    Then the client can use the exact same namespace API as local mode
+
+  # ============================================================================
+  # Universal RPC
+  # ============================================================================
+
+  Scenario: Developer uses the universal RPC method
+    Given I have an AgentX instance in any mode
+    When I call rpc with a method and params:
       """
-    Then I can use the exact same API as local mode
-    # containers.create, images.create, agents.create, sessions.send...
+      // These are equivalent:
+      await ax.container.create("my-app");
+      await ax.rpc("container.create", { containerId: "my-app" });
+
+      // Useful for custom transport (e.g. Cloudflare Workers)
+      const response = await ax.rpc(request.method, request.params);
+      """
+    Then the RPC method dispatches to the same handler as namespace methods
 
   # ============================================================================
   # Stream Events
@@ -134,7 +135,7 @@ Feature: Getting Started with AgentX SDK
       | tool_result    | toolCallId, result | Tool execution result  |
       | message_stop   | stopReason         | Response complete      |
       | error          | message            | Error occurred         |
-    And I subscribe via agentx.on("event_name", handler)
+    And I subscribe via ax.on("event_name", handler)
 
   # ============================================================================
   # Presentation API — UI Integration
@@ -144,7 +145,7 @@ Feature: Getting Started with AgentX SDK
     Given I need structured conversation state for a UI
     When I use the Presentation API:
       """
-      const presentation = await agentx.presentations.create(agentId, {
+      const presentation = await ax.presentation.create(agentId, {
         onUpdate: (state) => {
           // state.conversations — completed messages (includes history)
           // state.streaming — current streaming response (or null)
@@ -157,7 +158,22 @@ Feature: Getting Started with AgentX SDK
       """
     Then the onUpdate callback fires with structured PresentationState
     And I don't need to manually aggregate stream events
-    # Presentation handles text_delta, tool_use, message_stop internally
+
+  # ============================================================================
+  # Message History
+  # ============================================================================
+
+  Scenario: Developer retrieves message history
+    Given I have an agent with previous conversations
+    When I want to access the message history:
+      """
+      // Get messages by image (persistent across agent instances)
+      const messages = await ax.image.getMessages(imageId);
+
+      // Get messages by agent session
+      const messages = await ax.session.getMessages(agentId);
+      """
+    Then I can display or process the conversation history
 
   # ============================================================================
   # MCP Tools
@@ -167,7 +183,7 @@ Feature: Getting Started with AgentX SDK
     Given I want my agent to use external tools
     When I create an image with MCP servers:
       """
-      const { record: image } = await agentx.images.create({
+      const { record: image } = await ax.image.create({
         containerId: "my-app",
         name: "Agent with Tools",
         systemPrompt: "You can access the filesystem.",

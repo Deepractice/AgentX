@@ -75,95 +75,60 @@ Open <http://localhost:5200> and start chatting!
 
 AgentX is a TypeScript framework for building AI Agent applications with event-driven architecture.
 
-**Server-side (Node.js)**
+**Local Mode (Embedded)**
 
 ```typescript
-import { createServer } from "http";
-import { createAgentX, defineAgent } from "agentxjs";
+import { createAgentX } from "agentxjs";
+import { nodePlatform } from "@agentxjs/node-platform";
+import { createMonoDriver } from "@agentxjs/mono-driver";
 
-// Define your Agent
-const MyAgent = defineAgent({
-  name: "MyAgent",
+const createDriver = (config) => createMonoDriver({
+  ...config,
+  apiKey: process.env.LLM_PROVIDER_KEY,
+  options: { provider: "anthropic" },
+});
+
+const ax = createAgentX(nodePlatform({ createDriver }));
+
+// Create container → image → agent → chat
+await ax.container.create("my-app");
+const { record: image } = await ax.image.create({
+  containerId: "my-app",
   systemPrompt: "You are a helpful assistant.",
-  mcpServers: {
-    // Optional: Add MCP servers for tools
-    filesystem: {
-      command: "npx",
-      args: ["-y", "@anthropic/mcp-server-filesystem", "/tmp"],
-    },
-  },
 });
+const { agentId } = await ax.agent.create({ imageId: image.imageId });
 
-// Create HTTP server
-const server = createServer();
-
-// Create AgentX instance
-const agentx = await createAgentX({
-  llm: {
-    apiKey: process.env.LLM_PROVIDER_KEY,
-    baseUrl: process.env.LLM_PROVIDER_URL,
-  },
-  agentxDir: "~/.agentx", // Auto-configures SQLite storage
-  server, // Attach WebSocket to HTTP server
-  defaultAgent: MyAgent, // Default agent for new conversations
-});
-
-// Start server
-server.listen(5200, () => {
-  console.log("✓ Server running at http://localhost:5200");
-  console.log("✓ WebSocket available at ws://localhost:5200/ws");
-});
+ax.on("text_delta", (e) => process.stdout.write(e.data.text));
+await ax.session.send(agentId, "Hello!");
 ```
 
-**Client-side (Browser/React)**
+**Remote Mode (WebSocket Client)**
 
 ```typescript
-import { useAgentX, ResponsiveStudio } from "@agentxjs/ui";
-import "@agentxjs/ui/styles.css";
+import { createAgentX } from "agentxjs";
 
-function App() {
-  const agentx = useAgentX("ws://localhost:5200/ws");
+const ax = createAgentX();
+const client = await ax.connect("ws://localhost:5200");
 
-  if (!agentx) return <div>Connecting...</div>;
+// Same API as local mode
+await client.agent.create({ imageId: "..." });
+```
 
-  return <ResponsiveStudio agentx={agentx} />;
-}
+**Server Mode**
+
+```typescript
+const ax = createAgentX(nodePlatform({ createDriver }));
+const server = await ax.serve({ port: 5200 });
 ```
 
 ### 📚 Documentation
 
-- **[Getting Started](./docs/getting-started/)**
-  - [Installation](./docs/getting-started/installation.md)
-  - [Quick Start](./docs/getting-started/quickstart.md)
-  - [First Agent](./docs/getting-started/first-agent.md)
-- **[Core Concepts](./docs/concepts/)**
-  - [Architecture Overview](./docs/concepts/overview.md)
-  - [Event System](./docs/concepts/event-system.md)
-  - [Lifecycle](./docs/concepts/lifecycle.md)
-  - [Mealy Machine](./docs/concepts/mealy-machine.md)
-- **[Guides](./docs/guides/)**
-  - [Event Subscription](./docs/guides/events.md)
-  - [Session Management](./docs/guides/sessions.md)
-  - [Persistence](./docs/guides/persistence.md)
-  - [MCP Tools](./docs/guides/tools.md)
-- **[API Reference](./docs/api/)**
-  - [AgentX API](./docs/api/agentx.md)
-  - [Runtime API](./docs/api/runtime.md)
-  - [Agent API](./docs/api/agent.md)
-  - [Event Types](./docs/api/events.md)
-- **[Packages](./docs/packages/)**
-  - [@agentxjs/types](./docs/packages/types.md)
-  - [@agentxjs/common](./docs/packages/common.md)
-  - [@agentxjs/agent](./docs/packages/agent.md)
-  - [@agentxjs/runtime](./docs/packages/runtime.md)
-  - [agentxjs](./docs/packages/agentx.md)
-  - [@agentxjs/ui](./docs/packages/ui.md)
-- **[Examples](./docs/examples/)**
-  - [CLI Chat](./docs/examples/chat-cli.md)
-  - [Web Chat](./docs/examples/chat-web.md)
-  - [Tool Usage](./docs/examples/tool-use.md)
-
-👉 **[Full Documentation](./docs/README.md)** - Learning paths and more
+- **[agentxjs](./packages/agentx/README.md)** — Client SDK (local, remote, server modes)
+- **[@agentxjs/core](./packages/core/README.md)** — Core abstractions (Container, Image, Session, Driver)
+- **[@agentxjs/node-platform](./packages/node-platform/README.md)** — Node.js platform (SQLite, WebSocket)
+- **[@agentxjs/mono-driver](./packages/mono-driver/README.md)** — Multi-provider LLM driver
+- **[@agentxjs/claude-driver](./packages/claude-driver/README.md)** — Claude-specific driver
+- **[@agentxjs/devtools](./packages/devtools/README.md)** — BDD testing tools
 
 ---
 

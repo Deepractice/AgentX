@@ -6,9 +6,9 @@
  * @example Local mode
  * ```typescript
  * import { createAgentX } from "agentxjs";
- * import { node } from "@agentxjs/node-platform";
+ * import { nodePlatform } from "@agentxjs/node-platform";
  *
- * const ax = createAgentX(node({ createDriver }));
+ * const ax = createAgentX(nodePlatform({ createDriver }));
  * await ax.agent.create({ imageId: "..." });
  * ```
  *
@@ -20,7 +20,7 @@
  *
  * @example Server mode
  * ```typescript
- * const ax = createAgentX(node({ createDriver }));
+ * const ax = createAgentX(nodePlatform({ createDriver }));
  * const server = await ax.serve({ port: 5200 });
  * ```
  */

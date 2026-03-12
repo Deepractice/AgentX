@@ -1,23 +1,8 @@
 # agentxjs
 
-Client SDK for building AI agent applications. Supports local (embedded) and remote (WebSocket) modes through a single unified API.
-
-## Overview
-
-`agentxjs` is the main SDK that developers use directly. It auto-detects the mode based on config: provide `apiKey` for local mode (no server needed), or `serverUrl` for remote mode (connects to an AgentX server over WebSocket).
+Client SDK for building AI agent applications. Supports local, remote, and server modes through a unified fluent API.
 
 ## Quick Start
-
-### When to use which mode?
-
-|               | Local Mode                                      | Remote Mode                                                  |
-| ------------- | ----------------------------------------------- | ------------------------------------------------------------ |
-| **Use when**  | Prototyping, CLI tools, single-user apps, tests | Multi-tenant apps, shared infrastructure, horizontal scaling |
-| **Trade-off** | Simpler setup, no server to manage              | Centralized state, multiple clients can share agents         |
-| **Data**      | In-process SQLite (or `:memory:`)               | Server-managed persistent storage                            |
-| **Config**    | `apiKey`                                        | `serverUrl`                                                  |
-
-**Start with Local mode.** Switch to Remote when you need multiple processes or users sharing the same agents.
 
 ### Local Mode (Embedded)
 
@@ -25,60 +10,71 @@ Runs agents directly in your process. No server required.
 
 ```typescript
 import { createAgentX } from "agentxjs";
+import { nodePlatform } from "@agentxjs/node-platform";
+import { createMonoDriver } from "@agentxjs/mono-driver";
 
-const agentx = await createAgentX({
+const createDriver = (config) => createMonoDriver({
+  ...config,
   apiKey: process.env.ANTHROPIC_API_KEY,
-  provider: "anthropic",
+  options: { provider: "anthropic" },
 });
 
-await agentx.containers.create("my-app");
+const ax = createAgentX(nodePlatform({ createDriver }));
 
-const { record: image } = await agentx.images.create({
+await ax.container.create("my-app");
+
+const { record: image } = await ax.image.create({
   containerId: "my-app",
   systemPrompt: "You are a helpful assistant.",
 });
 
-const { agentId } = await agentx.agents.create({ imageId: image.imageId });
+const { agentId } = await ax.agent.create({ imageId: image.imageId });
 
-agentx.on("text_delta", (e) => process.stdout.write(e.data.text));
-await agentx.sessions.send(agentId, "Hello!");
+ax.on("text_delta", (e) => process.stdout.write(e.data.text));
+await ax.session.send(agentId, "Hello!");
 ```
 
-### Remote Mode (WebSocket)
+### Remote Mode (WebSocket Client)
 
 Connects to a running AgentX server. Same API surface.
 
 ```typescript
 import { createAgentX } from "agentxjs";
 
-const agentx = await createAgentX({
-  serverUrl: "ws://localhost:5200",
-});
+const ax = createAgentX();
+const client = await ax.connect("ws://localhost:5200");
 
-// Identical API as local mode
-await agentx.containers.create("my-app");
-const { record: image } = await agentx.images.create({
+await client.container.create("my-app");
+const { record: image } = await client.image.create({
   containerId: "my-app",
   systemPrompt: "You are a helpful assistant.",
 });
-const { agentId } = await agentx.agents.create({ imageId: image.imageId });
+const { agentId } = await client.agent.create({ imageId: image.imageId });
 
-agentx.on("text_delta", (e) => process.stdout.write(e.data.text));
-await agentx.sessions.send(agentId, "Hello!");
+client.on("text_delta", (e) => process.stdout.write(e.data.text));
+await client.session.send(agentId, "Hello!");
+```
+
+### Server Mode
+
+Start an AgentX WebSocket server for remote clients.
+
+```typescript
+import { createAgentX } from "agentxjs";
+import { nodePlatform } from "@agentxjs/node-platform";
+
+const ax = createAgentX(nodePlatform({ createDriver }));
+const server = await ax.serve({ port: 5200 });
 ```
 
 ## API Reference
 
-### `createAgentX(config: AgentXConfig): Promise<AgentX>`
+### `createAgentX(config?): AgentXBuilder`
 
-Creates an AgentX client. Mode is auto-detected:
+Creates an AgentX builder. Synchronous — returns immediately.
 
-| Config field     | Mode   | Trigger                                 |
-| ---------------- | ------ | --------------------------------------- |
-| `serverUrl`      | Remote | Connects via WebSocket                  |
-| `apiKey`         | Local  | Starts embedded runtime with MonoDriver |
-| `createDriver`   | Local  | Uses custom driver factory              |
-| `customPlatform` | Local  | Uses custom platform                    |
+- **With config** (PlatformConfig): Local mode + `connect()` + `serve()`
+- **Without config**: Only `connect()` available
 
 ### AgentX Interface
 
@@ -88,11 +84,14 @@ interface AgentX {
   readonly events: EventBus;
 
   // Namespaced operations
-  readonly containers: ContainerNamespace;
-  readonly images: ImageNamespace;
-  readonly agents: AgentNamespace;
-  readonly sessions: SessionNamespace;
-  readonly presentations: PresentationNamespace;
+  readonly container: ContainerNamespace;
+  readonly image: ImageNamespace;
+  readonly agent: AgentNamespace;
+  readonly session: SessionNamespace;
+  readonly presentation: PresentationNamespace;
+
+  // Universal RPC
+  rpc<T = unknown>(method: string, params?: unknown): Promise<T>;
 
   // Event subscription
   on<T extends string>(type: T, handler: BusEventHandler): Unsubscribe;
@@ -103,38 +102,61 @@ interface AgentX {
   disconnect(): Promise<void>;
   dispose(): Promise<void>;
 }
+
+interface AgentXBuilder extends AgentX {
+  connect(serverUrl: string, options?: ConnectOptions): Promise<AgentX>;
+  serve(config?: ServeConfig): Promise<AgentXServer>;
+}
 ```
 
 ### Namespace Operations
 
-**containers**:
+**container**:
 
 - `create(containerId: string): Promise<ContainerCreateResponse>`
 - `get(containerId: string): Promise<ContainerGetResponse>`
 - `list(): Promise<ContainerListResponse>`
 
-**images**:
+**image**:
 
-- `create(params: { containerId, name?, description?, systemPrompt?, mcpServers? }): Promise<ImageCreateResponse>`
+- `create(params: { containerId, name?, description?, systemPrompt?, mcpServers?, customData? }): Promise<ImageCreateResponse>`
 - `get(imageId: string): Promise<ImageGetResponse>`
 - `list(containerId?: string): Promise<ImageListResponse>`
+- `update(imageId: string, updates: { name?, description?, customData? }): Promise<ImageUpdateResponse>`
 - `delete(imageId: string): Promise<BaseResponse>`
+- `getMessages(imageId: string): Promise<Message[]>`
 
-**agents**:
+**agent**:
 
 - `create(params: { imageId, agentId? }): Promise<AgentCreateResponse>`
 - `get(agentId: string): Promise<AgentGetResponse>`
 - `list(containerId?: string): Promise<AgentListResponse>`
 - `destroy(agentId: string): Promise<BaseResponse>`
 
-**sessions**:
+**session**:
 
 - `send(agentId: string, content: string | unknown[]): Promise<MessageSendResponse>`
 - `interrupt(agentId: string): Promise<BaseResponse>`
+- `getMessages(agentId: string): Promise<Message[]>`
 
-**presentations**:
+**presentation**:
 
-- `create(agentId: string, options?: PresentationOptions): Presentation`
+- `create(agentId: string, options?: PresentationOptions): Promise<Presentation>`
+
+### Universal RPC
+
+Transport-agnostic JSON-RPC entry point. Works in all modes — local dispatches to CommandHandler, remote forwards via WebSocket.
+
+```typescript
+// Equivalent to ax.container.create("default")
+await ax.rpc("container.create", { containerId: "default" });
+
+// Equivalent to ax.image.list()
+const { records } = await ax.rpc<{ records: ImageRecord[] }>("image.list");
+
+// Useful for custom transport (e.g. Cloudflare Workers/DO)
+const response = await ax.rpc(request.method, request.params);
+```
 
 ### Stream Events
 
@@ -150,35 +172,23 @@ interface AgentX {
 
 ### Presentation API
 
-High-level UI state management. Aggregates raw stream events into a structured conversation state.
+High-level UI state management. Aggregates raw stream events into structured conversation state.
 
 ```typescript
-const presentation = await agentx.presentations.create(agentId, {
-  onUpdate: (state: PresentationState) => renderUI(state),
+const presentation = await ax.presentation.create(agentId, {
+  onUpdate: (state) => {
+    // state.conversations — completed messages (includes history)
+    // state.streaming — current streaming response (or null)
+    // state.status — "idle" | "thinking" | "responding" | "executing"
+    renderUI(state);
+  },
   onError: (error) => console.error(error),
 });
-// For existing sessions, getState() already contains conversation history
 
 await presentation.send("What is the weather?");
 const state = presentation.getState();
-// state.conversations -- completed conversations (includes history)
-// state.streaming     -- current streaming response (or null)
-// state.status        -- "idle" | "thinking" | "responding" | "executing"
-
 presentation.dispose();
 ```
-
-**PresentationState**:
-
-```typescript
-interface PresentationState {
-  conversations: Conversation[]; // UserConversation | AssistantConversation | ErrorConversation
-  streaming: AssistantConversation | null;
-  status: "idle" | "thinking" | "responding" | "executing";
-}
-```
-
-**Block types**: `TextBlock { type: "text", content }`, `ToolBlock { type: "tool", toolName, status, ... }`, `ImageBlock { type: "image", url }`
 
 For custom state management, use the exported reducer:
 
@@ -189,69 +199,3 @@ let state = createInitialState();
 state = addUserConversation(state, "Hello");
 state = presentationReducer(state, event); // pure function
 ```
-
-## Configuration
-
-### AgentXConfig
-
-```typescript
-interface AgentXConfig {
-  // --- Local Mode ---
-  apiKey?: string; // LLM provider API key
-  provider?: LLMProvider; // default: "anthropic"
-  model?: string; // e.g. "claude-sonnet-4-20250514"
-  baseUrl?: string; // custom API endpoint
-  dataPath?: string; // default: ":memory:"
-  createDriver?: CreateDriver; // custom driver factory (advanced)
-  customPlatform?: AgentXPlatform; // custom platform (advanced)
-
-  // --- Remote Mode ---
-  serverUrl?: string; // WebSocket URL
-  headers?: MaybeAsync<Record<string, string>>; // auth headers
-  context?: MaybeAsync<Record<string, unknown>>; // business context
-
-  // --- Common ---
-  timeout?: number; // default: 30000 ms
-  debug?: boolean;
-  autoReconnect?: boolean; // default: true (remote only)
-}
-```
-
-| Field           | Type                                  | Default          | Description                                                                         |
-| --------------- | ------------------------------------- | ---------------- | ----------------------------------------------------------------------------------- |
-| `apiKey`        | `string`                              | --               | LLM provider API key (triggers local mode)                                          |
-| `provider`      | `LLMProvider`                         | `"anthropic"`    | `"anthropic"` \| `"openai"` \| `"google"` \| `"xai"` \| `"deepseek"` \| `"mistral"` |
-| `model`         | `string`                              | provider default | Model identifier                                                                    |
-| `baseUrl`       | `string`                              | --               | Custom API endpoint                                                                 |
-| `dataPath`      | `string`                              | `":memory:"`     | SQLite path or `:memory:`                                                           |
-| `serverUrl`     | `string`                              | --               | WebSocket URL (triggers remote mode)                                                |
-| `headers`       | `MaybeAsync<Record<string, string>>`  | --               | Static, dynamic, or async auth headers                                              |
-| `context`       | `MaybeAsync<Record<string, unknown>>` | --               | Business context (userId, tenantId, etc.)                                           |
-| `timeout`       | `number`                              | `30000`          | Request timeout in ms                                                               |
-| `debug`         | `boolean`                             | `false`          | Enable debug logging                                                                |
-| `autoReconnect` | `boolean`                             | `true`           | Auto reconnect on connection loss (remote only)                                     |
-
-### MaybeAsync
-
-`headers` and `context` accept static values, functions, or async functions:
-
-```typescript
-type MaybeAsync<T> = T | (() => T) | (() => Promise<T>);
-
-// Static
-headers: {
-  Authorization: "Bearer sk-xxx";
-}
-
-// Dynamic
-headers: () => ({ Authorization: `Bearer ${getToken()}` });
-
-// Async
-headers: async () => ({ Authorization: `Bearer ${await refreshToken()}` });
-```
-
-### Environment Variables
-
-| Variable            | Description                            |
-| ------------------- | -------------------------------------- |
-| `ANTHROPIC_API_KEY` | Default API key for Anthropic provider |
