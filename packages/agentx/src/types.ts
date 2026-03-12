@@ -3,6 +3,7 @@
  */
 
 import type { Message } from "@agentxjs/core/agent";
+import type { AgentXError } from "@agentxjs/core/error";
 import type { BusEvent, BusEventHandler, EventBus, Unsubscribe } from "@agentxjs/core/event";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type { Presentation, PresentationOptions } from "./presentation";
@@ -333,6 +334,25 @@ export interface AgentX {
   on<T extends string>(type: T, handler: BusEventHandler<BusEvent & { type: T }>): Unsubscribe;
   onAny(handler: BusEventHandler): Unsubscribe;
   subscribe(sessionId: string): void;
+
+  // ==================== Error Handling ====================
+
+  /**
+   * Top-level error handler — receives all AgentXError instances from any layer.
+   *
+   * Independent of `on("error", ...)` (stream events) and `presentation.onError` (UI errors).
+   *
+   * @example
+   * ```typescript
+   * ax.onError((error) => {
+   *   console.error(`[${error.category}] ${error.code}: ${error.message}`);
+   *   if (!error.recoverable) {
+   *     // Circuit is open, stop sending requests
+   *   }
+   * });
+   * ```
+   */
+  onError(handler: (error: AgentXError) => void): Unsubscribe;
 
   // ==================== RPC ====================
 

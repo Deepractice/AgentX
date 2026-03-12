@@ -31,6 +31,8 @@ import type {
   DriverStreamEvent,
   ToolDefinition,
 } from "../driver/types";
+import { AgentXError } from "../error/AgentXError";
+import { CircuitBreaker } from "../error/CircuitBreaker";
 import type { BusEvent } from "../event/types";
 import { createSession } from "../session/Session";
 import type {
@@ -54,6 +56,7 @@ interface AgentState {
   subscriptions: Set<() => void>;
   driver: Driver;
   engine: AgentEngine;
+  circuitBreaker: CircuitBreaker;
   /** Flag to track if a receive operation is in progress */
   isReceiving: boolean;
   /** Pending message persist promises — flushed at end of receive() */
@@ -180,7 +183,24 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
         if (category === "message" && output.type !== "user_message") {
           const message = output.data as Message;
           const persistPromise = sessionRepository.addMessage(sessionId, message).catch((err) => {
+            const axError = new AgentXError({
+              code: "PERSISTENCE_FAILED",
+              category: "persistence",
+              message: `Failed to persist ${output.type}`,
+              recoverable: true,
+              context: { agentId, sessionId, imageId, containerId: imageRecord.containerId },
+              cause: err instanceof Error ? err : new Error(String(err)),
+            });
             logger.error("Failed to persist message", { type: output.type, error: err });
+            eventBus.emit({
+              type: "agentx_error",
+              timestamp: Date.now(),
+              source: "runtime",
+              category: "error",
+              intent: "notification",
+              data: axError,
+              context: { agentId, sessionId, imageId, containerId: imageRecord.containerId },
+            } as BusEvent);
           });
           const agentState = this.agents.get(agentId);
           if (agentState) {
@@ -208,6 +228,23 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       createdAt: Date.now(),
     };
 
+    // Create circuit breaker for this agent's driver calls
+    const circuitBreaker = new CircuitBreaker();
+    circuitBreaker.onChange((newState, error) => {
+      logger.warn("Circuit breaker state changed", { agentId, state: newState });
+      if (error) {
+        eventBus.emit({
+          type: "agentx_error",
+          timestamp: Date.now(),
+          source: "runtime",
+          category: "error",
+          intent: "notification",
+          data: error,
+          context: { agentId, imageId, containerId: imageRecord.containerId, sessionId },
+        } as BusEvent);
+      }
+    });
+
     // Store agent state with driver and engine
     const state: AgentState = {
       agent,
@@ -215,6 +252,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       subscriptions: new Set(),
       driver,
       engine,
+      circuitBreaker,
       isReceiving: false,
       pendingPersists: [],
     };
@@ -386,6 +424,22 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       throw new Error(`Agent ${agentId} is already processing a message`);
     }
 
+    // Circuit breaker check
+    if (!state.circuitBreaker.canExecute()) {
+      throw new AgentXError({
+        code: "CIRCUIT_OPEN",
+        category: "driver",
+        message: "Circuit breaker open: too many consecutive driver failures",
+        recoverable: false,
+        context: {
+          agentId,
+          sessionId: state.agent.sessionId,
+          imageId: state.agent.imageId,
+          containerId: state.agent.containerId,
+        },
+      });
+    }
+
     const actualRequestId = requestId ?? this.generateRequestId();
 
     // Build user message
@@ -423,7 +477,12 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
         // Convert DriverStreamEvent to BusEvent and emit
         this.handleDriverEvent(state, event, actualRequestId);
       }
+      // Driver call succeeded — record success for circuit breaker
+      state.circuitBreaker.recordSuccess();
     } catch (error) {
+      // Record failure for circuit breaker
+      state.circuitBreaker.recordFailure(error instanceof Error ? error : undefined);
+
       // Emit error event
       this.emitEvent(
         state,
