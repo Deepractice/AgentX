@@ -98,6 +98,9 @@ interface AgentX {
   onAny(handler: BusEventHandler): Unsubscribe;
   subscribe(sessionId: string): void;
 
+  // Error handling
+  onError(handler: (error: AgentXError) => void): Unsubscribe;
+
   // Lifecycle
   disconnect(): Promise<void>;
   dispose(): Promise<void>;
@@ -157,6 +160,42 @@ const { records } = await ax.rpc<{ records: ImageRecord[] }>("image.list");
 // Useful for custom transport (e.g. Cloudflare Workers/DO)
 const response = await ax.rpc(request.method, request.params);
 ```
+
+### Error Handling
+
+Top-level error handler — receives structured `AgentXError` from all layers (driver, persistence, connection, runtime). Independent of stream events and Presentation API.
+
+```typescript
+import { AgentXError } from "agentxjs";
+
+ax.onError((error) => {
+  console.error(`[${error.category}] ${error.code}: ${error.message}`);
+
+  if (error.code === "CIRCUIT_OPEN") {
+    // Too many consecutive LLM failures — stop sending requests
+  }
+
+  if (error.code === "PERSISTENCE_FAILED") {
+    // Message failed to save — conversation continues but data may be lost
+  }
+
+  if (!error.recoverable) {
+    // Fatal error — consider restarting the agent
+  }
+});
+```
+
+**AgentXError properties:**
+
+| Property      | Type     | Description                          |
+| ------------- | -------- | ------------------------------------ |
+| `code`        | string   | Error code (e.g. `PERSISTENCE_FAILED`) |
+| `category`    | string   | `"driver"` \| `"persistence"` \| `"connection"` \| `"runtime"` |
+| `recoverable` | boolean  | Whether the caller should retry      |
+| `context`     | object   | `{ agentId?, sessionId?, imageId? }` |
+| `cause`       | Error?   | Original error                       |
+
+**Built-in circuit breaker:** After 5 consecutive driver failures, the circuit opens and rejects new requests. After 30s cooldown, one probe request is allowed through. Success closes the circuit.
 
 ### Stream Events
 

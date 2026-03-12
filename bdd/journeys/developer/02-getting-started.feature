@@ -176,6 +176,24 @@ Feature: Getting Started with AgentX SDK
     Then I can display or process the conversation history
 
   # ============================================================================
+  # Error Handling
+  # ============================================================================
+
+  Scenario: Developer handles errors via top-level onError
+    Given I have an AgentX instance in any mode
+    When I register an error handler:
+      """
+      ax.onError((error) => {
+        console.error(`[${error.category}] ${error.code}: ${error.message}`);
+        if (!error.recoverable) {
+          // Circuit is open or fatal error
+        }
+      });
+      """
+    Then all AgentXError instances from any layer are delivered to this handler
+    And this is independent of stream events and Presentation API
+
+  # ============================================================================
   # MCP Tools
   # ============================================================================
 

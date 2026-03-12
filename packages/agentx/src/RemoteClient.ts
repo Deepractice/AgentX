@@ -5,6 +5,7 @@
  * This class focuses on business logic, not protocol details.
  */
 
+import type { AgentXError } from "@agentxjs/core/error";
 import type { BusEvent, BusEventHandler, EventBus, Unsubscribe } from "@agentxjs/core/event";
 import { EventBusImpl } from "@agentxjs/core/event";
 import { RpcClient } from "@agentxjs/core/network";
@@ -109,6 +110,14 @@ export class RemoteClient implements AgentX {
   subscribe(sessionId: string): void {
     this.rpcClient.subscribe(sessionId);
     logger.debug("Subscribed to session", { sessionId });
+  }
+
+  // ==================== Error Handling ====================
+
+  onError(handler: (error: AgentXError) => void): Unsubscribe {
+    return this.eventBus.on("agentx_error", (event) => {
+      handler(event.data as AgentXError);
+    });
   }
 
   // ==================== RPC ====================

@@ -106,6 +106,10 @@ export function createAgentX(config?: PlatformConfig): AgentXBuilder {
       getLocalClient().subscribe(sessionId);
     },
 
+    onError(handler) {
+      return getLocalClient().onError(handler);
+    },
+
     async disconnect() {
       await localClient?.disconnect();
     },
@@ -155,6 +159,9 @@ export function createAgentX(config?: PlatformConfig): AgentXBuilder {
   };
 }
 
+export type { AgentXErrorCategory, AgentXErrorContext } from "@agentxjs/core/error";
+// Re-export error types
+export { AgentXError, AgentXErrorCode } from "@agentxjs/core/error";
 // Re-export server
 export { CommandHandler } from "./CommandHandler";
 // Re-export Presentation types and classes

@@ -70,6 +70,11 @@
       "import": "./dist/persistence/index.js",
       "default": "./dist/persistence/index.js"
     },
+    "./error": {
+      "types": "./dist/error/index.d.ts",
+      "import": "./dist/error/index.js",
+      "default": "./dist/error/index.js"
+    },
     "./network": {
       "types": "./dist/network/index.d.ts",
       "import": "./dist/network/index.js",

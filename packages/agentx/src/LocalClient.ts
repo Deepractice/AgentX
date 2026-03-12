@@ -5,6 +5,7 @@
  * Implements the same AgentX interface as RemoteClient.
  */
 
+import type { AgentXError } from "@agentxjs/core/error";
 import type { BusEvent, BusEventHandler, EventBus, Unsubscribe } from "@agentxjs/core/event";
 import type { RpcMethod } from "@agentxjs/core/network";
 import type { AgentXRuntime } from "@agentxjs/core/runtime";
@@ -75,6 +76,14 @@ export class LocalClient implements AgentX {
 
   subscribe(_sessionId: string): void {
     // No-op for local mode - already subscribed via eventBus
+  }
+
+  // ==================== Error Handling ====================
+
+  onError(handler: (error: AgentXError) => void): Unsubscribe {
+    return this.runtime.platform.eventBus.on("agentx_error", (event) => {
+      handler(event.data as AgentXError);
+    });
   }
 
   // ==================== RPC ====================
