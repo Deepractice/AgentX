@@ -3,15 +3,31 @@ Feature: Testing Infrastructure
   As a maintainer, I provide testing tools,
   so contributors can verify their work without manual effort.
 
-  Scenario: Projects use shared BDD utilities
+  Scenario: Projects use @deepracticex/bdd for test runner
     Given a project needs BDD testing
+    Then it should create a "bdd/run.test.ts" entry file:
+      """
+      import { configure } from "@deepracticex/bdd";
+
+      await configure({
+        features: ["bdd/journeys/**/*.feature"],
+        steps: ["bdd/support/**/*.ts", "bdd/steps/**/*.ts"],
+        tags: "not @pending",
+        timeout: 30_000,
+      });
+      """
+    And run tests with "bun test bdd/"
+    And the API (Given, When, Then, Before, After, World) is identical to @cucumber/cucumber
+
+  Scenario: Projects use shared BDD utilities from devtools
+    Given a project needs BDD testing utilities
     Then it should import from "@agentxjs/devtools/bdd":
-      | utility              | purpose                        |
-      | createCucumberConfig | Cucumber configuration         |
-      | agentUiTester        | AI-driven UI testing           |
-      | agentDocTester       | AI-driven document evaluation  |
-      | startDevServer       | Dev server lifecycle           |
-      | paths                | Consistent path resolution     |
+      | utility              | purpose                                 |
+      | agentUiTester        | AI-driven UI testing                    |
+      | agentDocTester       | AI-driven document evaluation           |
+      | startDevServer       | Dev server lifecycle                    |
+      | paths                | Consistent path resolution              |
+      | createCucumberConfig | Legacy Cucumber configuration (deprecated) |
 
   Scenario: UI scenarios are tested by agentUiTester
     Given a contributor writes a @ui scenario
@@ -30,14 +46,14 @@ Feature: Testing Infrastructure
     And it reads the file content and sends to Claude for review
     And it returns PASS or FAIL based on whether requirements are met
 
-  Scenario: Running tests uses the bdd CLI
+  Scenario: Running tests uses bun test
     Given a project with BDD tests
     Then these commands should work:
-      | command                           | what it does                    |
-      | bun run bdd                       | Run non-UI tests                |
-      | bun run bdd:ui                    | Run UI tests (opt-in)           |
-      | bun run bdd:ui -- --tags "@setup" | Run specific UI scenario        |
-      | bun run bdd:docs                  | Run documentation tests         |
+      | command                                      | what it does                    |
+      | bun test bdd/                                | Run all BDD tests               |
+      | bun test bdd/ --test-name-pattern "LLM"      | Run scenarios matching pattern  |
+      | bun run bdd:ui                               | Run UI tests (opt-in)           |
+      | bun run bdd:docs                             | Run documentation tests         |
 
   Scenario: VCR records and replays external API calls
     Given a journey that calls external APIs (e.g. LLM provider)

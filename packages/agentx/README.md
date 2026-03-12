@@ -89,6 +89,7 @@ interface AgentX {
   readonly agent: AgentNamespace;
   readonly session: SessionNamespace;
   readonly presentation: PresentationNamespace;
+  readonly llm: LLMNamespace;
 
   // Universal RPC
   rpc<T = unknown>(method: string, params?: unknown): Promise<T>;
@@ -145,6 +146,20 @@ interface AgentXBuilder extends AgentX {
 **presentation**:
 
 - `create(agentId: string, options?: PresentationOptions): Promise<Presentation>`
+
+**llm**:
+
+- `create(params: { containerId, name, vendor, protocol, apiKey, baseUrl?, model? }): Promise<LLMProviderCreateResponse>`
+- `get(id: string): Promise<LLMProviderGetResponse>`
+- `list(containerId: string): Promise<LLMProviderListResponse>`
+- `update(id: string, updates: { name?, apiKey?, baseUrl?, model? }): Promise<LLMProviderUpdateResponse>`
+- `delete(id: string): Promise<BaseResponse>`
+- `setDefault(id: string): Promise<BaseResponse>`
+- `getDefault(containerId: string): Promise<LLMProviderDefaultResponse>`
+
+Each LLM provider has a **vendor** (who provides the service — `anthropic`, `openai`, `deepseek`, `ollama`) and a **protocol** (API format — `anthropic` or `openai`). These are separate dimensions: e.g., Deepseek uses vendor `"deepseek"` with protocol `"openai"`.
+
+When creating an agent, the runtime validates that the container's default LLM provider protocol is supported by the driver.
 
 ### Universal RPC
 

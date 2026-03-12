@@ -46,6 +46,7 @@ const logger = createLogger("mono-driver/MonoDriver");
  */
 export class MonoDriver implements Driver {
   readonly name = "MonoDriver";
+  readonly supportedProtocols = ["anthropic", "openai"] as const;
 
   private _sessionId: string | null = null;
   private _state: DriverState = "idle";

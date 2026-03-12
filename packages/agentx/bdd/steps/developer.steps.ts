@@ -10,8 +10,8 @@ import { existsSync, mkdirSync } from "node:fs";
 import type { BusEvent } from "@agentxjs/core/event";
 import { env } from "@agentxjs/devtools";
 import { ensureDir, getFixturesPath } from "@agentxjs/devtools/bdd";
-import type { DataTable } from "@cucumber/cucumber";
-import { After, Given, Then, When } from "@cucumber/cucumber";
+import type { DataTable } from "@deepracticex/bdd";
+import { After, Given, Then, When } from "@deepracticex/bdd";
 import type { AgentXWorld } from "../support/world";
 
 // ============================================================================

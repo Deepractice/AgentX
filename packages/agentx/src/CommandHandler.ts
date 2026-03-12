@@ -105,6 +105,20 @@ export class CommandHandler {
         case "message.send":
           return await this.handleMessageSend(params);
 
+        // LLM Provider
+        case "llm.create":
+          return await this.handleLLMCreate(params);
+        case "llm.get":
+          return await this.handleLLMGet(params);
+        case "llm.list":
+          return await this.handleLLMList(params);
+        case "llm.update":
+          return await this.handleLLMUpdate(params);
+        case "llm.delete":
+          return await this.handleLLMDelete(params);
+        case "llm.default":
+          return await this.handleLLMDefault(params);
+
         default:
           return err(-32601, `Method not found: ${method}`);
       }
@@ -414,6 +428,125 @@ export class CommandHandler {
 
     await this.runtime.receive(targetAgentId, content);
     return ok({ agentId: targetAgentId, imageId });
+  }
+
+  // ==================== LLM Provider Commands ====================
+
+  private async handleLLMCreate(params: unknown): Promise<RpcResponse> {
+    const { containerId, name, vendor, protocol, apiKey, baseUrl, model } = params as {
+      containerId: string;
+      name: string;
+      vendor: string;
+      protocol: string;
+      apiKey: string;
+      baseUrl?: string;
+      model?: string;
+    };
+
+    const repo = this.runtime.platform.llmProviderRepository;
+    if (!repo) {
+      return err(-32000, "LLM provider repository not available");
+    }
+
+    const { generateId } = await import("@deepracticex/id");
+    const now = Date.now();
+    const record = {
+      id: generateId("llm"),
+      containerId,
+      name,
+      vendor,
+      protocol: protocol as "anthropic" | "openai",
+      apiKey,
+      baseUrl,
+      model,
+      isDefault: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await repo.saveLLMProvider(record);
+    return ok({ record });
+  }
+
+  private async handleLLMGet(params: unknown): Promise<RpcResponse> {
+    const { id } = params as { id: string };
+    const repo = this.runtime.platform.llmProviderRepository;
+    if (!repo) {
+      return err(-32000, "LLM provider repository not available");
+    }
+
+    const record = await repo.findLLMProviderById(id);
+    return ok({ record });
+  }
+
+  private async handleLLMList(params: unknown): Promise<RpcResponse> {
+    const { containerId } = params as { containerId: string };
+    const repo = this.runtime.platform.llmProviderRepository;
+    if (!repo) {
+      return err(-32000, "LLM provider repository not available");
+    }
+
+    const records = await repo.findLLMProvidersByContainerId(containerId);
+    return ok({ records });
+  }
+
+  private async handleLLMUpdate(params: unknown): Promise<RpcResponse> {
+    const { id, updates } = params as {
+      id: string;
+      updates: Record<string, unknown>;
+    };
+    const repo = this.runtime.platform.llmProviderRepository;
+    if (!repo) {
+      return err(-32000, "LLM provider repository not available");
+    }
+
+    const existing = await repo.findLLMProviderById(id);
+    if (!existing) {
+      return err(404, `LLM provider not found: ${id}`);
+    }
+
+    const updated = {
+      ...existing,
+      ...updates,
+      id: existing.id,
+      containerId: existing.containerId,
+      createdAt: existing.createdAt,
+      updatedAt: Date.now(),
+    };
+
+    await repo.saveLLMProvider(updated);
+    return ok({ record: updated });
+  }
+
+  private async handleLLMDelete(params: unknown): Promise<RpcResponse> {
+    const { id } = params as { id: string };
+    const repo = this.runtime.platform.llmProviderRepository;
+    if (!repo) {
+      return err(-32000, "LLM provider repository not available");
+    }
+
+    await repo.deleteLLMProvider(id);
+    return ok({ id });
+  }
+
+  private async handleLLMDefault(params: unknown): Promise<RpcResponse> {
+    const { id, containerId } = params as { id?: string; containerId?: string };
+    const repo = this.runtime.platform.llmProviderRepository;
+    if (!repo) {
+      return err(-32000, "LLM provider repository not available");
+    }
+
+    if (id) {
+      // Set default
+      await repo.setDefaultLLMProvider(id);
+      return ok({ id });
+    }
+    if (containerId) {
+      // Get default
+      const record = await repo.findDefaultLLMProvider(containerId);
+      return ok({ record });
+    }
+    return err(-32602, "Either id or containerId is required");
   }
 
   // ==================== Lifecycle ====================

@@ -20,6 +20,10 @@ export type {
   ImageMetadata,
   ImageRecord,
   ImageRepository,
+  // LLM Provider
+  LLMProtocol,
+  LLMProviderRecord,
+  LLMProviderRepository,
   // Config types
   McpServerConfig,
   SessionRecord,

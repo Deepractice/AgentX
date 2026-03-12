@@ -31,6 +31,7 @@
  */
 
 import type { UserMessage } from "../agent/types/message";
+import type { LLMProtocol } from "../persistence/types";
 import type { Session } from "../session/types";
 
 // ============================================================================
@@ -472,6 +473,18 @@ export interface Driver {
    * Driver name (for identification and logging)
    */
   readonly name: string;
+
+  /**
+   * Supported LLM API protocols
+   *
+   * Declares which protocols this driver can handle.
+   * Used by Runtime to validate that the driver is compatible
+   * with the configured LLM provider's protocol.
+   *
+   * - MonoDriver (Vercel AI SDK): ["anthropic", "openai"]
+   * - ClaudeDriver (Anthropic SDK): ["anthropic"]
+   */
+  readonly supportedProtocols: readonly LLMProtocol[];
 
   /**
    * SDK Session ID (available after first message)

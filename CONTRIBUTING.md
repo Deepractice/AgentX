@@ -18,7 +18,7 @@ bun run build
 Verify everything works:
 
 ```bash
-bun run bdd
+bun test bdd/
 ```
 
 ## Project Structure
@@ -53,7 +53,7 @@ Build order follows the dependency graph (handled automatically by Turbo):
 | ------------------ | ------------------------------------- |
 | `bun dev`          | Start dev environment with hot reload |
 | `bun run build`    | Rebuild all packages                  |
-| `bun run bdd`      | Run non-UI tests                      |
+| `bun test bdd/`    | Run BDD tests                         |
 | `bun run bdd:ui`   | Run UI tests (requires browser)       |
 | `bun run bdd:docs` | Run documentation quality tests       |
 
@@ -68,7 +68,7 @@ Every change starts with a `.feature` file. Follow the 4-step process:
 | 1    | Write `.feature` file describing the goal |
 | 2    | Write `.steps.ts` with test definitions   |
 | 3    | Implement the code                        |
-| 4    | Run `bun run bdd` until all pass          |
+| 4    | Run `bun test bdd/` until all pass        |
 
 ### Where to put BDD files
 
@@ -80,9 +80,10 @@ Every change starts with a `.feature` file. Follow the 4-step process:
 
 Each `bdd/` directory has:
 
-- `cucumber.js` — Cucumber configuration
+- `run.test.ts` — BDD runner entry (uses `@deepracticex/bdd` configure())
 - `journeys/` — Feature files organized by role
 - `steps/` — Step definitions
+- `support/` — World class and hooks
 
 ## Environment Variables
 

@@ -124,6 +124,7 @@ export async function createNodePlatform(
     containerRepository: persistence.containers,
     imageRepository: persistence.images,
     sessionRepository: persistence.sessions,
+    llmProviderRepository: persistence.llmProviders,
     eventBus,
     bashProvider,
     channelServer,

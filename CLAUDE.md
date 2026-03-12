@@ -28,7 +28,7 @@ Before writing ANY code, read `bdd/journeys/`. Details: `bdd/journeys/maintainer
 
 ```bash
 bun install && bun build        # Setup
-bun run bdd                     # Run tests
+bun test bdd/                   # Run BDD tests
 bun run bdd:ui                  # Run UI tests
 bun run bdd:docs                # Run doc tests
 bun run check                   # Lint + format check (Biome)

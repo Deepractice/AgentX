@@ -138,6 +138,22 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     // Create driver using the injected CreateDriver function
     const driver = this.createDriver(driverConfig);
 
+    // Validate LLM provider protocol against driver's supported protocols
+    if (this.platform.llmProviderRepository) {
+      const defaultProvider = await this.platform.llmProviderRepository.findDefaultLLMProvider(
+        imageRecord.containerId
+      );
+      if (defaultProvider) {
+        const supported = driver.supportedProtocols;
+        if (!supported.includes(defaultProvider.protocol)) {
+          throw new Error(
+            `Protocol mismatch: LLM provider "${defaultProvider.name}" uses protocol "${defaultProvider.protocol}", ` +
+              `but driver "${driver.name}" only supports [${supported.join(", ")}]`
+          );
+        }
+      }
+    }
+
     // Initialize driver
     await driver.initialize();
 

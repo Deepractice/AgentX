@@ -65,13 +65,21 @@ interface Driver {
   dispose(): Promise<void>;
   interrupt(): void;
   readonly state: DriverState; // "idle" | "active" | "disposed"
+  readonly supportedProtocols: readonly LLMProtocol[]; // "anthropic" | "openai"
 }
 
 // Factory function that the runtime calls to create a Driver per agent
 type CreateDriver = (config: DriverConfig) => Driver;
 ```
 
-**To add a new LLM provider**: implement `Driver` and export a `CreateDriver` factory. Your factory receives `DriverConfig` with `apiKey`, `model`, `systemPrompt`, `session` (for message history), and `mcpServers`. See `@agentxjs/mono-driver` for a reference implementation.
+Each driver declares which LLM API protocols it supports via `supportedProtocols`. When `createAgent` is called, the runtime validates that the container's default LLM provider protocol matches the driver's supported protocols.
+
+| Driver       | Supported Protocols       |
+| ------------ | ------------------------- |
+| MonoDriver   | `["anthropic", "openai"]` |
+| ClaudeDriver | `["anthropic"]`           |
+
+**To add a new LLM provider**: implement `Driver` and export a `CreateDriver` factory. Your factory receives `DriverConfig` with `apiKey`, `model`, `systemPrompt`, `session` (for message history), and `mcpServers`. Declare `supportedProtocols` to indicate which API formats your driver handles. See `@agentxjs/mono-driver` for a reference implementation.
 
 ### Platform
 
@@ -83,6 +91,7 @@ interface AgentXPlatform {
   imageRepository: ImageRepository; // CRUD for images + metadata
   sessionRepository: SessionRepository; // CRUD for sessions + messages
   eventBus: EventBus; // pub/sub for stream events
+  llmProviderRepository?: LLMProviderRepository; // optional LLM provider management
   bashProvider?: BashProvider; // optional shell execution
 }
 ```
@@ -188,6 +197,7 @@ import { ... } from "@agentxjs/core/event";        // event bus system
 import { ... } from "@agentxjs/core/bash";         // command execution
 import { ... } from "@agentxjs/core/network";      // client-server protocol
 import { ... } from "@agentxjs/core/persistence";  // repository interfaces
+import { ... } from "@agentxjs/core/llm";           // LLM provider types
 import { ... } from "@agentxjs/core/mq";           // message queue interface
 ```
 

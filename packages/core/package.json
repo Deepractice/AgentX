@@ -79,6 +79,11 @@
       "types": "./dist/network/index.d.ts",
       "import": "./dist/network/index.js",
       "default": "./dist/network/index.js"
+    },
+    "./llm": {
+      "types": "./dist/llm/index.d.ts",
+      "import": "./dist/llm/index.js",
+      "default": "./dist/llm/index.js"
     }
   },
   "files": [

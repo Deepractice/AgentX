@@ -13,7 +13,7 @@ import type { BusEvent, Unsubscribe } from "@agentxjs/core/event";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import { env } from "@agentxjs/devtools";
 import { ensureDir, getFixturesPath, getTempPath } from "@agentxjs/devtools/bdd";
-import { After, AfterAll, Before, BeforeAll, setWorldConstructor, World } from "@cucumber/cucumber";
+import { After, AfterAll, Before, BeforeAll, setWorldConstructor, World } from "@deepracticex/bdd";
 import type { AgentX, AgentXServer, BaseResponse, Presentation, PresentationState } from "agentxjs";
 
 // Current scenario's fixture name (set by Before hook)
@@ -237,14 +237,11 @@ export class AgentXWorld extends World {
 
 setWorldConstructor(AgentXWorld);
 
-Before(async function (this: AgentXWorld, scenario) {
-  // Set current fixture name from scenario
-  const name = scenario.pickle.name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-  this.scenarioName = name;
-  setCurrentFixture(name);
+Before(async function (this: AgentXWorld) {
+  // @deepracticex/bdd does not pass scenario to Before hooks.
+  // scenarioName is set via bun test's test name when needed.
+  this.scenarioName = "";
+  setCurrentFixture("");
 
   this.collectedEvents = [];
   this.savedValues.clear();

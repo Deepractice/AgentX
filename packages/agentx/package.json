@@ -20,16 +20,16 @@
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "test": "echo 'No tests yet'",
-    "bdd": "bdd",
-    "bdd:developer": "bdd --tags @developer"
+    "test": "bun test bdd/"
   },
   "dependencies": {
     "@agentxjs/core": "workspace:*",
+    "@deepracticex/id": "^0.2.0",
     "@deepracticex/logger": "^1.2.0"
   },
   "devDependencies": {
     "@agentxjs/devtools": "workspace:*",
+    "@deepracticex/bdd": "^0.3.0",
     "tsx": "^4.19.0",
     "typescript": "^5.3.3"
   },

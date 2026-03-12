@@ -131,6 +131,62 @@ export interface SessionRecord {
 }
 
 // ============================================================================
+// LLM Provider Record
+// ============================================================================
+
+/**
+ * Supported LLM API protocols
+ */
+export type LLMProtocol = "anthropic" | "openai";
+
+/**
+ * LLMProviderRecord - Persistent LLM provider configuration
+ *
+ * Represents a configured LLM provider (e.g., Anthropic, OpenAI, Deepseek).
+ * Separates vendor (who provides) from protocol (API format).
+ *
+ * Examples:
+ * - Anthropic official: vendor="anthropic", protocol="anthropic"
+ * - Deepseek: vendor="deepseek", protocol="openai"
+ * - Ollama local: vendor="ollama", protocol="openai"
+ * - Vercel proxying Anthropic: vendor="vercel", protocol="anthropic"
+ */
+export interface LLMProviderRecord {
+  /** Unique provider configuration identifier */
+  id: string;
+
+  /** Container this provider belongs to */
+  containerId: string;
+
+  /** Display name (e.g., "My Anthropic", "Company Gateway") */
+  name: string;
+
+  /** Vendor - who provides the service */
+  vendor: string;
+
+  /** Protocol - API format (determines which SDK to use) */
+  protocol: LLMProtocol;
+
+  /** API key for authentication */
+  apiKey: string;
+
+  /** Custom base URL (for proxies, self-hosted, etc.) */
+  baseUrl?: string;
+
+  /** Default model to use */
+  model?: string;
+
+  /** Whether this is the default provider for the container */
+  isDefault?: boolean;
+
+  /** Creation timestamp (Unix milliseconds) */
+  createdAt: number;
+
+  /** Last update timestamp (Unix milliseconds) */
+  updatedAt: number;
+}
+
+// ============================================================================
 // Container Repository
 // ============================================================================
 
@@ -226,4 +282,34 @@ export interface SessionRepository {
 
   /** Clear all messages for a session */
   clearMessages(sessionId: string): Promise<void>;
+}
+
+// ============================================================================
+// LLM Provider Repository
+// ============================================================================
+
+/**
+ * LLMProviderRepository - Storage operations for LLM provider configurations
+ */
+export interface LLMProviderRepository {
+  /** Save a provider record (create or update) */
+  saveLLMProvider(record: LLMProviderRecord): Promise<void>;
+
+  /** Find provider by ID */
+  findLLMProviderById(id: string): Promise<LLMProviderRecord | null>;
+
+  /** Find all providers for a container */
+  findLLMProvidersByContainerId(containerId: string): Promise<LLMProviderRecord[]>;
+
+  /** Delete provider by ID */
+  deleteLLMProvider(id: string): Promise<void>;
+
+  /** Check if provider exists */
+  llmProviderExists(id: string): Promise<boolean>;
+
+  /** Get default provider for a container */
+  findDefaultLLMProvider(containerId: string): Promise<LLMProviderRecord | null>;
+
+  /** Set a provider as default for its container (unsets previous default) */
+  setDefaultLLMProvider(id: string): Promise<void>;
 }

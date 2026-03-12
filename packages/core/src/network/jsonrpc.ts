@@ -58,7 +58,14 @@ export type RpcMethod =
   | "agent.destroyAll"
   | "agent.interrupt"
   // Message
-  | "message.send";
+  | "message.send"
+  // LLM Provider
+  | "llm.create"
+  | "llm.get"
+  | "llm.list"
+  | "llm.update"
+  | "llm.delete"
+  | "llm.default";
 
 /**
  * Notification method names (server push)
@@ -306,6 +313,13 @@ export const eventTypeToRpcMethod: Record<string, RpcMethod> = {
   agent_interrupt_request: "agent.interrupt",
   // Message
   message_send_request: "message.send",
+  // LLM Provider
+  llm_create_request: "llm.create",
+  llm_get_request: "llm.get",
+  llm_list_request: "llm.list",
+  llm_update_request: "llm.update",
+  llm_delete_request: "llm.delete",
+  llm_default_request: "llm.default",
 };
 
 /**
@@ -333,4 +347,11 @@ export const rpcMethodToResponseType: Record<RpcMethod, string> = {
   "agent.interrupt": "agent_interrupt_response",
   // Message
   "message.send": "message_send_response",
+  // LLM Provider
+  "llm.create": "llm_create_response",
+  "llm.get": "llm_get_response",
+  "llm.list": "llm_list_response",
+  "llm.update": "llm_update_response",
+  "llm.delete": "llm_delete_response",
+  "llm.default": "llm_default_response",
 };

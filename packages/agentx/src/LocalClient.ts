@@ -14,6 +14,7 @@ import { CommandHandler } from "./CommandHandler";
 import { createLocalAgents } from "./namespaces/agents";
 import { createLocalContainers } from "./namespaces/containers";
 import { createLocalImages } from "./namespaces/images";
+import { createLocalLLM } from "./namespaces/llm";
 import { createPresentations } from "./namespaces/presentations";
 import { createLocalSessions } from "./namespaces/sessions";
 import type {
@@ -21,6 +22,7 @@ import type {
   AgentX,
   ContainerNamespace,
   ImageNamespace,
+  LLMNamespace,
   PresentationNamespace,
   SessionNamespace,
 } from "./types";
@@ -40,6 +42,7 @@ export class LocalClient implements AgentX {
   readonly agent: AgentNamespace;
   readonly session: SessionNamespace;
   readonly presentation: PresentationNamespace;
+  readonly llm: LLMNamespace;
 
   constructor(runtime: AgentXRuntime) {
     this.runtime = runtime;
@@ -50,6 +53,7 @@ export class LocalClient implements AgentX {
     this.agent = createLocalAgents(runtime);
     this.session = createLocalSessions(runtime);
     this.presentation = createPresentations(this);
+    this.llm = createLocalLLM(platform);
 
     logger.info("LocalClient initialized");
   }

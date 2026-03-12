@@ -5,6 +5,7 @@
 import type { Message } from "@agentxjs/core/agent";
 import type { AgentXError } from "@agentxjs/core/error";
 import type { BusEvent, BusEventHandler, EventBus, Unsubscribe } from "@agentxjs/core/event";
+import type { LLMProtocol, LLMProviderRecord } from "@agentxjs/core/persistence";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type { Presentation, PresentationOptions } from "./presentation";
 
@@ -164,6 +165,41 @@ export interface MessageSendResponse extends BaseResponse {
   agentId: string;
 }
 
+/**
+ * LLM provider create response
+ */
+export interface LLMProviderCreateResponse extends BaseResponse {
+  record: LLMProviderRecord;
+}
+
+/**
+ * LLM provider get response
+ */
+export interface LLMProviderGetResponse extends BaseResponse {
+  record: LLMProviderRecord | null;
+}
+
+/**
+ * LLM provider list response
+ */
+export interface LLMProviderListResponse extends BaseResponse {
+  records: LLMProviderRecord[];
+}
+
+/**
+ * LLM provider update response
+ */
+export interface LLMProviderUpdateResponse extends BaseResponse {
+  record: LLMProviderRecord;
+}
+
+/**
+ * LLM provider default response
+ */
+export interface LLMProviderDefaultResponse extends BaseResponse {
+  record: LLMProviderRecord | null;
+}
+
 // ============================================================================
 // Namespace Interfaces
 // ============================================================================
@@ -283,6 +319,64 @@ export interface SessionNamespace {
 }
 
 /**
+ * LLM provider operations namespace
+ */
+export interface LLMNamespace {
+  /**
+   * Create a new LLM provider configuration
+   */
+  create(params: {
+    containerId: string;
+    name: string;
+    vendor: string;
+    protocol: LLMProtocol;
+    apiKey: string;
+    baseUrl?: string;
+    model?: string;
+  }): Promise<LLMProviderCreateResponse>;
+
+  /**
+   * Get LLM provider by ID
+   */
+  get(id: string): Promise<LLMProviderGetResponse>;
+
+  /**
+   * List LLM providers for a container
+   */
+  list(containerId: string): Promise<LLMProviderListResponse>;
+
+  /**
+   * Update LLM provider
+   */
+  update(
+    id: string,
+    updates: {
+      name?: string;
+      vendor?: string;
+      protocol?: LLMProtocol;
+      apiKey?: string;
+      baseUrl?: string;
+      model?: string;
+    }
+  ): Promise<LLMProviderUpdateResponse>;
+
+  /**
+   * Delete LLM provider
+   */
+  delete(id: string): Promise<BaseResponse>;
+
+  /**
+   * Set default LLM provider for a container
+   */
+  setDefault(id: string): Promise<BaseResponse>;
+
+  /**
+   * Get default LLM provider for a container
+   */
+  getDefault(containerId: string): Promise<LLMProviderDefaultResponse>;
+}
+
+/**
  * Presentation operations namespace
  */
 export interface PresentationNamespace {
@@ -328,6 +422,7 @@ export interface AgentX {
   readonly agent: AgentNamespace;
   readonly session: SessionNamespace;
   readonly presentation: PresentationNamespace;
+  readonly llm: LLMNamespace;
 
   // ==================== Event Subscription ====================
 

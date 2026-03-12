@@ -39,6 +39,7 @@ const logger = createLogger("devtools/MockDriver");
  */
 export class MockDriver implements Driver {
   readonly name = "MockDriver";
+  readonly supportedProtocols = ["anthropic", "openai"] as const;
 
   private _sessionId: string | null = null;
   private _state: DriverState = "idle";

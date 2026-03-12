@@ -13,6 +13,7 @@ import { createLogger } from "commonxjs/logger";
 import { createRemoteAgents } from "./namespaces/agents";
 import { createRemoteContainers } from "./namespaces/containers";
 import { createRemoteImages } from "./namespaces/images";
+import { createRemoteLLM } from "./namespaces/llm";
 import { createPresentations } from "./namespaces/presentations";
 import { createRemoteSessions } from "./namespaces/sessions";
 import type {
@@ -20,6 +21,7 @@ import type {
   AgentX,
   ContainerNamespace,
   ImageNamespace,
+  LLMNamespace,
   PresentationNamespace,
   RemoteClientConfig,
   SessionNamespace,
@@ -40,6 +42,7 @@ export class RemoteClient implements AgentX {
   readonly agent: AgentNamespace;
   readonly session: SessionNamespace;
   readonly presentation: PresentationNamespace;
+  readonly llm: LLMNamespace;
 
   constructor(config: RemoteClientConfig) {
     this.config = config;
@@ -67,6 +70,7 @@ export class RemoteClient implements AgentX {
     this.agent = createRemoteAgents(this.rpcClient);
     this.session = createRemoteSessions(this.rpcClient);
     this.presentation = createPresentations(this);
+    this.llm = createRemoteLLM(this.rpcClient);
   }
 
   // ==================== Properties ====================

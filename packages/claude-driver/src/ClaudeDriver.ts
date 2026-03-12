@@ -103,6 +103,7 @@ export type ClaudeDriverConfig = DriverConfig<ClaudeDriverOptions>;
  */
 export class ClaudeDriver implements Driver {
   readonly name = "ClaudeDriver";
+  readonly supportedProtocols = ["anthropic"] as const;
 
   private _sessionId: string | null = null;
   private _state: DriverState = "idle";

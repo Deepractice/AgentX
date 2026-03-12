@@ -94,6 +94,10 @@ export function createAgentX(config?: PlatformConfig): AgentXBuilder {
       return getLocalClient().presentation;
     },
 
+    get llm() {
+      return getLocalClient().llm;
+    },
+
     on(type, handler) {
       return getLocalClient().on(type, handler);
     },
@@ -210,6 +214,12 @@ export type {
   ImageListResponse,
   ImageNamespace,
   ImageRecord,
+  LLMNamespace,
+  LLMProviderCreateResponse,
+  LLMProviderDefaultResponse,
+  LLMProviderGetResponse,
+  LLMProviderListResponse,
+  LLMProviderUpdateResponse,
   MaybeAsync,
   MessageSendResponse,
   PresentationNamespace,

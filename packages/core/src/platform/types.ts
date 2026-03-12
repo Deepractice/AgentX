@@ -23,6 +23,7 @@ import type { BashProvider } from "../bash/types";
 import type { ContainerRepository } from "../container/types";
 import type { EventBus } from "../event/types";
 import type { ImageRepository } from "../image/types";
+import type { LLMProviderRepository } from "../llm/types";
 import type { ChannelClientFactory } from "../network/RpcClient";
 import type { ChannelServer } from "../network/types";
 import type { SessionRepository } from "../session/types";
@@ -64,6 +65,14 @@ export interface AgentXPlatform {
    * Event bus for pub/sub
    */
   readonly eventBus: EventBus;
+
+  /**
+   * LLM provider repository for persistence
+   *
+   * Optional — not all platforms need runtime LLM provider management.
+   * When provided, enables ax.llm namespace for CRUD operations.
+   */
+  readonly llmProviderRepository?: LLMProviderRepository;
 
   // === Optional Providers ===
 

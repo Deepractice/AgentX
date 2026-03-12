@@ -9,6 +9,7 @@ import { createLogger } from "commonxjs/logger";
 import type { Storage } from "unstorage";
 import { StorageContainerRepository } from "./StorageContainerRepository";
 import { StorageImageRepository } from "./StorageImageRepository";
+import { StorageLLMProviderRepository } from "./StorageLLMProviderRepository";
 import { StorageSessionRepository } from "./StorageSessionRepository";
 import type { Persistence, PersistenceDriver } from "./types";
 
@@ -21,11 +22,13 @@ class PersistenceImpl implements Persistence {
   readonly containers: StorageContainerRepository;
   readonly images: StorageImageRepository;
   readonly sessions: StorageSessionRepository;
+  readonly llmProviders: StorageLLMProviderRepository;
 
   constructor(storage: Storage) {
     this.containers = new StorageContainerRepository(storage);
     this.images = new StorageImageRepository(storage);
     this.sessions = new StorageSessionRepository(storage);
+    this.llmProviders = new StorageLLMProviderRepository(storage);
   }
 }
 

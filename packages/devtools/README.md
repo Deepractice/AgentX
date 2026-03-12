@@ -1,27 +1,33 @@
 # @agentxjs/devtools
 
-Development and testing tools for AgentX. Provides BDD utilities for Cucumber-based integration tests, plus VCR-style fixture recording/replay for deterministic LLM testing.
+Development and testing tools for AgentX. Provides BDD utilities, AI-powered testing, plus VCR-style fixture recording/replay for deterministic LLM testing.
 
 ## Overview
 
 `@agentxjs/devtools` has two parts:
 
-1. **BDD Utilities** (`@agentxjs/devtools/bdd`) -- Cucumber config, AI-powered UI testing, documentation testing, dev server management.
+1. **BDD Utilities** (`@agentxjs/devtools/bdd`) -- AI-powered UI testing, documentation testing, dev server management, path utilities.
 2. **VCR Infrastructure** -- `MockDriver`, `RecordingDriver`, `createVcrCreateDriver` for recording and replaying LLM interactions in unit tests.
 
 ## Quick Start: BDD Testing
 
-### 1. Set up Cucumber config
+### 1. Set up BDD runner
+
+BDD tests use `@deepracticex/bdd` — a Bun-native Cucumber-compatible framework. Same API (`Given`, `When`, `Then`, `World`), runs directly with `bun test`.
 
 ```typescript
-// bdd/cucumber.js
-import { createCucumberConfig } from "@agentxjs/devtools/bdd";
+// bdd/run.test.ts
+import { configure } from "@deepracticex/bdd";
 
-export default createCucumberConfig({
-  paths: ["bdd/journeys/**/*.feature"],
-  import: ["bdd/steps/**/*.ts"],
+await configure({
+  features: ["bdd/journeys/**/*.feature"],
+  steps: ["bdd/support/**/*.ts", "bdd/steps/**/*.ts"],
+  tags: "not @pending",
+  timeout: 30_000,
 });
 ```
+
+Run with `bun test bdd/`.
 
 ### 2. Use agentUiTester for UI tests
 
@@ -133,17 +139,11 @@ const server = await createServer({ platform, createDriver: vcrCreateDriver });
 
 ### BDD API (`@agentxjs/devtools/bdd`)
 
-#### `createCucumberConfig(options: CucumberConfigOptions)`
+#### `createCucumberConfig(options)` *(legacy)*
 
-```typescript
-interface CucumberConfigOptions {
-  paths: string[]; // feature file paths
-  import: string[]; // step definition paths
-  tags?: string; // default: "not @pending and not @skip"
-  timeout?: number; // default: 30000 ms
-  format?: string[]; // default: ["progress"]
-}
-```
+> **Deprecated**: Use `configure()` from `@deepracticex/bdd` instead. See Quick Start above.
+
+Generates a Cucumber.js config object. Kept for backward compatibility with projects still using `@cucumber/cucumber`.
 
 #### `agentUiTester(prompt, options?): UiTestResult`
 
@@ -272,7 +272,7 @@ listFixtures(); // ["simple-reply", "long-reply", "tool-call", "error", "empty"]
 | `@agentxjs/devtools/mock`     | `MockDriver`, `createMockDriver`                                                        |
 | `@agentxjs/devtools/recorder` | `RecordingDriver`, `createRecordingDriver`                                              |
 | `@agentxjs/devtools/fixtures` | Built-in fixtures, `getFixture`, `listFixtures`                                         |
-| `@agentxjs/devtools/bdd`      | BDD: `createCucumberConfig`, `agentUiTester`, `agentDocTester`, `startDevServer`, paths |
+| `@agentxjs/devtools/bdd`      | BDD: `agentUiTester`, `agentDocTester`, `startDevServer`, paths, `createCucumberConfig` (legacy) |
 
 ### Peer Dependencies (optional)
 
@@ -281,4 +281,4 @@ listFixtures(); // ["simple-reply", "long-reply", "tool-call", "error", "empty"]
 | `agentxjs`                | `agentDocTester` (uses AgentX SDK for AI evaluation) |
 | `@agentxjs/claude-driver` | Recording with claude-driver                         |
 | `@playwright/test`        | Browser-based BDD tests                              |
-| `@cucumber/cucumber`      | BDD test runner                                      |
+| `@deepracticex/bdd`       | BDD test runner (replaces @cucumber/cucumber)        |

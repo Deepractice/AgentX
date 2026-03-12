@@ -93,6 +93,36 @@ Feature: Monorepo Architecture
       | module | reason                                       |
       | ws     | WebSocket impl belongs in platform layer     |
 
+  Scenario: Driver declares supported LLM protocols
+    Given the Driver interface in @agentxjs/core
+    Then each Driver implementation must declare supportedProtocols:
+      | driver           | supportedProtocols          |
+      | MonoDriver       | ["anthropic", "openai"]     |
+      | ClaudeDriver     | ["anthropic"]               |
+      | MockDriver       | ["anthropic", "openai"]     |
+    And LLMProtocol is defined as "anthropic" | "openai"
+
+  Scenario: LLM Provider management via ax.llm namespace
+    Given the agentxjs SDK
+    Then it provides an ax.llm namespace for managing LLM provider configurations:
+      | operation  | description                                |
+      | create     | Register a new LLM provider in a container |
+      | get        | Retrieve provider by ID                    |
+      | list       | List providers in a container              |
+      | update     | Update provider settings                   |
+      | delete     | Remove a provider                          |
+      | setDefault | Set the default provider for a container   |
+      | getDefault | Get the default provider for a container   |
+    And each provider has vendor (who provides) and protocol (API format) fields
+    And vendor and protocol are separate dimensions (e.g. deepseek vendor uses openai protocol)
+
+  Scenario: createAgent validates LLM provider protocol
+    Given an LLM provider is configured with a protocol
+    And a Driver declares its supportedProtocols
+    When createAgent is called
+    Then the runtime checks that the provider's protocol is in driver.supportedProtocols
+    And throws "Protocol mismatch" error if they don't match
+
   Scenario: All packages share base TypeScript config
     Given the file "tsconfig.base.json"
     Then all packages should extend it
