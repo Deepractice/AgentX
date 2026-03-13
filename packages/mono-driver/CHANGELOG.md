@@ -1,5 +1,12 @@
 # @agentxjs/mono-driver
 
+## 2.6.0
+
+### Patch Changes
+
+- Updated dependencies [e1b44f7]
+  - @agentxjs/core@2.6.0
+
 ## 2.5.0
 
 ### Minor Changes
