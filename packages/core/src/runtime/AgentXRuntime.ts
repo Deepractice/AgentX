@@ -128,12 +128,18 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       defaultTools.push(...context.getTools());
     }
 
+    // Resolve embodiment
+    const embody = imageRecord.embody;
+    const systemPrompt = embody?.systemPrompt;
+    const mcpServers = embody?.mcpServers;
+    const imageModel = embody?.model;
+
     // Create driver config
     const driverConfig: DriverConfig = {
       apiKey: "",
       agentId,
-      systemPrompt: imageRecord.systemPrompt,
-      mcpServers: imageRecord.mcpServers,
+      systemPrompt,
+      mcpServers,
       context,
       tools: defaultTools.length > 0 ? defaultTools : undefined,
       session, // Inject Session for stateless drivers
@@ -157,6 +163,11 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       if (defaultProvider.model) {
         driverConfig.model = defaultProvider.model;
       }
+    }
+
+    // Image-level model overrides container default
+    if (imageModel) {
+      driverConfig.model = imageModel;
     }
 
     // Create driver using the injected CreateDriver function

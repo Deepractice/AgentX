@@ -43,6 +43,56 @@ export interface ContainerRecord {
 }
 
 // ============================================================================
+// Embodiment
+// ============================================================================
+
+/**
+ * Embodiment — runtime configuration for an agent's "body".
+ *
+ * contextId defines WHO the agent is (soul),
+ * embody defines HOW the agent runs (body).
+ */
+export interface Embodiment {
+  /** LLM model identifier (e.g. "claude-sonnet-4-6"). Overrides container default. */
+  model?: string;
+
+  /** System prompt — controls agent behavior */
+  systemPrompt?: string;
+
+  /** MCP servers configuration — tool capabilities */
+  mcpServers?: Record<string, McpServerConfig>;
+}
+
+// ============================================================================
+// Agent Blueprint
+// ============================================================================
+
+/**
+ * Agent — the blueprint for creating an Image.
+ *
+ * Like a Dockerfile defines how to build an image,
+ * Agent defines what an agent looks like before it becomes a persistent Image.
+ *
+ * Agent = contextId (soul) + Embodiment (body) + metadata (name, description).
+ */
+export interface Agent {
+  /** Display name */
+  name?: string;
+
+  /** Description */
+  description?: string;
+
+  /** Context ID — identifies the cognitive context (e.g. RoleX individual). The soul. */
+  contextId?: string;
+
+  /** Embodiment — runtime configuration (model, systemPrompt, mcpServers). The body. */
+  embody?: Embodiment;
+
+  /** Application-specific custom data */
+  customData?: Record<string, unknown>;
+}
+
+// ============================================================================
 // Image Record
 // ============================================================================
 
@@ -55,15 +105,14 @@ export interface ImageMetadata {
 }
 
 /**
- * ImageRecord - Persistent representation of a conversation
+ * ImageRecord — persistent representation of an agent.
  *
- * Image is the primary entity users interact with (displayed as "conversation").
- * Agent is a transient runtime instance created from Image.
+ * Image = Agent blueprint + runtime metadata (IDs, timestamps, session).
  *
  * Lifecycle:
- * - image_create → ImageRecord (persistent)
- * - image_run → Agent (runtime, in-memory)
- * - image_stop / server restart → Agent destroyed, Image remains
+ * - Agent (blueprint) → ImageRecord (persistent)
+ * - ImageRecord → Instance (runtime, in-memory)
+ * - Instance stop / server restart → Instance destroyed, Image remains
  */
 export interface ImageRecord {
   /** Unique image identifier (pattern: `img_${nanoid()}`) */
@@ -81,17 +130,14 @@ export interface ImageRecord {
   /** Conversation description (optional) */
   description?: string;
 
-  /** System prompt - controls agent behavior */
-  systemPrompt?: string;
+  /** Context ID — identifies the cognitive context (e.g. RoleX individual). The soul. */
+  contextId?: string;
+
+  /** Embodiment — runtime configuration (model, systemPrompt, mcpServers). The body. */
+  embody?: Embodiment;
 
   /** Parent image ID (for fork/branch feature) */
   parentImageId?: string;
-
-  /** MCP servers configuration */
-  mcpServers?: Record<string, McpServerConfig>;
-
-  /** Context ID — identifies the cognitive context for this image (e.g. RoleX individual) */
-  contextId?: string;
 
   /** Provider-specific metadata */
   metadata?: ImageMetadata;

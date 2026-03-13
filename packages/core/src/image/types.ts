@@ -10,21 +10,32 @@
  * - stop() / server restart → Agent destroyed, Image remains
  */
 
-import type { McpServerConfig } from "../driver/types";
-import type { SessionRepository } from "../persistence/types";
+import type {
+  Agent,
+  Embodiment,
+  ImageRecord,
+  ImageRepository,
+  SessionRepository,
+} from "../persistence/types";
 
 // ============================================================================
 // Re-export from persistence (storage schema)
 // ============================================================================
 
-export type { ImageMetadata, ImageRecord, ImageRepository } from "../persistence/types";
+export type {
+  Agent,
+  Embodiment,
+  ImageMetadata,
+  ImageRecord,
+  ImageRepository,
+} from "../persistence/types";
 
 // ============================================================================
 // Image Interface
 // ============================================================================
 
 /**
- * Image - Persistent conversation entity
+ * Image - Persistent agent entity
  */
 export interface Image {
   readonly imageId: string;
@@ -32,19 +43,19 @@ export interface Image {
   readonly sessionId: string;
   readonly name: string;
   readonly description: string | undefined;
-  readonly systemPrompt: string | undefined;
-  readonly mcpServers: Record<string, McpServerConfig> | undefined;
   readonly contextId: string | undefined;
+  readonly embody: Embodiment | undefined;
   readonly customData: Record<string, unknown> | undefined;
   readonly createdAt: number;
   readonly updatedAt: number;
 
   /**
-   * Update image metadata (name, description, customData)
+   * Update image
    */
   update(updates: {
     name?: string;
     description?: string;
+    embody?: Embodiment;
     customData?: Record<string, unknown>;
   }): Promise<Image>;
 
@@ -56,7 +67,7 @@ export interface Image {
   /**
    * Get the underlying record
    */
-  toRecord(): import("../persistence/types").ImageRecord;
+  toRecord(): ImageRecord;
 }
 
 // ============================================================================
@@ -67,19 +78,16 @@ export interface Image {
  * Context needed by Image operations
  */
 export interface ImageContext {
-  imageRepository: import("../persistence/types").ImageRepository;
+  imageRepository: ImageRepository;
   sessionRepository: SessionRepository;
 }
 
 /**
- * Configuration for creating a new Image
+ * Configuration for creating a new Image.
+ *
+ * Extends Agent blueprint — the blueprint is serializable and portable,
+ * ImageCreateConfig adds the runtime binding (containerId).
  */
-export interface ImageCreateConfig {
+export interface ImageCreateConfig extends Agent {
   containerId: string;
-  name?: string;
-  description?: string;
-  systemPrompt?: string;
-  mcpServers?: Record<string, McpServerConfig>;
-  contextId?: string;
-  customData?: Record<string, unknown>;
 }

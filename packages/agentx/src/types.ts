@@ -47,6 +47,15 @@ export interface AgentInfo {
 }
 
 /**
+ * Embodiment — runtime configuration for an agent's "body".
+ */
+export interface Embodiment {
+  model?: string;
+  systemPrompt?: string;
+  mcpServers?: Record<string, unknown>;
+}
+
+/**
  * Image record from server
  */
 export interface ImageRecord {
@@ -55,7 +64,12 @@ export interface ImageRecord {
   sessionId: string;
   name?: string;
   description?: string;
+  contextId?: string;
+  embody?: Embodiment;
+  /** @deprecated Use `embody.systemPrompt` instead. */
   systemPrompt?: string;
+  /** @deprecated Use `embody.mcpServers` instead. */
+  mcpServers?: Record<string, unknown>;
   customData?: Record<string, unknown>;
   createdAt: number;
   updatedAt: number;
@@ -229,14 +243,14 @@ export interface ContainerNamespace {
  */
 export interface ImageNamespace {
   /**
-   * Create a new image
+   * Create a new image from an Agent blueprint
    */
   create(params: {
     containerId: string;
     name?: string;
     description?: string;
-    systemPrompt?: string;
-    mcpServers?: Record<string, unknown>;
+    contextId?: string;
+    embody?: Embodiment;
     customData?: Record<string, unknown>;
   }): Promise<ImageCreateResponse>;
 
@@ -258,6 +272,7 @@ export interface ImageNamespace {
     updates: {
       name?: string;
       description?: string;
+      embody?: Embodiment;
       customData?: Record<string, unknown>;
     }
   ): Promise<ImageUpdateResponse>;

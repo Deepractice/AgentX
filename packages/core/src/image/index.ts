@@ -15,8 +15,9 @@
  * // Create new image
  * const image = await createImage({
  *   containerId: "container-1",
- *   name: "My Conversation",
- *   systemPrompt: "You are helpful",
+ *   name: "My Agent",
+ *   contextId: "aristotle",
+ *   embody: { model: "claude-sonnet-4-6", systemPrompt: "You are helpful" },
  * }, context);
  *
  * // Load existing image
@@ -26,6 +27,8 @@
 
 export { createImage, ImageImpl, loadImage } from "./Image";
 export type {
+  Agent,
+  Embodiment,
   Image,
   ImageContext,
   ImageCreateConfig,

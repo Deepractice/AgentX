@@ -209,6 +209,7 @@ export type {
   ContainerInfo,
   ContainerListResponse,
   ContainerNamespace,
+  Embodiment,
   ImageCreateResponse,
   ImageGetResponse,
   ImageListResponse,

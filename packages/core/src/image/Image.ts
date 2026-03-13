@@ -41,16 +41,12 @@ export class ImageImpl implements Image {
     return this.record.description;
   }
 
-  get systemPrompt(): string | undefined {
-    return this.record.systemPrompt;
-  }
-
-  get mcpServers() {
-    return this.record.mcpServers;
-  }
-
   get contextId(): string | undefined {
     return this.record.contextId;
+  }
+
+  get embody() {
+    return this.record.embody;
   }
 
   get customData(): Record<string, unknown> | undefined {
@@ -82,8 +78,8 @@ export class ImageImpl implements Image {
       sessionId,
       name: config.name ?? "New Conversation",
       description: config.description,
-      systemPrompt: config.systemPrompt,
-      mcpServers: config.mcpServers,
+      contextId: config.contextId,
+      embody: config.embody,
       customData: config.customData,
       createdAt: now,
       updatedAt: now,
@@ -147,6 +143,7 @@ export class ImageImpl implements Image {
   async update(updates: {
     name?: string;
     description?: string;
+    embody?: import("../persistence/types").Embodiment;
     customData?: Record<string, unknown>;
   }): Promise<Image> {
     const now = Date.now();
@@ -154,6 +151,10 @@ export class ImageImpl implements Image {
       ...this.record,
       name: updates.name ?? this.record.name,
       description: updates.description ?? this.record.description,
+      embody:
+        updates.embody !== undefined
+          ? { ...this.record.embody, ...updates.embody }
+          : this.record.embody,
       customData: updates.customData !== undefined ? updates.customData : this.record.customData,
       updatedAt: now,
     };

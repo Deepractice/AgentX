@@ -158,12 +158,12 @@ export class CommandHandler {
   // ==================== Image Commands ====================
 
   private async handleImageCreate(params: unknown): Promise<RpcResponse> {
-    const { containerId, name, description, systemPrompt, mcpServers, customData } = params as {
+    const { containerId, name, description, contextId, embody, customData } = params as {
       containerId: string;
       name?: string;
       description?: string;
-      systemPrompt?: string;
-      mcpServers?: Record<string, unknown>;
+      contextId?: string;
+      embody?: import("@agentxjs/core/persistence").Embodiment;
       customData?: Record<string, unknown>;
     };
 
@@ -171,7 +171,7 @@ export class CommandHandler {
     const { createImage } = await import("@agentxjs/core/image");
 
     const image = await createImage(
-      { containerId, name, description, systemPrompt, mcpServers: mcpServers as any, customData },
+      { containerId, name, description, contextId, embody, customData },
       { imageRepository, sessionRepository }
     );
 
@@ -280,7 +280,12 @@ export class CommandHandler {
   private async handleImageUpdate(params: unknown): Promise<RpcResponse> {
     const { imageId, updates } = params as {
       imageId: string;
-      updates: { name?: string; description?: string; customData?: Record<string, unknown> };
+      updates: {
+        name?: string;
+        description?: string;
+        embody?: import("@agentxjs/core/persistence").Embodiment;
+        customData?: Record<string, unknown>;
+      };
     };
 
     // Get existing image
@@ -289,10 +294,12 @@ export class CommandHandler {
       return err(404, `Image not found: ${imageId}`);
     }
 
-    // Update image record
+    // Update image record (embody is merged, not replaced)
+    const { embody: embodyUpdates, ...otherUpdates } = updates;
     const updatedRecord = {
       ...imageRecord,
-      ...updates,
+      ...otherUpdates,
+      embody: embodyUpdates ? { ...imageRecord.embody, ...embodyUpdates } : imageRecord.embody,
       updatedAt: Date.now(),
     };
 

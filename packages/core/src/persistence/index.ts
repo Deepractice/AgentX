@@ -12,11 +12,13 @@
  */
 
 export type {
+  Agent,
   ContainerConfig,
   // Record types
   ContainerRecord,
   // Repository interfaces
   ContainerRepository,
+  Embodiment,
   ImageMetadata,
   ImageRecord,
   ImageRepository,
