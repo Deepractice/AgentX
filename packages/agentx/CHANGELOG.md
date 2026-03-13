@@ -1,5 +1,50 @@
 # agentxjs
 
+## 2.8.0
+
+### Minor Changes
+
+- 4c00e4b: BREAKING: decouple RoleX, pure runtime architecture
+
+  - Rename Context interface: `instructions` → `schema`, `getTools()` → `capabilities()`
+  - Add self-describing `Capability` type (name, description, parameters, execute)
+  - Remove `rolexjs` dependency from core, mono-driver, node-platform
+  - Delete built-in RolexContext and RolexContextProvider — moved to `@rolexjs/agentx-context`
+  - `contextProvider` is now an optional injection in node-platform (no default)
+  - Delete CLI app — AgentX is SDK-only
+  - Clean up unused exports (createServer, Embodiment, Prototype types)
+
+- 724e53d: BREAKING: hide Container from SDK public API
+
+  Container is now an internal concept, auto-managed with DEFAULT_CONTAINER_ID.
+
+  - Remove `containerId` param from `image.create()`, `prototype.create()`, `llm.create()`
+  - Remove `containerId` param from `image.list()`, `prototype.list()`, `llm.list()`, `instance.list()`, `llm.getDefault()`
+  - Delete `ContainerNamespace`, `ContainerInfo`, `ContainerCreateResponse/GetResponse/ListResponse` types
+  - Delete `containers.ts` namespace implementation
+  - Remove container RPC handlers from CommandHandler
+  - Add `DEFAULT_CONTAINER_ID` constant in `@agentxjs/core/container`
+  - All namespace implementations use DEFAULT_CONTAINER_ID internally
+
+- 4c00e4b: BREAKING: remove Prototype registry, replace Embodiment with flat AgentConfig
+
+  AgentX is now a pure runtime — receives config, starts agents, manages sessions.
+  Prototype/template management moves to RoleX.
+
+  - Remove `PrototypeNamespace`, `PrototypeCreateResponse/GetResponse/ListResponse/UpdateResponse` types
+  - Delete `prototypes.ts` namespace implementation
+  - Remove prototype RPC handlers from CommandHandler
+  - Remove `prototype` from `RuntimeNamespace` and `AgentX` interface
+  - Replace `Embodiment` wrapper with flat `AgentConfig` type (model, systemPrompt, mcpServers, contextId, name, description, customData)
+  - `ChatNamespace.create()` now accepts `AgentConfig` directly (no more `prototypeId` or `embody` wrapper)
+  - `AgentHandle.update()` uses flat fields instead of `Embodiment`
+  - `ImageNamespace.create()` accepts `AgentConfig`
+
+### Patch Changes
+
+- Updated dependencies [724e53d]
+  - @agentxjs/core@2.8.0
+
 ## 2.7.0
 
 ### Minor Changes
