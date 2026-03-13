@@ -8,6 +8,7 @@
  */
 
 import type { UserContentPart } from "@agentxjs/core/agent";
+import { DEFAULT_CONTAINER_ID } from "@agentxjs/core/container";
 import type { RpcMethod } from "@agentxjs/core/network";
 import type { AgentXRuntime } from "@agentxjs/core/runtime";
 import { createLogger } from "@deepracticex/logger";
@@ -63,14 +64,6 @@ export class CommandHandler {
 
     try {
       switch (method) {
-        // Container
-        case "container.create":
-          return await this.handleContainerCreate(params);
-        case "container.get":
-          return await this.handleContainerGet(params);
-        case "container.list":
-          return await this.handleContainerList(params);
-
         // Image
         case "image.create":
           return await this.handleImageCreate(params);
@@ -140,38 +133,18 @@ export class CommandHandler {
     }
   }
 
-  // ==================== Container Commands ====================
-
-  private async handleContainerCreate(params: unknown): Promise<RpcResponse> {
-    const { containerId } = params as { containerId: string };
-    const { getOrCreateContainer } = await import("@agentxjs/core/container");
-    const { containerRepository, imageRepository, sessionRepository } = this.runtime.platform;
-
-    const container = await getOrCreateContainer(containerId, {
-      containerRepository,
-      imageRepository,
-      sessionRepository,
-    });
-
-    return ok({ containerId: container.containerId });
-  }
-
-  private async handleContainerGet(params: unknown): Promise<RpcResponse> {
-    const { containerId } = params as { containerId: string };
-    const exists = await this.runtime.platform.containerRepository.containerExists(containerId);
-    return ok({ containerId, exists });
-  }
-
-  private async handleContainerList(_params: unknown): Promise<RpcResponse> {
-    const containers = await this.runtime.platform.containerRepository.findAllContainers();
-    return ok({ containerIds: containers.map((c) => c.containerId) });
-  }
-
   // ==================== Image Commands ====================
 
   private async handleImageCreate(params: unknown): Promise<RpcResponse> {
-    const { containerId, name, description, contextId, embody, customData } = params as {
-      containerId: string;
+    const {
+      containerId: _cid,
+      name,
+      description,
+      contextId,
+      embody,
+      customData,
+    } = params as {
+      containerId?: string;
       name?: string;
       description?: string;
       contextId?: string;
@@ -183,7 +156,7 @@ export class CommandHandler {
     const { createImage } = await import("@agentxjs/core/image");
 
     const image = await createImage(
-      { containerId, name, description, contextId, embody, customData },
+      { containerId: DEFAULT_CONTAINER_ID, name, description, contextId, embody, customData },
       { imageRepository, sessionRepository }
     );
 
@@ -452,8 +425,15 @@ export class CommandHandler {
   // ==================== Prototype Commands ====================
 
   private async handlePrototypeCreate(params: unknown): Promise<RpcResponse> {
-    const { containerId, name, description, contextId, embody, customData } = params as {
-      containerId: string;
+    const {
+      containerId: _cid,
+      name,
+      description,
+      contextId,
+      embody,
+      customData,
+    } = params as {
+      containerId?: string;
       name: string;
       description?: string;
       contextId?: string;
@@ -470,7 +450,7 @@ export class CommandHandler {
     const random = Math.random().toString(36).slice(2, 8);
     const record = {
       prototypeId: `proto_${now}_${random}`,
-      containerId,
+      containerId: DEFAULT_CONTAINER_ID,
       name,
       description,
       contextId,
@@ -557,8 +537,16 @@ export class CommandHandler {
   // ==================== LLM Provider Commands ====================
 
   private async handleLLMCreate(params: unknown): Promise<RpcResponse> {
-    const { containerId, name, vendor, protocol, apiKey, baseUrl, model } = params as {
-      containerId: string;
+    const {
+      containerId: _cid,
+      name,
+      vendor,
+      protocol,
+      apiKey,
+      baseUrl,
+      model,
+    } = params as {
+      containerId?: string;
       name: string;
       vendor: string;
       protocol: string;
@@ -576,7 +564,7 @@ export class CommandHandler {
     const now = Date.now();
     const record = {
       id: generateId("llm"),
-      containerId,
+      containerId: DEFAULT_CONTAINER_ID,
       name,
       vendor,
       protocol: protocol as "anthropic" | "openai",

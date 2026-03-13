@@ -3,6 +3,7 @@
  */
 
 import type { Message } from "@agentxjs/core/agent";
+import { DEFAULT_CONTAINER_ID } from "@agentxjs/core/container";
 import type { RpcClient } from "@agentxjs/core/network";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type {
@@ -20,7 +21,6 @@ import type {
 export function createLocalImages(platform: AgentXPlatform): ImageNamespace {
   return {
     async create(params: {
-      containerId: string;
       name?: string;
       description?: string;
       systemPrompt?: string;
@@ -32,7 +32,7 @@ export function createLocalImages(platform: AgentXPlatform): ImageNamespace {
 
       const image = await createImage(
         {
-          containerId: params.containerId,
+          containerId: DEFAULT_CONTAINER_ID,
           name: params.name,
           description: params.description,
           systemPrompt: params.systemPrompt,
@@ -58,10 +58,8 @@ export function createLocalImages(platform: AgentXPlatform): ImageNamespace {
       };
     },
 
-    async list(containerId?: string): Promise<ImageListResponse> {
-      const records = containerId
-        ? await platform.imageRepository.findImagesByContainerId(containerId)
-        : await platform.imageRepository.findAllImages();
+    async list(): Promise<ImageListResponse> {
+      const records = await platform.imageRepository.findAllImages();
 
       return {
         records,
@@ -119,14 +117,16 @@ export function createRemoteImages(
 ): ImageNamespace {
   return {
     async create(params: {
-      containerId: string;
       name?: string;
       description?: string;
       systemPrompt?: string;
       mcpServers?: Record<string, unknown>;
       customData?: Record<string, unknown>;
     }): Promise<ImageCreateResponse> {
-      const result = await rpcClient.call<ImageCreateResponse>("image.create", params);
+      const result = await rpcClient.call<ImageCreateResponse>("image.create", {
+        ...params,
+        containerId: DEFAULT_CONTAINER_ID,
+      });
 
       // Auto subscribe to session events
       if (result.__subscriptions) {
@@ -151,8 +151,8 @@ export function createRemoteImages(
       return { ...result, requestId: "" };
     },
 
-    async list(containerId?: string): Promise<ImageListResponse> {
-      const result = await rpcClient.call<ImageListResponse>("image.list", { containerId });
+    async list(): Promise<ImageListResponse> {
+      const result = await rpcClient.call<ImageListResponse>("image.list", {});
 
       // Auto subscribe
       if (result.__subscriptions) {

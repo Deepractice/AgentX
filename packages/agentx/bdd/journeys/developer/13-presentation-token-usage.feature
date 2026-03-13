@@ -9,8 +9,7 @@ Feature: Presentation Token Usage
 
   Scenario: Presentation state includes token usage after agent response
     Given a local AgentX environment with provider "anthropic"
-    When I create a container "my-app"
-    And I create an image "TokenBot" in "my-app" with prompt "You are a helpful assistant. Reply briefly."
+    When I create an image "TokenBot" with prompt "You are a helpful assistant. Reply briefly."
     And I run the image as an agent
     When I create a presentation for the agent
 
@@ -24,8 +23,7 @@ Feature: Presentation Token Usage
 
   Scenario: Token usage accumulates across tool call steps
     Given a local AgentX environment with provider "anthropic"
-    When I create a container "my-app"
-    And I create an image "ToolTokenBot" in "my-app" with prompt "You are a helpful assistant with bash access. When asked to run commands, always use the bash tool."
+    When I create an image "ToolTokenBot" with prompt "You are a helpful assistant with bash access. When asked to run commands, always use the bash tool."
     And I run the image as an agent
     When I create a presentation for the agent
 

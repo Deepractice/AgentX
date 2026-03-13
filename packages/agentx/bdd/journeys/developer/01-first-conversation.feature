@@ -9,8 +9,7 @@ Feature: First Conversation
     Given a local AgentX environment with provider "anthropic"
 
     # Phase 2: Create agent
-    When I create a container "my-app"
-    And I create an image "Assistant" in "my-app" with prompt "You are a helpful assistant. Reply briefly in one sentence."
+    When I create an image "Assistant" with prompt "You are a helpful assistant. Reply briefly in one sentence."
     And I run the image as an agent
 
     # Phase 3: Chat

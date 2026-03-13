@@ -2,6 +2,7 @@
  * LLM Provider namespace factories
  */
 
+import { DEFAULT_CONTAINER_ID } from "@agentxjs/core/container";
 import type { RpcClient } from "@agentxjs/core/network";
 import type { LLMProviderRecord } from "@agentxjs/core/persistence";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
@@ -30,7 +31,7 @@ export function createLocalLLM(platform: AgentXPlatform): LLMNamespace {
       const now = Date.now();
       const record: LLMProviderRecord = {
         id: generateId("llm"),
-        containerId: params.containerId,
+        containerId: DEFAULT_CONTAINER_ID,
         name: params.name,
         vendor: params.vendor,
         protocol: params.protocol,
@@ -51,8 +52,8 @@ export function createLocalLLM(platform: AgentXPlatform): LLMNamespace {
       return { record, requestId: "" };
     },
 
-    async list(containerId: string): Promise<LLMProviderListResponse> {
-      const records = await repo.findLLMProvidersByContainerId(containerId);
+    async list(): Promise<LLMProviderListResponse> {
+      const records = await repo.findLLMProvidersByContainerId(DEFAULT_CONTAINER_ID);
       return { records, requestId: "" };
     },
 
@@ -85,8 +86,8 @@ export function createLocalLLM(platform: AgentXPlatform): LLMNamespace {
       return { requestId: "" };
     },
 
-    async getDefault(containerId: string): Promise<LLMProviderDefaultResponse> {
-      const record = await repo.findDefaultLLMProvider(containerId);
+    async getDefault(): Promise<LLMProviderDefaultResponse> {
+      const record = await repo.findDefaultLLMProvider(DEFAULT_CONTAINER_ID);
       return { record, requestId: "" };
     },
   };
@@ -98,7 +99,10 @@ export function createLocalLLM(platform: AgentXPlatform): LLMNamespace {
 export function createRemoteLLM(rpcClient: RpcClient): LLMNamespace {
   return {
     async create(params): Promise<LLMProviderCreateResponse> {
-      const result = await rpcClient.call<LLMProviderCreateResponse>("llm.create", params);
+      const result = await rpcClient.call<LLMProviderCreateResponse>("llm.create", {
+        ...params,
+        containerId: DEFAULT_CONTAINER_ID,
+      });
       return { ...result, requestId: "" };
     },
 
@@ -107,8 +111,10 @@ export function createRemoteLLM(rpcClient: RpcClient): LLMNamespace {
       return { ...result, requestId: "" };
     },
 
-    async list(containerId: string): Promise<LLMProviderListResponse> {
-      const result = await rpcClient.call<LLMProviderListResponse>("llm.list", { containerId });
+    async list(): Promise<LLMProviderListResponse> {
+      const result = await rpcClient.call<LLMProviderListResponse>("llm.list", {
+        containerId: DEFAULT_CONTAINER_ID,
+      });
       return { ...result, requestId: "" };
     },
 
@@ -130,9 +136,9 @@ export function createRemoteLLM(rpcClient: RpcClient): LLMNamespace {
       return { ...result, requestId: "" };
     },
 
-    async getDefault(containerId: string): Promise<LLMProviderDefaultResponse> {
+    async getDefault(): Promise<LLMProviderDefaultResponse> {
       const result = await rpcClient.call<LLMProviderDefaultResponse>("llm.default", {
-        containerId,
+        containerId: DEFAULT_CONTAINER_ID,
       });
       return { ...result, requestId: "" };
     },

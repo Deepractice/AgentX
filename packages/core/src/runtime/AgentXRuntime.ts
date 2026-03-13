@@ -98,13 +98,13 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     // Generate instance ID
     const instanceId = options.instanceId ?? this.generateInstanceId();
 
-    // Ensure container exists
-    const containerExists = await this.platform.containerRepository.containerExists(
-      imageRecord.containerId
-    );
-    if (!containerExists) {
-      throw new Error(`Container not found: ${imageRecord.containerId}`);
-    }
+    // Ensure container exists (auto-create if needed)
+    const { getOrCreateContainer } = await import("../container");
+    await getOrCreateContainer(imageRecord.containerId, {
+      containerRepository: this.platform.containerRepository,
+      imageRepository: this.platform.imageRepository,
+      sessionRepository: this.platform.sessionRepository,
+    });
 
     // Create Session for driver (MonoDriver needs this to read history)
     const session = createSession({

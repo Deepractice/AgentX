@@ -6,8 +6,7 @@ Feature: Multi-turn Chat
   Scenario: Agent remembers context from previous messages
     # Phase 1: Setup
     Given a local AgentX environment with provider "anthropic"
-    When I create a container "my-app"
-    And I create an image "Assistant" in "my-app" with prompt "You are a helpful assistant. Reply briefly in one sentence."
+    When I create an image "Assistant" with prompt "You are a helpful assistant. Reply briefly in one sentence."
     And I run the image as an agent
 
     # Phase 2: First turn — tell it something

@@ -7,8 +7,7 @@ Feature: Session Resume
   Scenario: Agent remembers conversation after restart
     # Phase 1: Setup
     Given a local AgentX environment with provider "anthropic"
-    When I create a container "my-app"
-    And I create an image "MemoryBot" in "my-app" with prompt "You are a helpful assistant. Always include the user's name in your reply if you know it."
+    When I create an image "MemoryBot" with prompt "You are a helpful assistant. Always include the user's name in your reply if you know it."
     And I run the image as an agent
 
     # Phase 2: First conversation

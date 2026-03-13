@@ -44,15 +44,6 @@ Given(
 );
 
 When(
-  "I ensure container {string} exists via remote client",
-  { timeout: 5000 },
-  async function (this: AgentXWorld, containerId: string) {
-    const state = getState(this);
-    await state.client!.runtime.container.create(containerId);
-  }
-);
-
-When(
   "I create a chat {string} via remote client",
   { timeout: 10000 },
   async function (this: AgentXWorld, name: string) {

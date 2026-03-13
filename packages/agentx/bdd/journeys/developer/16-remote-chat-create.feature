@@ -6,8 +6,7 @@ Feature: Remote Mode chat.create
 
   Scenario: chat.create and present succeed in remote mode
     Given a remote AgentX client connected to the test server
-    When I ensure container "default" exists via remote client
-    And I create a chat "RemoteTest" via remote client
+    When I create a chat "RemoteTest" via remote client
     Then the remote chat should have a valid instanceId
     And the remote chat instanceId should not equal the imageId
     When I create a presentation for the remote chat

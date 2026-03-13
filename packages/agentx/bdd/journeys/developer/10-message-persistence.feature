@@ -5,8 +5,7 @@ Feature: Message Persistence
 
   Scenario: Assistant reply is persisted to session
     Given a local AgentX environment with provider "anthropic"
-    When I create a container "my-app"
-    And I create an image "PersistBot" in "my-app" with prompt "You are a helpful assistant."
+    When I create an image "PersistBot" with prompt "You are a helpful assistant."
     And I run the image as an agent
 
     When I send message "Hello"

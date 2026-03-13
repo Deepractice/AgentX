@@ -19,7 +19,6 @@ import type { AgentXWorld } from "../support/world";
 // ============================================================================
 
 interface DeveloperState {
-  containerId?: string;
   imageId?: string;
   instanceId?: string;
   sessionId?: string;
@@ -78,16 +77,10 @@ Given(
 // Phase 2: Create agent
 // ============================================================================
 
-When("I create a container {string}", async function (this: AgentXWorld, containerId: string) {
-  const result = await this.localAgentX!.container.create(containerId);
-  getState(this).containerId = result.containerId;
-});
-
 When(
-  "I create an image {string} in {string} with prompt {string}",
-  async function (this: AgentXWorld, name: string, containerId: string, systemPrompt: string) {
+  "I create an image {string} with prompt {string}",
+  async function (this: AgentXWorld, name: string, systemPrompt: string) {
     const result = await this.localAgentX!.image.create({
-      containerId,
       name,
       systemPrompt,
     });
@@ -98,14 +91,8 @@ When(
 );
 
 When(
-  "I create an image {string} in {string} with prompt {string} and mcp servers:",
-  async function (
-    this: AgentXWorld,
-    name: string,
-    containerId: string,
-    systemPrompt: string,
-    table: DataTable
-  ) {
+  "I create an image {string} with prompt {string} and mcp servers:",
+  async function (this: AgentXWorld, name: string, systemPrompt: string, table: DataTable) {
     const mcpServers: Record<string, any> = {};
     for (const row of table.hashes()) {
       if (row.url) {
@@ -137,7 +124,6 @@ When(
     }
 
     const result = await this.localAgentX!.image.create({
-      containerId,
       name,
       systemPrompt,
       mcpServers,
@@ -442,22 +428,18 @@ Then("each tool block should have non-empty toolInput", function (this: AgentXWo
 // Phase: Image Custom Data
 // ============================================================================
 
-When(
-  "I create an image {string} in {string}",
-  async function (this: AgentXWorld, name: string, containerId: string) {
-    const result = await this.localAgentX!.image.create({
-      containerId,
-      name,
-    });
-    const state = getState(this);
-    state.imageId = result.record.imageId;
-    state.sessionId = result.record.sessionId;
-  }
-);
+When("I create an image {string}", async function (this: AgentXWorld, name: string) {
+  const result = await this.localAgentX!.image.create({
+    name,
+  });
+  const state = getState(this);
+  state.imageId = result.record.imageId;
+  state.sessionId = result.record.sessionId;
+});
 
 When(
-  "I create an image {string} in {string} with customData:",
-  async function (this: AgentXWorld, name: string, containerId: string, table: DataTable) {
+  "I create an image {string} with customData:",
+  async function (this: AgentXWorld, name: string, table: DataTable) {
     const customData: Record<string, unknown> = {};
     for (const row of table.hashes()) {
       // Parse "true"/"false" as booleans, numbers as numbers
@@ -469,7 +451,6 @@ When(
     }
 
     const result = await this.localAgentX!.image.create({
-      containerId,
       name,
       customData,
     });
@@ -502,9 +483,9 @@ When("I reload the image by id", async function (this: AgentXWorld) {
   assert.ok(result.record, "Image should exist after reload");
 });
 
-When("I list images in {string}", async function (this: AgentXWorld, containerId: string) {
+When("I list images", async function (this: AgentXWorld) {
   const state = getState(this);
-  const result = await this.localAgentX!.image.list(containerId);
+  const result = await this.localAgentX!.image.list();
   (state as any).imageList = result.records;
 });
 

@@ -75,13 +75,6 @@ export interface ImageRecord {
   updatedAt: number;
 }
 
-/**
- * Container info
- */
-export interface ContainerInfo {
-  containerId: string;
-}
-
 // ============================================================================
 // Request/Response Types
 // ============================================================================
@@ -148,28 +141,6 @@ export interface ImageListResponse extends BaseResponse {
  */
 export interface ImageUpdateResponse extends BaseResponse {
   record: ImageRecord;
-}
-
-/**
- * Container create response
- */
-export interface ContainerCreateResponse extends BaseResponse {
-  containerId: string;
-}
-
-/**
- * Container get response
- */
-export interface ContainerGetResponse extends BaseResponse {
-  containerId: string;
-  exists: boolean;
-}
-
-/**
- * Container list response
- */
-export interface ContainerListResponse extends BaseResponse {
-  containerIds: string[];
 }
 
 /**
@@ -251,26 +222,6 @@ export interface PrototypeUpdateResponse extends BaseResponse {
 // ============================================================================
 
 /**
- * Container operations namespace
- */
-export interface ContainerNamespace {
-  /**
-   * Create or get container
-   */
-  create(containerId: string): Promise<ContainerCreateResponse>;
-
-  /**
-   * Get container
-   */
-  get(containerId: string): Promise<ContainerGetResponse>;
-
-  /**
-   * List containers
-   */
-  list(): Promise<ContainerListResponse>;
-}
-
-/**
  * Image operations namespace
  */
 export interface ImageNamespace {
@@ -278,7 +229,6 @@ export interface ImageNamespace {
    * Create a new image from an Agent blueprint
    */
   create(params: {
-    containerId: string;
     name?: string;
     description?: string;
     contextId?: string;
@@ -294,7 +244,7 @@ export interface ImageNamespace {
   /**
    * List images
    */
-  list(containerId?: string): Promise<ImageListResponse>;
+  list(): Promise<ImageListResponse>;
 
   /**
    * Update image
@@ -337,7 +287,7 @@ export interface InstanceNamespace {
   /**
    * List agents
    */
-  list(containerId?: string): Promise<InstanceListResponse>;
+  list(): Promise<InstanceListResponse>;
 
   /**
    * Destroy an agent
@@ -373,7 +323,6 @@ export interface LLMNamespace {
    * Create a new LLM provider configuration
    */
   create(params: {
-    containerId: string;
     name: string;
     vendor: string;
     protocol: LLMProtocol;
@@ -388,9 +337,9 @@ export interface LLMNamespace {
   get(id: string): Promise<LLMProviderGetResponse>;
 
   /**
-   * List LLM providers for a container
+   * List LLM providers
    */
-  list(containerId: string): Promise<LLMProviderListResponse>;
+  list(): Promise<LLMProviderListResponse>;
 
   /**
    * Update LLM provider
@@ -413,14 +362,14 @@ export interface LLMNamespace {
   delete(id: string): Promise<BaseResponse>;
 
   /**
-   * Set default LLM provider for a container
+   * Set default LLM provider
    */
   setDefault(id: string): Promise<BaseResponse>;
 
   /**
-   * Get default LLM provider for a container
+   * Get default LLM provider
    */
-  getDefault(containerId: string): Promise<LLMProviderDefaultResponse>;
+  getDefault(): Promise<LLMProviderDefaultResponse>;
 }
 
 /**
@@ -431,7 +380,6 @@ export interface PrototypeNamespace {
    * Register a new prototype
    */
   create(params: {
-    containerId: string;
     name: string;
     description?: string;
     contextId?: string;
@@ -447,7 +395,7 @@ export interface PrototypeNamespace {
   /**
    * List prototypes
    */
-  list(containerId?: string): Promise<PrototypeListResponse>;
+  list(): Promise<PrototypeListResponse>;
 
   /**
    * Update prototype
@@ -498,11 +446,10 @@ export interface PresentationNamespace {
  * Instance — low-level access to internal subsystems.
  *
  * Most users should use the top-level Agent API (ax.create, ax.send, etc.).
- * Instance exposes the underlying image, agent, session, container, llm,
+ * Instance exposes the underlying image, agent, session, llm,
  * and presentation subsystems for advanced use cases.
  */
 export interface RuntimeNamespace {
-  readonly container: ContainerNamespace;
   readonly image: ImageNamespace;
   readonly instance: InstanceNamespace;
   readonly session: SessionNamespace;
@@ -651,7 +598,7 @@ export interface AgentX {
   // ==================== Instance (low-level) ====================
 
   /**
-   * Low-level access to internal subsystems (image, agent, session, container, llm).
+   * Low-level access to internal subsystems (image, agent, session, llm).
    */
   readonly runtime: RuntimeNamespace;
 

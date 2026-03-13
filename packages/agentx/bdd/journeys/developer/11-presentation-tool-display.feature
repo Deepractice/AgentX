@@ -10,8 +10,7 @@ Feature: Presentation Tool Call Display
   Scenario: Tool call block has populated toolInput and toolResult
     # Phase 1: Setup
     Given a local AgentX environment with provider "anthropic"
-    When I create a container "my-app"
-    And I create an image "ToolBot" in "my-app" with prompt "You are a helpful assistant with bash access. When asked to run commands, always use the bash tool."
+    When I create an image "ToolBot" with prompt "You are a helpful assistant with bash access. When asked to run commands, always use the bash tool."
     And I run the image as an agent
 
     # Phase 2: Create presentation to observe tool blocks
@@ -29,8 +28,7 @@ Feature: Presentation Tool Call Display
 
   Scenario: Multiple tool calls each have their own toolInput
     Given a local AgentX environment with provider "anthropic"
-    When I create a container "my-app"
-    And I create an image "MultiToolBot" in "my-app" with prompt "You are a helpful assistant with bash access. Always use bash tool when asked."
+    When I create an image "MultiToolBot" with prompt "You are a helpful assistant with bash access. Always use bash tool when asked."
     And I run the image as an agent
     When I create a presentation for the agent
 

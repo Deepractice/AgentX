@@ -15,7 +15,6 @@ import type { AgentXWorld } from "../support/world";
 // ============================================================================
 
 interface LLMProviderState {
-  containerId?: string;
   lastProviderId?: string;
   lastProviderName?: string;
   providerIds: Map<string, string>; // name → id
@@ -50,11 +49,6 @@ Given("a local AgentX environment", { timeout: 30000 }, async function (this: Ag
     platform,
     createDriver: createMockDriver(),
   });
-
-  // Create a default container for LLM provider tests
-  const state = getState(this);
-  const result = await this.localAgentX.container.create("test-container");
-  state.containerId = result.containerId;
 });
 
 // ============================================================================
@@ -70,7 +64,6 @@ When("I create an LLM provider:", async function (this: AgentXWorld, table: Data
   }
 
   const result = await this.localAgentX!.llm.create({
-    containerId: state.containerId!,
     name: params.name,
     vendor: params.vendor,
     protocol: params.protocol as "anthropic" | "openai",
@@ -88,7 +81,6 @@ Given("I have created LLM providers:", async function (this: AgentXWorld, table:
   const state = getState(this);
   for (const row of table.hashes()) {
     const result = await this.localAgentX!.llm.create({
-      containerId: state.containerId!,
       name: row.name,
       vendor: row.vendor,
       protocol: row.protocol as "anthropic" | "openai",
@@ -111,7 +103,7 @@ When("I get the LLM provider by its ID", async function (this: AgentXWorld) {
 
 When("I list LLM providers", async function (this: AgentXWorld) {
   const state = getState(this);
-  const result = await this.localAgentX!.llm.list(state.containerId!);
+  const result = await this.localAgentX!.llm.list();
   state.listResult = result.records as any;
 });
 
@@ -245,7 +237,7 @@ Then(
   "the default LLM provider should be {string}",
   async function (this: AgentXWorld, name: string) {
     const state = getState(this);
-    const result = await this.localAgentX!.llm.getDefault(state.containerId!);
+    const result = await this.localAgentX!.llm.getDefault();
     assert.ok(result.record, "Default LLM provider should exist");
     assert.equal(result.record!.name, name);
   }

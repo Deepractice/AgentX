@@ -12,11 +12,10 @@ Feature: Getting Started with AgentX SDK
     When I read the getting started guide
     Then I should understand these concepts:
       | concept   | what it is                              | analogy              |
-      | Container | Namespace grouping related agents       | A project folder     |
       | Image     | Persistent agent config (prompt, tools) | A Docker image       |
       | Session   | Message history for an image            | A conversation log   |
       | Agent     | Running instance of an image            | A Docker container   |
-    And the relationship is: Container > Image > Session + Agent
+    And the relationship is: Image > Session + Agent
 
   # ============================================================================
   # Local Mode — Zero Infrastructure
@@ -39,10 +38,7 @@ Feature: Getting Started with AgentX SDK
 
       const ax = createAgentX(nodePlatform({ createDriver }));
 
-      await ax.container.create("my-app");
-
       const { record: image } = await ax.image.create({
-        containerId: "my-app",
         name: "Assistant",
         systemPrompt: "You are a helpful assistant.",
       });
@@ -99,7 +95,6 @@ Feature: Getting Started with AgentX SDK
       const client = await ax.connect("ws://localhost:5200");
 
       // Same API as local mode
-      await client.container.create("my-app");
       await client.agent.create({ imageId: "..." });
       """
     Then the client can use the exact same namespace API as local mode
@@ -112,10 +107,6 @@ Feature: Getting Started with AgentX SDK
     Given I have an AgentX instance in any mode
     When I call rpc with a method and params:
       """
-      // These are equivalent:
-      await ax.container.create("my-app");
-      await ax.rpc("container.create", { containerId: "my-app" });
-
       // Useful for custom transport (e.g. Cloudflare Workers)
       const response = await ax.rpc(request.method, request.params);
       """
@@ -202,7 +193,6 @@ Feature: Getting Started with AgentX SDK
     When I create an image with MCP servers:
       """
       const { record: image } = await ax.image.create({
-        containerId: "my-app",
         name: "Agent with Tools",
         systemPrompt: "You can access the filesystem.",
         mcpServers: {

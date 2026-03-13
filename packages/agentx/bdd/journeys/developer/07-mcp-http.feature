@@ -7,10 +7,8 @@ Feature: MCP Server - HTTP
   Scenario: Agent uses a remote HTTP MCP server to query code context
     # Phase 1: Setup
     Given a local AgentX environment with provider "anthropic"
-    When I create a container "my-app"
-
     # Phase 2: Create agent with HTTP MCP server
-    And I create an image "CodeAgent" in "my-app" with prompt "You are a helpful assistant. Use the deepwiki tool to answer questions about GitHub repositories." and mcp servers:
+    When I create an image "CodeAgent" with prompt "You are a helpful assistant. Use the deepwiki tool to answer questions about GitHub repositories." and mcp servers:
       | name     | url                          |
       | deepwiki | https://mcp.deepwiki.com/mcp |
     And I run the image as an agent

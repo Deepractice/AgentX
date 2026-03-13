@@ -2,6 +2,7 @@
  * Prototype namespace factories
  */
 
+import { DEFAULT_CONTAINER_ID } from "@agentxjs/core/container";
 import type { RpcClient } from "@agentxjs/core/network";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type {
@@ -28,7 +29,7 @@ export function createLocalPrototypes(platform: AgentXPlatform): PrototypeNamesp
       const random = Math.random().toString(36).slice(2, 8);
       const record = {
         prototypeId: `proto_${now}_${random}`,
-        containerId: params.containerId,
+        containerId: DEFAULT_CONTAINER_ID,
         name: params.name,
         description: params.description,
         contextId: params.contextId,
@@ -52,15 +53,13 @@ export function createLocalPrototypes(platform: AgentXPlatform): PrototypeNamesp
       return { record, requestId: "" };
     },
 
-    async list(containerId?: string): Promise<PrototypeListResponse> {
+    async list(): Promise<PrototypeListResponse> {
       const repo = platform.prototypeRepository;
       if (!repo) {
         throw new Error("Prototype repository not available");
       }
 
-      const records = containerId
-        ? await repo.findPrototypesByContainerId(containerId)
-        : await repo.findAllPrototypes();
+      const records = await repo.findPrototypesByContainerId(DEFAULT_CONTAINER_ID);
 
       return { records, requestId: "" };
     },
@@ -106,7 +105,10 @@ export function createLocalPrototypes(platform: AgentXPlatform): PrototypeNamesp
 export function createRemotePrototypes(rpcClient: RpcClient): PrototypeNamespace {
   return {
     async create(params): Promise<PrototypeCreateResponse> {
-      const result = await rpcClient.call<PrototypeCreateResponse>("prototype.create", params);
+      const result = await rpcClient.call<PrototypeCreateResponse>("prototype.create", {
+        ...params,
+        containerId: DEFAULT_CONTAINER_ID,
+      });
       return { ...result, requestId: "" };
     },
 
@@ -115,8 +117,10 @@ export function createRemotePrototypes(rpcClient: RpcClient): PrototypeNamespace
       return { ...result, requestId: "" };
     },
 
-    async list(containerId?: string): Promise<PrototypeListResponse> {
-      const result = await rpcClient.call<PrototypeListResponse>("prototype.list", { containerId });
+    async list(): Promise<PrototypeListResponse> {
+      const result = await rpcClient.call<PrototypeListResponse>("prototype.list", {
+        containerId: DEFAULT_CONTAINER_ID,
+      });
       return { ...result, requestId: "" };
     },
 

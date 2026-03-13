@@ -7,10 +7,8 @@ Feature: MCP Server - Stdio
   Scenario: Agent uses filesystem MCP server to read and write files
     # Phase 1: Setup
     Given a local AgentX environment with provider "anthropic"
-    When I create a container "my-app"
-
     # Phase 2: Create agent with filesystem MCP server
-    And I create an image "FileAgent" in "my-app" with prompt "You are a helpful assistant. Use the filesystem tools to read and write files." and mcp servers:
+    When I create an image "FileAgent" with prompt "You are a helpful assistant. Use the filesystem tools to read and write files." and mcp servers:
       | name       | command | args                                                    |
       | filesystem | npx     | -y @modelcontextprotocol/server-filesystem /tmp/agentx  |
     And I run the image as an agent

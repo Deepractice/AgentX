@@ -113,7 +113,6 @@ export class AgentXWorld extends World {
   remoteEvents?: BusEvent[];
 
   // Document test support - Shared state
-  lastContainerId?: string;
   lastImageId?: string;
   lastSessionId?: string;
   lastInstanceId?: string;
@@ -218,7 +217,6 @@ export class AgentXWorld extends World {
     this.docPlatform = undefined;
     this.localEvents = undefined;
     this.remoteEvents = undefined;
-    this.lastContainerId = undefined;
     this.lastImageId = undefined;
     this.lastSessionId = undefined;
     this.lastInstanceId = undefined;

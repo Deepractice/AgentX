@@ -32,6 +32,11 @@
  * ```
  */
 
+/**
+ * Default container ID used internally when container is auto-managed.
+ */
+export const DEFAULT_CONTAINER_ID = "default";
+
 export { ContainerImpl, createContainer, getOrCreateContainer, loadContainer } from "./Container";
 export type {
   Container,

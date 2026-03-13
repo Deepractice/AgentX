@@ -11,8 +11,7 @@ Feature: Presentation History Restoration
   Scenario: Presentation loads user message history for existing conversation
     # Phase 1: Setup and first conversation
     Given a local AgentX environment with provider "anthropic"
-    When I create a container "my-app"
-    And I create an image "HistoryBot" in "my-app" with prompt "You are a helpful assistant."
+    When I create an image "HistoryBot" with prompt "You are a helpful assistant."
     And I run the image as an agent
 
     # Phase 2: Send a message (persists user message to session)
@@ -30,8 +29,7 @@ Feature: Presentation History Restoration
 
   Scenario: Presentation starts empty for new conversation
     Given a local AgentX environment with provider "anthropic"
-    When I create a container "my-app"
-    And I create an image "FreshBot" in "my-app" with prompt "You are a helpful assistant."
+    When I create an image "FreshBot" with prompt "You are a helpful assistant."
     And I run the image as an agent
 
     When I create a presentation for the agent

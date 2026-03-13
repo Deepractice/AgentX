@@ -7,8 +7,7 @@ Feature: Tool Use - Bash
   Scenario: Agent executes commands and works with files
     # Phase 1: Setup
     Given a local AgentX environment with provider "anthropic"
-    When I create a container "my-app"
-    And I create an image "ShellAgent" in "my-app" with prompt "You are a helpful assistant with bash access. When asked to run commands, use the bash tool. Be concise."
+    When I create an image "ShellAgent" with prompt "You are a helpful assistant with bash access. When asked to run commands, use the bash tool. Be concise."
     And I run the image as an agent
 
     # Phase 2: Simple command

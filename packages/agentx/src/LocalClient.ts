@@ -13,7 +13,6 @@ import { createLogger } from "commonxjs/logger";
 import { AgentHandleImpl } from "./AgentHandle";
 import { CommandHandler } from "./CommandHandler";
 import { createLocalInstances } from "./namespaces/agents";
-import { createLocalContainers } from "./namespaces/containers";
 import { createLocalImages } from "./namespaces/images";
 import { createLocalLLM } from "./namespaces/llm";
 import { createPresentations } from "./namespaces/presentations";
@@ -46,7 +45,6 @@ export class LocalClient implements AgentX {
     this._runtime = agentxRuntime;
     const platform = agentxRuntime.platform;
 
-    const container = createLocalContainers(platform);
     const image = createLocalImages(platform);
     const instance = createLocalInstances(agentxRuntime);
     const session = createLocalSessions(agentxRuntime);
@@ -54,7 +52,7 @@ export class LocalClient implements AgentX {
     const prototype = createLocalPrototypes(platform);
     const present = createPresentations(this, session);
 
-    this.runtime = { container, image, instance, session, present, llm, prototype };
+    this.runtime = { image, instance, session, present, llm, prototype };
     this.provider = llm;
     this.prototype = prototype;
     this.chat = this.createChatNamespace();
@@ -113,7 +111,6 @@ export class LocalClient implements AgentX {
     const rt = this.runtime;
     return {
       async create(params) {
-        const containerId = "default";
         // If prototypeId is provided, merge prototype config into params
         let mergedParams = { ...params };
         if (params.prototypeId) {
@@ -131,7 +128,7 @@ export class LocalClient implements AgentX {
           }
         }
         const { prototypeId: _pid, ...imageParams } = mergedParams;
-        const imgRes = await rt.image.create({ containerId, ...imageParams });
+        const imgRes = await rt.image.create(imageParams);
         const instRes = await rt.instance.create({ imageId: imgRes.record.imageId });
         return new AgentHandleImpl(
           {

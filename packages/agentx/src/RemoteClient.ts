@@ -12,7 +12,6 @@ import { RpcClient, type RpcMethod } from "@agentxjs/core/network";
 import { createLogger } from "commonxjs/logger";
 import { AgentHandleImpl } from "./AgentHandle";
 import { createRemoteInstances } from "./namespaces/agents";
-import { createRemoteContainers } from "./namespaces/containers";
 import { createRemoteImages } from "./namespaces/images";
 import { createRemoteLLM } from "./namespaces/llm";
 import { createPresentations } from "./namespaces/presentations";
@@ -63,7 +62,6 @@ export class RemoteClient implements AgentX {
     });
 
     // Assemble namespaces
-    const container = createRemoteContainers(this.rpcClient);
     const image = createRemoteImages(this.rpcClient, (sessionId) => this.subscribe(sessionId));
     const instance = createRemoteInstances(this.rpcClient);
     const session = createRemoteSessions(this.rpcClient);
@@ -71,7 +69,7 @@ export class RemoteClient implements AgentX {
     const prototype = createRemotePrototypes(this.rpcClient);
     const present = createPresentations(this, session);
 
-    this.runtime = { container, image, instance, session, present, llm, prototype };
+    this.runtime = { image, instance, session, present, llm, prototype };
     this.provider = llm;
     this.prototype = prototype;
     this.chat = this.createChatNamespace();
@@ -140,7 +138,6 @@ export class RemoteClient implements AgentX {
     const rt = this.runtime;
     return {
       async create(params) {
-        const containerId = "default";
         // If prototypeId is provided, merge prototype config into params
         let mergedParams = { ...params };
         if (params.prototypeId) {
@@ -158,7 +155,7 @@ export class RemoteClient implements AgentX {
           }
         }
         const { prototypeId: _pid, ...imageParams } = mergedParams;
-        const imgRes = await rt.image.create({ containerId, ...imageParams });
+        const imgRes = await rt.image.create(imageParams);
         const instRes = await rt.instance.create({ imageId: imgRes.record.imageId });
         return new AgentHandleImpl(
           {

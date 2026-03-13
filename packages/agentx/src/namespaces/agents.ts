@@ -67,8 +67,8 @@ export function createLocalInstances(runtime: AgentXRuntime): InstanceNamespace 
       };
     },
 
-    async list(containerId?: string): Promise<InstanceListResponse> {
-      const agents = containerId ? runtime.getAgentsByContainer(containerId) : runtime.getAgents();
+    async list(): Promise<InstanceListResponse> {
+      const agents = runtime.getAgents();
 
       return {
         agents: agents.map((a) => ({
@@ -114,8 +114,8 @@ export function createRemoteInstances(rpcClient: RpcClient): InstanceNamespace {
       return { ...result, requestId: "" };
     },
 
-    async list(containerId?: string): Promise<InstanceListResponse> {
-      const result = await rpcClient.call<InstanceListResponse>("instance.list", { containerId });
+    async list(): Promise<InstanceListResponse> {
+      const result = await rpcClient.call<InstanceListResponse>("instance.list", {});
       return { ...result, requestId: "" };
     },
 

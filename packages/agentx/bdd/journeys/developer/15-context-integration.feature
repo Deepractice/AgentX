@@ -14,16 +14,14 @@ Feature: Context Integration
   # ================================================================
 
   Scenario: Agent with contextId gets RoleX tools and context
-    When I create a container "cognitive-app"
-    And I create an image "Nuwa" in "cognitive-app" with prompt "You are Nuwa." and contextId "nuwa"
+    When I create an image "Nuwa" with prompt "You are Nuwa." and contextId "nuwa"
     And I run the image as an agent
     Then the agent should have RoleX tools available
     And the system prompt should contain "<instructions>" block
     And the system prompt should contain "<context>" block
 
   Scenario: Agent without contextId works normally
-    When I create a container "simple-app"
-    And I create an image "Bot" in "simple-app" with prompt "You are a bot."
+    When I create an image "Bot" with prompt "You are a bot."
     And I run the image as an agent
     Then the agent should NOT have RoleX tools
     And the system prompt should only contain "<system>" block
@@ -33,8 +31,7 @@ Feature: Context Integration
   # ================================================================
 
   Scenario: System prompt is structured in XML layers
-    When I create a container "layered-app"
-    And I create an image "Agent" in "layered-app" with prompt "Be helpful." and contextId "nuwa"
+    When I create an image "Agent" with prompt "Be helpful." and contextId "nuwa"
     And I run the image as an agent
     Then the system prompt Layer 1 should be wrapped in "<system>"
     And the system prompt Layer 2 instructions should be wrapped in "<instructions>"
@@ -45,8 +42,7 @@ Feature: Context Integration
   # ================================================================
 
   Scenario: Context projection refreshes on every receive
-    Given I create a container "refresh-app"
-    And I create an image "Learner" in "refresh-app" with prompt "You learn." and contextId "sean"
+    Given I create an image "Learner" with prompt "You learn." and contextId "sean"
     And I run the image as an agent
     When I send message "I want to ship v1"
     Then the RoleX role should have processed the message
