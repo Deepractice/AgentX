@@ -1,5 +1,28 @@
 # @agentxjs/devtools
 
+## 2.2.0
+
+### Minor Changes
+
+- f3f9686: BREAKING: rename `agentId` to `instanceId` across all public APIs
+
+  - `RuntimeAgent.agentId` → `RuntimeAgent.instanceId`
+  - `CreateAgentOptions.agentId` → `CreateAgentOptions.instanceId`
+  - `DriverConfigBase.agentId` → `DriverConfigBase.instanceId`
+  - `AgentXErrorContext.agentId` → `AgentXErrorContext.instanceId`
+  - `EventContext.agentId` → `EventContext.instanceId`
+  - All command/container/session event data: `agentId` → `instanceId`
+  - RPC methods: `agent.*` → `instance.*`
+  - SDK types: `AgentNamespace` → `InstanceNamespace`, `AgentCreateResponse` → `InstanceCreateResponse`, etc.
+  - `RuntimeNamespace.agent` → `RuntimeNamespace.instance`
+  - ID prefix: `agent_` → `inst_`
+  - `AgentHandle.agentId` → `AgentHandle.instanceId`
+
+### Patch Changes
+
+- Updated dependencies [f3f9686]
+  - @agentxjs/core@2.7.0
+
 ## 2.1.5
 
 ### Patch Changes
