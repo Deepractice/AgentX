@@ -80,6 +80,9 @@ interface AgentX {
   // Conversation management
   readonly chat: ChatNamespace;
 
+  // Prototype registry — reusable agent templates
+  readonly prototype: PrototypeNamespace;
+
   // Low-level subsystems
   readonly runtime: RuntimeNamespace;
 
@@ -114,11 +117,13 @@ Conversation management — create, list, and open conversations:
 
 ```typescript
 interface ChatNamespace {
-  create(params: { name?, description?, contextId?, embody?, customData? }): Promise<AgentHandle>;
+  create(params: { prototypeId?, name?, description?, contextId?, embody?, customData? }): Promise<AgentHandle>;
   list(): Promise<ImageListResponse>;
   get(id: string): Promise<AgentHandle | null>;
 }
 ```
+
+When `prototypeId` is provided, the conversation inherits the prototype's configuration. Inline params override prototype values.
 
 ### AgentHandle
 
@@ -138,6 +143,32 @@ interface AgentHandle {
   update(updates: { name?, description?, embody?, customData? }): Promise<void>;
   delete(): Promise<void>;
 }
+```
+
+### PrototypeNamespace
+
+Manage reusable agent templates — register once, create many conversations:
+
+```typescript
+interface PrototypeNamespace {
+  create(params: { containerId, name, description?, contextId?, embody?, customData? }): Promise<PrototypeCreateResponse>;
+  get(prototypeId: string): Promise<PrototypeGetResponse>;
+  list(containerId?: string): Promise<PrototypeListResponse>;
+  update(prototypeId: string, updates: { name?, description?, contextId?, embody?, customData? }): Promise<PrototypeUpdateResponse>;
+  delete(prototypeId: string): Promise<BaseResponse>;
+}
+```
+
+```typescript
+// Register a prototype
+const res = await ax.prototype.create({
+  containerId: "default",
+  name: "Code Reviewer",
+  embody: { model: "claude-sonnet-4-6", systemPrompt: "You review code." },
+});
+
+// Create conversation from prototype
+const agent = await ax.chat.create({ prototypeId: res.record.prototypeId });
 ```
 
 ### Runtime Namespace (low-level)
@@ -186,6 +217,14 @@ For advanced use cases, access `ax.runtime.*` for direct subsystem operations:
 - `setDefault(id: string): Promise<BaseResponse>`
 - `getDefault(containerId: string): Promise<LLMProviderDefaultResponse>`
 
+**prototype**:
+
+- `create(params: { containerId, name, description?, contextId?, embody?, customData? }): Promise<PrototypeCreateResponse>`
+- `get(prototypeId: string): Promise<PrototypeGetResponse>`
+- `list(containerId?: string): Promise<PrototypeListResponse>`
+- `update(prototypeId: string, updates: { name?, description?, contextId?, embody?, customData? }): Promise<PrototypeUpdateResponse>`
+- `delete(prototypeId: string): Promise<BaseResponse>`
+
 Each LLM provider has a **vendor** (who provides the service — `anthropic`, `openai`, `deepseek`, `ollama`) and a **protocol** (API format — `anthropic` or `openai`). These are separate dimensions: e.g., Deepseek uses vendor `"deepseek"` with protocol `"openai"`.
 
 ### Embodiment
@@ -212,6 +251,10 @@ await ax.rpc("container.create", { containerId: "default" });
 
 // Equivalent to ax.runtime.image.list()
 const { records } = await ax.rpc<{ records: ImageRecord[] }>("image.list");
+
+// Prototype operations via RPC
+await ax.rpc("prototype.create", { containerId: "default", name: "My Agent" });
+const { records } = await ax.rpc<{ records: PrototypeRecord[] }>("prototype.list", {});
 
 // Useful for custom transport (e.g. Cloudflare Workers/DO)
 const response = await ax.rpc(request.method, request.params);

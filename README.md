@@ -111,9 +111,29 @@ Prototype (template)  →  Image (persistent)  →  Agent (runtime)
 
 ```typescript
 ax.chat.*           // Conversation management (create, list, get → AgentHandle)
-ax.prototype.*      // Prototype registry (register, list, get — coming soon)
+ax.prototype.*      // Prototype registry (create, list, get, update, delete)
 ax.provider.*       // LLM provider configuration
-ax.runtime.*        // Low-level subsystems (image, agent, session, container)
+ax.runtime.*        // Low-level subsystems (image, agent, session, container, prototype)
+```
+
+### Prototype — Reusable Agent Templates
+
+Register a prototype once, create many conversations from it:
+
+```typescript
+// Register a prototype
+const proto = await ax.prototype.create({
+  containerId: "default",
+  name: "Code Reviewer",
+  embody: {
+    model: "claude-sonnet-4-6",
+    systemPrompt: "You are a code review assistant.",
+  },
+});
+
+// Create conversations from the prototype
+const agent = await ax.chat.create({ prototypeId: proto.record.prototypeId });
+await agent.send("Review this pull request...");
 ```
 
 ---

@@ -9,11 +9,13 @@ Foundation library for the AgentX framework — a TypeScript toolkit for buildin
 AgentX is built around five concepts that work together:
 
 ```
-Container  ──contains──►  Image  ──has──►  Session
-                            │
-                     created as──►  Agent  ──uses──►  Driver
-                                     │
-                              runs on──►  Platform
+Prototype  ──creates──►  Image  ──has──►  Session
+  (template)               │
+                    created as──►  Agent  ──uses──►  Driver
+                                    │
+                             runs on──►  Platform
+
+Container  ──scopes──►  Prototypes, Images, Sessions
 ```
 
 ### Container
@@ -27,7 +29,7 @@ const container = await runtime.getOrCreateContainer("my-app");
 
 ### Image
 
-An **Image** is a persistent agent record created from an Agent blueprint. It stores the agent's configuration (via **Embodiment**), session, and message history. One Image can spawn many runtime instances over time.
+An **Image** is a persistent agent record created from a Prototype or an Agent blueprint. When created from a Prototype, the Image's `prototypeId` field tracks its origin. It stores the agent's configuration (via **Embodiment**), session, and message history. One Image can spawn many runtime instances over time.
 
 ```typescript
 // Create an image from a blueprint
@@ -43,6 +45,24 @@ const image = await createImage(
   },
   ctx
 );
+```
+
+### Prototype
+
+A **Prototype** is a reusable, registered agent definition — a template that creates many Images. Like a Dockerfile that builds many Docker images. Prototypes are scoped to a Container and stored via `PrototypeRepository`.
+
+```typescript
+interface PrototypeRecord {
+  prototypeId: string;    // Unique ID (pattern: proto_${timestamp}_${random})
+  containerId: string;    // Scope boundary
+  name: string;           // Display name
+  description?: string;
+  contextId?: string;     // Cognitive context (soul)
+  embody?: Embodiment;    // Runtime config (body)
+  customData?: Record<string, unknown>;
+  createdAt: number;
+  updatedAt: number;
+}
 ```
 
 ### Embodiment
@@ -107,6 +127,7 @@ interface AgentXPlatform {
   sessionRepository: SessionRepository; // CRUD for sessions + messages
   eventBus: EventBus; // pub/sub for stream events
   llmProviderRepository?: LLMProviderRepository; // optional LLM provider management
+  prototypeRepository?: PrototypeRepository; // optional prototype registry
   bashProvider?: BashProvider; // optional shell execution
 }
 ```
@@ -338,7 +359,16 @@ interface ContainerRepository {
   delete(containerId: string): Promise<void>;
 }
 
-// ImageRepository and SessionRepository follow the same CRUD pattern
+// ImageRepository, SessionRepository, PrototypeRepository follow the same CRUD pattern
+
+interface PrototypeRepository {
+  savePrototype(record: PrototypeRecord): Promise<void>;
+  findPrototypeById(prototypeId: string): Promise<PrototypeRecord | null>;
+  findAllPrototypes(): Promise<PrototypeRecord[]>;
+  findPrototypesByContainerId(containerId: string): Promise<PrototypeRecord[]>;
+  deletePrototype(prototypeId: string): Promise<void>;
+  prototypeExists(prototypeId: string): Promise<boolean>;
+}
 ```
 
 ### Bash (`@agentxjs/core/bash`)

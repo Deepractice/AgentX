@@ -111,9 +111,29 @@ Prototype（原型）  →  Image（持久化）  →  Agent（运行时）
 
 ```typescript
 ax.chat.*           // 对话管理（create, list, get → AgentHandle）
-ax.prototype.*      // 原型注册中心（register, list, get — 即将推出）
+ax.prototype.*      // 原型注册中心（create, list, get, update, delete）
 ax.provider.*       // LLM Provider 配置
-ax.runtime.*        // 底层子系统（image, agent, session, container）
+ax.runtime.*        // 底层子系统（image, agent, session, container, prototype）
+```
+
+### Prototype — 可复用的 Agent 模板
+
+注册一次原型，创建多个对话：
+
+```typescript
+// 注册原型
+const proto = await ax.prototype.create({
+  containerId: "default",
+  name: "代码审查助手",
+  embody: {
+    model: "claude-sonnet-4-6",
+    systemPrompt: "你是一个代码审查助手。",
+  },
+});
+
+// 从原型创建对话
+const agent = await ax.chat.create({ prototypeId: proto.record.prototypeId });
+await agent.send("请审查这个 PR...");
 ```
 
 ---
