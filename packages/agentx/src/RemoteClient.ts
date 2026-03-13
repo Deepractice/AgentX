@@ -18,13 +18,11 @@ import { createRemoteLLM } from "./namespaces/llm";
 import { createPresentations } from "./namespaces/presentations";
 import { createRemoteSessions } from "./namespaces/sessions";
 import type {
-  AgentHandle,
   AgentX,
-  Embodiment,
-  ImageListResponse,
-  InstanceNamespace,
+  ChatNamespace,
   LLMNamespace,
   RemoteClientConfig,
+  RuntimeNamespace,
 } from "./types";
 
 const logger = createLogger("agentx/RemoteClient");
@@ -37,7 +35,8 @@ export class RemoteClient implements AgentX {
   private readonly eventBus: EventBus;
   private readonly rpcClient: RpcClient;
 
-  readonly instance: InstanceNamespace;
+  readonly chat: ChatNamespace;
+  readonly runtime: RuntimeNamespace;
   readonly provider: LLMNamespace;
 
   constructor(config: RemoteClientConfig) {
@@ -68,8 +67,9 @@ export class RemoteClient implements AgentX {
     const llm = createRemoteLLM(this.rpcClient);
     const present = createPresentations(this, image);
 
-    this.instance = { container, image, agent, session, present, llm };
+    this.runtime = { container, image, agent, session, present, llm };
     this.provider = llm;
+    this.chat = this.createChatNamespace();
   }
 
   // ==================== Properties ====================
@@ -80,48 +80,6 @@ export class RemoteClient implements AgentX {
 
   get events(): EventBus {
     return this.eventBus;
-  }
-
-  // ==================== Top-level Agent API ====================
-
-  async create(params: {
-    name?: string;
-    description?: string;
-    contextId?: string;
-    embody?: Embodiment;
-    customData?: Record<string, unknown>;
-  }): Promise<AgentHandle> {
-    const containerId = "default";
-    const imgRes = await this.instance.image.create({ containerId, ...params });
-    const agentRes = await this.instance.agent.create({ imageId: imgRes.record.imageId });
-    return new AgentHandleImpl(
-      {
-        agentId: agentRes.agentId,
-        imageId: agentRes.imageId,
-        containerId: agentRes.containerId,
-        sessionId: agentRes.sessionId,
-      },
-      this.instance
-    );
-  }
-
-  async list(): Promise<ImageListResponse> {
-    return this.instance.image.list();
-  }
-
-  async get(agentId: string): Promise<AgentHandle | null> {
-    const res = await this.instance.image.get(agentId);
-    if (!res.record) return null;
-    const r = res.record;
-    return new AgentHandleImpl(
-      {
-        agentId: r.imageId,
-        imageId: r.imageId,
-        containerId: r.containerId,
-        sessionId: r.sessionId,
-      },
-      this.instance
-    );
   }
 
   // ==================== Connection ====================
@@ -169,5 +127,44 @@ export class RemoteClient implements AgentX {
 
   async rpc<T = unknown>(method: string, params?: unknown): Promise<T> {
     return this.rpcClient.call<T>(method as RpcMethod, params);
+  }
+
+  // ==================== Private ====================
+
+  private createChatNamespace(): ChatNamespace {
+    const instance = this.runtime;
+    return {
+      async create(params) {
+        const containerId = "default";
+        const imgRes = await instance.image.create({ containerId, ...params });
+        const agentRes = await instance.agent.create({ imageId: imgRes.record.imageId });
+        return new AgentHandleImpl(
+          {
+            agentId: agentRes.agentId,
+            imageId: agentRes.imageId,
+            containerId: agentRes.containerId,
+            sessionId: agentRes.sessionId,
+          },
+          instance
+        );
+      },
+      async list() {
+        return instance.image.list();
+      },
+      async get(id) {
+        const res = await instance.image.get(id);
+        if (!res.record) return null;
+        const r = res.record;
+        return new AgentHandleImpl(
+          {
+            agentId: r.imageId,
+            imageId: r.imageId,
+            containerId: r.containerId,
+            sessionId: r.sessionId,
+          },
+          instance
+        );
+      },
+    };
   }
 }

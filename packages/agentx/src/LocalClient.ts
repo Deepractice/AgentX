@@ -18,14 +18,7 @@ import { createLocalImages } from "./namespaces/images";
 import { createLocalLLM } from "./namespaces/llm";
 import { createPresentations } from "./namespaces/presentations";
 import { createLocalSessions } from "./namespaces/sessions";
-import type {
-  AgentHandle,
-  AgentX,
-  Embodiment,
-  ImageListResponse,
-  InstanceNamespace,
-  LLMNamespace,
-} from "./types";
+import type { AgentX, ChatNamespace, LLMNamespace, RuntimeNamespace } from "./types";
 
 const logger = createLogger("agentx/LocalClient");
 
@@ -33,26 +26,28 @@ const logger = createLogger("agentx/LocalClient");
  * LocalClient - Embedded runtime implementation
  */
 export class LocalClient implements AgentX {
-  private readonly runtime: AgentXRuntime;
+  private readonly _runtime: AgentXRuntime;
   private commandHandler: CommandHandler | null = null;
   private isDisposed = false;
 
-  readonly instance: InstanceNamespace;
+  readonly chat: ChatNamespace;
+  readonly runtime: RuntimeNamespace;
   readonly provider: LLMNamespace;
 
-  constructor(runtime: AgentXRuntime) {
-    this.runtime = runtime;
-    const platform = runtime.platform;
+  constructor(agentxRuntime: AgentXRuntime) {
+    this._runtime = agentxRuntime;
+    const platform = agentxRuntime.platform;
 
     const container = createLocalContainers(platform);
     const image = createLocalImages(platform);
-    const agent = createLocalAgents(runtime);
-    const session = createLocalSessions(runtime);
+    const agent = createLocalAgents(agentxRuntime);
+    const session = createLocalSessions(agentxRuntime);
     const llm = createLocalLLM(platform);
     const present = createPresentations(this, image);
 
-    this.instance = { container, image, agent, session, present, llm };
+    this.runtime = { container, image, agent, session, present, llm };
     this.provider = llm;
+    this.chat = this.createChatNamespace();
 
     logger.info("LocalClient initialized");
   }
@@ -64,59 +59,17 @@ export class LocalClient implements AgentX {
   }
 
   get events(): EventBus {
-    return this.runtime.platform.eventBus;
-  }
-
-  // ==================== Top-level Agent API ====================
-
-  async create(params: {
-    name?: string;
-    description?: string;
-    contextId?: string;
-    embody?: Embodiment;
-    customData?: Record<string, unknown>;
-  }): Promise<AgentHandle> {
-    const containerId = "default";
-    const imgRes = await this.instance.image.create({ containerId, ...params });
-    const agentRes = await this.instance.agent.create({ imageId: imgRes.record.imageId });
-    return new AgentHandleImpl(
-      {
-        agentId: agentRes.agentId,
-        imageId: agentRes.imageId,
-        containerId: agentRes.containerId,
-        sessionId: agentRes.sessionId,
-      },
-      this.instance
-    );
-  }
-
-  async list(): Promise<ImageListResponse> {
-    return this.instance.image.list();
-  }
-
-  async get(agentId: string): Promise<AgentHandle | null> {
-    const res = await this.instance.image.get(agentId);
-    if (!res.record) return null;
-    const r = res.record;
-    return new AgentHandleImpl(
-      {
-        agentId: r.imageId,
-        imageId: r.imageId,
-        containerId: r.containerId,
-        sessionId: r.sessionId,
-      },
-      this.instance
-    );
+    return this._runtime.platform.eventBus;
   }
 
   // ==================== Event Subscription ====================
 
   on<T extends string>(type: T, handler: BusEventHandler<BusEvent & { type: T }>): Unsubscribe {
-    return this.runtime.platform.eventBus.on(type, handler);
+    return this._runtime.platform.eventBus.on(type, handler);
   }
 
   onAny(handler: BusEventHandler): Unsubscribe {
-    return this.runtime.platform.eventBus.onAny(handler);
+    return this._runtime.platform.eventBus.onAny(handler);
   }
 
   subscribe(_sessionId: string): void {
@@ -126,7 +79,7 @@ export class LocalClient implements AgentX {
   // ==================== Error Handling ====================
 
   onError(handler: (error: AgentXError) => void): Unsubscribe {
-    return this.runtime.platform.eventBus.on("agentx_error", (event) => {
+    return this._runtime.platform.eventBus.on("agentx_error", (event) => {
       handler(event.data as AgentXError);
     });
   }
@@ -135,13 +88,52 @@ export class LocalClient implements AgentX {
 
   async rpc<T = unknown>(method: string, params?: unknown): Promise<T> {
     if (!this.commandHandler) {
-      this.commandHandler = new CommandHandler(this.runtime);
+      this.commandHandler = new CommandHandler(this._runtime);
     }
     const result = await this.commandHandler.handle(method as RpcMethod, params);
     if (result.success) {
       return result.data as T;
     }
     throw new Error(result.message);
+  }
+
+  // ==================== Private ====================
+
+  private createChatNamespace(): ChatNamespace {
+    const instance = this.runtime;
+    return {
+      async create(params) {
+        const containerId = "default";
+        const imgRes = await instance.image.create({ containerId, ...params });
+        const agentRes = await instance.agent.create({ imageId: imgRes.record.imageId });
+        return new AgentHandleImpl(
+          {
+            agentId: agentRes.agentId,
+            imageId: agentRes.imageId,
+            containerId: agentRes.containerId,
+            sessionId: agentRes.sessionId,
+          },
+          instance
+        );
+      },
+      async list() {
+        return instance.image.list();
+      },
+      async get(id) {
+        const res = await instance.image.get(id);
+        if (!res.record) return null;
+        const r = res.record;
+        return new AgentHandleImpl(
+          {
+            agentId: r.imageId,
+            imageId: r.imageId,
+            containerId: r.containerId,
+            sessionId: r.sessionId,
+          },
+          instance
+        );
+      },
+    };
   }
 
   // ==================== Lifecycle ====================
@@ -152,7 +144,7 @@ export class LocalClient implements AgentX {
 
   async dispose(): Promise<void> {
     if (this.isDisposed) return;
-    await this.runtime.shutdown();
+    await this._runtime.shutdown();
     this.isDisposed = true;
     logger.info("LocalClient disposed");
   }

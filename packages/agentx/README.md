@@ -21,7 +21,7 @@ const createDriver = (config) => createMonoDriver({
 
 const ax = createAgentX(nodePlatform({ createDriver }));
 
-const agent = await ax.create({
+const agent = await ax.chat.create({
   name: "My Assistant",
   embody: { systemPrompt: "You are a helpful assistant." },
 });
@@ -40,7 +40,7 @@ import { createAgentX } from "agentxjs";
 const ax = createAgentX();
 const client = await ax.connect("ws://localhost:5200");
 
-const agent = await client.create({
+const agent = await client.chat.create({
   name: "My Assistant",
   embody: { systemPrompt: "You are a helpful assistant." },
 });
@@ -77,13 +77,11 @@ interface AgentX {
   readonly connected: boolean;
   readonly events: EventBus;
 
-  // Top-level Agent API
-  create(params: { name?, description?, contextId?, embody?, customData? }): Promise<AgentHandle>;
-  list(): Promise<ImageListResponse>;
-  get(agentId: string): Promise<AgentHandle | null>;
+  // Conversation management
+  readonly chat: ChatNamespace;
 
   // Low-level subsystems
-  readonly instance: InstanceNamespace;
+  readonly runtime: RuntimeNamespace;
 
   // LLM provider management (system-level)
   readonly provider: LLMNamespace;
@@ -110,9 +108,21 @@ interface AgentXBuilder extends AgentX {
 }
 ```
 
+### ChatNamespace
+
+Conversation management — create, list, and open conversations:
+
+```typescript
+interface ChatNamespace {
+  create(params: { name?, description?, contextId?, embody?, customData? }): Promise<AgentHandle>;
+  list(): Promise<ImageListResponse>;
+  get(id: string): Promise<AgentHandle | null>;
+}
+```
+
 ### AgentHandle
 
-Returned by `create()` and `get()`. A live reference to an agent with instance-level operations.
+Returned by `chat.create()` and `chat.get()`. A live reference to a conversation with agent operations.
 
 ```typescript
 interface AgentHandle {
@@ -130,9 +140,9 @@ interface AgentHandle {
 }
 ```
 
-### Instance Namespace (low-level)
+### Runtime Namespace (low-level)
 
-For advanced use cases, access `ax.instance.*` for direct subsystem operations:
+For advanced use cases, access `ax.runtime.*` for direct subsystem operations:
 
 **container**:
 
@@ -197,10 +207,10 @@ Model priority: `embody.model > container default provider > environment variabl
 Transport-agnostic JSON-RPC entry point. Works in all modes — local dispatches to CommandHandler, remote forwards via WebSocket.
 
 ```typescript
-// Equivalent to ax.instance.container.create("default")
+// Equivalent to ax.runtime.container.create("default")
 await ax.rpc("container.create", { containerId: "default" });
 
-// Equivalent to ax.instance.image.list()
+// Equivalent to ax.runtime.image.list()
 const { records } = await ax.rpc<{ records: ImageRecord[] }>("image.list");
 
 // Useful for custom transport (e.g. Cloudflare Workers/DO)

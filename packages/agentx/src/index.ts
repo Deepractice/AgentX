@@ -9,7 +9,7 @@
  * import { nodePlatform } from "@agentxjs/node-platform";
  *
  * const ax = createAgentX(nodePlatform({ createDriver }));
- * const agent = await ax.create({ name: "Aristotle", embody: { model: "claude-sonnet-4-6" } });
+ * const agent = await ax.chat.create({ name: "Aristotle", embody: { model: "claude-sonnet-4-6" } });
  * await agent.send("Hello!");
  * ```
  *
@@ -75,18 +75,17 @@ export function createAgentX(config?: PlatformConfig): AgentXBuilder {
       return getLocalClient().events;
     },
 
-    get instance() {
-      return getLocalClient().instance;
+    get runtime() {
+      return getLocalClient().runtime;
     },
 
     get provider() {
       return getLocalClient().provider;
     },
 
-    // Top-level Agent API
-    create: (params) => getLocalClient().create(params),
-    list: () => getLocalClient().list(),
-    get: (agentId) => getLocalClient().get(agentId),
+    get chat() {
+      return getLocalClient().chat;
+    },
 
     on(type, handler) {
       return getLocalClient().on(type, handler);
@@ -194,6 +193,7 @@ export type {
   AgentXBuilder,
   AgentXServer,
   BaseResponse,
+  ChatNamespace,
   ConnectOptions,
   ContainerCreateResponse,
   ContainerGetResponse,
@@ -206,7 +206,6 @@ export type {
   ImageListResponse,
   ImageNamespace,
   ImageRecord,
-  InstanceNamespace,
   LLMNamespace,
   LLMProviderCreateResponse,
   LLMProviderDefaultResponse,
@@ -216,6 +215,7 @@ export type {
   MaybeAsync,
   MessageSendResponse,
   PresentationNamespace,
+  RuntimeNamespace,
   ServeConfig,
   SessionNamespace,
 } from "./types";

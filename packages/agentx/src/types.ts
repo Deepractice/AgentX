@@ -423,7 +423,7 @@ export interface PresentationNamespace {
  * Instance exposes the underlying image, agent, session, container, llm,
  * and presentation subsystems for advanced use cases.
  */
-export interface InstanceNamespace {
+export interface RuntimeNamespace {
   readonly container: ContainerNamespace;
   readonly image: ImageNamespace;
   readonly agent: AgentNamespace;
@@ -439,12 +439,12 @@ export interface InstanceNamespace {
 /**
  * AgentHandle — a live reference to a created agent.
  *
- * Returned by `ax.create()` and `ax.get()`. Holds the agent's identity
+ * Returned by `ax.chat.create()` and `ax.chat.get()`. Holds the agent's identity
  * and provides instance-level operations (send, interrupt, etc.).
  *
  * @example
  * ```typescript
- * const agent = await ax.create({ name: "Aristotle", embody: { model: "claude-sonnet-4-6" } });
+ * const agent = await ax.chat.create({ name: "Aristotle", embody: { model: "claude-sonnet-4-6" } });
  * await agent.send("Hello!");
  * const messages = await agent.history();
  * ```
@@ -492,6 +492,39 @@ export interface AgentHandle {
 }
 
 // ============================================================================
+// Chat Namespace
+// ============================================================================
+
+/**
+ * Chat operations — create and manage conversations.
+ *
+ * Each conversation is backed by an Image (persistent record)
+ * and returns an AgentHandle for interaction.
+ */
+export interface ChatNamespace {
+  /**
+   * Create a new conversation
+   */
+  create(params: {
+    name?: string;
+    description?: string;
+    contextId?: string;
+    embody?: Embodiment;
+    customData?: Record<string, unknown>;
+  }): Promise<AgentHandle>;
+
+  /**
+   * List all conversations
+   */
+  list(): Promise<ImageListResponse>;
+
+  /**
+   * Get a conversation by ID
+   */
+  get(id: string): Promise<AgentHandle | null>;
+}
+
+// ============================================================================
 // AgentX Client Interface
 // ============================================================================
 
@@ -501,11 +534,11 @@ export interface AgentHandle {
  * @example
  * ```typescript
  * const ax = createAgentX(config);
- * const agent = await ax.create({ name: "Aristotle", embody: { model: "claude-sonnet-4-6" } });
+ * const agent = await ax.chat.create({ name: "Aristotle", embody: { model: "claude-sonnet-4-6" } });
  * await agent.send("Hello!");
  * ```
  *
- * For advanced use cases, access `ax.instance.*` for low-level subsystems.
+ * For advanced use cases, access `ax.runtime.*` for low-level subsystems.
  */
 export interface AgentX {
   /**
@@ -518,35 +551,19 @@ export interface AgentX {
    */
   readonly events: EventBus;
 
-  // ==================== Agent API (top-level) ====================
+  // ==================== Chat (conversation) ====================
 
   /**
-   * Create a new agent from a blueprint
+   * Conversation management — create, list, and open conversations.
    */
-  create(params: {
-    name?: string;
-    description?: string;
-    contextId?: string;
-    embody?: Embodiment;
-    customData?: Record<string, unknown>;
-  }): Promise<AgentHandle>;
-
-  /**
-   * List all agents
-   */
-  list(): Promise<ImageListResponse>;
-
-  /**
-   * Get agent by ID
-   */
-  get(agentId: string): Promise<AgentHandle | null>;
+  readonly chat: ChatNamespace;
 
   // ==================== Instance (low-level) ====================
 
   /**
    * Low-level access to internal subsystems (image, agent, session, container, llm).
    */
-  readonly instance: InstanceNamespace;
+  readonly runtime: RuntimeNamespace;
 
   // ==================== LLM Provider (system-level) ====================
 
@@ -631,7 +648,7 @@ export interface AgentXServer {
  * const ax = createAgentX(node({ createDriver }))
  *
  * // Local use
- * const agent = await ax.create({ name: "Aristotle" })
+ * const agent = await ax.chat.create({ name: "Aristotle" })
  * await agent.send("Hello!")
  *
  * // Connect to remote server

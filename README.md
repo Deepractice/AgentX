@@ -44,8 +44,8 @@ const createDriver = (config) => createMonoDriver({
 const platform = await nodePlatform({ createDriver }).resolve();
 const ax = createAgentX({ platform, createDriver });
 
-// Create agent and chat
-const agent = await ax.create({
+// Create a conversation and chat
+const agent = await ax.chat.create({
   name: "My Assistant",
   embody: { systemPrompt: "You are a helpful assistant." },
 });
@@ -74,7 +74,7 @@ const ax = createAgentX();
 const client = await ax.connect("ws://localhost:5200");
 
 // Same API as local mode
-const agent = await client.create({ name: "My Assistant" });
+const agent = await client.chat.create({ name: "My Assistant" });
 await agent.send("Hello!");
 ```
 
@@ -95,17 +95,26 @@ bun run dev
 AgentX uses a layered concept model inspired by container runtimes:
 
 ```
-Agent (blueprint)  →  Image (persistent)  →  Instance (runtime)
-      ↓                     ↓                      ↓
-  Serializable          Stored in DB          Running in memory
-  Portable              Has session           Has lifecycle
-  Like Dockerfile       Like Docker image     Like container
+Prototype (template)  →  Image (persistent)  →  Agent (runtime)
+       ↓                       ↓                      ↓
+  Reusable definition     Stored in DB          Running in memory
+  Registered once         Has session           Has lifecycle
+  Like Dockerfile         Like Docker image     Like container
 ```
 
-- **Agent blueprint** — a serializable definition: `{ name, embody: { model, systemPrompt, mcpServers } }`
+- **Prototype** — a reusable, registered agent definition (name, embody, etc.)
 - **Embodiment** — runtime config for an agent's "body": model, system prompt, MCP servers
-- **Image** — persistent record created from a blueprint, with session and message history
-- **Instance** — a live runtime agent created from an Image
+- **Image** — persistent record created from a prototype, with session and message history
+- **Chat** — a conversation backed by an Image, accessed via `AgentHandle`
+
+### API Architecture
+
+```typescript
+ax.chat.*           // Conversation management (create, list, get → AgentHandle)
+ax.prototype.*      // Prototype registry (register, list, get — coming soon)
+ax.provider.*       // LLM provider configuration
+ax.runtime.*        // Low-level subsystems (image, agent, session, container)
+```
 
 ---
 

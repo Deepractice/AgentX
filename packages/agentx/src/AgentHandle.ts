@@ -10,8 +10,8 @@ import type {
   AgentHandle,
   BaseResponse,
   Embodiment,
-  InstanceNamespace,
   MessageSendResponse,
+  RuntimeNamespace,
 } from "./types";
 
 export class AgentHandleImpl implements AgentHandle {
@@ -20,11 +20,11 @@ export class AgentHandleImpl implements AgentHandle {
   readonly containerId: string;
   readonly sessionId: string;
 
-  private readonly ns: InstanceNamespace;
+  private readonly ns: RuntimeNamespace;
 
   constructor(
     ids: { agentId: string; imageId: string; containerId: string; sessionId: string },
-    ns: InstanceNamespace
+    ns: RuntimeNamespace
   ) {
     this.agentId = ids.agentId;
     this.imageId = ids.imageId;

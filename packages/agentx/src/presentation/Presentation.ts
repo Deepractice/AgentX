@@ -110,7 +110,7 @@ export class Presentation {
 
     try {
       // Send message via agentx
-      await this.agentx.instance.session.send(this.agentId, content);
+      await this.agentx.runtime.session.send(this.agentId, content);
     } catch (error) {
       this.notifyError(error instanceof Error ? error : new Error(String(error)));
     }
@@ -121,7 +121,7 @@ export class Presentation {
    */
   async interrupt(): Promise<void> {
     try {
-      await this.agentx.instance.session.interrupt(this.agentId);
+      await this.agentx.runtime.session.interrupt(this.agentId);
     } catch (error) {
       this.notifyError(error instanceof Error ? error : new Error(String(error)));
     }
