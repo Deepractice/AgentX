@@ -1,5 +1,11 @@
 # @agentxjs/devtools
 
+## 2.1.5
+
+### Patch Changes
+
+- @agentxjs/core@2.6.1
+
 ## 2.1.4
 
 ### Patch Changes

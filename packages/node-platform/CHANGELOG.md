@@ -1,5 +1,11 @@
 # @agentxjs/node-platform
 
+## 2.6.1
+
+### Patch Changes
+
+- @agentxjs/core@2.6.1
+
 ## 2.6.0
 
 ### Minor Changes
