@@ -7,6 +7,7 @@ import { DEFAULT_CONTAINER_ID } from "@agentxjs/core/container";
 import type { RpcClient } from "@agentxjs/core/network";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type {
+  AgentConfig,
   BaseResponse,
   ImageCreateResponse,
   ImageGetResponse,
@@ -20,24 +21,21 @@ import type {
  */
 export function createLocalImages(platform: AgentXPlatform): ImageNamespace {
   return {
-    async create(params: {
-      name?: string;
-      description?: string;
-      systemPrompt?: string;
-      mcpServers?: Record<string, unknown>;
-      customData?: Record<string, unknown>;
-    }): Promise<ImageCreateResponse> {
+    async create(params: AgentConfig): Promise<ImageCreateResponse> {
       const { imageRepository, sessionRepository } = platform;
       const { createImage } = await import("@agentxjs/core/image");
+
+      const { model, systemPrompt, mcpServers, ...rest } = params;
+      const embody =
+        model || systemPrompt || mcpServers
+          ? { model, systemPrompt, mcpServers: mcpServers as any }
+          : undefined;
 
       const image = await createImage(
         {
           containerId: DEFAULT_CONTAINER_ID,
-          name: params.name,
-          description: params.description,
-          systemPrompt: params.systemPrompt,
-          mcpServers: params.mcpServers as any,
-          customData: params.customData,
+          ...rest,
+          embody,
         },
         { imageRepository, sessionRepository }
       );
@@ -116,13 +114,7 @@ export function createRemoteImages(
   subscribeFn: (sessionId: string) => void
 ): ImageNamespace {
   return {
-    async create(params: {
-      name?: string;
-      description?: string;
-      systemPrompt?: string;
-      mcpServers?: Record<string, unknown>;
-      customData?: Record<string, unknown>;
-    }): Promise<ImageCreateResponse> {
+    async create(params: AgentConfig): Promise<ImageCreateResponse> {
       const result = await rpcClient.call<ImageCreateResponse>("image.create", {
         ...params,
         containerId: DEFAULT_CONTAINER_ID,

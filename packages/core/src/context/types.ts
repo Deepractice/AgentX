@@ -3,27 +3,46 @@
  *
  * Three-layer context model:
  *   Layer 1: System Prompt (fixed, from Image config)
- *   Layer 2: Context (dynamic cognitive context — identity, tools, instructions)
+ *   Layer 2: Context (dynamic cognitive context — schema, capabilities, projection)
  *   Layer 3: Messages (conversation history, managed by Session)
  *
  * Context provides three things:
- *   - instructions: world-level cognitive framework (fixed per context)
+ *   - schema: cognitive framework (fixed per context)
  *   - project(): dynamic state projection (refreshed each turn)
- *   - getTools(): capabilities the context brings (e.g. RoleX tools)
+ *   - capabilities(): what the context can do
  */
 
-import type { ToolDefinition } from "../driver/types";
+/**
+ * Capability — a discrete capability provided by a cognitive context.
+ *
+ * Self-describing: includes name, description, parameters, and execute function.
+ * The runtime converts these into whatever format the Driver needs.
+ */
+export interface Capability {
+  /** Capability type — currently only "tool" */
+  readonly type: "tool";
+  /** Capability name */
+  readonly name: string;
+  /** Human-readable description */
+  readonly description?: string;
+  /** Parameter schema (JSON Schema) */
+  readonly parameters: {
+    type: "object";
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
+  /** Execute this capability */
+  execute(input: Record<string, unknown>): Promise<unknown>;
+}
 
 /**
  * Context — dynamic cognitive context for an agent.
  *
- * Implementations:
- *   - RolexContext: RoleX role identity + world instructions + tools
- *   - Future: other context providers
+ * Concrete implementations live in external packages (e.g. RolexContextProvider).
  */
 export interface Context {
-  /** World-level instructions — the cognitive framework. */
-  readonly instructions: string;
+  /** Cognitive schema — the world-level framework. */
+  readonly schema: string;
 
   /**
    * Project the current cognitive state.
@@ -32,10 +51,10 @@ export interface Context {
   project(): Promise<string>;
 
   /**
-   * Get tools provided by this context.
-   * These are merged with other tools (bash, MCP, etc.) by the runtime.
+   * Capabilities provided by this context.
+   * These are merged with other capabilities (bash, MCP, etc.) by the runtime.
    */
-  getTools(): ToolDefinition[];
+  capabilities(): Capability[];
 }
 
 /**

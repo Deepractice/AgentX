@@ -9,7 +9,7 @@
  * import { nodePlatform } from "@agentxjs/node-platform";
  *
  * const ax = createAgentX(nodePlatform({ createDriver }));
- * const agent = await ax.chat.create({ name: "Aristotle", embody: { model: "claude-sonnet-4-6" } });
+ * const agent = await ax.chat.create({ name: "Aristotle", model: "claude-sonnet-4-6" });
  * await agent.send("Hello!");
  * ```
  *
@@ -87,10 +87,6 @@ export function createAgentX(config?: PlatformConfig): AgentXBuilder {
       return getLocalClient().chat;
     },
 
-    get prototype() {
-      return getLocalClient().prototype;
-    },
-
     on(type, handler) {
       return getLocalClient().on(type, handler);
     },
@@ -156,12 +152,12 @@ export function createAgentX(config?: PlatformConfig): AgentXBuilder {
   };
 }
 
-export type { AgentXErrorCategory, AgentXErrorContext } from "@agentxjs/core/error";
+// Re-export context interfaces
+export type { Capability, Context, ContextProvider } from "@agentxjs/core/context";
 // Re-export error types
+export type { AgentXErrorCategory, AgentXErrorContext } from "@agentxjs/core/error";
 export { AgentXError, AgentXErrorCode } from "@agentxjs/core/error";
-// Re-export server
-export { CommandHandler } from "./CommandHandler";
-// Re-export Presentation types and classes
+// Re-export Presentation
 export type {
   AssistantConversation,
   Block,
@@ -184,9 +180,9 @@ export {
   Presentation,
   presentationReducer,
 } from "./presentation";
-export { createServer, type ServerConfig } from "./server";
 // Re-export types
 export type {
+  AgentConfig,
   AgentHandle,
   AgentX,
   AgentXBuilder,
@@ -194,12 +190,12 @@ export type {
   BaseResponse,
   ChatNamespace,
   ConnectOptions,
-  Embodiment,
   ImageCreateResponse,
   ImageGetResponse,
   ImageListResponse,
   ImageNamespace,
   ImageRecord,
+  ImageUpdateResponse,
   InstanceCreateResponse,
   InstanceGetResponse,
   InstanceInfo,
@@ -214,11 +210,6 @@ export type {
   MaybeAsync,
   MessageSendResponse,
   PresentationNamespace,
-  PrototypeCreateResponse,
-  PrototypeGetResponse,
-  PrototypeListResponse,
-  PrototypeNamespace,
-  PrototypeUpdateResponse,
   RuntimeNamespace,
   ServeConfig,
   SessionNamespace,

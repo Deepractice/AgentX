@@ -15,10 +15,8 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ContextProvider } from "@agentxjs/core/context";
-import { RolexContextProvider } from "@agentxjs/core/context";
 import { EventBusImpl } from "@agentxjs/core/event";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
-import { localPlatform } from "@rolexjs/local-platform";
 import type { LogLevel } from "commonxjs/logger";
 import { ConsoleLogger, setLoggerFactory } from "commonxjs/logger";
 import { NodeBashProvider } from "./bash/NodeBashProvider";
@@ -36,12 +34,6 @@ export interface NodePlatformOptions {
   dataPath?: string;
 
   /**
-   * Base path for RoleX data storage
-   * @default "~/.deepractice/rolex"
-   */
-  rolexDataPath?: string;
-
-  /**
    * Directory for log files
    * If provided, enables file logging instead of console
    * @example ".agentx/logs"
@@ -55,11 +47,10 @@ export interface NodePlatformOptions {
   logLevel?: LogLevel;
 
   /**
-   * Custom context provider — overrides the built-in RolexContextProvider.
-   * By default, node-platform creates a RolexContextProvider automatically.
-   * Set to `null` to disable context provider entirely.
+   * Context provider — inject cognitive context (e.g. RoleX).
+   * If not provided, agents run without cognitive context.
    */
-  contextProvider?: ContextProvider | null;
+  contextProvider?: ContextProvider;
 }
 
 /**
@@ -105,7 +96,6 @@ export async function createNodePlatform(
 ): Promise<AgentXPlatform> {
   const deepracticeHome = join(homedir(), ".deepractice");
   const dataPath = options.dataPath ?? join(deepracticeHome, "agentx");
-  const rolexDataPath = options.rolexDataPath ?? join(deepracticeHome, "rolex");
 
   // Configure logging
   if (options.logDir) {
@@ -123,19 +113,8 @@ export async function createNodePlatform(
   // Create persistence with SQLite
   const persistence = await createPersistence(sqliteDriver({ path: join(dataPath, "agentx.db") }));
 
-  // Create context provider (built-in RoleX by default)
-  let contextProvider: ContextProvider | undefined;
-  if (options.contextProvider === null) {
-    // Explicitly disabled
-    contextProvider = undefined;
-  } else if (options.contextProvider) {
-    // Custom provider
-    contextProvider = options.contextProvider;
-  } else {
-    // Default: RoleX local platform
-    const rolexPlatform = localPlatform({ dataDir: rolexDataPath });
-    contextProvider = new RolexContextProvider(rolexPlatform);
-  }
+  // Context provider — externally injected, no default
+  const contextProvider = options.contextProvider;
 
   // Create bash provider
   const bashProvider = new NodeBashProvider();

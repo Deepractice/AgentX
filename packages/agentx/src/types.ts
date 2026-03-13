@@ -5,7 +5,7 @@
 import type { Message } from "@agentxjs/core/agent";
 import type { AgentXError } from "@agentxjs/core/error";
 import type { BusEvent, BusEventHandler, EventBus, Unsubscribe } from "@agentxjs/core/event";
-import type { LLMProtocol, LLMProviderRecord, PrototypeRecord } from "@agentxjs/core/persistence";
+import type { LLMProtocol, LLMProviderRecord } from "@agentxjs/core/persistence";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type { Presentation, PresentationOptions } from "./presentation";
 
@@ -47,16 +47,28 @@ export interface InstanceInfo {
 }
 
 /**
- * Embodiment — runtime configuration for an agent's "body".
+ * AgentConfig — flat runtime configuration for creating an agent.
+ * AgentConfig IS the body — no wrapper needed.
  */
-export interface Embodiment {
+export interface AgentConfig {
+  /** LLM model identifier */
   model?: string;
+  /** System prompt for the agent */
   systemPrompt?: string;
+  /** MCP server configurations for tool access */
   mcpServers?: Record<string, unknown>;
+  /** Context provider ID (e.g. RoleX individual) */
+  contextId?: string;
+  /** Display name */
+  name?: string;
+  /** Description */
+  description?: string;
+  /** Arbitrary custom data */
+  customData?: Record<string, unknown>;
 }
 
 /**
- * Image record from server
+ * Image record from server (internal persistence)
  */
 export interface ImageRecord {
   imageId: string;
@@ -65,10 +77,8 @@ export interface ImageRecord {
   name?: string;
   description?: string;
   contextId?: string;
-  embody?: Embodiment;
-  /** @deprecated Use `embody.systemPrompt` instead. */
+  model?: string;
   systemPrompt?: string;
-  /** @deprecated Use `embody.mcpServers` instead. */
   mcpServers?: Record<string, unknown>;
   customData?: Record<string, unknown>;
   createdAt: number;
@@ -186,38 +196,6 @@ export interface LLMProviderDefaultResponse extends BaseResponse {
 }
 
 // ============================================================================
-// Prototype Response Types
-// ============================================================================
-
-/**
- * Prototype create response
- */
-export interface PrototypeCreateResponse extends BaseResponse {
-  record: PrototypeRecord;
-}
-
-/**
- * Prototype get response
- */
-export interface PrototypeGetResponse extends BaseResponse {
-  record: PrototypeRecord | null;
-}
-
-/**
- * Prototype list response
- */
-export interface PrototypeListResponse extends BaseResponse {
-  records: PrototypeRecord[];
-}
-
-/**
- * Prototype update response
- */
-export interface PrototypeUpdateResponse extends BaseResponse {
-  record: PrototypeRecord;
-}
-
-// ============================================================================
 // Namespace Interfaces
 // ============================================================================
 
@@ -228,13 +206,7 @@ export interface ImageNamespace {
   /**
    * Create a new image from an Agent blueprint
    */
-  create(params: {
-    name?: string;
-    description?: string;
-    contextId?: string;
-    embody?: Embodiment;
-    customData?: Record<string, unknown>;
-  }): Promise<ImageCreateResponse>;
+  create(params: AgentConfig): Promise<ImageCreateResponse>;
 
   /**
    * Get image by ID
@@ -251,12 +223,12 @@ export interface ImageNamespace {
    */
   update(
     imageId: string,
-    updates: {
-      name?: string;
-      description?: string;
-      embody?: Embodiment;
-      customData?: Record<string, unknown>;
-    }
+    updates: Partial<
+      Pick<
+        AgentConfig,
+        "name" | "description" | "model" | "systemPrompt" | "mcpServers" | "customData"
+      >
+    >
   ): Promise<ImageUpdateResponse>;
 
   /**
@@ -373,51 +345,6 @@ export interface LLMNamespace {
 }
 
 /**
- * Prototype operations namespace — manage reusable agent templates
- */
-export interface PrototypeNamespace {
-  /**
-   * Register a new prototype
-   */
-  create(params: {
-    name: string;
-    description?: string;
-    contextId?: string;
-    embody?: Embodiment;
-    customData?: Record<string, unknown>;
-  }): Promise<PrototypeCreateResponse>;
-
-  /**
-   * Get prototype by ID
-   */
-  get(prototypeId: string): Promise<PrototypeGetResponse>;
-
-  /**
-   * List prototypes
-   */
-  list(): Promise<PrototypeListResponse>;
-
-  /**
-   * Update prototype
-   */
-  update(
-    prototypeId: string,
-    updates: {
-      name?: string;
-      description?: string;
-      contextId?: string;
-      embody?: Embodiment;
-      customData?: Record<string, unknown>;
-    }
-  ): Promise<PrototypeUpdateResponse>;
-
-  /**
-   * Delete prototype
-   */
-  delete(prototypeId: string): Promise<BaseResponse>;
-}
-
-/**
  * Presentation operations namespace
  */
 export interface PresentationNamespace {
@@ -455,7 +382,6 @@ export interface RuntimeNamespace {
   readonly session: SessionNamespace;
   readonly present: PresentationNamespace;
   readonly llm: LLMNamespace;
-  readonly prototype: PrototypeNamespace;
 }
 
 // ============================================================================
@@ -470,7 +396,7 @@ export interface RuntimeNamespace {
  *
  * @example
  * ```typescript
- * const agent = await ax.chat.create({ name: "Aristotle", embody: { model: "claude-sonnet-4-6" } });
+ * const agent = await ax.chat.create({ name: "Aristotle", model: "claude-sonnet-4-6" });
  * await agent.send("Hello!");
  * const messages = await agent.history();
  * ```
@@ -504,12 +430,14 @@ export interface AgentHandle {
   /**
    * Update this agent's metadata
    */
-  update(updates: {
-    name?: string;
-    description?: string;
-    embody?: Embodiment;
-    customData?: Record<string, unknown>;
-  }): Promise<void>;
+  update(
+    updates: Partial<
+      Pick<
+        AgentConfig,
+        "name" | "description" | "model" | "systemPrompt" | "mcpServers" | "customData"
+      >
+    >
+  ): Promise<void>;
 
   /**
    * Delete this agent
@@ -530,18 +458,8 @@ export interface AgentHandle {
 export interface ChatNamespace {
   /**
    * Create a new conversation
-   *
-   * When `prototypeId` is provided, the conversation inherits the prototype's
-   * configuration (contextId, embody, etc.). Inline params override prototype values.
    */
-  create(params: {
-    prototypeId?: string;
-    name?: string;
-    description?: string;
-    contextId?: string;
-    embody?: Embodiment;
-    customData?: Record<string, unknown>;
-  }): Promise<AgentHandle>;
+  create(params: AgentConfig): Promise<AgentHandle>;
 
   /**
    * List all conversations
@@ -564,7 +482,7 @@ export interface ChatNamespace {
  * @example
  * ```typescript
  * const ax = createAgentX(config);
- * const agent = await ax.chat.create({ name: "Aristotle", embody: { model: "claude-sonnet-4-6" } });
+ * const agent = await ax.chat.create({ name: "Aristotle", model: "claude-sonnet-4-6" });
  * await agent.send("Hello!");
  * ```
  *
@@ -587,13 +505,6 @@ export interface AgentX {
    * Conversation management — create, list, and open conversations.
    */
   readonly chat: ChatNamespace;
-
-  // ==================== Prototype (templates) ====================
-
-  /**
-   * Prototype management — register and manage reusable agent templates.
-   */
-  readonly prototype: PrototypeNamespace;
 
   // ==================== Instance (low-level) ====================
 

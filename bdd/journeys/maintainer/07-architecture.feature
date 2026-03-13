@@ -126,14 +126,14 @@ Feature: Monorepo Architecture
   Scenario: Context integration — three-layer system prompt
     Given the Context interface in @agentxjs/core/context
     Then it provides three things:
-      | property     | description                                     |
-      | instructions | World-level cognitive framework (fixed)           |
-      | project()    | Dynamic state projection (refreshed each turn)   |
-      | getTools()   | Capabilities the context brings (e.g. RoleX tools)|
+      | property       | description                                       |
+      | schema         | Cognitive framework (fixed per context)            |
+      | project()      | Dynamic state projection (refreshed each turn)    |
+      | capabilities()   | Capability[] — what the context can do (tools, etc.) |
     And the system prompt is structured as:
       | layer | tag             | source                    |
       | 1     | <system>        | Image.systemPrompt        |
-      | 2     | <instructions>  | Context.instructions      |
+      | 2     | <instructions>  | Context.schema            |
       | 2     | <context>       | Context.project()         |
       | 3     | (messages)      | Session history           |
 
@@ -143,15 +143,13 @@ Feature: Monorepo Architecture
     And it is registered on AgentXPlatform.contextProvider
     And Runtime calls it when ImageRecord has a contextId
 
-  Scenario: Node platform includes RoleX context by default
+  Scenario: Node platform accepts external context provider
     Given the @agentxjs/node-platform package
-    Then it creates a RolexContextProvider automatically
-    And default data paths are:
+    Then contextProvider is an optional parameter — not built-in
+    And if not provided, agents run without cognitive context
+    And default data path is:
       | component | path                    |
       | AgentX    | ~/.deepractice/agentx   |
-      | RoleX     | ~/.deepractice/rolex    |
-    And both paths are configurable via dataPath and rolexDataPath options
-    And context provider can be disabled by setting contextProvider to null
 
   Scenario: All packages share base TypeScript config
     Given the file "tsconfig.base.json"

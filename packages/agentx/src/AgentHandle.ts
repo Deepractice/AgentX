@@ -7,9 +7,9 @@
 import type { Message } from "@agentxjs/core/agent";
 import type { Presentation, PresentationOptions } from "./presentation";
 import type {
+  AgentConfig,
   AgentHandle,
   BaseResponse,
-  Embodiment,
   MessageSendResponse,
   RuntimeNamespace,
 } from "./types";
@@ -49,12 +49,14 @@ export class AgentHandleImpl implements AgentHandle {
     return this.ns.present.create(this.instanceId, options);
   }
 
-  async update(updates: {
-    name?: string;
-    description?: string;
-    embody?: Embodiment;
-    customData?: Record<string, unknown>;
-  }): Promise<void> {
+  async update(
+    updates: Partial<
+      Pick<
+        AgentConfig,
+        "name" | "description" | "model" | "systemPrompt" | "mcpServers" | "customData"
+      >
+    >
+  ): Promise<void> {
     await this.ns.image.update(this.imageId, updates);
   }
 

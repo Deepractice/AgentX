@@ -98,18 +98,6 @@ export class CommandHandler {
         case "message.send":
           return await this.handleMessageSend(params);
 
-        // Prototype
-        case "prototype.create":
-          return await this.handlePrototypeCreate(params);
-        case "prototype.get":
-          return await this.handlePrototypeGet(params);
-        case "prototype.list":
-          return await this.handlePrototypeList(params);
-        case "prototype.update":
-          return await this.handlePrototypeUpdate(params);
-        case "prototype.delete":
-          return await this.handlePrototypeDelete(params);
-
         // LLM Provider
         case "llm.create":
           return await this.handleLLMCreate(params);
@@ -141,19 +129,28 @@ export class CommandHandler {
       name,
       description,
       contextId,
-      embody,
+      model,
+      systemPrompt,
+      mcpServers,
       customData,
     } = params as {
       containerId?: string;
       name?: string;
       description?: string;
       contextId?: string;
-      embody?: import("@agentxjs/core/persistence").Embodiment;
+      model?: string;
+      systemPrompt?: string;
+      mcpServers?: Record<string, unknown>;
       customData?: Record<string, unknown>;
     };
 
     const { imageRepository, sessionRepository } = this.runtime.platform;
     const { createImage } = await import("@agentxjs/core/image");
+
+    const embody =
+      model || systemPrompt || mcpServers
+        ? ({ model, systemPrompt, mcpServers } as import("@agentxjs/core/persistence").Embodiment)
+        : undefined;
 
     const image = await createImage(
       { containerId: DEFAULT_CONTAINER_ID, name, description, contextId, embody, customData },
@@ -268,7 +265,9 @@ export class CommandHandler {
       updates: {
         name?: string;
         description?: string;
-        embody?: import("@agentxjs/core/persistence").Embodiment;
+        model?: string;
+        systemPrompt?: string;
+        mcpServers?: Record<string, unknown>;
         customData?: Record<string, unknown>;
       };
     };
@@ -279,12 +278,22 @@ export class CommandHandler {
       return err(404, `Image not found: ${imageId}`);
     }
 
-    // Update image record (embody is merged, not replaced)
-    const { embody: embodyUpdates, ...otherUpdates } = updates;
+    // Extract embody fields from flat updates
+    const { model, systemPrompt, mcpServers, ...otherUpdates } = updates;
+    const embodyUpdates =
+      model !== undefined || systemPrompt !== undefined || mcpServers !== undefined
+        ? ({
+            ...imageRecord.embody,
+            model,
+            systemPrompt,
+            mcpServers,
+          } as import("@agentxjs/core/persistence").Embodiment)
+        : imageRecord.embody;
+
     const updatedRecord = {
       ...imageRecord,
       ...otherUpdates,
-      embody: embodyUpdates ? { ...imageRecord.embody, ...embodyUpdates } : imageRecord.embody,
+      embody: embodyUpdates,
       updatedAt: Date.now(),
     };
 
@@ -420,118 +429,6 @@ export class CommandHandler {
 
     await this.runtime.receive(targetInstanceId, content);
     return ok({ instanceId: targetInstanceId, imageId });
-  }
-
-  // ==================== Prototype Commands ====================
-
-  private async handlePrototypeCreate(params: unknown): Promise<RpcResponse> {
-    const {
-      containerId: _cid,
-      name,
-      description,
-      contextId,
-      embody,
-      customData,
-    } = params as {
-      containerId?: string;
-      name: string;
-      description?: string;
-      contextId?: string;
-      embody?: import("@agentxjs/core/persistence").Embodiment;
-      customData?: Record<string, unknown>;
-    };
-
-    const repo = this.runtime.platform.prototypeRepository;
-    if (!repo) {
-      return err(-32000, "Prototype repository not available");
-    }
-
-    const now = Date.now();
-    const random = Math.random().toString(36).slice(2, 8);
-    const record = {
-      prototypeId: `proto_${now}_${random}`,
-      containerId: DEFAULT_CONTAINER_ID,
-      name,
-      description,
-      contextId,
-      embody,
-      customData,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    await repo.savePrototype(record);
-    return ok({ record });
-  }
-
-  private async handlePrototypeGet(params: unknown): Promise<RpcResponse> {
-    const { prototypeId } = params as { prototypeId: string };
-    const repo = this.runtime.platform.prototypeRepository;
-    if (!repo) {
-      return err(-32000, "Prototype repository not available");
-    }
-
-    const record = await repo.findPrototypeById(prototypeId);
-    return ok({ record });
-  }
-
-  private async handlePrototypeList(params: unknown): Promise<RpcResponse> {
-    const { containerId } = params as { containerId?: string };
-    const repo = this.runtime.platform.prototypeRepository;
-    if (!repo) {
-      return err(-32000, "Prototype repository not available");
-    }
-
-    const records = containerId
-      ? await repo.findPrototypesByContainerId(containerId)
-      : await repo.findAllPrototypes();
-
-    return ok({ records });
-  }
-
-  private async handlePrototypeUpdate(params: unknown): Promise<RpcResponse> {
-    const { prototypeId, updates } = params as {
-      prototypeId: string;
-      updates: {
-        name?: string;
-        description?: string;
-        contextId?: string;
-        embody?: import("@agentxjs/core/persistence").Embodiment;
-        customData?: Record<string, unknown>;
-      };
-    };
-
-    const repo = this.runtime.platform.prototypeRepository;
-    if (!repo) {
-      return err(-32000, "Prototype repository not available");
-    }
-
-    const existing = await repo.findPrototypeById(prototypeId);
-    if (!existing) {
-      return err(404, `Prototype not found: ${prototypeId}`);
-    }
-
-    const { embody: embodyUpdates, ...otherUpdates } = updates;
-    const updated = {
-      ...existing,
-      ...otherUpdates,
-      embody: embodyUpdates ? { ...existing.embody, ...embodyUpdates } : existing.embody,
-      updatedAt: Date.now(),
-    };
-
-    await repo.savePrototype(updated);
-    return ok({ record: updated });
-  }
-
-  private async handlePrototypeDelete(params: unknown): Promise<RpcResponse> {
-    const { prototypeId } = params as { prototypeId: string };
-    const repo = this.runtime.platform.prototypeRepository;
-    if (!repo) {
-      return err(-32000, "Prototype repository not available");
-    }
-
-    await repo.deletePrototype(prototypeId);
-    return ok({ prototypeId });
   }
 
   // ==================== LLM Provider Commands ====================

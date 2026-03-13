@@ -341,10 +341,10 @@ export class MonoDriver implements Driver {
 
     // Layer 2: Context (cognitive context from ContextProvider)
     if (this.config.context) {
-      // Instructions — fixed cognitive framework
-      const instructions = this.config.context.instructions;
-      if (instructions) {
-        parts.push(`<instructions>\n${instructions}\n</instructions>`);
+      // Schema — fixed cognitive framework
+      const schema = this.config.context.schema;
+      if (schema) {
+        parts.push(`<instructions>\n${schema}\n</instructions>`);
       }
 
       // Projection — dynamic state, refreshed each turn

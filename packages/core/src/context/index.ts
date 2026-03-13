@@ -1,8 +1,8 @@
 /**
  * Context — Layer 2 of the three-layer context model
+ *
+ * Core only defines the interfaces. Concrete implementations
+ * (e.g. RolexContextProvider) live in platform packages.
  */
 
-export type { RolexContextConfig } from "./rolex-context";
-export { createRolexContext, RolexContext } from "./rolex-context";
-export { RolexContextProvider } from "./rolex-context-provider";
-export type { Context, ContextProvider } from "./types";
+export type { Capability, Context, ContextProvider } from "./types";

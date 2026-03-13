@@ -51,7 +51,7 @@ When(
     try {
       const agent = await state.client!.chat.create({
         name,
-        embody: { systemPrompt: "You are a test assistant." },
+        systemPrompt: "You are a test assistant.",
       });
       state.agent = agent;
     } catch (err) {

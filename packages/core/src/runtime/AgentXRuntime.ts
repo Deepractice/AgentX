@@ -124,8 +124,17 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     let context: import("../context/types").Context | undefined;
     if (imageRecord.contextId && this.platform.contextProvider) {
       context = await this.platform.contextProvider.create(imageRecord.contextId);
-      // Merge context tools into default tools
-      defaultTools.push(...context.getTools());
+      // Merge context capabilities into default tools
+      for (const cap of context.capabilities()) {
+        if (cap.type === "tool") {
+          defaultTools.push({
+            name: cap.name,
+            description: cap.description,
+            parameters: cap.parameters,
+            execute: cap.execute,
+          });
+        }
+      }
     }
 
     // Resolve embodiment
