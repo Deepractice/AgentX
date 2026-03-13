@@ -1,5 +1,12 @@
 # agentxjs
 
+## 2.6.1
+
+### Patch Changes
+
+- 56c7e0e: Fix chat.get() not creating agent instance — agentId was incorrectly set to imageId, causing send/present to fail
+  - @agentxjs/core@2.6.1
+
 ## 2.6.0
 
 ### Minor Changes
