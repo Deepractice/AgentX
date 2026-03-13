@@ -1,5 +1,13 @@
 # @agentxjs/devtools
 
+## 2.1.3
+
+### Patch Changes
+
+- Updated dependencies [266840a]
+- Updated dependencies [37a0a42]
+  - @agentxjs/core@2.5.0
+
 ## 2.1.2
 
 ### Patch Changes

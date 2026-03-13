@@ -1,5 +1,52 @@
 # @agentxjs/core
 
+## 2.5.0
+
+### Minor Changes
+
+- 266840a: Introduce Embodiment, Agent blueprint, and AgentHandle
+
+  Core:
+
+  - Add Embodiment type: runtime config (model, systemPrompt, mcpServers)
+  - Add Agent blueprint type: serializable agent definition (name, contextId, embody)
+  - ImageRecord: move systemPrompt/mcpServers into embody, add model support
+  - ImageCreateConfig extends Agent — blueprint is portable, config adds containerId
+  - Runtime resolves config from embody; image-level model overrides container default
+
+  SDK (agentxjs):
+
+  - New top-level Agent API: ax.create() returns AgentHandle
+  - AgentHandle: send(), interrupt(), history(), present(), update(), delete()
+  - ax.list() and ax.get() for agent CRUD
+  - Instance namespace (ax.instance.\*) for low-level subsystem access
+  - Provider namespace (ax.provider.\*) for LLM provider management
+  - Presentation namespace renamed to present
+  - Export AgentHandle, InstanceNamespace, Embodiment types
+
+- 37a0a42: Context integration — generic cognitive context layer with built-in RoleX support
+
+  Core:
+
+  - Add Context interface (instructions, project(), getTools()) and ContextProvider factory
+  - Add RolexContext implementing Context with dynamic RPC dispatch via toArgs()
+  - Add RolexContextProvider implementing ContextProvider
+  - Rename ImageRecord.roleId to contextId
+  - Add contextProvider to AgentXPlatform
+  - Runtime auto-creates Context and merges tools when Image has contextId
+
+  MonoDriver:
+
+  - Three-layer system prompt with XML tags: <system>, <instructions>, <context>
+  - Migrate from RolexBridge to RolexContext (now in core)
+
+  Node Platform:
+
+  - Built-in RolexContextProvider by default
+  - Default paths: ~/.deepractice/agentx and ~/.deepractice/rolex
+  - Configurable via dataPath and rolexDataPath options
+  - contextProvider: null to disable
+
 ## 2.4.0
 
 ### Minor Changes
