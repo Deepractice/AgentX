@@ -163,9 +163,9 @@ describe("createAgent", () => {
       const agent1 = createAgent(options);
       const agent2 = createAgent(options);
 
-      expect(agent1.agentId).toBeDefined();
-      expect(agent2.agentId).toBeDefined();
-      expect(agent1.agentId).not.toBe(agent2.agentId);
+      expect(agent1.instanceId).toBeDefined();
+      expect(agent2.instanceId).toBeDefined();
+      expect(agent1.instanceId).not.toBe(agent2.instanceId);
     });
 
     it("should create agent with createdAt timestamp", () => {

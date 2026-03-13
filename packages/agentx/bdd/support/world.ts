@@ -116,7 +116,7 @@ export class AgentXWorld extends World {
   lastContainerId?: string;
   lastImageId?: string;
   lastSessionId?: string;
-  lastAgentId?: string;
+  lastInstanceId?: string;
 
   // Document test support - Package-specific
   docDriver?: Driver;
@@ -221,7 +221,7 @@ export class AgentXWorld extends World {
     this.lastContainerId = undefined;
     this.lastImageId = undefined;
     this.lastSessionId = undefined;
-    this.lastAgentId = undefined;
+    this.lastInstanceId = undefined;
     this.eventHandlerCalled = undefined;
     this.lastRpcResult = undefined;
 

@@ -191,7 +191,7 @@ export interface SessionResumedEvent
     "session_resumed",
     {
       sessionId: string;
-      agentId: string;
+      instanceId: string;
       resumedAt: number;
     }
   > {}

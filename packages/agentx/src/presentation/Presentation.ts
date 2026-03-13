@@ -41,7 +41,7 @@ export interface PresentationOptions {
  */
 export class Presentation {
   private agentx: AgentX;
-  private agentId: string;
+  private instanceId: string;
   private state: PresentationState;
   private updateHandlers: Set<PresentationUpdateHandler> = new Set();
   private errorHandlers: Set<PresentationErrorHandler> = new Set();
@@ -49,12 +49,12 @@ export class Presentation {
 
   constructor(
     agentx: AgentX,
-    agentId: string,
+    instanceId: string,
     options?: PresentationOptions,
     initialConversations?: Conversation[]
   ) {
     this.agentx = agentx;
-    this.agentId = agentId;
+    this.instanceId = instanceId;
     this.state = initialConversations?.length
       ? { ...initialPresentationState, conversations: initialConversations }
       : createInitialState();
@@ -110,7 +110,7 @@ export class Presentation {
 
     try {
       // Send message via agentx
-      await this.agentx.runtime.session.send(this.agentId, content);
+      await this.agentx.runtime.session.send(this.instanceId, content);
     } catch (error) {
       this.notifyError(error instanceof Error ? error : new Error(String(error)));
     }
@@ -121,7 +121,7 @@ export class Presentation {
    */
   async interrupt(): Promise<void> {
     try {
-      await this.agentx.runtime.session.interrupt(this.agentId);
+      await this.agentx.runtime.session.interrupt(this.instanceId);
     } catch (error) {
       this.notifyError(error instanceof Error ? error : new Error(String(error)));
     }
@@ -150,15 +150,15 @@ export class Presentation {
   // ==================== Private ====================
 
   private subscribeToEvents(): void {
-    // Subscribe to all events and filter by agentId
+    // Subscribe to all events and filter by instanceId
     this.eventUnsubscribe = this.agentx.onAny((event: BusEvent) => {
       // Filter events for this agent (if context is available)
-      // Note: Events from server may or may not include context with agentId
-      const eventWithContext = event as BusEvent & { context?: { agentId?: string } };
-      const eventAgentId = eventWithContext.context?.agentId;
+      // Note: Events from server may or may not include context with instanceId
+      const eventWithContext = event as BusEvent & { context?: { instanceId?: string } };
+      const eventAgentId = eventWithContext.context?.instanceId;
 
-      // Only filter if event has agentId and it doesn't match
-      if (eventAgentId && eventAgentId !== this.agentId) {
+      // Only filter if event has instanceId and it doesn't match
+      if (eventAgentId && eventAgentId !== this.instanceId) {
         return;
       }
 

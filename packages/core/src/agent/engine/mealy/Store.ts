@@ -16,7 +16,7 @@
 export interface Store<T> {
   /**
    * Get state by ID
-   * @param id - Unique identifier (e.g., agentId, sessionId)
+   * @param id - Unique identifier (e.g., instanceId, sessionId)
    * @returns The stored state or undefined if not found
    */
   get(id: string): T | undefined;

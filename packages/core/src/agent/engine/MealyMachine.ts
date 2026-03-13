@@ -5,9 +5,9 @@
  * into higher-level events (state, message, turn events).
  *
  * Key Design:
- * - Engine is a pure Mealy Machine: process(agentId, event) → outputs
+ * - Engine is a pure Mealy Machine: process(instanceId, event) → outputs
  * - Engine does NOT hold driver or presenters (those belong to AgentEngine layer)
- * - Engine manages intermediate processing state per agentId
+ * - Engine manages intermediate processing state per instanceId
  * - Multiple agents can share the same MealyMachine instance
  *
  * Type Relationship:
@@ -24,7 +24,7 @@
  * ```
  *
  * State Management:
- * - Processing state (pendingContents, etc.) is managed internally per agentId
+ * - Processing state (pendingContents, etc.) is managed internally per instanceId
  * - Business data persistence is NOT handled here - that's AgentEngine layer's job
  *
  * Usage:
@@ -37,9 +37,9 @@
  * // 3. Presenters handle outputs
  *
  * for await (const streamEvent of driver.receive(message)) {
- *   const outputs = machine.process(agentId, streamEvent);
+ *   const outputs = machine.process(instanceId, streamEvent);
  *   for (const output of outputs) {
- *     presenters.forEach(p => p.present(agentId, output));
+ *     presenters.forEach(p => p.present(instanceId, output));
  *   }
  * }
  * ```
@@ -61,7 +61,7 @@ const logger = createLogger("engine/MealyMachine");
  *
  * - Input: StreamEvent (from Driver)
  * - Output: AgentOutput[] (state, message, turn events)
- * - State: Managed internally per agentId
+ * - State: Managed internally per instanceId
  */
 export class MealyMachine {
   private readonly store: MemoryStore<AgentEngineState>;
@@ -75,22 +75,22 @@ export class MealyMachine {
    * Process a single driveable event and return output events
    *
    * This is the core Mealy Machine operation:
-   * process(agentId, event) → outputs[]
+   * process(instanceId, event) → outputs[]
    *
-   * @param agentId - The agent identifier (for state isolation)
+   * @param instanceId - The agent identifier (for state isolation)
    * @param event - StreamEvent to process
    * @returns Array of output events (state, message, turn events)
    */
-  process(agentId: string, event: StreamEvent): AgentOutput[] {
+  process(instanceId: string, event: StreamEvent): AgentOutput[] {
     const eventType = (event as { type?: string }).type || "unknown";
-    logger.debug("Processing event", { agentId, eventType });
+    logger.debug("Processing event", { instanceId, eventType });
 
     // Get current state or create initial state
-    const isNewState = !this.store.has(agentId);
-    let state = this.store.get(agentId) ?? createInitialAgentEngineState();
+    const isNewState = !this.store.has(instanceId);
+    let state = this.store.get(instanceId) ?? createInitialAgentEngineState();
 
     if (isNewState) {
-      logger.debug("Created initial state for agent", { agentId });
+      logger.debug("Created initial state for agent", { instanceId });
     }
 
     // Collect all outputs
@@ -114,11 +114,11 @@ export class MealyMachine {
     }
 
     // Store updated state
-    this.store.set(agentId, state);
+    this.store.set(instanceId, state);
 
     if (outputs.length > 0) {
       logger.debug("Produced outputs", {
-        agentId,
+        instanceId,
         inputEvent: eventType,
         outputCount: allOutputs.length,
         processorOutputs: outputs.length,
@@ -163,16 +163,16 @@ export class MealyMachine {
    *
    * Call this when an agent is destroyed to free memory.
    */
-  clearState(agentId: string): void {
-    logger.debug("Clearing state", { agentId });
-    this.store.delete(agentId);
+  clearState(instanceId: string): void {
+    logger.debug("Clearing state", { instanceId });
+    this.store.delete(instanceId);
   }
 
   /**
    * Check if state exists for an agent
    */
-  hasState(agentId: string): boolean {
-    return this.store.has(agentId);
+  hasState(instanceId: string): boolean {
+    return this.store.has(instanceId);
   }
 }
 

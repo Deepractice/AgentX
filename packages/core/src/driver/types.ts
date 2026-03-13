@@ -309,7 +309,7 @@ export type { Context };
  * // Use with type parameter
  * const config: DriverConfig<ClaudeDriverOptions> = {
  *   apiKey: "...",
- *   agentId: "my-agent",
+ *   instanceId: "my-agent",
  *   options: {
  *     claudeCodePath: "/usr/local/bin/claude"
  *   }
@@ -347,7 +347,7 @@ export interface DriverConfigBase {
   /**
    * Agent ID (for identification and logging)
    */
-  agentId: string;
+  instanceId: string;
 
   /**
    * System prompt for the agent (Layer 1 — fixed)
@@ -432,7 +432,7 @@ export interface DriverConfigBase {
  * // MonoDriverConfig = DriverConfigBase & MonoDriverOptions
  * const config: DriverConfig<MonoDriverOptions> = {
  *   apiKey: "...",
- *   agentId: "my-agent",
+ *   instanceId: "my-agent",
  *   provider: "anthropic",  // flat, not nested under options
  *   maxSteps: 10,
  * };

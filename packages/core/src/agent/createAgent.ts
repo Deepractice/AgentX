@@ -48,10 +48,10 @@ import type {
 const logger = createLogger("agent/AgentEngine");
 
 /**
- * Generate unique agent ID
+ * Generate unique instance ID
  */
-function generateAgentId(): string {
-  return `agent_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+function generateInstanceId(): string {
+  return `inst_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 }
 
 /**
@@ -79,7 +79,7 @@ class DefaultSource implements AgentSource {
 
   constructor(
     private readonly bus: AgentEventBus,
-    private readonly agentId: string
+    private readonly instanceId: string
   ) {}
 
   connect(onEvent: (event: StreamEvent) => void): void {
@@ -92,9 +92,9 @@ class DefaultSource implements AgentSource {
           return;
         }
 
-        // Filter by agentId if present in context
-        const e = event as { context?: { agentId?: string } };
-        if (e.context?.agentId && e.context.agentId !== this.agentId) {
+        // Filter by instanceId if present in context
+        const e = event as { context?: { instanceId?: string } };
+        if (e.context?.instanceId && e.context.instanceId !== this.instanceId) {
           return;
         }
         onEvent(event as StreamEvent);
@@ -102,7 +102,7 @@ class DefaultSource implements AgentSource {
       this.unsubscribes.push(unsub);
     }
 
-    logger.debug("DefaultSource connected", { agentId: this.agentId });
+    logger.debug("DefaultSource connected", { instanceId: this.instanceId });
   }
 
   disconnect(): void {
@@ -110,7 +110,7 @@ class DefaultSource implements AgentSource {
       unsub();
     }
     this.unsubscribes = [];
-    logger.debug("DefaultSource disconnected", { agentId: this.agentId });
+    logger.debug("DefaultSource disconnected", { instanceId: this.instanceId });
   }
 }
 
@@ -123,12 +123,12 @@ class DefaultPresenter implements AgentPresenter {
 
   constructor(private readonly bus: AgentEventBus) {}
 
-  present(agentId: string, output: AgentOutput): void {
+  present(instanceId: string, output: AgentOutput): void {
     // Emit to EventBus with agent context
     this.bus.emit({
       ...output,
       source: "agent",
-      context: { agentId },
+      context: { instanceId },
     });
   }
 }
@@ -164,7 +164,7 @@ class SimpleMessageQueue implements MessageQueue {
  * AgentEngineImpl - EventBus-based AgentEngine implementation
  */
 class AgentEngineImpl implements AgentEngine {
-  readonly agentId: string;
+  readonly instanceId: string;
   readonly createdAt: number;
   readonly messageQueue: MessageQueue;
 
@@ -185,7 +185,7 @@ class AgentEngineImpl implements AgentEngine {
   private isDestroyed = false;
 
   constructor(options: CreateAgentOptions) {
-    this.agentId = options.agentId ?? generateAgentId();
+    this.instanceId = options.instanceId ?? generateInstanceId();
     this.createdAt = Date.now();
     this.messageQueue = this._messageQueue;
     this.bus = options.bus;
@@ -193,13 +193,13 @@ class AgentEngineImpl implements AgentEngine {
     this.stateMachine = new AgentStateMachine();
 
     // Use provided Source/Presenter or create defaults
-    this.source = options.source ?? new DefaultSource(this.bus, this.agentId);
+    this.source = options.source ?? new DefaultSource(this.bus, this.instanceId);
     this.presenter = options.presenter ?? new DefaultPresenter(this.bus);
 
     // Connect Source to receive StreamEvents
     this.source.connect((event) => this.handleStreamEvent(event));
 
-    logger.debug("AgentEngine created", { agentId: this.agentId });
+    logger.debug("AgentEngine created", { instanceId: this.instanceId });
   }
 
   get state(): AgentState {
@@ -245,7 +245,7 @@ class AgentEngineImpl implements AgentEngine {
       timestamp: Date.now(),
       source: "agent",
       data: processedMessage,
-      context: { agentId: this.agentId },
+      context: { instanceId: this.instanceId },
     });
 
     logger.debug("user_message emitted to EventBus", { messageId: userMessage.id });
@@ -260,7 +260,7 @@ class AgentEngineImpl implements AgentEngine {
     logger.debug("handleStreamEvent", { type: event.type });
 
     // Process through MealyMachine
-    const outputs = this.machine.process(this.agentId, event);
+    const outputs = this.machine.process(this.instanceId, event);
 
     logger.debug("MealyMachine outputs", {
       count: outputs.length,
@@ -292,7 +292,7 @@ class AgentEngineImpl implements AgentEngine {
     if (!currentOutput) return;
 
     // Send to presenter (emits to EventBus)
-    this.presenter.present(this.agentId, currentOutput);
+    this.presenter.present(this.instanceId, currentOutput);
 
     // Notify local handlers
     for (const handler of this.handlers) {
@@ -421,10 +421,10 @@ class AgentEngineImpl implements AgentEngine {
       timestamp: Date.now(),
       source: "agent",
       data: {},
-      context: { agentId: this.agentId },
+      context: { instanceId: this.instanceId },
     });
 
-    logger.debug("Interrupt requested", { agentId: this.agentId });
+    logger.debug("Interrupt requested", { instanceId: this.instanceId });
   }
 
   async destroy(): Promise<void> {
@@ -444,7 +444,7 @@ class AgentEngineImpl implements AgentEngine {
     }
 
     // Clear state
-    this.machine.clearState(this.agentId);
+    this.machine.clearState(this.instanceId);
     this.stateMachine.reset();
 
     this._messageQueue.clear();
@@ -455,7 +455,7 @@ class AgentEngineImpl implements AgentEngine {
     this.middlewares.length = 0;
     this.interceptors.length = 0;
 
-    logger.debug("AgentEngine destroyed", { agentId: this.agentId });
+    logger.debug("AgentEngine destroyed", { instanceId: this.instanceId });
   }
 }
 

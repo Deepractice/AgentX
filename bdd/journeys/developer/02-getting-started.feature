@@ -47,7 +47,7 @@ Feature: Getting Started with AgentX SDK
         systemPrompt: "You are a helpful assistant.",
       });
 
-      const { agentId } = await ax.agent.create({
+      const { instanceId } = await ax.runtime.instance.create({
         imageId: image.imageId,
       });
 
@@ -57,7 +57,7 @@ Feature: Getting Started with AgentX SDK
         ax.dispose();
       });
 
-      await ax.session.send(agentId, "Hello, who are you?");
+      await ax.runtime.session.send(instanceId, "Hello, who are you?");
       """
     Then I should see a streaming response from the agent
     And no server or database is needed
@@ -145,7 +145,7 @@ Feature: Getting Started with AgentX SDK
     Given I need structured conversation state for a UI
     When I use the Presentation API:
       """
-      const presentation = await ax.presentation.create(agentId, {
+      const presentation = await ax.runtime.present.create(instanceId, {
         onUpdate: (state) => {
           // state.conversations — completed messages (includes history)
           // state.streaming — current streaming response (or null)
@@ -171,7 +171,7 @@ Feature: Getting Started with AgentX SDK
       const messages = await ax.image.getMessages(imageId);
 
       // Get messages by agent session
-      const messages = await ax.session.getMessages(agentId);
+      const messages = await ax.runtime.session.getMessages(instanceId);
       """
     Then I can display or process the conversation history
 

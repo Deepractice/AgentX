@@ -16,16 +16,16 @@
  * const agent = await runtime.createAgent({ imageId: "img_xxx" });
  *
  * // Send message
- * await runtime.receive(agent.agentId, "Hello!");
+ * await runtime.receive(agent.instanceId, "Hello!");
  *
  * // Subscribe to events
- * const sub = runtime.subscribe(agent.agentId, (event) => {
+ * const sub = runtime.subscribe(agent.instanceId, (event) => {
  *   console.log(event.type, event.data);
  * });
  *
  * // Cleanup
  * sub.unsubscribe();
- * await runtime.destroyAgent(agent.agentId);
+ * await runtime.destroyAgent(agent.instanceId);
  * ```
  */
 

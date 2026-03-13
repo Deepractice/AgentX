@@ -18,7 +18,7 @@ export type AgentXErrorCategory = "driver" | "persistence" | "connection" | "run
  * Error context — scope information for debugging
  */
 export interface AgentXErrorContext {
-  agentId?: string;
+  instanceId?: string;
   sessionId?: string;
   imageId?: string;
   containerId?: string;
@@ -66,7 +66,7 @@ export type AgentXErrorCodeType = (typeof AgentXErrorCode)[keyof typeof AgentXEr
  *   category: "persistence",
  *   message: "Failed to persist assistant message",
  *   recoverable: true,
- *   context: { agentId: "agent_123", sessionId: "sess_456" },
+ *   context: { instanceId: "agent_123", sessionId: "sess_456" },
  *   cause: originalError,
  * });
  * ```

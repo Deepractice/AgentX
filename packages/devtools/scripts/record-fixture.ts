@@ -44,7 +44,7 @@ async function main() {
   // Create real Claude driver
   const claudeFactory = createClaudeDriverFactory();
   const realDriver = claudeFactory.createDriver({
-    agentId: "recording-agent",
+    instanceId: "recording-agent",
     config: {
       apiKey: apiKey!,
       baseUrl,
@@ -111,7 +111,7 @@ async function main() {
       timestamp: Date.now(),
     },
     context: {
-      agentId: "recording-agent",
+      instanceId: "recording-agent",
       sessionId: "recording-session",
     },
   } as never);

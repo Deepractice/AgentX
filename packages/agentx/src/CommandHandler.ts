@@ -89,16 +89,16 @@ export class CommandHandler {
         case "image.messages":
           return await this.handleImageMessages(params);
 
-        // Agent
-        case "agent.get":
+        // Instance
+        case "instance.get":
           return await this.handleAgentGet(params);
-        case "agent.list":
+        case "instance.list":
           return await this.handleAgentList(params);
-        case "agent.destroy":
+        case "instance.destroy":
           return await this.handleAgentDestroy(params);
-        case "agent.destroyAll":
+        case "instance.destroyAll":
           return await this.handleAgentDestroyAll(params);
-        case "agent.interrupt":
+        case "instance.interrupt":
           return await this.handleAgentInterrupt(params);
 
         // Message
@@ -228,9 +228,9 @@ export class CommandHandler {
   }
 
   private async handleImageRun(params: unknown): Promise<RpcResponse> {
-    const { imageId, agentId: requestedAgentId } = params as {
+    const { imageId, instanceId: requestedInstanceId } = params as {
       imageId: string;
-      agentId?: string;
+      instanceId?: string;
     };
 
     // Check if already have a running agent for this image
@@ -241,30 +241,30 @@ export class CommandHandler {
     if (existingAgent) {
       logger.debug("Reusing existing agent for image", {
         imageId,
-        agentId: existingAgent.agentId,
+        instanceId: existingAgent.instanceId,
       });
       return ok({
         imageId,
-        agentId: existingAgent.agentId,
+        instanceId: existingAgent.instanceId,
         sessionId: existingAgent.sessionId,
         containerId: existingAgent.containerId,
         reused: true,
       });
     }
 
-    // Create new agent (with optional custom agentId)
+    // Create new agent (with optional custom instanceId)
     const agent = await this.runtime.createAgent({
       imageId,
-      agentId: requestedAgentId,
+      instanceId: requestedInstanceId,
     });
     logger.info("Created new agent for image", {
       imageId,
-      agentId: agent.agentId,
+      instanceId: agent.instanceId,
     });
 
     return ok({
       imageId,
-      agentId: agent.agentId,
+      instanceId: agent.instanceId,
       sessionId: agent.sessionId,
       containerId: agent.containerId,
       reused: false,
@@ -280,8 +280,8 @@ export class CommandHandler {
       .find((a) => a.imageId === imageId && a.lifecycle === "running");
 
     if (agent) {
-      await this.runtime.stopAgent(agent.agentId);
-      logger.info("Stopped agent for image", { imageId, agentId: agent.agentId });
+      await this.runtime.stopAgent(agent.instanceId);
+      logger.info("Stopped agent for image", { imageId, instanceId: agent.instanceId });
     } else {
       logger.debug("No running agent found for image", { imageId });
     }
@@ -344,13 +344,13 @@ export class CommandHandler {
   // ==================== Agent Commands ====================
 
   private async handleAgentGet(params: unknown): Promise<RpcResponse> {
-    const { agentId } = params as { agentId: string };
-    const agent = this.runtime.getAgent(agentId);
+    const { instanceId } = params as { instanceId: string };
+    const agent = this.runtime.getAgent(instanceId);
 
     return ok({
       agent: agent
         ? {
-            agentId: agent.agentId,
+            instanceId: agent.instanceId,
             imageId: agent.imageId,
             containerId: agent.containerId,
             sessionId: agent.sessionId,
@@ -369,7 +369,7 @@ export class CommandHandler {
 
     return ok({
       agents: agents.map((a) => ({
-        agentId: a.agentId,
+        instanceId: a.instanceId,
         imageId: a.imageId,
         containerId: a.containerId,
         sessionId: a.sessionId,
@@ -379,47 +379,47 @@ export class CommandHandler {
   }
 
   private async handleAgentDestroy(params: unknown): Promise<RpcResponse> {
-    const { agentId } = params as { agentId: string };
+    const { instanceId } = params as { instanceId: string };
 
     // Check if agent exists first
-    const agent = this.runtime.getAgent(agentId);
+    const agent = this.runtime.getAgent(instanceId);
     if (!agent) {
-      return ok({ agentId, success: false });
+      return ok({ instanceId, success: false });
     }
 
-    await this.runtime.destroyAgent(agentId);
-    return ok({ agentId, success: true });
+    await this.runtime.destroyAgent(instanceId);
+    return ok({ instanceId, success: true });
   }
 
   private async handleAgentDestroyAll(params: unknown): Promise<RpcResponse> {
     const { containerId } = params as { containerId: string };
     const agents = this.runtime.getAgentsByContainer(containerId);
     for (const agent of agents) {
-      await this.runtime.destroyAgent(agent.agentId);
+      await this.runtime.destroyAgent(agent.instanceId);
     }
     return ok({ containerId });
   }
 
   private async handleAgentInterrupt(params: unknown): Promise<RpcResponse> {
-    const { agentId } = params as { agentId: string };
-    this.runtime.interrupt(agentId);
-    return ok({ agentId });
+    const { instanceId } = params as { instanceId: string };
+    this.runtime.interrupt(instanceId);
+    return ok({ instanceId });
   }
 
   // ==================== Message Commands ====================
 
   private async handleMessageSend(params: unknown): Promise<RpcResponse> {
-    const { agentId, imageId, content } = params as {
-      agentId?: string;
+    const { instanceId, imageId, content } = params as {
+      instanceId?: string;
       imageId?: string;
       content: string | UserContentPart[];
     };
 
-    let targetAgentId: string;
+    let targetInstanceId: string;
 
-    if (agentId) {
+    if (instanceId) {
       // Direct agent reference
-      targetAgentId = agentId;
+      targetInstanceId = instanceId;
     } else if (imageId) {
       // Auto-activate image: find or create agent
       const existingAgent = this.runtime
@@ -427,26 +427,26 @@ export class CommandHandler {
         .find((a) => a.imageId === imageId && a.lifecycle === "running");
 
       if (existingAgent) {
-        targetAgentId = existingAgent.agentId;
+        targetInstanceId = existingAgent.instanceId;
         logger.debug("Using existing agent for message", {
           imageId,
-          agentId: targetAgentId,
+          instanceId: targetInstanceId,
         });
       } else {
         // Create new agent for this image
         const agent = await this.runtime.createAgent({ imageId });
-        targetAgentId = agent.agentId;
+        targetInstanceId = agent.instanceId;
         logger.info("Auto-created agent for message", {
           imageId,
-          agentId: targetAgentId,
+          instanceId: targetInstanceId,
         });
       }
     } else {
-      return err(-32602, "Either agentId or imageId is required");
+      return err(-32602, "Either instanceId or imageId is required");
     }
 
-    await this.runtime.receive(targetAgentId, content);
-    return ok({ agentId: targetAgentId, imageId });
+    await this.runtime.receive(targetInstanceId, content);
+    return ok({ instanceId: targetInstanceId, imageId });
   }
 
   // ==================== Prototype Commands ====================

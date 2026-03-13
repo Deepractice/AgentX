@@ -12,7 +12,7 @@
  * const logger = createLogger("engine/AgentEngine");
  *
  * // Later, at runtime
- * logger.info("Agent initialized", { agentId: "xxx" });
+ * logger.info("Agent initialized", { instanceId: "xxx" });
  * ```
  */
 

@@ -16,7 +16,7 @@
  *
  * const driver = createClaudeDriver({
  *   apiKey: process.env.ANTHROPIC_API_KEY!,
- *   agentId: "my-agent",
+ *   instanceId: "my-agent",
  *   systemPrompt: "You are helpful",
  * });
  *

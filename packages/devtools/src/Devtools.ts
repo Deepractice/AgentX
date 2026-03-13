@@ -160,13 +160,13 @@ export class Devtools {
   async record(name: string, options: DriverOptions): Promise<Fixture> {
     const createDriver = await this.getRealCreateDriver();
 
-    const agentId = `record-${name}`;
+    const instanceId = `record-${name}`;
 
     // Create driver config
     const driverConfig: DriverConfig = {
       apiKey: this.config.apiKey!,
       baseUrl: this.config.baseUrl,
-      agentId,
+      instanceId,
       model: this.config.model,
       systemPrompt:
         options.systemPrompt || this.config.systemPrompt || "You are a helpful assistant.",

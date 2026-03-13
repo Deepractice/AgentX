@@ -174,7 +174,7 @@ export interface AgentEngine {
   /**
    * Unique agent instance ID
    */
-  readonly agentId: string;
+  readonly instanceId: string;
 
   /**
    * Creation timestamp
@@ -333,10 +333,10 @@ export interface AgentPresenter {
   /**
    * Publish an agent output to EventBus
    *
-   * @param agentId - The agent ID
+   * @param instanceId - The agent ID
    * @param output - The output to publish
    */
-  present(agentId: string, output: AgentOutput): void;
+  present(instanceId: string, output: AgentOutput): void;
 }
 
 // =============================================================================
@@ -370,7 +370,7 @@ export interface CreateAgentOptions {
   /**
    * Agent ID (optional, auto-generated if not provided)
    */
-  agentId?: string;
+  instanceId?: string;
 
   /**
    * EventBus connection

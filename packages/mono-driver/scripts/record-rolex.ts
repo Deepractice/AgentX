@@ -49,7 +49,7 @@ async function main() {
     apiKey: env.apiKey!,
     baseUrl: env.baseUrl,
     model: env.model,
-    agentId: "rolex-recording-agent",
+    instanceId: "rolex-recording-agent",
     provider: "anthropic",
     systemPrompt: "You are an AI assistant with RoleX role system enabled. Respond concisely.",
     rolex: {

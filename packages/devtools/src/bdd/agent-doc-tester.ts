@@ -104,7 +104,7 @@ export async function agentDocTester(
       systemPrompt: SYSTEM_PROMPT,
     });
 
-    const { agentId } = await agentx.agent.create({ imageId: image.imageId });
+    const { instanceId } = await agentx.agent.create({ imageId: image.imageId });
 
     // Collect response text
     let output = "";
@@ -114,7 +114,7 @@ export async function agentDocTester(
 
     // Send prompt and wait for completion
     await Promise.race([
-      agentx.session.send(agentId, userPrompt),
+      agentx.session.send(instanceId, userPrompt),
       new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeout)),
     ]);
 

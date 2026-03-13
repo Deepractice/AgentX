@@ -95,8 +95,8 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       throw new Error(`Image not found: ${imageId}`);
     }
 
-    // Generate agent ID
-    const agentId = options.agentId ?? this.generateAgentId();
+    // Generate instance ID
+    const instanceId = options.instanceId ?? this.generateInstanceId();
 
     // Ensure container exists
     const containerExists = await this.platform.containerRepository.containerExists(
@@ -137,7 +137,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     // Create driver config
     const driverConfig: DriverConfig = {
       apiKey: "",
-      agentId,
+      instanceId,
       systemPrompt,
       mcpServers,
       context,
@@ -202,7 +202,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
 
     const runtimePresenter: AgentPresenter = {
       name: "RuntimePresenter",
-      present: (_agentId: string, output: AgentOutput) => {
+      present: (_instanceId: string, output: AgentOutput) => {
         const category = categorizeAgentOutput(output.type);
 
         // Skip stream events — already emitted by handleDriverEvent
@@ -217,7 +217,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
           intent: "notification",
           data: output.data,
           context: {
-            agentId,
+            instanceId,
             imageId,
             containerId: imageRecord.containerId,
             sessionId,
@@ -234,7 +234,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
               category: "persistence",
               message: `Failed to persist ${output.type}`,
               recoverable: true,
-              context: { agentId, sessionId, imageId, containerId: imageRecord.containerId },
+              context: { instanceId, sessionId, imageId, containerId: imageRecord.containerId },
               cause: err instanceof Error ? err : new Error(String(err)),
             });
             logger.error("Failed to persist message", { type: output.type, error: err });
@@ -245,10 +245,10 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
               category: "error",
               intent: "notification",
               data: axError,
-              context: { agentId, sessionId, imageId, containerId: imageRecord.containerId },
+              context: { instanceId, sessionId, imageId, containerId: imageRecord.containerId },
             } as BusEvent);
           });
-          const agentState = this.agents.get(agentId);
+          const agentState = this.agents.get(instanceId);
           if (agentState) {
             agentState.pendingPersists.push(persistPromise);
           }
@@ -257,7 +257,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     };
 
     const engine = createAgentEngine({
-      agentId,
+      instanceId,
       bus: this.platform.eventBus,
       source: noopSource,
       presenter: runtimePresenter,
@@ -265,7 +265,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
 
     // Create runtime agent
     const agent: RuntimeAgent = {
-      agentId,
+      instanceId,
       imageId,
       containerId: imageRecord.containerId,
       sessionId: imageRecord.sessionId,
@@ -277,7 +277,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     // Create circuit breaker for this agent's driver calls
     const circuitBreaker = new CircuitBreaker();
     circuitBreaker.onChange((newState, error) => {
-      logger.warn("Circuit breaker state changed", { agentId, state: newState });
+      logger.warn("Circuit breaker state changed", { instanceId, state: newState });
       if (error) {
         eventBus.emit({
           type: "agentx_error",
@@ -286,7 +286,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
           category: "error",
           intent: "notification",
           data: error,
-          context: { agentId, imageId, containerId: imageRecord.containerId, sessionId },
+          context: { instanceId, imageId, containerId: imageRecord.containerId, sessionId },
         } as BusEvent);
       }
     });
@@ -302,7 +302,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       isReceiving: false,
       pendingPersists: [],
     };
-    this.agents.set(agentId, state);
+    this.agents.set(instanceId, state);
 
     // Emit agent_created event
     this.platform.eventBus.emit({
@@ -312,12 +312,12 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       category: "lifecycle",
       intent: "notification",
       data: {
-        agentId,
+        instanceId,
         imageId,
         containerId: imageRecord.containerId,
       },
       context: {
-        agentId,
+        instanceId,
         imageId,
         containerId: imageRecord.containerId,
         sessionId: imageRecord.sessionId,
@@ -325,7 +325,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     } as BusEvent);
 
     logger.info("Agent created", {
-      agentId,
+      instanceId,
       imageId,
       containerId: imageRecord.containerId,
     });
@@ -333,8 +333,8 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     return agent;
   }
 
-  getAgent(agentId: string): RuntimeAgent | undefined {
-    const state = this.agents.get(agentId);
+  getAgent(instanceId: string): RuntimeAgent | undefined {
+    const state = this.agents.get(instanceId);
     return state?.agent;
   }
 
@@ -348,14 +348,14 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       .map((s) => s.agent);
   }
 
-  async stopAgent(agentId: string): Promise<void> {
-    const state = this.agents.get(agentId);
+  async stopAgent(instanceId: string): Promise<void> {
+    const state = this.agents.get(instanceId);
     if (!state) {
-      throw new Error(`Agent not found: ${agentId}`);
+      throw new Error(`Agent not found: ${instanceId}`);
     }
 
     if (state.lifecycle === "destroyed") {
-      throw new Error(`Agent already destroyed: ${agentId}`);
+      throw new Error(`Agent already destroyed: ${instanceId}`);
     }
 
     state.lifecycle = "stopped";
@@ -367,26 +367,26 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       source: "runtime",
       category: "lifecycle",
       intent: "notification",
-      data: { agentId },
+      data: { instanceId },
       context: {
-        agentId,
+        instanceId,
         imageId: state.agent.imageId,
         containerId: state.agent.containerId,
         sessionId: state.agent.sessionId,
       },
     } as BusEvent);
 
-    logger.info("Agent stopped", { agentId });
+    logger.info("Agent stopped", { instanceId });
   }
 
-  async resumeAgent(agentId: string): Promise<void> {
-    const state = this.agents.get(agentId);
+  async resumeAgent(instanceId: string): Promise<void> {
+    const state = this.agents.get(instanceId);
     if (!state) {
-      throw new Error(`Agent not found: ${agentId}`);
+      throw new Error(`Agent not found: ${instanceId}`);
     }
 
     if (state.lifecycle === "destroyed") {
-      throw new Error(`Cannot resume destroyed agent: ${agentId}`);
+      throw new Error(`Cannot resume destroyed agent: ${instanceId}`);
     }
 
     state.lifecycle = "running";
@@ -398,22 +398,22 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       source: "runtime",
       category: "lifecycle",
       intent: "notification",
-      data: { agentId },
+      data: { instanceId },
       context: {
-        agentId,
+        instanceId,
         imageId: state.agent.imageId,
         containerId: state.agent.containerId,
         sessionId: state.agent.sessionId,
       },
     } as BusEvent);
 
-    logger.info("Agent resumed", { agentId });
+    logger.info("Agent resumed", { instanceId });
   }
 
-  async destroyAgent(agentId: string): Promise<void> {
-    const state = this.agents.get(agentId);
+  async destroyAgent(instanceId: string): Promise<void> {
+    const state = this.agents.get(instanceId);
     if (!state) {
-      throw new Error(`Agent not found: ${agentId}`);
+      throw new Error(`Agent not found: ${instanceId}`);
     }
 
     // Dispose driver and engine
@@ -435,9 +435,9 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       source: "runtime",
       category: "lifecycle",
       intent: "notification",
-      data: { agentId },
+      data: { instanceId },
       context: {
-        agentId,
+        instanceId,
         imageId: state.agent.imageId,
         containerId: state.agent.containerId,
         sessionId: state.agent.sessionId,
@@ -445,29 +445,29 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     } as BusEvent);
 
     // Remove from map
-    this.agents.delete(agentId);
+    this.agents.delete(instanceId);
 
-    logger.info("Agent destroyed", { agentId });
+    logger.info("Agent destroyed", { instanceId });
   }
 
   // ==================== Message Handling ====================
 
   async receive(
-    agentId: string,
+    instanceId: string,
     content: string | UserContentPart[],
     requestId?: string
   ): Promise<void> {
-    const state = this.agents.get(agentId);
+    const state = this.agents.get(instanceId);
     if (!state) {
-      throw new Error(`Agent not found: ${agentId}`);
+      throw new Error(`Agent not found: ${instanceId}`);
     }
 
     if (state.lifecycle !== "running") {
-      throw new Error(`Cannot send message to ${state.lifecycle} agent: ${agentId}`);
+      throw new Error(`Cannot send message to ${state.lifecycle} agent: ${instanceId}`);
     }
 
     if (state.isReceiving) {
-      throw new Error(`Agent ${agentId} is already processing a message`);
+      throw new Error(`Agent ${instanceId} is already processing a message`);
     }
 
     // Circuit breaker check
@@ -478,7 +478,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
         message: "Circuit breaker open: too many consecutive driver failures",
         recoverable: false,
         context: {
-          agentId,
+          instanceId,
           sessionId: state.agent.sessionId,
           imageId: state.agent.imageId,
           containerId: state.agent.containerId,
@@ -504,7 +504,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     this.emitEvent(state, "user_message", userMessage, actualRequestId);
 
     logger.debug("User message sent", {
-      agentId,
+      instanceId,
       requestId: actualRequestId,
       contentPreview:
         typeof content === "string"
@@ -550,32 +550,32 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     }
   }
 
-  interrupt(agentId: string, requestId?: string): void {
-    const state = this.agents.get(agentId);
+  interrupt(instanceId: string, requestId?: string): void {
+    const state = this.agents.get(instanceId);
     if (!state) {
-      throw new Error(`Agent not found: ${agentId}`);
+      throw new Error(`Agent not found: ${instanceId}`);
     }
 
     // Call driver.interrupt() directly
     state.driver.interrupt();
 
     // Emit interrupt event (for external subscribers)
-    this.emitEvent(state, "interrupt", { agentId }, requestId ?? this.generateRequestId());
+    this.emitEvent(state, "interrupt", { instanceId }, requestId ?? this.generateRequestId());
 
-    logger.debug("Interrupt sent", { agentId, requestId });
+    logger.debug("Interrupt sent", { instanceId, requestId });
   }
 
   // ==================== Event Subscription ====================
 
-  subscribe(agentId: string, handler: AgentEventHandler): Subscription {
-    const state = this.agents.get(agentId);
+  subscribe(instanceId: string, handler: AgentEventHandler): Subscription {
+    const state = this.agents.get(instanceId);
     if (!state) {
-      throw new Error(`Agent not found: ${agentId}`);
+      throw new Error(`Agent not found: ${instanceId}`);
     }
 
     const unsub = this.platform.eventBus.onAny((event) => {
-      const context = (event as BusEvent & { context?: { agentId?: string } }).context;
-      if (context?.agentId === agentId) {
+      const context = (event as BusEvent & { context?: { instanceId?: string } }).context;
+      if (context?.instanceId === instanceId) {
         handler(event);
       }
     });
@@ -610,9 +610,9 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     logger.info("Shutting down AgentXRuntime...");
 
     // Destroy all agents
-    const agentIds = Array.from(this.agents.keys());
-    for (const agentId of agentIds) {
-      await this.destroyAgent(agentId);
+    const instanceIds = Array.from(this.agents.keys());
+    for (const instanceId of instanceIds) {
+      await this.destroyAgent(instanceId);
     }
 
     // Cleanup global subscriptions
@@ -653,7 +653,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       requestId,
       data,
       context: {
-        agentId: state.agent.agentId,
+        instanceId: state.agent.instanceId,
         imageId: state.agent.imageId,
         containerId: state.agent.containerId,
         sessionId: state.agent.sessionId,
@@ -672,10 +672,10 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     return "stream";
   }
 
-  private generateAgentId(): string {
+  private generateInstanceId(): string {
     const timestamp = Date.now().toString(36);
     const random = Math.random().toString(36).substring(2, 8);
-    return `agent_${timestamp}_${random}`;
+    return `inst_${timestamp}_${random}`;
   }
 
   private generateRequestId(): string {

@@ -28,7 +28,7 @@ export interface QueueEntry {
   readonly offset: string;
 
   /**
-   * Topic this entry belongs to (e.g., sessionId, agentId)
+   * Topic this entry belongs to (e.g., sessionId, instanceId)
    */
   readonly topic: string;
 

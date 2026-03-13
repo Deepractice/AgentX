@@ -187,12 +187,7 @@ export {
 export { createServer, type ServerConfig } from "./server";
 // Re-export types
 export type {
-  AgentCreateResponse,
-  AgentGetResponse,
   AgentHandle,
-  AgentInfo,
-  AgentListResponse,
-  AgentNamespace,
   AgentX,
   AgentXBuilder,
   AgentXServer,
@@ -210,6 +205,11 @@ export type {
   ImageListResponse,
   ImageNamespace,
   ImageRecord,
+  InstanceCreateResponse,
+  InstanceGetResponse,
+  InstanceInfo,
+  InstanceListResponse,
+  InstanceNamespace,
   LLMNamespace,
   LLMProviderCreateResponse,
   LLMProviderDefaultResponse,

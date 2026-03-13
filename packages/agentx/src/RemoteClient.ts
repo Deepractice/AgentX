@@ -11,7 +11,7 @@ import { EventBusImpl } from "@agentxjs/core/event";
 import { RpcClient, type RpcMethod } from "@agentxjs/core/network";
 import { createLogger } from "commonxjs/logger";
 import { AgentHandleImpl } from "./AgentHandle";
-import { createRemoteAgents } from "./namespaces/agents";
+import { createRemoteInstances } from "./namespaces/agents";
 import { createRemoteContainers } from "./namespaces/containers";
 import { createRemoteImages } from "./namespaces/images";
 import { createRemoteLLM } from "./namespaces/llm";
@@ -65,13 +65,13 @@ export class RemoteClient implements AgentX {
     // Assemble namespaces
     const container = createRemoteContainers(this.rpcClient);
     const image = createRemoteImages(this.rpcClient, (sessionId) => this.subscribe(sessionId));
-    const agent = createRemoteAgents(this.rpcClient);
+    const instance = createRemoteInstances(this.rpcClient);
     const session = createRemoteSessions(this.rpcClient);
     const llm = createRemoteLLM(this.rpcClient);
     const prototype = createRemotePrototypes(this.rpcClient);
-    const present = createPresentations(this, image);
+    const present = createPresentations(this, session);
 
-    this.runtime = { container, image, agent, session, present, llm, prototype };
+    this.runtime = { container, image, instance, session, present, llm, prototype };
     this.provider = llm;
     this.prototype = prototype;
     this.chat = this.createChatNamespace();
@@ -137,14 +137,14 @@ export class RemoteClient implements AgentX {
   // ==================== Private ====================
 
   private createChatNamespace(): ChatNamespace {
-    const instance = this.runtime;
+    const rt = this.runtime;
     return {
       async create(params) {
         const containerId = "default";
         // If prototypeId is provided, merge prototype config into params
         let mergedParams = { ...params };
         if (params.prototypeId) {
-          const protoRes = await instance.prototype.get(params.prototypeId);
+          const protoRes = await rt.prototype.get(params.prototypeId);
           if (protoRes.record) {
             const proto = protoRes.record;
             mergedParams = {
@@ -158,34 +158,34 @@ export class RemoteClient implements AgentX {
           }
         }
         const { prototypeId: _pid, ...imageParams } = mergedParams;
-        const imgRes = await instance.image.create({ containerId, ...imageParams });
-        const agentRes = await instance.agent.create({ imageId: imgRes.record.imageId });
+        const imgRes = await rt.image.create({ containerId, ...imageParams });
+        const instRes = await rt.instance.create({ imageId: imgRes.record.imageId });
         return new AgentHandleImpl(
           {
-            agentId: agentRes.agentId,
-            imageId: agentRes.imageId,
-            containerId: agentRes.containerId,
-            sessionId: agentRes.sessionId,
+            instanceId: instRes.instanceId,
+            imageId: instRes.imageId,
+            containerId: instRes.containerId,
+            sessionId: instRes.sessionId,
           },
-          instance
+          rt
         );
       },
       async list() {
-        return instance.image.list();
+        return rt.image.list();
       },
       async get(id) {
-        const res = await instance.image.get(id);
+        const res = await rt.image.get(id);
         if (!res.record) return null;
         const r = res.record;
-        const agentRes = await instance.agent.create({ imageId: r.imageId });
+        const instRes = await rt.instance.create({ imageId: r.imageId });
         return new AgentHandleImpl(
           {
-            agentId: agentRes.agentId,
-            imageId: agentRes.imageId,
-            containerId: agentRes.containerId,
-            sessionId: agentRes.sessionId,
+            instanceId: instRes.instanceId,
+            imageId: instRes.imageId,
+            containerId: instRes.containerId,
+            sessionId: instRes.sessionId,
           },
-          instance
+          rt
         );
       },
     };

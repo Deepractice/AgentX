@@ -5,19 +5,22 @@
 import type { RpcClient, RpcMethod } from "@agentxjs/core/network";
 import type { AgentXRuntime } from "@agentxjs/core/runtime";
 import type {
-  AgentCreateResponse,
-  AgentGetResponse,
-  AgentListResponse,
-  AgentNamespace,
   BaseResponse,
+  InstanceCreateResponse,
+  InstanceGetResponse,
+  InstanceListResponse,
+  InstanceNamespace,
 } from "../types";
 
 /**
  * Create local agent namespace backed by embedded runtime
  */
-export function createLocalAgents(runtime: AgentXRuntime): AgentNamespace {
+export function createLocalInstances(runtime: AgentXRuntime): InstanceNamespace {
   return {
-    async create(params: { imageId: string; agentId?: string }): Promise<AgentCreateResponse> {
+    async create(params: {
+      imageId: string;
+      instanceId?: string;
+    }): Promise<InstanceCreateResponse> {
       // Reuse existing running agent for this image
       const existingAgent = runtime
         .getAgents()
@@ -25,7 +28,7 @@ export function createLocalAgents(runtime: AgentXRuntime): AgentNamespace {
 
       if (existingAgent) {
         return {
-          agentId: existingAgent.agentId,
+          instanceId: existingAgent.instanceId,
           imageId: existingAgent.imageId,
           containerId: existingAgent.containerId,
           sessionId: existingAgent.sessionId,
@@ -35,11 +38,11 @@ export function createLocalAgents(runtime: AgentXRuntime): AgentNamespace {
 
       const agent = await runtime.createAgent({
         imageId: params.imageId,
-        agentId: params.agentId,
+        instanceId: params.instanceId,
       });
 
       return {
-        agentId: agent.agentId,
+        instanceId: agent.instanceId,
         imageId: agent.imageId,
         containerId: agent.containerId,
         sessionId: agent.sessionId,
@@ -47,12 +50,12 @@ export function createLocalAgents(runtime: AgentXRuntime): AgentNamespace {
       };
     },
 
-    async get(agentId: string): Promise<AgentGetResponse> {
-      const agent = runtime.getAgent(agentId);
+    async get(instanceId: string): Promise<InstanceGetResponse> {
+      const agent = runtime.getAgent(instanceId);
       return {
         agent: agent
           ? {
-              agentId: agent.agentId,
+              instanceId: agent.instanceId,
               imageId: agent.imageId,
               containerId: agent.containerId,
               sessionId: agent.sessionId,
@@ -64,12 +67,12 @@ export function createLocalAgents(runtime: AgentXRuntime): AgentNamespace {
       };
     },
 
-    async list(containerId?: string): Promise<AgentListResponse> {
+    async list(containerId?: string): Promise<InstanceListResponse> {
       const agents = containerId ? runtime.getAgentsByContainer(containerId) : runtime.getAgents();
 
       return {
         agents: agents.map((a) => ({
-          agentId: a.agentId,
+          instanceId: a.instanceId,
           imageId: a.imageId,
           containerId: a.containerId,
           sessionId: a.sessionId,
@@ -79,10 +82,10 @@ export function createLocalAgents(runtime: AgentXRuntime): AgentNamespace {
       };
     },
 
-    async destroy(agentId: string): Promise<BaseResponse> {
-      const agent = runtime.getAgent(agentId);
+    async destroy(instanceId: string): Promise<BaseResponse> {
+      const agent = runtime.getAgent(instanceId);
       if (agent) {
-        await runtime.destroyAgent(agentId);
+        await runtime.destroyAgent(instanceId);
       }
       return { requestId: "" };
     },
@@ -92,29 +95,32 @@ export function createLocalAgents(runtime: AgentXRuntime): AgentNamespace {
 /**
  * Create remote agent namespace backed by RPC client
  */
-export function createRemoteAgents(rpcClient: RpcClient): AgentNamespace {
+export function createRemoteInstances(rpcClient: RpcClient): InstanceNamespace {
   return {
-    async create(params: { imageId: string; agentId?: string }): Promise<AgentCreateResponse> {
+    async create(params: {
+      imageId: string;
+      instanceId?: string;
+    }): Promise<InstanceCreateResponse> {
       // Agent creation via image.run RPC
-      const result = await rpcClient.call<AgentCreateResponse>("image.run" as RpcMethod, {
+      const result = await rpcClient.call<InstanceCreateResponse>("image.run" as RpcMethod, {
         imageId: params.imageId,
-        agentId: params.agentId,
+        instanceId: params.instanceId,
       });
       return { ...result, requestId: "" };
     },
 
-    async get(agentId: string): Promise<AgentGetResponse> {
-      const result = await rpcClient.call<AgentGetResponse>("agent.get", { agentId });
+    async get(instanceId: string): Promise<InstanceGetResponse> {
+      const result = await rpcClient.call<InstanceGetResponse>("instance.get", { instanceId });
       return { ...result, requestId: "" };
     },
 
-    async list(containerId?: string): Promise<AgentListResponse> {
-      const result = await rpcClient.call<AgentListResponse>("agent.list", { containerId });
+    async list(containerId?: string): Promise<InstanceListResponse> {
+      const result = await rpcClient.call<InstanceListResponse>("instance.list", { containerId });
       return { ...result, requestId: "" };
     },
 
-    async destroy(agentId: string): Promise<BaseResponse> {
-      const result = await rpcClient.call<BaseResponse>("agent.destroy", { agentId });
+    async destroy(instanceId: string): Promise<BaseResponse> {
+      const result = await rpcClient.call<BaseResponse>("instance.destroy", { instanceId });
       return { ...result, requestId: "" };
     },
   };

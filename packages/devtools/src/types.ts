@@ -29,7 +29,7 @@ export interface FixtureEvent {
   index?: number;
 
   /**
-   * Optional: event context (agentId, sessionId, etc.)
+   * Optional: event context (instanceId, sessionId, etc.)
    */
   context?: unknown;
 }

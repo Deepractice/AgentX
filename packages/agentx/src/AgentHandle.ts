@@ -15,7 +15,7 @@ import type {
 } from "./types";
 
 export class AgentHandleImpl implements AgentHandle {
-  readonly agentId: string;
+  readonly instanceId: string;
   readonly imageId: string;
   readonly containerId: string;
   readonly sessionId: string;
@@ -23,10 +23,10 @@ export class AgentHandleImpl implements AgentHandle {
   private readonly ns: RuntimeNamespace;
 
   constructor(
-    ids: { agentId: string; imageId: string; containerId: string; sessionId: string },
+    ids: { instanceId: string; imageId: string; containerId: string; sessionId: string },
     ns: RuntimeNamespace
   ) {
-    this.agentId = ids.agentId;
+    this.instanceId = ids.instanceId;
     this.imageId = ids.imageId;
     this.containerId = ids.containerId;
     this.sessionId = ids.sessionId;
@@ -34,11 +34,11 @@ export class AgentHandleImpl implements AgentHandle {
   }
 
   async send(content: string | unknown[]): Promise<MessageSendResponse> {
-    return this.ns.session.send(this.agentId, content);
+    return this.ns.session.send(this.instanceId, content);
   }
 
   async interrupt(): Promise<BaseResponse> {
-    return this.ns.session.interrupt(this.agentId);
+    return this.ns.session.interrupt(this.instanceId);
   }
 
   async history(): Promise<Message[]> {
@@ -46,7 +46,7 @@ export class AgentHandleImpl implements AgentHandle {
   }
 
   async present(options?: PresentationOptions): Promise<Presentation> {
-    return this.ns.present.create(this.agentId, options);
+    return this.ns.present.create(this.instanceId, options);
   }
 
   async update(updates: {
@@ -59,7 +59,7 @@ export class AgentHandleImpl implements AgentHandle {
   }
 
   async delete(): Promise<void> {
-    await this.ns.agent.destroy(this.agentId);
+    await this.ns.instance.destroy(this.instanceId);
     await this.ns.image.delete(this.imageId);
   }
 }

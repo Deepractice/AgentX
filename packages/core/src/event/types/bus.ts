@@ -32,7 +32,7 @@ export type BusEventHandler<E extends BusEvent = BusEvent> = (event: E) => void;
 export interface SubscribeOptions<E extends BusEvent = BusEvent> {
   /**
    * Event filter - only events returning true will trigger the handler
-   * Useful for filtering by agentId, sessionId, etc.
+   * Useful for filtering by instanceId, sessionId, etc.
    */
   filter?: (event: E) => boolean;
 
@@ -242,7 +242,7 @@ export interface EventConsumer {
  *
  * // Subscribe with options
  * bus.on('text_delta', handler, {
- *   filter: (e) => e.agentId === 'agent-1',
+ *   filter: (e) => e.instanceId === 'agent-1',
  *   priority: 10,
  *   once: true
  * });

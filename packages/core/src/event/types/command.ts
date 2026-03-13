@@ -114,7 +114,7 @@ export interface ImageListItem extends ImageRecord {
   /** Whether an agent is currently running for this image */
   online: boolean;
   /** Current agent ID if online */
-  agentId?: string;
+  instanceId?: string;
 }
 
 // ============================================================================
@@ -222,7 +222,7 @@ export interface AgentGetRequest
     "agent_get_request",
     {
       requestId: string;
-      agentId: string;
+      instanceId: string;
     }
   > {}
 
@@ -233,7 +233,7 @@ export interface AgentGetResponse
   extends BaseCommandResponse<
     "agent_get_response",
     AgentXResponse & {
-      agentId?: string;
+      instanceId?: string;
       containerId?: string;
       exists: boolean;
     }
@@ -258,7 +258,7 @@ export interface AgentListResponse
   extends BaseCommandResponse<
     "agent_list_response",
     AgentXResponse & {
-      agents: Array<{ agentId: string; containerId: string; imageId: string }>;
+      agents: Array<{ instanceId: string; containerId: string; imageId: string }>;
     }
   > {}
 
@@ -270,7 +270,7 @@ export interface AgentDestroyRequest
     "agent_destroy_request",
     {
       requestId: string;
-      agentId: string;
+      instanceId: string;
     }
   > {}
 
@@ -281,7 +281,7 @@ export interface AgentDestroyResponse
   extends BaseCommandResponse<
     "agent_destroy_response",
     AgentXResponse & {
-      agentId: string;
+      instanceId: string;
       success: boolean;
     }
   > {}
@@ -311,7 +311,7 @@ export interface AgentDestroyAllResponse
 
 /**
  * Request to send a message
- * Can use either imageId (preferred) or agentId
+ * Can use either imageId (preferred) or instanceId
  * If using imageId and agent is not running, it will be auto-activated
  */
 export interface MessageSendRequest
@@ -322,7 +322,7 @@ export interface MessageSendRequest
       /** Image ID (preferred) - will auto-activate if offline */
       imageId?: string;
       /** Agent ID (legacy) - must be already running */
-      agentId?: string;
+      instanceId?: string;
       /** Message content (text-only or multimodal) */
       content: string | UserContentPart[];
     }
@@ -336,13 +336,13 @@ export interface MessageSendResponse
     "message_send_response",
     AgentXResponse & {
       imageId?: string;
-      agentId: string;
+      instanceId: string;
     }
   > {}
 
 /**
  * Request to interrupt an agent
- * Can use either imageId or agentId
+ * Can use either imageId or instanceId
  */
 export interface AgentInterruptRequest
   extends BaseCommandRequest<
@@ -352,7 +352,7 @@ export interface AgentInterruptRequest
       /** Image ID (preferred) */
       imageId?: string;
       /** Agent ID (legacy) */
-      agentId?: string;
+      instanceId?: string;
     }
   > {}
 
@@ -364,7 +364,7 @@ export interface AgentInterruptResponse
     "agent_interrupt_response",
     AgentXResponse & {
       imageId?: string;
-      agentId?: string;
+      instanceId?: string;
     }
   > {}
 
@@ -424,7 +424,7 @@ export interface ImageRunResponse
     "image_run_response",
     AgentXResponse & {
       imageId: string;
-      agentId: string;
+      instanceId: string;
       /** true if reusing existing agent, false if newly created */
       reused: boolean;
     }

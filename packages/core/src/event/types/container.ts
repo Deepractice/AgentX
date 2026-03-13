@@ -50,7 +50,7 @@ export interface AgentRegisteredEvent
     "agent_registered",
     {
       containerId: string;
-      agentId: string;
+      instanceId: string;
       definitionName: string;
       registeredAt: number;
     }
@@ -64,7 +64,7 @@ export interface AgentUnregisteredEvent
     "agent_unregistered",
     {
       containerId: string;
-      agentId: string;
+      instanceId: string;
       reason?: string;
     }
   > {}

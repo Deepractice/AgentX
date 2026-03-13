@@ -16,7 +16,7 @@ Feature: Error Handling in AgentX SDK
       | code        | string                                        | e.g. "PERSISTENCE_FAILED"|
       | category    | "driver" \| "persistence" \| "connection" \| "runtime" | which layer failed       |
       | recoverable | boolean                                       | should the caller retry  |
-      | context     | { agentId?, sessionId?, messageId? }          | scope of the error       |
+      | context     | { instanceId?, sessionId?, messageId? }          | scope of the error       |
       | cause       | Error (optional)                              | original error           |
 
   Scenario: Developer imports AgentXError from core
@@ -80,7 +80,7 @@ Feature: Error Handling in AgentX SDK
       | category    | persistence               |
       | recoverable | true                      |
     And the conversation continues (persistence failure does not crash the agent)
-    And the error includes context with agentId and sessionId
+    And the error includes context with instanceId and sessionId
 
   Scenario: User message persistence failure stops the request
     Given a user sends a message

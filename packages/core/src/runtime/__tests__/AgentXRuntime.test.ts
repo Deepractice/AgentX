@@ -151,7 +151,7 @@ describe("AgentXRuntime - AgentEngine Pipeline", () => {
         events.push(event as BusEvent);
       });
 
-      await env.runtime.receive(agent.agentId, "Hi");
+      await env.runtime.receive(agent.instanceId, "Hi");
 
       // Wait for async processing
       await new Promise((r) => setTimeout(r, 50));
@@ -199,7 +199,7 @@ describe("AgentXRuntime - AgentEngine Pipeline", () => {
         events.push(event as BusEvent);
       });
 
-      await env.runtime.receive(agent.agentId, "What's the weather?");
+      await env.runtime.receive(agent.instanceId, "What's the weather?");
       await new Promise((r) => setTimeout(r, 50));
 
       const messageTypes = events.map((e) => e.type);
@@ -230,7 +230,7 @@ describe("AgentXRuntime - AgentEngine Pipeline", () => {
         events.push(event as BusEvent);
       });
 
-      await env.runtime.receive(agent.agentId, "Hi");
+      await env.runtime.receive(agent.instanceId, "Hi");
       await new Promise((r) => setTimeout(r, 50));
 
       const types = events.map((e) => e.type);
@@ -246,7 +246,7 @@ describe("AgentXRuntime - AgentEngine Pipeline", () => {
       env = createMockPlatform(simpleTextResponse("Hello"));
 
       const agent = await env.runtime.createAgent({ imageId: "img_1" });
-      await env.runtime.receive(agent.agentId, "Hi");
+      await env.runtime.receive(agent.instanceId, "Hi");
       await new Promise((r) => setTimeout(r, 50));
 
       const messages = env.sessionRepo._getMessages("session_1");
@@ -259,7 +259,7 @@ describe("AgentXRuntime - AgentEngine Pipeline", () => {
       env = createMockPlatform(simpleTextResponse("Hello from assistant"));
 
       const agent = await env.runtime.createAgent({ imageId: "img_1" });
-      await env.runtime.receive(agent.agentId, "Hi");
+      await env.runtime.receive(agent.instanceId, "Hi");
       await new Promise((r) => setTimeout(r, 50));
 
       const messages = env.sessionRepo._getMessages("session_1");
@@ -299,7 +299,7 @@ describe("AgentXRuntime - AgentEngine Pipeline", () => {
       env = createMockPlatform(toolEvents);
 
       const agent = await env.runtime.createAgent({ imageId: "img_1" });
-      await env.runtime.receive(agent.agentId, "List files");
+      await env.runtime.receive(agent.instanceId, "List files");
       await new Promise((r) => setTimeout(r, 50));
 
       const messages = env.sessionRepo._getMessages("session_1");
@@ -332,7 +332,7 @@ describe("AgentXRuntime - AgentEngine Pipeline", () => {
         events.push(event as BusEvent);
       });
 
-      await env.runtime.receive(agent.agentId, "Hi");
+      await env.runtime.receive(agent.instanceId, "Hi");
       await new Promise((r) => setTimeout(r, 50));
 
       const types = events.map((e) => e.type);

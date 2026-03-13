@@ -21,7 +21,7 @@ import type { AgentXWorld } from "../support/world";
 interface DeveloperState {
   containerId?: string;
   imageId?: string;
-  agentId?: string;
+  instanceId?: string;
   sessionId?: string;
   lastReplyText?: string;
   events: BusEvent[];
@@ -150,10 +150,10 @@ When(
 
 When("I run the image as an agent", { timeout: 30000 }, async function (this: AgentXWorld) {
   const state = getState(this);
-  const result = await this.localAgentX!.agent.create({
+  const result = await this.localAgentX!.runtime.instance.create({
     imageId: state.imageId!,
   });
-  state.agentId = result.agentId;
+  state.instanceId = result.instanceId;
 });
 
 // ============================================================================
@@ -172,7 +172,7 @@ When(
     });
     state.unsubscribes.push(unsub);
 
-    await this.localAgentX!.session.send(state.agentId!, message);
+    await this.localAgentX!.runtime.session.send(state.instanceId!, message);
     await new Promise((r) => setTimeout(r, 200));
 
     // Extract reply text from text_delta events
@@ -212,7 +212,7 @@ When(
   { timeout: 10000 },
   async function (this: AgentXWorld) {
     const state = getState(this);
-    const presentation = await this.localAgentX!.presentation.create(state.agentId!);
+    const presentation = await this.localAgentX!.runtime.present.create(state.instanceId!);
     state.presentation = presentation;
   }
 );
@@ -269,7 +269,7 @@ Then(
 
 When("I check the session messages", async function (this: AgentXWorld) {
   const state = getState(this);
-  const messages = await this.localAgentX!.session.getMessages(state.agentId!);
+  const messages = await this.localAgentX!.runtime.session.getMessages(state.instanceId!);
   (state as any).sessionMessages = messages;
 });
 
@@ -577,12 +577,12 @@ When("I destroy the agent", async function (this: AgentXWorld) {
     state.presentation = undefined;
   }
 
-  await this.localAgentX!.agent.destroy(state.agentId!);
+  await this.localAgentX!.runtime.instance.destroy(state.instanceId!);
 });
 
 Then("the agent should no longer exist", async function (this: AgentXWorld) {
   const state = getState(this);
-  const result = await this.localAgentX!.agent.get(state.agentId!);
+  const result = await this.localAgentX!.runtime.instance.get(state.instanceId!);
   assert.ok(!result.exists, "Agent should no longer exist");
 });
 

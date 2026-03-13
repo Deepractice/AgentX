@@ -88,7 +88,7 @@ export class MonoDriver implements Driver {
     }
 
     logger.info("Initializing MonoDriver", {
-      agentId: this.config.agentId,
+      instanceId: this.config.instanceId,
       provider: this.provider,
     });
 
@@ -106,7 +106,7 @@ export class MonoDriver implements Driver {
       return;
     }
 
-    logger.info("Disposing MonoDriver", { agentId: this.config.agentId });
+    logger.info("Disposing MonoDriver", { instanceId: this.config.instanceId });
 
     // Abort any ongoing request
     this.abortController?.abort();
@@ -154,7 +154,7 @@ export class MonoDriver implements Driver {
       logger.debug("Sending message to LLM", {
         provider: this.provider,
         messageCount: messages.length,
-        agentId: this.config.agentId,
+        instanceId: this.config.instanceId,
       });
 
       // Build three-layer system prompt:

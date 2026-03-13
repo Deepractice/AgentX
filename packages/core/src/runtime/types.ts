@@ -44,7 +44,7 @@ export type AgentLifecycle = "running" | "stopped" | "destroyed";
  * Runtime Agent - Active agent instance
  */
 export interface RuntimeAgent {
-  readonly agentId: string;
+  readonly instanceId: string;
   readonly imageId: string;
   readonly containerId: string;
   readonly sessionId: string;
@@ -69,7 +69,7 @@ export interface CreateAgentOptions {
   /**
    * Optional agent ID (auto-generated if not provided)
    */
-  agentId?: string;
+  instanceId?: string;
 }
 
 /**
@@ -106,7 +106,7 @@ export interface AgentXRuntime {
   /**
    * Get an active agent by ID
    */
-  getAgent(agentId: string): RuntimeAgent | undefined;
+  getAgent(instanceId: string): RuntimeAgent | undefined;
 
   /**
    * Get all active agents
@@ -121,17 +121,17 @@ export interface AgentXRuntime {
   /**
    * Stop an agent (can be resumed)
    */
-  stopAgent(agentId: string): Promise<void>;
+  stopAgent(instanceId: string): Promise<void>;
 
   /**
    * Resume a stopped agent
    */
-  resumeAgent(agentId: string): Promise<void>;
+  resumeAgent(instanceId: string): Promise<void>;
 
   /**
    * Destroy an agent (cannot be resumed)
    */
-  destroyAgent(agentId: string): Promise<void>;
+  destroyAgent(instanceId: string): Promise<void>;
 
   // ==================== Message Handling ====================
 
@@ -140,19 +140,23 @@ export interface AgentXRuntime {
    *
    * Emits user_message to EventBus, Driver picks it up and responds.
    */
-  receive(agentId: string, content: string | UserContentPart[], requestId?: string): Promise<void>;
+  receive(
+    instanceId: string,
+    content: string | UserContentPart[],
+    requestId?: string
+  ): Promise<void>;
 
   /**
    * Interrupt an agent's current operation
    */
-  interrupt(agentId: string, requestId?: string): void;
+  interrupt(instanceId: string, requestId?: string): void;
 
   // ==================== Event Subscription ====================
 
   /**
    * Subscribe to events for a specific agent
    */
-  subscribe(agentId: string, handler: AgentEventHandler): Subscription;
+  subscribe(instanceId: string, handler: AgentEventHandler): Subscription;
 
   /**
    * Subscribe to all events (all agents)

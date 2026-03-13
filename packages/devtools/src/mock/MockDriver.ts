@@ -96,7 +96,7 @@ export class MockDriver implements Driver {
 
     logger.debug("MockDriver created", {
       fixture: this.currentFixture.name,
-      agentId: this.config?.agentId,
+      instanceId: this.config?.instanceId,
     });
   }
 

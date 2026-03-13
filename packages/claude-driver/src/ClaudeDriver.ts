@@ -55,13 +55,13 @@ const logger = createLogger("claude-driver/ClaudeDriver");
  * // Zero-config: claudeCodePath is auto-resolved from installed package
  * const config: DriverConfig<ClaudeDriverOptions> = {
  *   apiKey: "...",
- *   agentId: "my-agent",
+ *   instanceId: "my-agent",
  * };
  *
  * // Custom path (optional, only if needed)
  * const config: DriverConfig<ClaudeDriverOptions> = {
  *   apiKey: "...",
- *   agentId: "my-agent",
+ *   instanceId: "my-agent",
  *   options: {
  *     claudeCodePath: "/custom/path/to/claude",
  *   }
@@ -145,7 +145,7 @@ export class ClaudeDriver implements Driver {
       throw new Error(`Cannot initialize: Driver is in "${this._state}" state`);
     }
 
-    logger.info("Initializing ClaudeDriver", { agentId: this.config.agentId });
+    logger.info("Initializing ClaudeDriver", { instanceId: this.config.instanceId });
 
     // SDKQueryLifecycle will be created lazily on first receive()
     // This allows configuration to be validated early without starting subprocess
@@ -164,7 +164,7 @@ export class ClaudeDriver implements Driver {
       return;
     }
 
-    logger.info("Disposing ClaudeDriver", { agentId: this.config.agentId });
+    logger.info("Disposing ClaudeDriver", { instanceId: this.config.instanceId });
 
     // Complete any pending turn
     if (this.currentTurnSubject) {
@@ -237,7 +237,7 @@ export class ClaudeDriver implements Driver {
       logger.debug("Sending message to Claude", {
         content:
           typeof message.content === "string" ? message.content.substring(0, 80) : "[structured]",
-        agentId: this.config.agentId,
+        instanceId: this.config.instanceId,
       });
 
       this.queryLifecycle!.send(sdkMessage);
@@ -640,7 +640,7 @@ export class ClaudeDriver implements Driver {
  *
  * const driver = createClaudeDriver({
  *   apiKey: process.env.ANTHROPIC_API_KEY!,
- *   agentId: "my-agent",
+ *   instanceId: "my-agent",
  *   systemPrompt: "You are helpful",
  *   options: {
  *     claudeCodePath: "/usr/local/bin/claude",

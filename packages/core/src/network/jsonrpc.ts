@@ -51,12 +51,12 @@ export type RpcMethod =
   | "image.stop"
   | "image.update"
   | "image.messages"
-  // Agent
-  | "agent.get"
-  | "agent.list"
-  | "agent.destroy"
-  | "agent.destroyAll"
-  | "agent.interrupt"
+  // Instance
+  | "instance.get"
+  | "instance.list"
+  | "instance.destroy"
+  | "instance.destroyAll"
+  | "instance.interrupt"
   // Message
   | "message.send"
   // Prototype
@@ -311,12 +311,12 @@ export const eventTypeToRpcMethod: Record<string, RpcMethod> = {
   image_stop_request: "image.stop",
   image_update_request: "image.update",
   image_messages_request: "image.messages",
-  // Agent
-  agent_get_request: "agent.get",
-  agent_list_request: "agent.list",
-  agent_destroy_request: "agent.destroy",
-  agent_destroy_all_request: "agent.destroyAll",
-  agent_interrupt_request: "agent.interrupt",
+  // Instance
+  instance_get_request: "instance.get",
+  instance_list_request: "instance.list",
+  instance_destroy_request: "instance.destroy",
+  instance_destroy_all_request: "instance.destroyAll",
+  instance_interrupt_request: "instance.interrupt",
   // Message
   message_send_request: "message.send",
   // Prototype
@@ -351,12 +351,12 @@ export const rpcMethodToResponseType: Record<RpcMethod, string> = {
   "image.stop": "image_stop_response",
   "image.update": "image_update_response",
   "image.messages": "image_messages_response",
-  // Agent
-  "agent.get": "agent_get_response",
-  "agent.list": "agent_list_response",
-  "agent.destroy": "agent_destroy_response",
-  "agent.destroyAll": "agent_destroy_all_response",
-  "agent.interrupt": "agent_interrupt_response",
+  // Instance
+  "instance.get": "instance_get_response",
+  "instance.list": "instance_list_response",
+  "instance.destroy": "instance_destroy_response",
+  "instance.destroyAll": "instance_destroy_all_response",
+  "instance.interrupt": "instance_interrupt_response",
   // Message
   "message.send": "message_send_response",
   // Prototype

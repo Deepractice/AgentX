@@ -111,7 +111,7 @@ export interface EventContext {
   /**
    * Agent ID (if event is agent-scoped)
    */
-  agentId?: string;
+  instanceId?: string;
 
   /**
    * Session ID (if event is session-scoped)

@@ -131,7 +131,7 @@ export class Mealy<TState, TInput> {
   /**
    * Process an input through the Mealy Machine
    *
-   * @param id - Unique identifier (e.g., agentId)
+   * @param id - Unique identifier (e.g., instanceId)
    * @param input - The input to process
    * @returns Result containing new state and all outputs
    */

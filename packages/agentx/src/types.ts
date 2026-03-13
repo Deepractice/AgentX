@@ -38,8 +38,8 @@ export interface RemoteClientConfig {
 /**
  * Agent info returned from server
  */
-export interface AgentInfo {
-  agentId: string;
+export interface InstanceInfo {
+  instanceId: string;
   imageId: string;
   containerId: string;
   sessionId: string;
@@ -97,8 +97,8 @@ export interface BaseResponse {
 /**
  * Agent create response
  */
-export interface AgentCreateResponse extends BaseResponse {
-  agentId: string;
+export interface InstanceCreateResponse extends BaseResponse {
+  instanceId: string;
   imageId: string;
   containerId: string;
   sessionId: string;
@@ -107,16 +107,16 @@ export interface AgentCreateResponse extends BaseResponse {
 /**
  * Agent get response
  */
-export interface AgentGetResponse extends BaseResponse {
-  agent: AgentInfo | null;
+export interface InstanceGetResponse extends BaseResponse {
+  agent: InstanceInfo | null;
   exists: boolean;
 }
 
 /**
  * Agent list response
  */
-export interface AgentListResponse extends BaseResponse {
-  agents: AgentInfo[];
+export interface InstanceListResponse extends BaseResponse {
+  agents: InstanceInfo[];
 }
 
 /**
@@ -176,7 +176,7 @@ export interface ContainerListResponse extends BaseResponse {
  * Message send response
  */
 export interface MessageSendResponse extends BaseResponse {
-  agentId: string;
+  instanceId: string;
 }
 
 /**
@@ -323,26 +323,26 @@ export interface ImageNamespace {
 /**
  * Agent operations namespace
  */
-export interface AgentNamespace {
+export interface InstanceNamespace {
   /**
    * Create a new agent
    */
-  create(params: { imageId: string; agentId?: string }): Promise<AgentCreateResponse>;
+  create(params: { imageId: string; instanceId?: string }): Promise<InstanceCreateResponse>;
 
   /**
    * Get agent by ID
    */
-  get(agentId: string): Promise<AgentGetResponse>;
+  get(instanceId: string): Promise<InstanceGetResponse>;
 
   /**
    * List agents
    */
-  list(containerId?: string): Promise<AgentListResponse>;
+  list(containerId?: string): Promise<InstanceListResponse>;
 
   /**
    * Destroy an agent
    */
-  destroy(agentId: string): Promise<BaseResponse>;
+  destroy(instanceId: string): Promise<BaseResponse>;
 }
 
 /**
@@ -352,17 +352,17 @@ export interface SessionNamespace {
   /**
    * Send message to agent
    */
-  send(agentId: string, content: string | unknown[]): Promise<MessageSendResponse>;
+  send(instanceId: string, content: string | unknown[]): Promise<MessageSendResponse>;
 
   /**
    * Interrupt agent
    */
-  interrupt(agentId: string): Promise<BaseResponse>;
+  interrupt(instanceId: string): Promise<BaseResponse>;
 
   /**
    * Get message history for an agent's session
    */
-  getMessages(agentId: string): Promise<Message[]>;
+  getMessages(instanceId: string): Promise<Message[]>;
 }
 
 /**
@@ -478,7 +478,7 @@ export interface PresentationNamespace {
    *
    * @example
    * ```typescript
-   * const pres = ax.present(agentId, {
+   * const pres = ax.present(instanceId, {
    *   onUpdate: (state) => renderUI(state),
    *   onError: (error) => console.error(error),
    * });
@@ -487,7 +487,7 @@ export interface PresentationNamespace {
    * pres.dispose();
    * ```
    */
-  create(agentId: string, options?: PresentationOptions): Promise<Presentation>;
+  create(instanceId: string, options?: PresentationOptions): Promise<Presentation>;
 }
 
 // ============================================================================
@@ -504,7 +504,7 @@ export interface PresentationNamespace {
 export interface RuntimeNamespace {
   readonly container: ContainerNamespace;
   readonly image: ImageNamespace;
-  readonly agent: AgentNamespace;
+  readonly instance: InstanceNamespace;
   readonly session: SessionNamespace;
   readonly present: PresentationNamespace;
   readonly llm: LLMNamespace;
@@ -529,7 +529,7 @@ export interface RuntimeNamespace {
  * ```
  */
 export interface AgentHandle {
-  readonly agentId: string;
+  readonly instanceId: string;
   readonly imageId: string;
   readonly containerId: string;
   readonly sessionId: string;

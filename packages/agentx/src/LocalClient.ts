@@ -12,7 +12,7 @@ import type { AgentXRuntime } from "@agentxjs/core/runtime";
 import { createLogger } from "commonxjs/logger";
 import { AgentHandleImpl } from "./AgentHandle";
 import { CommandHandler } from "./CommandHandler";
-import { createLocalAgents } from "./namespaces/agents";
+import { createLocalInstances } from "./namespaces/agents";
 import { createLocalContainers } from "./namespaces/containers";
 import { createLocalImages } from "./namespaces/images";
 import { createLocalLLM } from "./namespaces/llm";
@@ -48,13 +48,13 @@ export class LocalClient implements AgentX {
 
     const container = createLocalContainers(platform);
     const image = createLocalImages(platform);
-    const agent = createLocalAgents(agentxRuntime);
+    const instance = createLocalInstances(agentxRuntime);
     const session = createLocalSessions(agentxRuntime);
     const llm = createLocalLLM(platform);
     const prototype = createLocalPrototypes(platform);
-    const present = createPresentations(this, image);
+    const present = createPresentations(this, session);
 
-    this.runtime = { container, image, agent, session, present, llm, prototype };
+    this.runtime = { container, image, instance, session, present, llm, prototype };
     this.provider = llm;
     this.prototype = prototype;
     this.chat = this.createChatNamespace();
@@ -110,14 +110,14 @@ export class LocalClient implements AgentX {
   // ==================== Private ====================
 
   private createChatNamespace(): ChatNamespace {
-    const instance = this.runtime;
+    const rt = this.runtime;
     return {
       async create(params) {
         const containerId = "default";
         // If prototypeId is provided, merge prototype config into params
         let mergedParams = { ...params };
         if (params.prototypeId) {
-          const protoRes = await instance.prototype.get(params.prototypeId);
+          const protoRes = await rt.prototype.get(params.prototypeId);
           if (protoRes.record) {
             const proto = protoRes.record;
             mergedParams = {
@@ -131,34 +131,34 @@ export class LocalClient implements AgentX {
           }
         }
         const { prototypeId: _pid, ...imageParams } = mergedParams;
-        const imgRes = await instance.image.create({ containerId, ...imageParams });
-        const agentRes = await instance.agent.create({ imageId: imgRes.record.imageId });
+        const imgRes = await rt.image.create({ containerId, ...imageParams });
+        const instRes = await rt.instance.create({ imageId: imgRes.record.imageId });
         return new AgentHandleImpl(
           {
-            agentId: agentRes.agentId,
-            imageId: agentRes.imageId,
-            containerId: agentRes.containerId,
-            sessionId: agentRes.sessionId,
+            instanceId: instRes.instanceId,
+            imageId: instRes.imageId,
+            containerId: instRes.containerId,
+            sessionId: instRes.sessionId,
           },
-          instance
+          rt
         );
       },
       async list() {
-        return instance.image.list();
+        return rt.image.list();
       },
       async get(id) {
-        const res = await instance.image.get(id);
+        const res = await rt.image.get(id);
         if (!res.record) return null;
         const r = res.record;
-        const agentRes = await instance.agent.create({ imageId: r.imageId });
+        const instRes = await rt.instance.create({ imageId: r.imageId });
         return new AgentHandleImpl(
           {
-            agentId: agentRes.agentId,
-            imageId: agentRes.imageId,
-            containerId: agentRes.containerId,
-            sessionId: agentRes.sessionId,
+            instanceId: instRes.instanceId,
+            imageId: instRes.imageId,
+            containerId: instRes.containerId,
+            sessionId: instRes.sessionId,
           },
-          instance
+          rt
         );
       },
     };
