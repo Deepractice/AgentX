@@ -1,5 +1,34 @@
 # agentxjs
 
+## 2.6.0
+
+### Minor Changes
+
+- b4ccfb7: Restructure SDK namespaces: chat, runtime, provider
+
+  - Add ChatNamespace: ax.chat.create/list/get for conversation management
+  - Rename instance → runtime (ax.runtime.\*)
+  - Top-level API is now clearly layered:
+    - ax.chat.\* — conversations (create → AgentHandle)
+    - ax.provider.\* — LLM provider config
+    - ax.runtime.\* — low-level subsystems (image, agent, session, container)
+  - Export ChatNamespace, RuntimeNamespace types
+  - Update all READMEs with new API architecture
+
+- e1b44f7: Add Prototype registry — reusable agent templates
+
+  - PrototypeRecord and PrototypeRepository in @agentxjs/core/persistence
+  - StoragePrototypeRepository in @agentxjs/node-platform
+  - ax.prototype.\* namespace (create/get/list/update/delete)
+  - RPC methods: prototype.create/get/list/update/delete
+  - chat.create() accepts prototypeId to inherit prototype config
+  - Add prototypeId field to ImageRecord for origin tracking
+
+### Patch Changes
+
+- Updated dependencies [e1b44f7]
+  - @agentxjs/core@2.6.0
+
 ## 2.5.0
 
 ### Minor Changes
