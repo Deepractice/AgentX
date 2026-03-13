@@ -1,32 +1,5 @@
 # agentxjs
 
-## 3.0.0
-
-### Major Changes
-
-- 2dd8ce4: BREAKING: rename `agentId` to `instanceId` across all public APIs
-
-  - `RuntimeAgent.agentId` → `RuntimeAgent.instanceId`
-  - `CreateAgentOptions.agentId` → `CreateAgentOptions.instanceId`
-  - `DriverConfigBase.agentId` → `DriverConfigBase.instanceId`
-  - `AgentXErrorContext.agentId` → `AgentXErrorContext.instanceId`
-  - `EventContext.agentId` → `EventContext.instanceId`
-  - All command/container/session event data: `agentId` → `instanceId`
-  - RPC methods: `agent.*` → `instance.*`
-  - SDK types: `AgentNamespace` → `InstanceNamespace`, `AgentCreateResponse` → `InstanceCreateResponse`, etc.
-  - `RuntimeNamespace.agent` → `RuntimeNamespace.instance`
-  - ID prefix: `agent_` → `inst_`
-  - `AgentHandle.agentId` → `AgentHandle.instanceId`
-
-### Patch Changes
-
-- 2dd8ce4: fix: `handle.present()` no longer fails with "Image not found" in remote mode
-
-  Root cause: `presentations.ts` passed `instanceId` (formerly `agentId`) to `imageNs.getMessages()` which expects `imageId`. Fixed by switching to `sessionNs.getMessages(instanceId)` which correctly resolves the instance's session internally.
-
-- Updated dependencies [2dd8ce4]
-  - @agentxjs/core@3.0.0
-
 ## 2.6.1
 
 ### Patch Changes

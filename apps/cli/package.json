@@ -1,6 +1,6 @@
 {
   "name": "@agentxjs/cli",
-  "version": "0.0.17",
+  "version": "0.0.16",
   "description": "AgentX Terminal UI Client",
   "license": "MIT",
   "type": "module",
