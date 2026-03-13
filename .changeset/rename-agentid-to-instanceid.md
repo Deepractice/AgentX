@@ -1,9 +1,9 @@
 ---
-"agentxjs": major
-"@agentxjs/core": major
-"@agentxjs/mono-driver": major
-"@agentxjs/claude-driver": major
-"@agentxjs/devtools": major
+"agentxjs": minor
+"@agentxjs/core": minor
+"@agentxjs/mono-driver": minor
+"@agentxjs/claude-driver": minor
+"@agentxjs/devtools": minor
 ---
 
 BREAKING: rename `agentId` to `instanceId` across all public APIs
