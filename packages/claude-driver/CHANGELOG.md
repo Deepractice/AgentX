@@ -1,5 +1,13 @@
 # @agentxjs/claude-driver
 
+## 2.5.0
+
+### Patch Changes
+
+- Updated dependencies [266840a]
+- Updated dependencies [37a0a42]
+  - @agentxjs/core@2.5.0
+
 ## 2.4.0
 
 ### Patch Changes
