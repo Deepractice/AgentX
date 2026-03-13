@@ -177,12 +177,13 @@ export class RemoteClient implements AgentX {
         const res = await instance.image.get(id);
         if (!res.record) return null;
         const r = res.record;
+        const agentRes = await instance.agent.create({ imageId: r.imageId });
         return new AgentHandleImpl(
           {
-            agentId: r.imageId,
-            imageId: r.imageId,
-            containerId: r.containerId,
-            sessionId: r.sessionId,
+            agentId: agentRes.agentId,
+            imageId: agentRes.imageId,
+            containerId: agentRes.containerId,
+            sessionId: agentRes.sessionId,
           },
           instance
         );
