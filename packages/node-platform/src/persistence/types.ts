@@ -6,6 +6,7 @@ import type {
   ContainerRepository,
   ImageRepository,
   LLMProviderRepository,
+  PrototypeRepository,
   SessionRepository,
 } from "@agentxjs/core/persistence";
 import type { Storage } from "unstorage";
@@ -31,4 +32,5 @@ export interface Persistence {
   readonly images: ImageRepository;
   readonly sessions: SessionRepository;
   readonly llmProviders: LLMProviderRepository;
+  readonly prototypes: PrototypeRepository;
 }

@@ -28,6 +28,8 @@ export type {
   LLMProviderRepository,
   // Config types
   McpServerConfig,
+  PrototypeRecord,
+  PrototypeRepository,
   SessionRecord,
   SessionRepository,
 } from "./types";

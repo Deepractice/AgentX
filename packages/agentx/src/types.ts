@@ -5,7 +5,7 @@
 import type { Message } from "@agentxjs/core/agent";
 import type { AgentXError } from "@agentxjs/core/error";
 import type { BusEvent, BusEventHandler, EventBus, Unsubscribe } from "@agentxjs/core/event";
-import type { LLMProtocol, LLMProviderRecord } from "@agentxjs/core/persistence";
+import type { LLMProtocol, LLMProviderRecord, PrototypeRecord } from "@agentxjs/core/persistence";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import type { Presentation, PresentationOptions } from "./presentation";
 
@@ -215,6 +215,38 @@ export interface LLMProviderDefaultResponse extends BaseResponse {
 }
 
 // ============================================================================
+// Prototype Response Types
+// ============================================================================
+
+/**
+ * Prototype create response
+ */
+export interface PrototypeCreateResponse extends BaseResponse {
+  record: PrototypeRecord;
+}
+
+/**
+ * Prototype get response
+ */
+export interface PrototypeGetResponse extends BaseResponse {
+  record: PrototypeRecord | null;
+}
+
+/**
+ * Prototype list response
+ */
+export interface PrototypeListResponse extends BaseResponse {
+  records: PrototypeRecord[];
+}
+
+/**
+ * Prototype update response
+ */
+export interface PrototypeUpdateResponse extends BaseResponse {
+  record: PrototypeRecord;
+}
+
+// ============================================================================
 // Namespace Interfaces
 // ============================================================================
 
@@ -392,6 +424,52 @@ export interface LLMNamespace {
 }
 
 /**
+ * Prototype operations namespace — manage reusable agent templates
+ */
+export interface PrototypeNamespace {
+  /**
+   * Register a new prototype
+   */
+  create(params: {
+    containerId: string;
+    name: string;
+    description?: string;
+    contextId?: string;
+    embody?: Embodiment;
+    customData?: Record<string, unknown>;
+  }): Promise<PrototypeCreateResponse>;
+
+  /**
+   * Get prototype by ID
+   */
+  get(prototypeId: string): Promise<PrototypeGetResponse>;
+
+  /**
+   * List prototypes
+   */
+  list(containerId?: string): Promise<PrototypeListResponse>;
+
+  /**
+   * Update prototype
+   */
+  update(
+    prototypeId: string,
+    updates: {
+      name?: string;
+      description?: string;
+      contextId?: string;
+      embody?: Embodiment;
+      customData?: Record<string, unknown>;
+    }
+  ): Promise<PrototypeUpdateResponse>;
+
+  /**
+   * Delete prototype
+   */
+  delete(prototypeId: string): Promise<BaseResponse>;
+}
+
+/**
  * Presentation operations namespace
  */
 export interface PresentationNamespace {
@@ -430,6 +508,7 @@ export interface RuntimeNamespace {
   readonly session: SessionNamespace;
   readonly present: PresentationNamespace;
   readonly llm: LLMNamespace;
+  readonly prototype: PrototypeNamespace;
 }
 
 // ============================================================================
@@ -504,8 +583,12 @@ export interface AgentHandle {
 export interface ChatNamespace {
   /**
    * Create a new conversation
+   *
+   * When `prototypeId` is provided, the conversation inherits the prototype's
+   * configuration (contextId, embody, etc.). Inline params override prototype values.
    */
   create(params: {
+    prototypeId?: string;
     name?: string;
     description?: string;
     contextId?: string;
@@ -557,6 +640,13 @@ export interface AgentX {
    * Conversation management — create, list, and open conversations.
    */
   readonly chat: ChatNamespace;
+
+  // ==================== Prototype (templates) ====================
+
+  /**
+   * Prototype management — register and manage reusable agent templates.
+   */
+  readonly prototype: PrototypeNamespace;
 
   // ==================== Instance (low-level) ====================
 

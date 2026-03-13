@@ -136,6 +136,9 @@ export interface ImageRecord {
   /** Embodiment — runtime configuration (model, systemPrompt, mcpServers). The body. */
   embody?: Embodiment;
 
+  /** Prototype ID — tracks which prototype this image was created from */
+  prototypeId?: string;
+
   /** Parent image ID (for fork/branch feature) */
   parentImageId?: string;
 
@@ -227,6 +230,47 @@ export interface LLMProviderRecord {
 
   /** Whether this is the default provider for the container */
   isDefault?: boolean;
+
+  /** Creation timestamp (Unix milliseconds) */
+  createdAt: number;
+
+  /** Last update timestamp (Unix milliseconds) */
+  updatedAt: number;
+}
+
+// ============================================================================
+// Prototype Record
+// ============================================================================
+
+/**
+ * PrototypeRecord — a reusable, registered agent definition (template).
+ *
+ * Like a Dockerfile that can be used to build many images,
+ * a Prototype defines a reusable agent template that creates many Images.
+ *
+ * Prototype = Agent blueprint + registration metadata (ID, timestamps, container scope).
+ */
+export interface PrototypeRecord {
+  /** Unique prototype identifier (pattern: `proto_${timestamp}_${random}`) */
+  prototypeId: string;
+
+  /** Container ID (scope boundary) */
+  containerId: string;
+
+  /** Display name */
+  name: string;
+
+  /** Description */
+  description?: string;
+
+  /** Context ID — identifies the cognitive context (e.g. RoleX individual). The soul. */
+  contextId?: string;
+
+  /** Embodiment — runtime configuration (model, systemPrompt, mcpServers). The body. */
+  embody?: Embodiment;
+
+  /** Application-specific custom data */
+  customData?: Record<string, unknown>;
 
   /** Creation timestamp (Unix milliseconds) */
   createdAt: number;
@@ -331,6 +375,33 @@ export interface SessionRepository {
 
   /** Clear all messages for a session */
   clearMessages(sessionId: string): Promise<void>;
+}
+
+// ============================================================================
+// Prototype Repository
+// ============================================================================
+
+/**
+ * PrototypeRepository - Storage operations for prototypes
+ */
+export interface PrototypeRepository {
+  /** Save a prototype record (create or update) */
+  savePrototype(record: PrototypeRecord): Promise<void>;
+
+  /** Find prototype by ID */
+  findPrototypeById(prototypeId: string): Promise<PrototypeRecord | null>;
+
+  /** Find all prototypes */
+  findAllPrototypes(): Promise<PrototypeRecord[]>;
+
+  /** Find prototypes by container ID */
+  findPrototypesByContainerId(containerId: string): Promise<PrototypeRecord[]>;
+
+  /** Delete prototype by ID */
+  deletePrototype(prototypeId: string): Promise<void>;
+
+  /** Check if prototype exists */
+  prototypeExists(prototypeId: string): Promise<boolean>;
 }
 
 // ============================================================================

@@ -59,6 +59,12 @@ export type RpcMethod =
   | "agent.interrupt"
   // Message
   | "message.send"
+  // Prototype
+  | "prototype.create"
+  | "prototype.get"
+  | "prototype.list"
+  | "prototype.update"
+  | "prototype.delete"
   // LLM Provider
   | "llm.create"
   | "llm.get"
@@ -313,6 +319,12 @@ export const eventTypeToRpcMethod: Record<string, RpcMethod> = {
   agent_interrupt_request: "agent.interrupt",
   // Message
   message_send_request: "message.send",
+  // Prototype
+  prototype_create_request: "prototype.create",
+  prototype_get_request: "prototype.get",
+  prototype_list_request: "prototype.list",
+  prototype_update_request: "prototype.update",
+  prototype_delete_request: "prototype.delete",
   // LLM Provider
   llm_create_request: "llm.create",
   llm_get_request: "llm.get",
@@ -347,6 +359,12 @@ export const rpcMethodToResponseType: Record<RpcMethod, string> = {
   "agent.interrupt": "agent_interrupt_response",
   // Message
   "message.send": "message_send_response",
+  // Prototype
+  "prototype.create": "prototype_create_response",
+  "prototype.get": "prototype_get_response",
+  "prototype.list": "prototype_list_response",
+  "prototype.update": "prototype_update_response",
+  "prototype.delete": "prototype_delete_response",
   // LLM Provider
   "llm.create": "llm_create_response",
   "llm.get": "llm_get_response",

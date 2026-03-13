@@ -16,11 +16,13 @@ import { createRemoteContainers } from "./namespaces/containers";
 import { createRemoteImages } from "./namespaces/images";
 import { createRemoteLLM } from "./namespaces/llm";
 import { createPresentations } from "./namespaces/presentations";
+import { createRemotePrototypes } from "./namespaces/prototypes";
 import { createRemoteSessions } from "./namespaces/sessions";
 import type {
   AgentX,
   ChatNamespace,
   LLMNamespace,
+  PrototypeNamespace,
   RemoteClientConfig,
   RuntimeNamespace,
 } from "./types";
@@ -38,6 +40,7 @@ export class RemoteClient implements AgentX {
   readonly chat: ChatNamespace;
   readonly runtime: RuntimeNamespace;
   readonly provider: LLMNamespace;
+  readonly prototype: PrototypeNamespace;
 
   constructor(config: RemoteClientConfig) {
     this.config = config;
@@ -65,10 +68,12 @@ export class RemoteClient implements AgentX {
     const agent = createRemoteAgents(this.rpcClient);
     const session = createRemoteSessions(this.rpcClient);
     const llm = createRemoteLLM(this.rpcClient);
+    const prototype = createRemotePrototypes(this.rpcClient);
     const present = createPresentations(this, image);
 
-    this.runtime = { container, image, agent, session, present, llm };
+    this.runtime = { container, image, agent, session, present, llm, prototype };
     this.provider = llm;
+    this.prototype = prototype;
     this.chat = this.createChatNamespace();
   }
 
@@ -136,7 +141,24 @@ export class RemoteClient implements AgentX {
     return {
       async create(params) {
         const containerId = "default";
-        const imgRes = await instance.image.create({ containerId, ...params });
+        // If prototypeId is provided, merge prototype config into params
+        let mergedParams = { ...params };
+        if (params.prototypeId) {
+          const protoRes = await instance.prototype.get(params.prototypeId);
+          if (protoRes.record) {
+            const proto = protoRes.record;
+            mergedParams = {
+              name: proto.name,
+              description: proto.description,
+              contextId: proto.contextId,
+              embody: proto.embody,
+              customData: proto.customData,
+              ...params, // inline params override prototype
+            };
+          }
+        }
+        const { prototypeId: _pid, ...imageParams } = mergedParams;
+        const imgRes = await instance.image.create({ containerId, ...imageParams });
         const agentRes = await instance.agent.create({ imageId: imgRes.record.imageId });
         return new AgentHandleImpl(
           {

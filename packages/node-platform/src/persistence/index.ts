@@ -30,6 +30,7 @@ export { createPersistence } from "./Persistence";
 export { StorageContainerRepository } from "./StorageContainerRepository";
 export { StorageImageRepository } from "./StorageImageRepository";
 export { StorageLLMProviderRepository } from "./StorageLLMProviderRepository";
+export { StoragePrototypeRepository } from "./StoragePrototypeRepository";
 export { StorageSessionRepository } from "./StorageSessionRepository";
 // Drivers
 export { type SqliteDriverOptions, sqliteDriver } from "./sqlite";

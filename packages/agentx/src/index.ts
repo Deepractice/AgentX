@@ -87,6 +87,10 @@ export function createAgentX(config?: PlatformConfig): AgentXBuilder {
       return getLocalClient().chat;
     },
 
+    get prototype() {
+      return getLocalClient().prototype;
+    },
+
     on(type, handler) {
       return getLocalClient().on(type, handler);
     },
@@ -215,6 +219,11 @@ export type {
   MaybeAsync,
   MessageSendResponse,
   PresentationNamespace,
+  PrototypeCreateResponse,
+  PrototypeGetResponse,
+  PrototypeListResponse,
+  PrototypeNamespace,
+  PrototypeUpdateResponse,
   RuntimeNamespace,
   ServeConfig,
   SessionNamespace,

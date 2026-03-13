@@ -27,6 +27,7 @@ import type { ImageRepository } from "../image/types";
 import type { LLMProviderRepository } from "../llm/types";
 import type { ChannelClientFactory } from "../network/RpcClient";
 import type { ChannelServer } from "../network/types";
+import type { PrototypeRepository } from "../persistence/types";
 import type { SessionRepository } from "../session/types";
 
 // ============================================================================
@@ -74,6 +75,14 @@ export interface AgentXPlatform {
    * When provided, enables ax.llm namespace for CRUD operations.
    */
   readonly llmProviderRepository?: LLMProviderRepository;
+
+  /**
+   * Prototype repository for persistence
+   *
+   * Optional — not all platforms need prototype management.
+   * When provided, enables ax.prototype namespace for CRUD operations.
+   */
+  readonly prototypeRepository?: PrototypeRepository;
 
   /**
    * Context provider for cognitive context (Layer 2)

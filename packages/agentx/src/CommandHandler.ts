@@ -105,6 +105,18 @@ export class CommandHandler {
         case "message.send":
           return await this.handleMessageSend(params);
 
+        // Prototype
+        case "prototype.create":
+          return await this.handlePrototypeCreate(params);
+        case "prototype.get":
+          return await this.handlePrototypeGet(params);
+        case "prototype.list":
+          return await this.handlePrototypeList(params);
+        case "prototype.update":
+          return await this.handlePrototypeUpdate(params);
+        case "prototype.delete":
+          return await this.handlePrototypeDelete(params);
+
         // LLM Provider
         case "llm.create":
           return await this.handleLLMCreate(params);
@@ -435,6 +447,111 @@ export class CommandHandler {
 
     await this.runtime.receive(targetAgentId, content);
     return ok({ agentId: targetAgentId, imageId });
+  }
+
+  // ==================== Prototype Commands ====================
+
+  private async handlePrototypeCreate(params: unknown): Promise<RpcResponse> {
+    const { containerId, name, description, contextId, embody, customData } = params as {
+      containerId: string;
+      name: string;
+      description?: string;
+      contextId?: string;
+      embody?: import("@agentxjs/core/persistence").Embodiment;
+      customData?: Record<string, unknown>;
+    };
+
+    const repo = this.runtime.platform.prototypeRepository;
+    if (!repo) {
+      return err(-32000, "Prototype repository not available");
+    }
+
+    const now = Date.now();
+    const random = Math.random().toString(36).slice(2, 8);
+    const record = {
+      prototypeId: `proto_${now}_${random}`,
+      containerId,
+      name,
+      description,
+      contextId,
+      embody,
+      customData,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await repo.savePrototype(record);
+    return ok({ record });
+  }
+
+  private async handlePrototypeGet(params: unknown): Promise<RpcResponse> {
+    const { prototypeId } = params as { prototypeId: string };
+    const repo = this.runtime.platform.prototypeRepository;
+    if (!repo) {
+      return err(-32000, "Prototype repository not available");
+    }
+
+    const record = await repo.findPrototypeById(prototypeId);
+    return ok({ record });
+  }
+
+  private async handlePrototypeList(params: unknown): Promise<RpcResponse> {
+    const { containerId } = params as { containerId?: string };
+    const repo = this.runtime.platform.prototypeRepository;
+    if (!repo) {
+      return err(-32000, "Prototype repository not available");
+    }
+
+    const records = containerId
+      ? await repo.findPrototypesByContainerId(containerId)
+      : await repo.findAllPrototypes();
+
+    return ok({ records });
+  }
+
+  private async handlePrototypeUpdate(params: unknown): Promise<RpcResponse> {
+    const { prototypeId, updates } = params as {
+      prototypeId: string;
+      updates: {
+        name?: string;
+        description?: string;
+        contextId?: string;
+        embody?: import("@agentxjs/core/persistence").Embodiment;
+        customData?: Record<string, unknown>;
+      };
+    };
+
+    const repo = this.runtime.platform.prototypeRepository;
+    if (!repo) {
+      return err(-32000, "Prototype repository not available");
+    }
+
+    const existing = await repo.findPrototypeById(prototypeId);
+    if (!existing) {
+      return err(404, `Prototype not found: ${prototypeId}`);
+    }
+
+    const { embody: embodyUpdates, ...otherUpdates } = updates;
+    const updated = {
+      ...existing,
+      ...otherUpdates,
+      embody: embodyUpdates ? { ...existing.embody, ...embodyUpdates } : existing.embody,
+      updatedAt: Date.now(),
+    };
+
+    await repo.savePrototype(updated);
+    return ok({ record: updated });
+  }
+
+  private async handlePrototypeDelete(params: unknown): Promise<RpcResponse> {
+    const { prototypeId } = params as { prototypeId: string };
+    const repo = this.runtime.platform.prototypeRepository;
+    if (!repo) {
+      return err(-32000, "Prototype repository not available");
+    }
+
+    await repo.deletePrototype(prototypeId);
+    return ok({ prototypeId });
   }
 
   // ==================== LLM Provider Commands ====================
