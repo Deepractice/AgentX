@@ -53,9 +53,9 @@ jobs:
           VERSION=$(jq -r '.version' packages/core/package.json)
           echo "Replacing workspace:* with ^${VERSION}"
 
-          find packages apps -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"^'"${VERSION}"'"/g' {} \;
+          find packages -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"^'"${VERSION}"'"/g' {} \;
 
-          if grep -r '"workspace:' packages/ apps/ --include="package.json" 2>/dev/null; then
+          if grep -r '"workspace:' packages/ --include="package.json" 2>/dev/null; then
             echo "ERROR: workspace: protocol still found!"
             exit 1
           fi
