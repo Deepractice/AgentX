@@ -44,16 +44,14 @@ const createDriver = (config) => createMonoDriver({
 const platform = await nodePlatform({ createDriver }).resolve();
 const ax = createAgentX({ platform, createDriver });
 
-// Create container → image → agent → chat
-await ax.container.create("my-app");
-const { record: image } = await ax.image.create({
-  containerId: "my-app",
-  systemPrompt: "You are a helpful assistant.",
+// Create agent and chat
+const agent = await ax.create({
+  name: "My Assistant",
+  embody: { systemPrompt: "You are a helpful assistant." },
 });
-const { agentId } = await ax.agent.create({ imageId: image.imageId });
 
 ax.on("text_delta", (e) => process.stdout.write(e.data.text));
-await ax.session.send(agentId, "Hello!");
+await agent.send("Hello!");
 ```
 
 ### Server Mode
@@ -61,14 +59,8 @@ await ax.session.send(agentId, "Hello!");
 Expose your agent as a WebSocket server:
 
 ```typescript
-import { createServer } from "agentxjs";
-
-const server = await createServer({
-  platform,
-  createDriver,
-  port: 5200,
-});
-await server.listen();
+const ax = createAgentX({ platform, createDriver });
+const server = await ax.serve({ port: 5200 });
 ```
 
 ### Remote Mode (WebSocket Client)
@@ -82,7 +74,8 @@ const ax = createAgentX();
 const client = await ax.connect("ws://localhost:5200");
 
 // Same API as local mode
-await client.agent.create({ imageId: "..." });
+const agent = await client.create({ name: "My Assistant" });
+await agent.send("Hello!");
 ```
 
 ### CLI
@@ -94,6 +87,25 @@ cd apps/cli
 cp .env.example .env.local  # Set DEEPRACTICE_API_KEY
 bun run dev
 ```
+
+---
+
+## 🧩 Core Concepts
+
+AgentX uses a layered concept model inspired by container runtimes:
+
+```
+Agent (blueprint)  →  Image (persistent)  →  Instance (runtime)
+      ↓                     ↓                      ↓
+  Serializable          Stored in DB          Running in memory
+  Portable              Has session           Has lifecycle
+  Like Dockerfile       Like Docker image     Like container
+```
+
+- **Agent blueprint** — a serializable definition: `{ name, embody: { model, systemPrompt, mcpServers } }`
+- **Embodiment** — runtime config for an agent's "body": model, system prompt, MCP servers
+- **Image** — persistent record created from a blueprint, with session and message history
+- **Instance** — a live runtime agent created from an Image
 
 ---
 

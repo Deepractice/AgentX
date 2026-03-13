@@ -21,17 +21,13 @@ const createDriver = (config) => createMonoDriver({
 
 const ax = createAgentX(nodePlatform({ createDriver }));
 
-await ax.container.create("my-app");
-
-const { record: image } = await ax.image.create({
-  containerId: "my-app",
-  systemPrompt: "You are a helpful assistant.",
+const agent = await ax.create({
+  name: "My Assistant",
+  embody: { systemPrompt: "You are a helpful assistant." },
 });
 
-const { agentId } = await ax.agent.create({ imageId: image.imageId });
-
 ax.on("text_delta", (e) => process.stdout.write(e.data.text));
-await ax.session.send(agentId, "Hello!");
+await agent.send("Hello!");
 ```
 
 ### Remote Mode (WebSocket Client)
@@ -44,15 +40,13 @@ import { createAgentX } from "agentxjs";
 const ax = createAgentX();
 const client = await ax.connect("ws://localhost:5200");
 
-await client.container.create("my-app");
-const { record: image } = await client.image.create({
-  containerId: "my-app",
-  systemPrompt: "You are a helpful assistant.",
+const agent = await client.create({
+  name: "My Assistant",
+  embody: { systemPrompt: "You are a helpful assistant." },
 });
-const { agentId } = await client.agent.create({ imageId: image.imageId });
 
 client.on("text_delta", (e) => process.stdout.write(e.data.text));
-await client.session.send(agentId, "Hello!");
+await agent.send("Hello!");
 ```
 
 ### Server Mode
@@ -83,13 +77,16 @@ interface AgentX {
   readonly connected: boolean;
   readonly events: EventBus;
 
-  // Namespaced operations
-  readonly container: ContainerNamespace;
-  readonly image: ImageNamespace;
-  readonly agent: AgentNamespace;
-  readonly session: SessionNamespace;
-  readonly presentation: PresentationNamespace;
-  readonly llm: LLMNamespace;
+  // Top-level Agent API
+  create(params: { name?, description?, contextId?, embody?, customData? }): Promise<AgentHandle>;
+  list(): Promise<ImageListResponse>;
+  get(agentId: string): Promise<AgentHandle | null>;
+
+  // Low-level subsystems
+  readonly instance: InstanceNamespace;
+
+  // LLM provider management (system-level)
+  readonly provider: LLMNamespace;
 
   // Universal RPC
   rpc<T = unknown>(method: string, params?: unknown): Promise<T>;
@@ -113,7 +110,29 @@ interface AgentXBuilder extends AgentX {
 }
 ```
 
-### Namespace Operations
+### AgentHandle
+
+Returned by `create()` and `get()`. A live reference to an agent with instance-level operations.
+
+```typescript
+interface AgentHandle {
+  readonly agentId: string;
+  readonly imageId: string;
+  readonly containerId: string;
+  readonly sessionId: string;
+
+  send(content: string | unknown[]): Promise<MessageSendResponse>;
+  interrupt(): Promise<BaseResponse>;
+  history(): Promise<Message[]>;
+  present(options?: PresentationOptions): Promise<Presentation>;
+  update(updates: { name?, description?, embody?, customData? }): Promise<void>;
+  delete(): Promise<void>;
+}
+```
+
+### Instance Namespace (low-level)
+
+For advanced use cases, access `ax.instance.*` for direct subsystem operations:
 
 **container**:
 
@@ -123,10 +142,10 @@ interface AgentXBuilder extends AgentX {
 
 **image**:
 
-- `create(params: { containerId, name?, description?, systemPrompt?, mcpServers?, customData? }): Promise<ImageCreateResponse>`
+- `create(params: { containerId, name?, description?, contextId?, embody?, customData? }): Promise<ImageCreateResponse>`
 - `get(imageId: string): Promise<ImageGetResponse>`
 - `list(containerId?: string): Promise<ImageListResponse>`
-- `update(imageId: string, updates: { name?, description?, customData? }): Promise<ImageUpdateResponse>`
+- `update(imageId: string, updates: { name?, description?, embody?, customData? }): Promise<ImageUpdateResponse>`
 - `delete(imageId: string): Promise<BaseResponse>`
 - `getMessages(imageId: string): Promise<Message[]>`
 
@@ -143,7 +162,7 @@ interface AgentXBuilder extends AgentX {
 - `interrupt(agentId: string): Promise<BaseResponse>`
 - `getMessages(agentId: string): Promise<Message[]>`
 
-**presentation**:
+**present**:
 
 - `create(agentId: string, options?: PresentationOptions): Promise<Presentation>`
 
@@ -159,17 +178,29 @@ interface AgentXBuilder extends AgentX {
 
 Each LLM provider has a **vendor** (who provides the service — `anthropic`, `openai`, `deepseek`, `ollama`) and a **protocol** (API format — `anthropic` or `openai`). These are separate dimensions: e.g., Deepseek uses vendor `"deepseek"` with protocol `"openai"`.
 
-When creating an agent, the runtime validates that the container's default LLM provider protocol is supported by the driver.
+### Embodiment
+
+Runtime configuration for an agent's "body":
+
+```typescript
+interface Embodiment {
+  model?: string;           // LLM model name
+  systemPrompt?: string;    // System prompt
+  mcpServers?: Record<string, McpServerConfig>;  // MCP tool servers
+}
+```
+
+Model priority: `embody.model > container default provider > environment variable`.
 
 ### Universal RPC
 
 Transport-agnostic JSON-RPC entry point. Works in all modes — local dispatches to CommandHandler, remote forwards via WebSocket.
 
 ```typescript
-// Equivalent to ax.container.create("default")
+// Equivalent to ax.instance.container.create("default")
 await ax.rpc("container.create", { containerId: "default" });
 
-// Equivalent to ax.image.list()
+// Equivalent to ax.instance.image.list()
 const { records } = await ax.rpc<{ records: ImageRecord[] }>("image.list");
 
 // Useful for custom transport (e.g. Cloudflare Workers/DO)
@@ -192,7 +223,7 @@ Most applications only need the Presentation layer. `ax.onError` is for advanced
 When an LLM call fails (e.g., 403 Forbidden, network timeout), the error automatically appears in `state.conversations` as an `ErrorConversation`:
 
 ```typescript
-const presentation = await ax.presentation.create(agentId, {
+const pres = await agent.present({
   onUpdate: (state) => {
     for (const conv of state.conversations) {
       if (conv.role === "user") {
@@ -202,7 +233,6 @@ const presentation = await ax.presentation.create(agentId, {
       } else if (conv.role === "error") {
         // LLM errors show up here automatically
         renderErrorMessage(conv.message);
-        // e.g. "403 Forbidden: Invalid API key"
       }
     }
   },
@@ -260,7 +290,7 @@ ax.onError((error) => {
 High-level UI state management. Aggregates raw stream events into structured conversation state — the recommended way to build chat UIs.
 
 ```typescript
-const presentation = await ax.presentation.create(agentId, {
+const pres = await agent.present({
   onUpdate: (state) => {
     // state.conversations — completed messages (user, assistant, and error)
     // state.streaming — current streaming response (or null)
@@ -269,9 +299,9 @@ const presentation = await ax.presentation.create(agentId, {
   },
 });
 
-await presentation.send("What is the weather?");
-const state = presentation.getState();
-presentation.dispose();
+await pres.send("What is the weather?");
+const state = pres.getState();
+pres.dispose();
 ```
 
 **Conversation types in `state.conversations`:**

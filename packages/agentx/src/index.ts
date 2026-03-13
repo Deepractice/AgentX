@@ -9,7 +9,8 @@
  * import { nodePlatform } from "@agentxjs/node-platform";
  *
  * const ax = createAgentX(nodePlatform({ createDriver }));
- * await ax.agent.create({ imageId: "..." });
+ * const agent = await ax.create({ name: "Aristotle", embody: { model: "claude-sonnet-4-6" } });
+ * await agent.send("Hello!");
  * ```
  *
  * @example Remote mode
@@ -74,29 +75,18 @@ export function createAgentX(config?: PlatformConfig): AgentXBuilder {
       return getLocalClient().events;
     },
 
-    get container() {
-      return getLocalClient().container;
+    get instance() {
+      return getLocalClient().instance;
     },
 
-    get image() {
-      return getLocalClient().image;
+    get provider() {
+      return getLocalClient().provider;
     },
 
-    get agent() {
-      return getLocalClient().agent;
-    },
-
-    get session() {
-      return getLocalClient().session;
-    },
-
-    get presentation() {
-      return getLocalClient().presentation;
-    },
-
-    get llm() {
-      return getLocalClient().llm;
-    },
+    // Top-level Agent API
+    create: (params) => getLocalClient().create(params),
+    list: () => getLocalClient().list(),
+    get: (agentId) => getLocalClient().get(agentId),
 
     on(type, handler) {
       return getLocalClient().on(type, handler);
@@ -196,6 +186,7 @@ export { createServer, type ServerConfig } from "./server";
 export type {
   AgentCreateResponse,
   AgentGetResponse,
+  AgentHandle,
   AgentInfo,
   AgentListResponse,
   AgentNamespace,
@@ -215,6 +206,7 @@ export type {
   ImageListResponse,
   ImageNamespace,
   ImageRecord,
+  InstanceNamespace,
   LLMNamespace,
   LLMProviderCreateResponse,
   LLMProviderDefaultResponse,

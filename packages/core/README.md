@@ -27,22 +27,37 @@ const container = await runtime.getOrCreateContainer("my-app");
 
 ### Image
 
-An **Image** is a persistent agent configuration: system prompt, MCP server definitions, and settings. One Image can spawn many Agents over time. When you update the Image, the next Agent created from it picks up the changes.
+An **Image** is a persistent agent record created from an Agent blueprint. It stores the agent's configuration (via **Embodiment**), session, and message history. One Image can spawn many runtime instances over time.
 
 ```typescript
-// Create an image (configuration) inside the container
+// Create an image from a blueprint
 const image = await createImage(
   {
     containerId: "my-app",
     name: "CodeReviewer",
-    systemPrompt: "You are a code review assistant.",
-    mcpServers: {
-      /* optional tool servers */
+    embody: {
+      model: "claude-sonnet-4-6",
+      systemPrompt: "You are a code review assistant.",
+      mcpServers: { /* optional tool servers */ },
     },
   },
   ctx
 );
 ```
+
+### Embodiment
+
+An **Embodiment** is runtime configuration for an agent's "body" — model, system prompt, and MCP servers. It lives inside the Image record and is resolved by the runtime when creating an agent instance.
+
+```typescript
+interface Embodiment {
+  model?: string;           // LLM model (overrides container default)
+  systemPrompt?: string;    // System prompt
+  mcpServers?: Record<string, McpServerConfig>;  // MCP tool servers
+}
+```
+
+Model priority: `embody.model > container default provider > environment variable`.
 
 ### Session
 
@@ -281,7 +296,7 @@ function createImage(config: ImageCreateConfig, ctx: ImageContext): Promise<Imag
 function loadImage(imageId: string, ctx: ImageContext): Promise<Image | null>;
 ```
 
-`ImageCreateConfig`: `{ containerId, name?, description?, systemPrompt?, mcpServers? }`.
+`ImageCreateConfig`: `{ containerId, name?, description?, contextId?, embody?, customData? }`.
 `ImageContext` provides repositories: `{ imageRepository, sessionRepository }`.
 
 ### Session (`@agentxjs/core/session`)

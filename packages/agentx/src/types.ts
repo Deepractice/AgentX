@@ -400,7 +400,7 @@ export interface PresentationNamespace {
    *
    * @example
    * ```typescript
-   * const pres = agentx.presentation.create(agentId, {
+   * const pres = ax.present(agentId, {
    *   onUpdate: (state) => renderUI(state),
    *   onError: (error) => console.error(error),
    * });
@@ -413,11 +413,99 @@ export interface PresentationNamespace {
 }
 
 // ============================================================================
+// Instance Namespace — internal implementation details
+// ============================================================================
+
+/**
+ * Instance — low-level access to internal subsystems.
+ *
+ * Most users should use the top-level Agent API (ax.create, ax.send, etc.).
+ * Instance exposes the underlying image, agent, session, container, llm,
+ * and presentation subsystems for advanced use cases.
+ */
+export interface InstanceNamespace {
+  readonly container: ContainerNamespace;
+  readonly image: ImageNamespace;
+  readonly agent: AgentNamespace;
+  readonly session: SessionNamespace;
+  readonly present: PresentationNamespace;
+  readonly llm: LLMNamespace;
+}
+
+// ============================================================================
+// Agent Handle
+// ============================================================================
+
+/**
+ * AgentHandle — a live reference to a created agent.
+ *
+ * Returned by `ax.create()` and `ax.get()`. Holds the agent's identity
+ * and provides instance-level operations (send, interrupt, etc.).
+ *
+ * @example
+ * ```typescript
+ * const agent = await ax.create({ name: "Aristotle", embody: { model: "claude-sonnet-4-6" } });
+ * await agent.send("Hello!");
+ * const messages = await agent.history();
+ * ```
+ */
+export interface AgentHandle {
+  readonly agentId: string;
+  readonly imageId: string;
+  readonly containerId: string;
+  readonly sessionId: string;
+
+  /**
+   * Send a message to this agent
+   */
+  send(content: string | unknown[]): Promise<MessageSendResponse>;
+
+  /**
+   * Interrupt this agent's current response
+   */
+  interrupt(): Promise<BaseResponse>;
+
+  /**
+   * Get message history
+   */
+  history(): Promise<Message[]>;
+
+  /**
+   * Create a presentation for UI integration
+   */
+  present(options?: PresentationOptions): Promise<Presentation>;
+
+  /**
+   * Update this agent's metadata
+   */
+  update(updates: {
+    name?: string;
+    description?: string;
+    embody?: Embodiment;
+    customData?: Record<string, unknown>;
+  }): Promise<void>;
+
+  /**
+   * Delete this agent
+   */
+  delete(): Promise<void>;
+}
+
+// ============================================================================
 // AgentX Client Interface
 // ============================================================================
 
 /**
- * AgentX Client SDK — unified interface for local, remote, and server modes
+ * AgentX Client SDK — unified interface for local, remote, and server modes.
+ *
+ * @example
+ * ```typescript
+ * const ax = createAgentX(config);
+ * const agent = await ax.create({ name: "Aristotle", embody: { model: "claude-sonnet-4-6" } });
+ * await agent.send("Hello!");
+ * ```
+ *
+ * For advanced use cases, access `ax.instance.*` for low-level subsystems.
  */
 export interface AgentX {
   /**
@@ -430,14 +518,42 @@ export interface AgentX {
    */
   readonly events: EventBus;
 
-  // ==================== Namespaced Operations ====================
+  // ==================== Agent API (top-level) ====================
 
-  readonly container: ContainerNamespace;
-  readonly image: ImageNamespace;
-  readonly agent: AgentNamespace;
-  readonly session: SessionNamespace;
-  readonly presentation: PresentationNamespace;
-  readonly llm: LLMNamespace;
+  /**
+   * Create a new agent from a blueprint
+   */
+  create(params: {
+    name?: string;
+    description?: string;
+    contextId?: string;
+    embody?: Embodiment;
+    customData?: Record<string, unknown>;
+  }): Promise<AgentHandle>;
+
+  /**
+   * List all agents
+   */
+  list(): Promise<ImageListResponse>;
+
+  /**
+   * Get agent by ID
+   */
+  get(agentId: string): Promise<AgentHandle | null>;
+
+  // ==================== Instance (low-level) ====================
+
+  /**
+   * Low-level access to internal subsystems (image, agent, session, container, llm).
+   */
+  readonly instance: InstanceNamespace;
+
+  // ==================== LLM Provider (system-level) ====================
+
+  /**
+   * LLM provider management (system-level, not per-agent)
+   */
+  readonly provider: LLMNamespace;
 
   // ==================== Event Subscription ====================
 
@@ -447,35 +563,12 @@ export interface AgentX {
 
   // ==================== Error Handling ====================
 
-  /**
-   * Top-level error handler — receives all AgentXError instances from any layer.
-   *
-   * Independent of `on("error", ...)` (stream events) and `presentation.onError` (UI errors).
-   *
-   * @example
-   * ```typescript
-   * ax.onError((error) => {
-   *   console.error(`[${error.category}] ${error.code}: ${error.message}`);
-   *   if (!error.recoverable) {
-   *     // Circuit is open, stop sending requests
-   *   }
-   * });
-   * ```
-   */
   onError(handler: (error: AgentXError) => void): Unsubscribe;
 
   // ==================== RPC ====================
 
   /**
-   * Universal JSON-RPC entry point — works in all modes:
-   * - Local: dispatches to CommandHandler directly
-   * - Remote: forwards to the remote server via RPC client
-   *
-   * @example
-   * ```typescript
-   * const result = await ax.rpc("container.create", { containerId: "default" });
-   * const { records } = await ax.rpc<{ records: ImageRecord[] }>("image.list");
-   * ```
+   * Universal JSON-RPC entry point
    */
   rpc<T = unknown>(method: string, params?: unknown): Promise<T>;
 
@@ -538,7 +631,8 @@ export interface AgentXServer {
  * const ax = createAgentX(node({ createDriver }))
  *
  * // Local use
- * await ax.agent.create({ imageId: "..." })
+ * const agent = await ax.create({ name: "Aristotle" })
+ * await agent.send("Hello!")
  *
  * // Connect to remote server
  * const client = await ax.connect("wss://...")

@@ -10,6 +10,7 @@ import type { BusEvent, BusEventHandler, EventBus, Unsubscribe } from "@agentxjs
 import { EventBusImpl } from "@agentxjs/core/event";
 import { RpcClient, type RpcMethod } from "@agentxjs/core/network";
 import { createLogger } from "commonxjs/logger";
+import { AgentHandleImpl } from "./AgentHandle";
 import { createRemoteAgents } from "./namespaces/agents";
 import { createRemoteContainers } from "./namespaces/containers";
 import { createRemoteImages } from "./namespaces/images";
@@ -17,14 +18,13 @@ import { createRemoteLLM } from "./namespaces/llm";
 import { createPresentations } from "./namespaces/presentations";
 import { createRemoteSessions } from "./namespaces/sessions";
 import type {
-  AgentNamespace,
+  AgentHandle,
   AgentX,
-  ContainerNamespace,
-  ImageNamespace,
+  Embodiment,
+  ImageListResponse,
+  InstanceNamespace,
   LLMNamespace,
-  PresentationNamespace,
   RemoteClientConfig,
-  SessionNamespace,
 } from "./types";
 
 const logger = createLogger("agentx/RemoteClient");
@@ -37,12 +37,8 @@ export class RemoteClient implements AgentX {
   private readonly eventBus: EventBus;
   private readonly rpcClient: RpcClient;
 
-  readonly container: ContainerNamespace;
-  readonly image: ImageNamespace;
-  readonly agent: AgentNamespace;
-  readonly session: SessionNamespace;
-  readonly presentation: PresentationNamespace;
-  readonly llm: LLMNamespace;
+  readonly instance: InstanceNamespace;
+  readonly provider: LLMNamespace;
 
   constructor(config: RemoteClientConfig) {
     this.config = config;
@@ -65,12 +61,15 @@ export class RemoteClient implements AgentX {
     });
 
     // Assemble namespaces
-    this.container = createRemoteContainers(this.rpcClient);
-    this.image = createRemoteImages(this.rpcClient, (sessionId) => this.subscribe(sessionId));
-    this.agent = createRemoteAgents(this.rpcClient);
-    this.session = createRemoteSessions(this.rpcClient);
-    this.presentation = createPresentations(this);
-    this.llm = createRemoteLLM(this.rpcClient);
+    const container = createRemoteContainers(this.rpcClient);
+    const image = createRemoteImages(this.rpcClient, (sessionId) => this.subscribe(sessionId));
+    const agent = createRemoteAgents(this.rpcClient);
+    const session = createRemoteSessions(this.rpcClient);
+    const llm = createRemoteLLM(this.rpcClient);
+    const present = createPresentations(this, image);
+
+    this.instance = { container, image, agent, session, present, llm };
+    this.provider = llm;
   }
 
   // ==================== Properties ====================
@@ -81,6 +80,48 @@ export class RemoteClient implements AgentX {
 
   get events(): EventBus {
     return this.eventBus;
+  }
+
+  // ==================== Top-level Agent API ====================
+
+  async create(params: {
+    name?: string;
+    description?: string;
+    contextId?: string;
+    embody?: Embodiment;
+    customData?: Record<string, unknown>;
+  }): Promise<AgentHandle> {
+    const containerId = "default";
+    const imgRes = await this.instance.image.create({ containerId, ...params });
+    const agentRes = await this.instance.agent.create({ imageId: imgRes.record.imageId });
+    return new AgentHandleImpl(
+      {
+        agentId: agentRes.agentId,
+        imageId: agentRes.imageId,
+        containerId: agentRes.containerId,
+        sessionId: agentRes.sessionId,
+      },
+      this.instance
+    );
+  }
+
+  async list(): Promise<ImageListResponse> {
+    return this.instance.image.list();
+  }
+
+  async get(agentId: string): Promise<AgentHandle | null> {
+    const res = await this.instance.image.get(agentId);
+    if (!res.record) return null;
+    const r = res.record;
+    return new AgentHandleImpl(
+      {
+        agentId: r.imageId,
+        imageId: r.imageId,
+        containerId: r.containerId,
+        sessionId: r.sessionId,
+      },
+      this.instance
+    );
   }
 
   // ==================== Connection ====================

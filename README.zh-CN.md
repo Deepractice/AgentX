@@ -44,16 +44,14 @@ const createDriver = (config) => createMonoDriver({
 const platform = await nodePlatform({ createDriver }).resolve();
 const ax = createAgentX({ platform, createDriver });
 
-// 创建容器 → 镜像 → Agent → 对话
-await ax.container.create("my-app");
-const { record: image } = await ax.image.create({
-  containerId: "my-app",
-  systemPrompt: "你是一个有帮助的助手。",
+// 创建 Agent 并对话
+const agent = await ax.create({
+  name: "我的助手",
+  embody: { systemPrompt: "你是一个有帮助的助手。" },
 });
-const { agentId } = await ax.agent.create({ imageId: image.imageId });
 
 ax.on("text_delta", (e) => process.stdout.write(e.data.text));
-await ax.session.send(agentId, "你好！");
+await agent.send("你好！");
 ```
 
 ### 服务端模式
@@ -61,14 +59,8 @@ await ax.session.send(agentId, "你好！");
 将 Agent 暴露为 WebSocket 服务：
 
 ```typescript
-import { createServer } from "agentxjs";
-
-const server = await createServer({
-  platform,
-  createDriver,
-  port: 5200,
-});
-await server.listen();
+const ax = createAgentX({ platform, createDriver });
+const server = await ax.serve({ port: 5200 });
 ```
 
 ### 远程模式（WebSocket 客户端）
@@ -82,7 +74,8 @@ const ax = createAgentX();
 const client = await ax.connect("ws://localhost:5200");
 
 // 与本地模式相同的 API
-await client.agent.create({ imageId: "..." });
+const agent = await client.create({ name: "我的助手" });
+await agent.send("你好！");
 ```
 
 ### CLI 终端
@@ -94,6 +87,25 @@ cd apps/cli
 cp .env.example .env.local  # 设置 DEEPRACTICE_API_KEY
 bun run dev
 ```
+
+---
+
+## 🧩 核心概念
+
+AgentX 使用类似容器运行时的分层概念模型：
+
+```
+Agent（蓝图）  →  Image（持久化）  →  Instance（运行时）
+      ↓                 ↓                    ↓
+   可序列化          存储在数据库          运行在内存中
+   可移植            有会话记录           有生命周期
+   类似 Dockerfile   类似 Docker 镜像     类似容器实例
+```
+
+- **Agent 蓝图** — 可序列化的定义：`{ name, embody: { model, systemPrompt, mcpServers } }`
+- **Embodiment** — 智能体"身体"的运行时配置：模型、系统提示、MCP 服务器
+- **Image** — 从蓝图创建的持久化记录，包含会话和消息历史
+- **Instance** — 从 Image 创建的活跃运行时智能体
 
 ---
 
