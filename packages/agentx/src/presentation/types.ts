@@ -39,9 +39,18 @@ export interface ImageBlock {
 }
 
 /**
+ * File block
+ */
+export interface FileBlock {
+  type: "file";
+  filename: string;
+  mediaType: string;
+}
+
+/**
  * All block types
  */
-export type Block = TextBlock | ToolBlock | ImageBlock;
+export type Block = TextBlock | ToolBlock | ImageBlock | FileBlock;
 
 // ============================================================================
 // Conversation Types - A single turn in the conversation

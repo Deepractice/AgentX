@@ -21,6 +21,7 @@ import type {
   ToolCallPart,
   ToolResultMessage,
   ToolResultOutput,
+  UserContentPart,
   UserMessage,
 } from "@agentxjs/core/agent";
 import type { BusEvent } from "@agentxjs/core/event";
@@ -337,16 +338,37 @@ function handleError(state: PresentationState, data: ErrorData): PresentationSta
 // Helper: Add user conversation
 // ============================================================================
 
-export function addUserConversation(state: PresentationState, content: string): PresentationState {
+export function addUserConversation(
+  state: PresentationState,
+  content: string | UserContentPart[]
+): PresentationState {
+  const blocks: Block[] =
+    typeof content === "string"
+      ? [{ type: "text", content }]
+      : content.map((part) => {
+          switch (part.type) {
+            case "text":
+              return { type: "text" as const, content: part.text };
+            case "image":
+              return {
+                type: "image" as const,
+                url: `data:${part.mediaType};base64,${part.data}`,
+                alt: part.name,
+              };
+            case "file":
+              return {
+                type: "file" as const,
+                filename: part.filename ?? "file",
+                mediaType: part.mediaType,
+              };
+            default:
+              return { type: "text" as const, content: String(part) };
+          }
+        });
+
   return {
     ...state,
-    conversations: [
-      ...state.conversations,
-      {
-        role: "user",
-        blocks: [{ type: "text", content }],
-      },
-    ],
+    conversations: [...state.conversations, { role: "user", blocks }],
   };
 }
 

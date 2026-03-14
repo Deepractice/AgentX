@@ -21,6 +21,7 @@ export type {
   Block,
   Conversation,
   ErrorConversation,
+  FileBlock,
   ImageBlock,
   PresentationState,
   TextBlock,

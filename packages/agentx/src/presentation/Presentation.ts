@@ -5,6 +5,7 @@
  * Wraps AgentX client and provides presentation state management.
  */
 
+import type { UserContentPart } from "@agentxjs/core/agent";
 import type { BusEvent, Unsubscribe } from "@agentxjs/core/event";
 import type { AgentX } from "../types";
 import { addUserConversation, createInitialState, presentationReducer } from "./reducer";
@@ -101,9 +102,9 @@ export class Presentation {
   }
 
   /**
-   * Send a message
+   * Send a message (text or content parts with files/images)
    */
-  async send(content: string): Promise<void> {
+  async send(content: string | UserContentPart[]): Promise<void> {
     // Add user conversation
     this.state = addUserConversation(this.state, content);
     this.notify();

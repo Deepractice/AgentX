@@ -226,6 +226,7 @@ export type {
   Block,
   Conversation,
   ErrorConversation,
+  FileBlock,
   ImageBlock,
   PresentationErrorHandler,
   PresentationOptions,
