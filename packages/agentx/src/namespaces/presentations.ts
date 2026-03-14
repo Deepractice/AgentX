@@ -18,10 +18,10 @@ export function createPresentations(
   sessionNs: SessionNamespace
 ): PresentationNamespace {
   return {
-    async create(instanceId: string, options?: PresentationOptions): Promise<Presentation> {
-      const messages = await sessionNs.getMessages(instanceId);
+    async create(imageId: string, options?: PresentationOptions): Promise<Presentation> {
+      const messages = await sessionNs.getMessages(imageId);
       const conversations = messagesToConversations(messages);
-      return new Presentation(agentx, instanceId, options, conversations);
+      return new Presentation(agentx, imageId, options, conversations);
     },
   };
 }
