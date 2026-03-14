@@ -448,45 +448,37 @@ export function createMonoDriver(config: MonoDriverConfig): Driver {
 // Provider Media Strategies
 // ============================================================================
 
-/** Text-based types that we can decode and send as plain text */
-const EXTRACTABLE_TEXT_TYPES = [
-  "text/markdown",
-  "text/csv",
-  "text/html",
-  "text/xml",
-  "text/javascript",
-  "text/typescript",
-  "application/json",
-  "application/xml",
-  "application/javascript",
-];
-
 /**
  * Get media strategies for a specific LLM provider.
  * Each provider supports different file types natively.
+ *
+ * All text/* types are extracted (decoded to text) rather than passed through,
+ * because many Anthropic-compatible APIs (e.g. Kimi) don't support `document` blocks.
+ * Images pass through as-is (all providers support them).
+ * PDF passthrough only for providers that natively support it.
  */
 function getProviderStrategies(provider: MonoProvider) {
   switch (provider) {
     case "anthropic":
       return [
-        passthrough(["image/*", "application/pdf", "text/plain"]),
-        textExtract(EXTRACTABLE_TEXT_TYPES),
+        passthrough(["image/*", "application/pdf"]),
+        textExtract(["text/*", "application/json", "application/xml", "application/javascript"]),
+      ];
+    case "google":
+      return [
+        passthrough(["image/*", "application/pdf"]),
+        textExtract(["text/*", "application/json", "application/xml", "application/javascript"]),
       ];
     case "openai":
       return [
         passthrough(["image/*"]),
-        textExtract(["application/pdf", "text/*", "application/json"]),
-      ];
-    case "google":
-      return [
-        passthrough(["image/*", "application/pdf", "text/plain"]),
-        textExtract(EXTRACTABLE_TEXT_TYPES),
+        textExtract(["application/pdf", "text/*", "application/json", "application/xml"]),
       ];
     default:
-      // Conservative default: only images pass through, rest extract as text
+      // Conservative: only images pass through, everything else extracted as text
       return [
         passthrough(["image/*"]),
-        textExtract(["application/pdf", "text/*", "application/json"]),
+        textExtract(["application/pdf", "text/*", "application/json", "application/xml"]),
       ];
   }
 }
