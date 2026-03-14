@@ -272,26 +272,29 @@ export interface InstanceNamespace {
  */
 export interface SessionNamespace {
   /**
-   * Send message to agent
+   * Send message to agent.
+   * Accepts imageId (recommended) or instanceId.
+   * With imageId, the server auto-creates agent if needed.
    */
-  send(instanceId: string, content: string | unknown[]): Promise<MessageSendResponse>;
+  send(imageId: string, content: string | unknown[]): Promise<MessageSendResponse>;
 
   /**
-   * Interrupt agent
+   * Interrupt agent.
+   * Accepts imageId or instanceId.
    */
-  interrupt(instanceId: string): Promise<BaseResponse>;
+  interrupt(imageId: string): Promise<BaseResponse>;
 
   /**
-   * Get message history for an agent's session
+   * Get message history for an agent's session.
+   * Accepts imageId or instanceId.
    */
-  getMessages(instanceId: string): Promise<Message[]>;
+  getMessages(imageId: string): Promise<Message[]>;
 
   /**
    * Truncate message history after a specific message.
-   * Deletes all messages after (not including) the specified message ID.
-   * Used for conversation rewind / edit-and-resend.
+   * Accepts imageId or instanceId.
    */
-  truncateAfter(instanceId: string, messageId: string): Promise<BaseResponse>;
+  truncateAfter(imageId: string, messageId: string): Promise<BaseResponse>;
 }
 
 /**

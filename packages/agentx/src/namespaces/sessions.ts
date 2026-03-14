@@ -49,32 +49,28 @@ export function createLocalSessions(runtime: AgentXRuntime): SessionNamespace {
  */
 export function createRemoteSessions(rpcClient: RpcClient): SessionNamespace {
   return {
-    async send(instanceId: string, content: string | unknown[]): Promise<MessageSendResponse> {
+    async send(imageId: string, content: string | unknown[]): Promise<MessageSendResponse> {
       const result = await rpcClient.call<MessageSendResponse>("message.send", {
-        instanceId,
+        imageId,
         content,
       });
       return { ...result, requestId: "" };
     },
 
-    async interrupt(instanceId: string): Promise<BaseResponse> {
-      const result = await rpcClient.call<BaseResponse>("instance.interrupt", { instanceId });
+    async interrupt(imageId: string): Promise<BaseResponse> {
+      const result = await rpcClient.call<BaseResponse>("instance.interrupt", { imageId });
       return { ...result, requestId: "" };
     },
 
-    async getMessages(instanceId: string): Promise<Message[]> {
-      const agentRes = await rpcClient.call<{ agent: InstanceInfo | null }>("instance.get", {
-        instanceId,
-      });
-      if (!agentRes.agent) return [];
+    async getMessages(imageId: string): Promise<Message[]> {
       const msgRes = await rpcClient.call<{ messages: Message[] }>("image.messages", {
-        imageId: agentRes.agent.imageId,
+        imageId,
       });
       return msgRes.messages ?? [];
     },
 
-    async truncateAfter(instanceId: string, messageId: string): Promise<BaseResponse> {
-      await rpcClient.call("message.truncateAfter", { instanceId, messageId });
+    async truncateAfter(imageId: string, messageId: string): Promise<BaseResponse> {
+      await rpcClient.call("message.truncateAfter", { imageId, messageId });
       return { requestId: "" };
     },
   };

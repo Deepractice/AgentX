@@ -384,10 +384,46 @@ export class CommandHandler {
     return ok({ containerId });
   }
 
+  /**
+   * Resolve instanceId from either instanceId or imageId.
+   * With imageId, finds existing agent or auto-creates one.
+   */
+  private async resolveInstanceId(params: {
+    instanceId?: string;
+    imageId?: string;
+  }): Promise<string> {
+    const { instanceId, imageId } = params;
+
+    if (instanceId) {
+      // Check if agent exists, if not try imageId fallback
+      const agent = this.runtime.getAgent(instanceId);
+      if (agent) return instanceId;
+      // Agent gone (server restart?) — try to find by imageId from stored agents
+    }
+
+    if (imageId) {
+      const existingAgent = this.runtime
+        .getAgents()
+        .find((a) => a.imageId === imageId && a.lifecycle === "running");
+
+      if (existingAgent) {
+        return existingAgent.instanceId;
+      }
+
+      // Auto-create agent for this image
+      const agent = await this.runtime.createAgent({ imageId });
+      logger.info("Auto-created agent", { imageId, instanceId: agent.instanceId });
+      return agent.instanceId;
+    }
+
+    throw new Error("Either instanceId or imageId is required");
+  }
+
   private async handleAgentInterrupt(params: unknown): Promise<RpcResponse> {
-    const { instanceId } = params as { instanceId: string };
-    this.runtime.interrupt(instanceId);
-    return ok({ instanceId });
+    const { instanceId, imageId } = params as { instanceId?: string; imageId?: string };
+    const resolved = await this.resolveInstanceId({ instanceId, imageId });
+    this.runtime.interrupt(resolved);
+    return ok({ instanceId: resolved });
   }
 
   // ==================== Message Commands ====================
@@ -399,53 +435,26 @@ export class CommandHandler {
       content: string | UserContentPart[];
     };
 
-    let targetInstanceId: string;
-
-    if (instanceId) {
-      // Direct agent reference
-      targetInstanceId = instanceId;
-    } else if (imageId) {
-      // Auto-activate image: find or create agent
-      const existingAgent = this.runtime
-        .getAgents()
-        .find((a) => a.imageId === imageId && a.lifecycle === "running");
-
-      if (existingAgent) {
-        targetInstanceId = existingAgent.instanceId;
-        logger.debug("Using existing agent for message", {
-          imageId,
-          instanceId: targetInstanceId,
-        });
-      } else {
-        // Create new agent for this image
-        const agent = await this.runtime.createAgent({ imageId });
-        targetInstanceId = agent.instanceId;
-        logger.info("Auto-created agent for message", {
-          imageId,
-          instanceId: targetInstanceId,
-        });
-      }
-    } else {
-      return err(-32602, "Either instanceId or imageId is required");
-    }
-
-    await this.runtime.receive(targetInstanceId, content);
-    return ok({ instanceId: targetInstanceId, imageId });
+    const resolved = await this.resolveInstanceId({ instanceId, imageId });
+    await this.runtime.receive(resolved, content);
+    return ok({ instanceId: resolved, imageId });
   }
 
   private async handleMessageTruncateAfter(params: unknown): Promise<RpcResponse> {
-    const { instanceId, messageId } = params as {
-      instanceId: string;
+    const { instanceId, imageId, messageId } = params as {
+      instanceId?: string;
+      imageId?: string;
       messageId: string;
     };
 
-    if (!instanceId || !messageId) {
-      return err(-32602, "instanceId and messageId are required");
+    if (!messageId) {
+      return err(-32602, "messageId is required");
     }
 
-    const agent = this.runtime.getAgent(instanceId);
+    const resolved = await this.resolveInstanceId({ instanceId, imageId });
+    const agent = this.runtime.getAgent(resolved);
     if (!agent) {
-      return err(-32602, `Agent not found: ${instanceId}`);
+      return err(-32602, `Agent not found: ${resolved}`);
     }
 
     const { sessionRepository } = this.runtime.platform;
