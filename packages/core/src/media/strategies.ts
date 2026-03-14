@@ -34,7 +34,7 @@ export function textExtract(patterns: string[]): MediaStrategy {
       const label = file.filename ?? file.mediaType;
       return {
         type: "text",
-        text: `[File: ${label}]\n${text}`,
+        text: `<file name="${label}">\n${text}\n</file>`,
       };
     },
   };

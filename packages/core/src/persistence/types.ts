@@ -375,6 +375,9 @@ export interface SessionRepository {
 
   /** Clear all messages for a session */
   clearMessages(sessionId: string): Promise<void>;
+
+  /** Delete all messages after (not including) the specified message ID */
+  truncateAfterMessage?(sessionId: string, messageId: string): Promise<void>;
 }
 
 // ============================================================================

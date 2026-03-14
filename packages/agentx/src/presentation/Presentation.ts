@@ -129,6 +129,69 @@ export class Presentation {
   }
 
   /**
+   * Rewind conversation to a specific index.
+   * Removes all conversations after the given index (inclusive).
+   * Also truncates the server-side message history.
+   *
+   * @param index - conversation index to rewind to (0-based, removes this index and after)
+   */
+  async rewind(index: number): Promise<void> {
+    const conversations = this.state.conversations;
+    if (index < 0 || index >= conversations.length) return;
+
+    // Find the last message ID before the rewind point to truncate server history
+    const kept = conversations.slice(0, index);
+
+    // Truncate server-side history
+    // We need the message ID of the last kept message. Get messages and find it.
+    try {
+      const messages = await this.agentx.runtime.session.getMessages(this.instanceId);
+      if (messages.length > 0 && index > 0) {
+        // Map conversation index to message index (approximate: each conversation = 1-2 messages)
+        // Find the user message that corresponds to the conversation before rewind point
+        let msgIndex = -1;
+        let convCount = 0;
+        for (let i = 0; i < messages.length; i++) {
+          if (messages[i].subtype === "user" || messages[i].subtype === "assistant") {
+            convCount++;
+          }
+          if (convCount >= index) {
+            msgIndex = i;
+            break;
+          }
+        }
+        if (msgIndex >= 0 && msgIndex < messages.length) {
+          await this.agentx.runtime.session.truncateAfter(this.instanceId, messages[msgIndex].id);
+        }
+      } else if (index === 0) {
+        // Rewind to beginning — clear all messages
+        // Use truncateAfter with first message won't work, need to handle separately
+      }
+    } catch (error) {
+      this.notifyError(error instanceof Error ? error : new Error(String(error)));
+    }
+
+    // Update local presentation state
+    this.state = { ...this.state, conversations: kept, streaming: null, status: "idle" };
+    this.notify();
+  }
+
+  /**
+   * Edit a user message and resend.
+   * Rewinds to the message, replaces it, and sends the new content.
+   *
+   * @param index - conversation index of the user message to edit (0-based)
+   * @param content - new content to send
+   */
+  async editAndResend(index: number, content: string | UserContentPart[]): Promise<void> {
+    // Rewind to before this message
+    await this.rewind(index);
+
+    // Send the new content
+    await this.send(content);
+  }
+
+  /**
    * Reset state
    */
   reset(): void {

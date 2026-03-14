@@ -25,7 +25,6 @@
 
 import type { UserMessage } from "@agentxjs/core/agent";
 import type { Driver, DriverState, DriverStreamEvent } from "@agentxjs/core/driver";
-import type { MediaResolver } from "@agentxjs/core/media";
 import { createMediaResolver, passthrough, textExtract } from "@agentxjs/core/media";
 import type { Session } from "@agentxjs/core/session";
 import { createAnthropic } from "@ai-sdk/anthropic";
@@ -65,7 +64,6 @@ export class MonoDriver implements Driver {
   private readonly provider: MonoProvider;
   private readonly maxSteps: number;
   private readonly compatibleConfig?: OpenAICompatibleConfig;
-  private readonly mediaResolver: MediaResolver;
 
   constructor(config: MonoDriverConfig) {
     this.config = config;
@@ -73,7 +71,6 @@ export class MonoDriver implements Driver {
     this.provider = config.provider ?? "anthropic";
     this.maxSteps = config.maxSteps ?? 10;
     this.compatibleConfig = config.compatibleConfig;
-    this.mediaResolver = createMediaResolver(getProviderStrategies(this.provider));
   }
 
   // ============================================================================
@@ -100,6 +97,8 @@ export class MonoDriver implements Driver {
     logger.info("Initializing MonoDriver", {
       instanceId: this.config.instanceId,
       provider: this.provider,
+      model: this.config.model,
+      baseUrl: this.config.baseUrl,
     });
 
     // Generate a session ID for tracking
@@ -146,14 +145,46 @@ export class MonoDriver implements Driver {
       // Get history from Session
       const history = this.session ? await this.session.getMessages() : [];
 
+      // Create media resolver with current model + baseUrl
+      const model = this.config.model ?? this.getDefaultModel();
+      const mediaResolver = createMediaResolver(
+        getMediaStrategies(this.provider, model, this.config.baseUrl)
+      );
+
+      // Resolve file parts in history messages (same as current message)
+      for (const msg of history) {
+        if (msg.subtype === "user" && typeof msg.content !== "string") {
+          (msg as any).content = await mediaResolver.resolve(
+            msg.content as import("@agentxjs/core/agent").UserContentPart[]
+          );
+        }
+      }
+
       // Convert to Vercel AI SDK format
       const messages = toVercelMessages(history);
 
       // Resolve file parts (extract text from unsupported types, passthrough supported ones)
+      const isMultipart = typeof message.content !== "string";
+      if (isMultipart) {
+        const parts = message.content as import("@agentxjs/core/agent").UserContentPart[];
+        logger.info("[MediaResolver] Input parts", {
+          count: parts.length,
+          types: parts.map((p) => `${p.type}:${"mediaType" in p ? (p as any).mediaType : "n/a"}`),
+        });
+      }
+
       const resolvedContent =
         typeof message.content === "string"
           ? message.content
-          : await this.mediaResolver.resolve(message.content);
+          : await mediaResolver.resolve(message.content);
+
+      if (isMultipart) {
+        const resolved = resolvedContent as import("@agentxjs/core/agent").UserContentPart[];
+        logger.info("[MediaResolver] Resolved parts", {
+          count: resolved.length,
+          types: resolved.map((p) => p.type),
+        });
+      }
 
       // Add current user message
       messages.push({
@@ -448,37 +479,64 @@ export function createMonoDriver(config: MonoDriverConfig): Driver {
 // Provider Media Strategies
 // ============================================================================
 
+/** All text-based types we can decode to inline text */
+const TEXT_EXTRACTABLE = [
+  "text/*",
+  "application/json",
+  "application/xml",
+  "application/javascript",
+];
+
 /**
- * Get media strategies for a specific LLM provider.
- * Each provider supports different file types natively.
+ * Check if a model/baseUrl combination supports PDF via native `document` blocks.
  *
- * All text/* types are extracted (decoded to text) rather than passed through,
- * because many Anthropic-compatible APIs (e.g. Kimi) don't support `document` blocks.
- * Images pass through as-is (all providers support them).
- * PDF passthrough only for providers that natively support it.
+ * Only Anthropic's own API and Google support this.
+ * Third-party APIs using Anthropic protocol (Kimi, Doubao, Ark, etc.) do NOT,
+ * even though they use the same protocol.
+ *
+ * Detection priority: model name → baseUrl → provider
  */
-function getProviderStrategies(provider: MonoProvider) {
-  switch (provider) {
-    case "anthropic":
-      return [
-        passthrough(["image/*", "application/pdf"]),
-        textExtract(["text/*", "application/json", "application/xml", "application/javascript"]),
-      ];
-    case "google":
-      return [
-        passthrough(["image/*", "application/pdf"]),
-        textExtract(["text/*", "application/json", "application/xml", "application/javascript"]),
-      ];
-    case "openai":
-      return [
-        passthrough(["image/*"]),
-        textExtract(["application/pdf", "text/*", "application/json", "application/xml"]),
-      ];
-    default:
-      // Conservative: only images pass through, everything else extracted as text
-      return [
-        passthrough(["image/*"]),
-        textExtract(["application/pdf", "text/*", "application/json", "application/xml"]),
-      ];
+function supportsPdfNative(provider: MonoProvider, model?: string, baseUrl?: string): boolean {
+  // 1. Model name check (most reliable when available)
+  if (model) {
+    if (model.startsWith("claude-")) return true;
+    if (model.startsWith("gemini-")) return true;
+    // Known non-native models
+    if (model.startsWith("kimi-")) return false;
+    if (model.startsWith("doubao-")) return false;
+    if (model.startsWith("deepseek-")) return false;
+    if (model.startsWith("glm-")) return false;
+    if (model.startsWith("minimax-")) return false;
   }
+
+  // 2. BaseUrl check (catches empty model case)
+  if (baseUrl) {
+    if (baseUrl.includes("anthropic.com")) return true;
+    if (baseUrl.includes("googleapis.com")) return true;
+    // Known third-party proxies — no native PDF support
+    if (baseUrl.includes("volces.com")) return false;
+    if (baseUrl.includes("sholoopai")) return false;
+  }
+
+  // 3. Fall back to provider (protocol)
+  return provider === "google";
+}
+
+/**
+ * Get media strategies based on protocol, model, and baseUrl.
+ *
+ * - Images: always passthrough
+ * - Text files: always textExtract (inline text)
+ * - PDF: passthrough only for native-supporting providers
+ */
+function getMediaStrategies(provider: MonoProvider, model?: string, baseUrl?: string) {
+  if (supportsPdfNative(provider, model, baseUrl)) {
+    return [passthrough(["image/*", "application/pdf"]), textExtract(TEXT_EXTRACTABLE)];
+  }
+
+  return [
+    passthrough(["image/*"]),
+    textExtract(TEXT_EXTRACTABLE),
+    // PDF not supported — will throw UnsupportedMediaTypeError
+  ];
 }

@@ -61,6 +61,29 @@ export class SessionImpl implements Session {
   async clear(): Promise<void> {
     await this.repository.clearMessages(this.sessionId);
   }
+
+  /**
+   * Delete all messages after the specified message ID.
+   * If repository doesn't support truncation, falls back to
+   * get-filter-clear-rewrite.
+   */
+  async truncateAfter(messageId: string): Promise<void> {
+    if (this.repository.truncateAfterMessage) {
+      await this.repository.truncateAfterMessage(this.sessionId, messageId);
+      return;
+    }
+
+    // Fallback: get all, filter, clear, rewrite
+    const messages = await this.repository.getMessages(this.sessionId);
+    const idx = messages.findIndex((m) => m.id === messageId);
+    if (idx === -1) throw new Error(`Message not found: ${messageId}`);
+
+    const kept = messages.slice(0, idx + 1);
+    await this.repository.clearMessages(this.sessionId);
+    for (const msg of kept) {
+      await this.repository.addMessage(this.sessionId, msg);
+    }
+  }
 }
 
 /**

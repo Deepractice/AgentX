@@ -285,6 +285,13 @@ export interface SessionNamespace {
    * Get message history for an agent's session
    */
   getMessages(instanceId: string): Promise<Message[]>;
+
+  /**
+   * Truncate message history after a specific message.
+   * Deletes all messages after (not including) the specified message ID.
+   * Used for conversation rewind / edit-and-resend.
+   */
+  truncateAfter(instanceId: string, messageId: string): Promise<BaseResponse>;
 }
 
 /**

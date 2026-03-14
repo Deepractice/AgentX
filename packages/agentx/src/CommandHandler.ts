@@ -97,6 +97,8 @@ export class CommandHandler {
         // Message
         case "message.send":
           return await this.handleMessageSend(params);
+        case "message.truncateAfter":
+          return await this.handleMessageTruncateAfter(params);
 
         // LLM Provider
         case "llm.create":
@@ -429,6 +431,40 @@ export class CommandHandler {
 
     await this.runtime.receive(targetInstanceId, content);
     return ok({ instanceId: targetInstanceId, imageId });
+  }
+
+  private async handleMessageTruncateAfter(params: unknown): Promise<RpcResponse> {
+    const { instanceId, messageId } = params as {
+      instanceId: string;
+      messageId: string;
+    };
+
+    if (!instanceId || !messageId) {
+      return err(-32602, "instanceId and messageId are required");
+    }
+
+    const agent = this.runtime.getAgent(instanceId);
+    if (!agent) {
+      return err(-32602, `Agent not found: ${instanceId}`);
+    }
+
+    const { sessionRepository } = this.runtime.platform;
+
+    // Get messages, find the target, truncate
+    const messages = await sessionRepository.getMessages(agent.sessionId);
+    const idx = messages.findIndex((m) => m.id === messageId);
+    if (idx === -1) {
+      return err(-32602, `Message not found: ${messageId}`);
+    }
+
+    // Keep messages up to and including messageId
+    const kept = messages.slice(0, idx + 1);
+    await sessionRepository.clearMessages(agent.sessionId);
+    for (const msg of kept) {
+      await sessionRepository.addMessage(agent.sessionId, msg);
+    }
+
+    return ok({ truncatedCount: messages.length - kept.length });
   }
 
   // ==================== LLM Provider Commands ====================

@@ -60,6 +60,12 @@ export interface Session {
    * Clear all messages in the session
    */
   clear(): Promise<void>;
+
+  /**
+   * Delete all messages after the specified message ID.
+   * Used for conversation rewind / edit-and-resend.
+   */
+  truncateAfter(messageId: string): Promise<void>;
 }
 
 // ============================================================================
