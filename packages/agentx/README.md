@@ -197,15 +197,16 @@ For advanced use cases, access `ax.runtime.*` for direct subsystem operations:
 - `list(containerId?: string): Promise<AgentListResponse>`
 - `destroy(agentId: string): Promise<BaseResponse>`
 
-**session**:
+**session** (all methods accept imageId — server auto-creates agent if needed):
 
-- `send(agentId: string, content: string | unknown[]): Promise<MessageSendResponse>`
-- `interrupt(agentId: string): Promise<BaseResponse>`
-- `getMessages(agentId: string): Promise<Message[]>`
+- `send(imageId: string, content: string | unknown[]): Promise<MessageSendResponse>`
+- `interrupt(imageId: string): Promise<BaseResponse>`
+- `getMessages(imageId: string): Promise<Message[]>`
+- `truncateAfter(imageId: string, messageId: string): Promise<BaseResponse>` — delete messages after a point (for rewind)
 
 **present**:
 
-- `create(agentId: string, options?: PresentationOptions): Promise<Presentation>`
+- `create(instanceId: string, options?: PresentationOptions): Promise<Presentation>`
 
 **llm**:
 
@@ -357,20 +358,101 @@ const state = pres.getState();
 pres.dispose();
 ```
 
-**Conversation types in `state.conversations`:**
+#### Presentation Methods
 
-| `role` | Type | Content |
-| ------ | ---- | ------- |
-| `"user"` | `UserConversation` | `blocks: [{ type: "text", content }]` |
-| `"assistant"` | `AssistantConversation` | `blocks: [{ type: "text", content }, { type: "tool_use", ... }]` |
-| `"error"` | `ErrorConversation` | `message: string` — the error description |
+| Method | Description |
+| ------ | ----------- |
+| `send(content)` | Send a message. Accepts `string` or `UserContentPart[]` (text + files/images) |
+| `interrupt()` | Interrupt the current streaming response |
+| `rewind(index)` | Rewind conversation to a specific index, removing all messages after it. Truncates server-side history too |
+| `editAndResend(index, content)` | Rewind to `index`, then send new content. For "edit & resend" UI |
+| `reset()` | Clear all local state |
+| `getState()` | Get current `PresentationState` |
+| `onUpdate(handler)` | Subscribe to state changes. Returns unsubscribe function |
+| `onError(handler)` | Subscribe to errors. Returns unsubscribe function |
+| `dispose()` | Cleanup subscriptions |
 
-For custom state management, use the exported reducer:
+#### Sending Files
+
+```typescript
+// Text only
+await pres.send("Hello!");
+
+// Text + file attachment
+await pres.send([
+  { type: "text", text: "Please analyze this data" },
+  { type: "file", data: base64Data, mediaType: "text/csv", filename: "sales.csv" },
+]);
+
+// Image
+await pres.send([
+  { type: "text", text: "What's in this image?" },
+  { type: "image", data: base64Data, mediaType: "image/png", name: "screenshot.png" },
+]);
+```
+
+Supported file types are handled automatically by the MediaResolver:
+
+| File Type | Behavior |
+| --------- | -------- |
+| Images (`image/*`) | Passed directly to LLM |
+| PDF (`application/pdf`) | Passed directly (Claude/Gemini only, others throw `UnsupportedMediaTypeError`) |
+| Text files (`text/*`, `application/json`, `application/xml`) | Auto-extracted to inline text with `<file>` tags |
+| Other | Throws `UnsupportedMediaTypeError` |
+
+#### Conversation Rewind / Edit & Resend
+
+```typescript
+// User sends a message, AI replies, user wants to try a different question
+
+// Rewind to conversation index 2 (removes index 2 and everything after)
+await pres.rewind(2);
+
+// Or edit the message at index 2 and resend in one call
+await pres.editAndResend(2, "Better question here");
+
+// Works with files too
+await pres.editAndResend(2, [
+  { type: "text", text: "Analyze with different instructions" },
+  { type: "file", data: base64, mediaType: "text/csv", filename: "data.csv" },
+]);
+```
+
+#### Conversation Types
+
+**`state.conversations`** contains an array of:
+
+| `role` | Type | Blocks |
+| ------ | ---- | ------ |
+| `"user"` | `UserConversation` | `TextBlock`, `FileBlock`, `ImageBlock` |
+| `"assistant"` | `AssistantConversation` | `TextBlock`, `ToolBlock`, `ImageBlock` |
+| `"error"` | `ErrorConversation` | `message: string` |
+
+**Block types:**
+
+```typescript
+interface TextBlock { type: "text"; content: string }
+interface FileBlock { type: "file"; filename: string; mediaType: string }
+interface ImageBlock { type: "image"; url: string; alt?: string }
+interface ToolBlock { type: "tool"; toolName: string; toolInput: Record<string, unknown>; toolResult?: string; status: "pending" | "running" | "completed" | "error" }
+```
+
+**`state.streaming`** — current streaming `AssistantConversation` or `null`.
+
+**`state.status`** — `"idle"` | `"thinking"` | `"responding"` | `"executing"`.
+
+#### Custom State Management
+
+For frameworks that need manual state control, use the exported reducer:
 
 ```typescript
 import { presentationReducer, createInitialState, addUserConversation } from "agentxjs";
 
 let state = createInitialState();
 state = addUserConversation(state, "Hello");
+state = addUserConversation(state, [
+  { type: "text", text: "Check this file" },
+  { type: "file", data: base64, mediaType: "text/csv", filename: "data.csv" },
+]);
 state = presentationReducer(state, event); // pure function
 ```
