@@ -89,6 +89,11 @@
       "types": "./dist/context/index.d.ts",
       "import": "./dist/context/index.js",
       "default": "./dist/context/index.js"
+    },
+    "./media": {
+      "types": "./dist/media/index.d.ts",
+      "import": "./dist/media/index.js",
+      "default": "./dist/media/index.js"
     }
   },
   "files": [

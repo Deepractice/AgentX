@@ -25,6 +25,8 @@
 
 import type { UserMessage } from "@agentxjs/core/agent";
 import type { Driver, DriverState, DriverStreamEvent } from "@agentxjs/core/driver";
+import type { MediaResolver } from "@agentxjs/core/media";
+import { createMediaResolver, passthrough, textExtract } from "@agentxjs/core/media";
 import type { Session } from "@agentxjs/core/session";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createDeepSeek } from "@ai-sdk/deepseek";
@@ -63,6 +65,7 @@ export class MonoDriver implements Driver {
   private readonly provider: MonoProvider;
   private readonly maxSteps: number;
   private readonly compatibleConfig?: OpenAICompatibleConfig;
+  private readonly mediaResolver: MediaResolver;
 
   constructor(config: MonoDriverConfig) {
     this.config = config;
@@ -70,6 +73,7 @@ export class MonoDriver implements Driver {
     this.provider = config.provider ?? "anthropic";
     this.maxSteps = config.maxSteps ?? 10;
     this.compatibleConfig = config.compatibleConfig;
+    this.mediaResolver = createMediaResolver(getProviderStrategies(this.provider));
   }
 
   // ============================================================================
@@ -145,10 +149,16 @@ export class MonoDriver implements Driver {
       // Convert to Vercel AI SDK format
       const messages = toVercelMessages(history);
 
+      // Resolve file parts (extract text from unsupported types, passthrough supported ones)
+      const resolvedContent =
+        typeof message.content === "string"
+          ? message.content
+          : await this.mediaResolver.resolve(message.content);
+
       // Add current user message
       messages.push({
         role: "user",
-        content: toVercelUserContent(message.content),
+        content: toVercelUserContent(resolvedContent),
       });
 
       logger.debug("Sending message to LLM", {
@@ -432,4 +442,51 @@ export class MonoDriver implements Driver {
  */
 export function createMonoDriver(config: MonoDriverConfig): Driver {
   return new MonoDriver(config);
+}
+
+// ============================================================================
+// Provider Media Strategies
+// ============================================================================
+
+/** Text-based types that we can decode and send as plain text */
+const EXTRACTABLE_TEXT_TYPES = [
+  "text/markdown",
+  "text/csv",
+  "text/html",
+  "text/xml",
+  "text/javascript",
+  "text/typescript",
+  "application/json",
+  "application/xml",
+  "application/javascript",
+];
+
+/**
+ * Get media strategies for a specific LLM provider.
+ * Each provider supports different file types natively.
+ */
+function getProviderStrategies(provider: MonoProvider) {
+  switch (provider) {
+    case "anthropic":
+      return [
+        passthrough(["image/*", "application/pdf", "text/plain"]),
+        textExtract(EXTRACTABLE_TEXT_TYPES),
+      ];
+    case "openai":
+      return [
+        passthrough(["image/*"]),
+        textExtract(["application/pdf", "text/*", "application/json"]),
+      ];
+    case "google":
+      return [
+        passthrough(["image/*", "application/pdf", "text/plain"]),
+        textExtract(EXTRACTABLE_TEXT_TYPES),
+      ];
+    default:
+      // Conservative default: only images pass through, rest extract as text
+      return [
+        passthrough(["image/*"]),
+        textExtract(["application/pdf", "text/*", "application/json"]),
+      ];
+  }
 }

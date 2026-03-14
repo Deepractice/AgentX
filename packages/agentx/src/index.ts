@@ -29,9 +29,70 @@
 import type { CreateDriver } from "@agentxjs/core/driver";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import { createAgentXRuntime } from "@agentxjs/core/runtime";
+import { createLogger } from "commonxjs/logger";
 import { LocalClient } from "./LocalClient";
 import { RemoteClient } from "./RemoteClient";
 import type { AgentX, AgentXBuilder, AgentXServer, ConnectOptions, ServeConfig } from "./types";
+
+const poolLogger = createLogger("agentx/connection-pool");
+
+// ============================================================================
+// Connection Pool — module-level singleton for WebSocket connection reuse
+//
+// Solves React 18+ Strict Mode double-mount:
+//   mount → connect (refCount=1) → unmount → dispose (refCount=0, deferred)
+//   → re-mount → connect (reuse, refCount=1)
+// ============================================================================
+
+interface PoolEntry {
+  client: RemoteClient;
+  refCount: number;
+}
+
+const connectionPool = new Map<string, PoolEntry>();
+
+function pooledConnect(serverUrl: string, factory: () => Promise<RemoteClient>): Promise<AgentX> {
+  const existing = connectionPool.get(serverUrl);
+  if (existing && existing.client.connected) {
+    existing.refCount++;
+    poolLogger.debug("Connection reused", { serverUrl, refCount: existing.refCount });
+    return Promise.resolve(wrapWithRefCount(serverUrl, existing));
+  }
+
+  return factory().then((client) => {
+    const entry: PoolEntry = { client, refCount: 1 };
+    connectionPool.set(serverUrl, entry);
+    poolLogger.debug("Connection created", { serverUrl });
+    return wrapWithRefCount(serverUrl, entry);
+  });
+}
+
+function wrapWithRefCount(serverUrl: string, entry: PoolEntry): AgentX {
+  const client = entry.client;
+  const originalDispose = client.dispose.bind(client);
+  const originalDisconnect = client.disconnect.bind(client);
+
+  // Override dispose — only truly dispose when refCount reaches 0
+  client.dispose = async () => {
+    entry.refCount--;
+    poolLogger.debug("Connection released", { serverUrl, refCount: entry.refCount });
+    if (entry.refCount <= 0) {
+      connectionPool.delete(serverUrl);
+      await originalDispose();
+    }
+  };
+
+  // disconnect follows same refCount logic
+  client.disconnect = async () => {
+    entry.refCount--;
+    if (entry.refCount <= 0) {
+      connectionPool.delete(serverUrl);
+      await originalDisconnect();
+    }
+  };
+
+  return client;
+}
 
 /**
  * Platform configuration for createAgentX
@@ -113,16 +174,18 @@ export function createAgentX(config?: PlatformConfig): AgentXBuilder {
     },
 
     async connect(serverUrl: string, options?: ConnectOptions): Promise<AgentX> {
-      const remoteClient = new RemoteClient({
-        serverUrl,
-        headers: options?.headers as Record<string, string> | undefined,
-        context: options?.context,
-        timeout: options?.timeout,
-        autoReconnect: options?.autoReconnect,
-        customPlatform: config?.platform,
+      return pooledConnect(serverUrl, async () => {
+        const remoteClient = new RemoteClient({
+          serverUrl,
+          headers: options?.headers as Record<string, string> | undefined,
+          context: options?.context,
+          timeout: options?.timeout,
+          autoReconnect: options?.autoReconnect,
+          customPlatform: config?.platform,
+        });
+        await remoteClient.connect();
+        return remoteClient;
       });
-      await remoteClient.connect();
-      return remoteClient;
     },
 
     async serve(serveConfig?: ServeConfig): Promise<AgentXServer> {

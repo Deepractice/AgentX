@@ -167,6 +167,50 @@ When(
   }
 );
 
+When(
+  "I send a file {string} with type {string} containing {string}",
+  { timeout: 30000 },
+  async function (this: AgentXWorld, filename: string, mediaType: string, content: string) {
+    const state = getState(this);
+    state.events = [];
+    (state as any).lastError = undefined;
+
+    const unsub = this.localAgentX!.onAny((event) => {
+      state.events.push(event);
+    });
+    state.unsubscribes.push(unsub);
+
+    // Encode content as base64
+    const data = Buffer.from(content.replace(/\\n/g, "\n")).toString("base64");
+
+    try {
+      await this.localAgentX!.runtime.session.send(state.instanceId!, [
+        { type: "file" as const, data, mediaType, filename },
+      ]);
+      await new Promise((r) => setTimeout(r, 200));
+
+      // Extract reply text from text_delta events
+      const textDeltas = state.events.filter((e) => e.type === "text_delta");
+      state.lastReplyText = textDeltas.map((e) => (e.data as any).text).join("");
+    } catch (err) {
+      (state as any).lastError = err;
+    }
+  }
+);
+
+Then(
+  "I should receive an unsupported media type error for {string}",
+  function (this: AgentXWorld, mediaType: string) {
+    const state = getState(this);
+    const err = (state as any).lastError;
+    assert.ok(err, "Expected an error but none was thrown");
+    assert.ok(
+      err.message?.includes(mediaType) || err.name === "UnsupportedMediaTypeError",
+      `Expected UnsupportedMediaTypeError for "${mediaType}", got: ${err.message}`
+    );
+  }
+);
+
 Then("I should receive a non-empty reply", function (this: AgentXWorld) {
   const state = getState(this);
   assert.ok(

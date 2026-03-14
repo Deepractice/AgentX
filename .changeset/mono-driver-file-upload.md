@@ -1,10 +1,12 @@
 ---
+"@agentxjs/core": patch
 "@agentxjs/mono-driver": patch
+"agentxjs": patch
 ---
 
-feat: support image and file content parts in MonoDriver
+feat: media resolver, file upload support, and connection pool
 
-Previously MonoDriver silently dropped non-text content parts (images, files),
-converting them to `[object Object]`. Now correctly maps AgentX `ImagePart` and
-`FilePart` to Vercel AI SDK format, enabling file upload support across all
-providers.
+- Add `@agentxjs/core/media` module with MediaResolver and strategies (passthrough, textExtract)
+- MonoDriver: resolve file parts per provider capabilities before sending to LLM
+- MonoDriver: unsupported file types throw UnsupportedMediaTypeError with clear message
+- agentxjs: connection pool with refCount for React 18+ Strict Mode compatibility
