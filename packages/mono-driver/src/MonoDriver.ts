@@ -36,7 +36,13 @@ import { createXai } from "@ai-sdk/xai";
 import type { ToolSet } from "ai";
 import { stepCountIs, streamText } from "ai";
 import { createLogger } from "commonxjs/logger";
-import { createEvent, toStopReason, toVercelMessages, toVercelTools } from "./converters";
+import {
+  createEvent,
+  toStopReason,
+  toVercelMessages,
+  toVercelTools,
+  toVercelUserContent,
+} from "./converters";
 import type { MonoDriverConfig, MonoProvider, OpenAICompatibleConfig } from "./types";
 
 const logger = createLogger("mono-driver/MonoDriver");
@@ -142,13 +148,7 @@ export class MonoDriver implements Driver {
       // Add current user message
       messages.push({
         role: "user",
-        content:
-          typeof message.content === "string"
-            ? message.content
-            : message.content.map((part) => {
-                if ("text" in part) return { type: "text" as const, text: part.text };
-                return { type: "text" as const, text: String(part) };
-              }),
+        content: toVercelUserContent(message.content),
       });
 
       logger.debug("Sending message to LLM", {

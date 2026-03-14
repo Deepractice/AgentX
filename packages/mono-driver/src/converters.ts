@@ -4,7 +4,7 @@
  * Converts between AgentX types and Vercel AI SDK v6 types
  */
 
-import type { Message, ToolResultMessage } from "@agentxjs/core/agent";
+import type { Message, ToolResultMessage, UserContentPart } from "@agentxjs/core/agent";
 import type { DriverStreamEvent, StopReason, ToolDefinition } from "@agentxjs/core/driver";
 import type { ModelMessage, ToolSet } from "ai";
 import { jsonSchema, tool } from "ai";
@@ -21,8 +21,7 @@ export function toVercelMessage(message: Message): ModelMessage | null {
     case "user":
       return {
         role: "user",
-        content:
-          typeof message.content === "string" ? message.content : extractText(message.content),
+        content: toVercelUserContent(message.content),
       };
 
     case "assistant": {
@@ -88,6 +87,27 @@ export function toVercelMessages(messages: Message[]): ModelMessage[] {
     }
   }
   return result;
+}
+
+/**
+ * Convert user message content to Vercel AI SDK format
+ */
+export function toVercelUserContent(content: string | UserContentPart[]) {
+  return typeof content === "string" ? content : content.map(toVercelContentPart);
+}
+
+/**
+ * Convert a UserContentPart to Vercel AI SDK content part
+ */
+function toVercelContentPart(part: UserContentPart) {
+  switch (part.type) {
+    case "image":
+      return { type: "image" as const, image: part.data, mediaType: part.mediaType };
+    case "file":
+      return { type: "file" as const, data: part.data, mediaType: part.mediaType };
+    default:
+      return { type: "text" as const, text: part.text };
+  }
 }
 
 /**
