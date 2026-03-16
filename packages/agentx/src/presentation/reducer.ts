@@ -184,14 +184,16 @@ function handleMessageStart(state: PresentationState, _data: MessageStartData): 
     isStreaming: true,
   };
 
+  // Only reset metrics at the start of a new turn (idle → thinking).
+  // Mid-turn message_start (after tool_use) should keep accumulating.
+  const isNewTurn = state.status === "idle";
+  const metrics = isNewTurn ? { ...initialMetrics, turnStartedAt: Date.now() } : state.metrics;
+
   return {
     ...state,
     conversations: [...state.conversations, newConv],
     status: "thinking",
-    metrics: {
-      ...initialMetrics,
-      turnStartedAt: Date.now(),
-    },
+    metrics,
   };
 }
 
