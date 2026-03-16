@@ -28,7 +28,7 @@ export interface ToolBlock {
   toolResult?: string;
   /** Partial JSON input being streamed (visible during input-streaming phase) */
   partialInput?: string;
-  status: "pending" | "running" | "completed" | "error";
+  status: "pending" | "running" | "completed" | "error" | "interrupted";
 }
 
 /**

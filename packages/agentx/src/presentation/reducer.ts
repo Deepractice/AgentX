@@ -418,15 +418,28 @@ function handleError(state: PresentationState, data: ErrorData): PresentationSta
   };
 }
 
+/**
+ * Interrupt handlers per block type.
+ * Each handler receives a block and returns the interrupted version.
+ * New block types register here — handleInterrupted stays fixed.
+ */
+const interruptHandlers: Partial<Record<Block["type"], (block: Block) => Block>> = {
+  tool: (block) => {
+    const tb = block as ToolBlock;
+    if (tb.status === "pending" || tb.status === "running") {
+      return { ...tb, status: "interrupted", toolResult: "Interrupted" };
+    }
+    return block;
+  },
+};
+
 function handleInterrupted(state: PresentationState): PresentationState {
   return updateLastConv(
     state,
     (conv) => {
       const blocks = conv.blocks.map((block): Block => {
-        if (block.type === "tool" && (block.status === "pending" || block.status === "running")) {
-          return { ...block, status: "error", toolResult: "Interrupted" };
-        }
-        return block;
+        const handler = interruptHandlers[block.type];
+        return handler ? handler(block) : block;
       });
       return { ...conv, blocks, isStreaming: false };
     },
