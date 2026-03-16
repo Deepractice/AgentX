@@ -116,6 +116,9 @@ export function presentationReducer(state: PresentationState, event: BusEvent): 
     case "error":
       return handleError(state, event.data as ErrorData);
 
+    case "interrupted":
+      return handleInterrupted(state);
+
     default:
       return state;
   }
@@ -329,6 +332,21 @@ function handleError(state: PresentationState, data: ErrorData): PresentationSta
         message: data.message,
       },
     ],
+    streaming: null,
+    status: "idle",
+  };
+}
+
+function handleInterrupted(state: PresentationState): PresentationState {
+  // Flush any streaming content to conversations (preserve partial response)
+  let conversations = state.conversations;
+  if (state.streaming && state.streaming.blocks.length > 0) {
+    conversations = [...conversations, { ...state.streaming, isStreaming: false }];
+  }
+
+  return {
+    ...state,
+    conversations,
     streaming: null,
     status: "idle",
   };
