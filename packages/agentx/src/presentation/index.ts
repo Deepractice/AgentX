@@ -19,6 +19,7 @@ export {
 export type {
   AssistantConversation,
   Block,
+  ConnectionState,
   Conversation,
   ErrorConversation,
   FileBlock,

@@ -149,6 +149,11 @@ export interface PresentationMetrics extends TurnMetrics {
 // ============================================================================
 
 /**
+ * Connection state
+ */
+export type ConnectionState = "connected" | "connecting" | "disconnected";
+
+/**
  * Presentation state - the complete UI state
  */
 export interface PresentationState {
@@ -160,9 +165,14 @@ export interface PresentationState {
   conversations: Conversation[];
 
   /**
-   * Current status
+   * Current agent status
    */
   status: "idle" | "thinking" | "responding" | "executing";
+
+  /**
+   * WebSocket connection state
+   */
+  connection: ConnectionState;
 
   /**
    * Real-time metrics for the current turn
@@ -192,5 +202,6 @@ export const initialMetrics: PresentationMetrics = {
 export const initialPresentationState: PresentationState = {
   conversations: [],
   status: "idle",
+  connection: "connected",
   metrics: initialMetrics,
 };

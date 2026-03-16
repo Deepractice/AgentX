@@ -28,6 +28,7 @@ import type { BusEvent } from "@agentxjs/core/event";
 import type {
   AssistantConversation,
   Block,
+  ConnectionState,
   Conversation,
   PresentationState,
   TextBlock,
@@ -130,6 +131,10 @@ export function presentationReducer(state: PresentationState, event: BusEvent): 
 
     case "interrupted":
       return handleInterrupted(state);
+
+    // Connection state
+    case "connection_state":
+      return handleConnectionState(state, event.data as { state: string });
 
     default:
       return state;
@@ -415,6 +420,15 @@ function handleError(state: PresentationState, data: ErrorData): PresentationSta
 
 function handleInterrupted(state: PresentationState): PresentationState {
   return updateLastConv(state, (conv) => ({ ...conv, isStreaming: false }), { status: "idle" });
+}
+
+function handleConnectionState(
+  state: PresentationState,
+  data: { state: string }
+): PresentationState {
+  const connection = data.state as ConnectionState;
+  if (connection === state.connection) return state;
+  return { ...state, connection };
 }
 
 // ============================================================================

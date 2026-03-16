@@ -58,6 +58,15 @@ export class RemoteClient implements AgentX {
       this.eventBus.emit(event as BusEvent);
     });
 
+    // Forward connection state changes to event bus
+    this.rpcClient.onStateChange((state) => {
+      this.eventBus.emit({
+        type: "connection_state",
+        timestamp: Date.now(),
+        data: { state },
+      } as BusEvent);
+    });
+
     // Assemble namespaces
     const image = createRemoteImages(this.rpcClient);
     const instance = createRemoteInstances(this.rpcClient);

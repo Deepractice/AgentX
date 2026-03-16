@@ -131,6 +131,7 @@ export class RpcClient {
   private readonly pendingRequests = new Map<string | number, PendingRequest>();
   private readonly notificationHandlers = new Set<NotificationHandler>();
   private readonly streamEventHandlers = new Set<StreamEventHandler>();
+  private readonly stateChangeHandlers = new Set<(state: RpcClientState) => void>();
 
   private ws: WebSocket | null = null;
   private state: RpcClientState = "disconnected";
@@ -174,6 +175,7 @@ export class RpcClient {
     }
 
     this.state = "connecting";
+    this.notifyStateChange();
 
     const url = this.config.url;
 
@@ -186,6 +188,7 @@ export class RpcClient {
     return new Promise((resolve, reject) => {
       ws.onopen = async () => {
         this.state = "connected";
+        this.notifyStateChange();
 
         if (this.config.debug) {
           console.log("[RpcClient] Connected to", url);
@@ -206,6 +209,7 @@ export class RpcClient {
 
       ws.onclose = () => {
         this.state = "disconnected";
+        this.notifyStateChange();
 
         if (this.config.debug) {
           console.log("[RpcClient] Disconnected");
@@ -249,6 +253,7 @@ export class RpcClient {
     }
 
     this.state = "disconnected";
+    this.notifyStateChange();
   }
 
   /**
@@ -364,6 +369,24 @@ export class RpcClient {
   onStreamEvent(handler: StreamEventHandler): () => void {
     this.streamEventHandlers.add(handler);
     return () => this.streamEventHandlers.delete(handler);
+  }
+
+  /**
+   * Register handler for connection state changes
+   */
+  onStateChange(handler: (state: RpcClientState) => void): () => void {
+    this.stateChangeHandlers.add(handler);
+    return () => this.stateChangeHandlers.delete(handler);
+  }
+
+  private notifyStateChange(): void {
+    for (const handler of this.stateChangeHandlers) {
+      try {
+        handler(this.state);
+      } catch {
+        // ignore handler errors
+      }
+    }
   }
 
   // ==================== Message Handling ====================
