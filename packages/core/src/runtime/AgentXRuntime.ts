@@ -727,11 +727,13 @@ function categorizeAgentOutput(type: string): string {
     "message_delta",
     "message_stop",
     "text_delta",
+    "thinking_delta",
     "tool_use_start",
     "input_json_delta",
     "tool_use_stop",
     "tool_result",
     "error_received",
+    "interrupted",
   ];
   if (streamTypes.includes(type)) return "stream";
 
