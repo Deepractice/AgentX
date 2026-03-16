@@ -419,7 +419,19 @@ function handleError(state: PresentationState, data: ErrorData): PresentationSta
 }
 
 function handleInterrupted(state: PresentationState): PresentationState {
-  return updateLastConv(state, (conv) => ({ ...conv, isStreaming: false }), { status: "idle" });
+  return updateLastConv(
+    state,
+    (conv) => {
+      const blocks = conv.blocks.map((block): Block => {
+        if (block.type === "tool" && (block.status === "pending" || block.status === "running")) {
+          return { ...block, status: "error", toolResult: "Interrupted" };
+        }
+        return block;
+      });
+      return { ...conv, blocks, isStreaming: false };
+    },
+    { status: "idle" }
+  );
 }
 
 function handleConnectionState(
