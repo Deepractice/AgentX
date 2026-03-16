@@ -301,12 +301,22 @@ function handleMessageDelta(state: PresentationState, data: MessageDeltaData): P
     return { ...conv, usage };
   });
 
+  // inputTokens from LLM = current context size (full history sent each call)
+  const contextTokens = data.usage.inputTokens;
+  const contextLimit = newState.metrics.session.contextLimit;
+  const contextUsage = contextLimit > 0 ? contextTokens / contextLimit : 0;
+
   return {
     ...newState,
     metrics: {
       ...newState.metrics,
       inputTokens: newState.metrics.inputTokens + data.usage.inputTokens,
       outputTokens: newState.metrics.outputTokens + data.usage.outputTokens,
+      session: {
+        contextTokens,
+        contextLimit,
+        contextUsage,
+      },
     },
   };
 }

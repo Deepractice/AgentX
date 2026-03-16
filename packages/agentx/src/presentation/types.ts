@@ -111,16 +111,37 @@ export type Conversation = UserConversation | AssistantConversation | ErrorConve
 // ============================================================================
 
 /**
- * Real-time metrics for the current turn.
+ * Turn-level metrics.
  * Reset at the start of each turn, preserved after turn ends.
  */
-export interface PresentationMetrics {
+export interface TurnMetrics {
   /** Timestamp when the current turn started (null when idle before first turn) */
   turnStartedAt: number | null;
   /** Input tokens consumed in the current turn */
   inputTokens: number;
   /** Output tokens generated in the current turn */
   outputTokens: number;
+}
+
+/**
+ * Session-level context metrics.
+ * Tracks the overall context window usage across the entire session.
+ */
+export interface SessionMetrics {
+  /** Current context size in tokens (last inputTokens from LLM — includes full history) */
+  contextTokens: number;
+  /** Model's context window limit (0 = unknown) */
+  contextLimit: number;
+  /** Context usage ratio 0-1 (0 when limit unknown) */
+  contextUsage: number;
+}
+
+/**
+ * Combined presentation metrics — turn + session level.
+ */
+export interface PresentationMetrics extends TurnMetrics {
+  /** Session-level context window metrics */
+  session: SessionMetrics;
 }
 
 // ============================================================================
@@ -152,10 +173,17 @@ export interface PresentationState {
 /**
  * Initial presentation metrics
  */
+export const initialSessionMetrics: SessionMetrics = {
+  contextTokens: 0,
+  contextLimit: 0,
+  contextUsage: 0,
+};
+
 export const initialMetrics: PresentationMetrics = {
   turnStartedAt: null,
   inputTokens: 0,
   outputTokens: 0,
+  session: initialSessionMetrics,
 };
 
 /**

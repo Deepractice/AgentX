@@ -25,10 +25,12 @@ export type {
   ImageBlock,
   PresentationMetrics,
   PresentationState,
+  SessionMetrics,
   TextBlock,
   ThinkingBlock,
   TokenUsage,
   ToolBlock,
+  TurnMetrics,
   UserConversation,
 } from "./types";
-export { initialMetrics, initialPresentationState } from "./types";
+export { initialMetrics, initialPresentationState, initialSessionMetrics } from "./types";
