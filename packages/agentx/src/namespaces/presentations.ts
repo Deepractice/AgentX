@@ -7,11 +7,19 @@
  */
 
 import { messagesToConversations, Presentation, type PresentationOptions } from "../presentation";
+import type { PresentationWorkspace } from "../presentation/types";
 import type { AgentX, PresentationNamespace, SessionNamespace } from "../types";
+
+/**
+ * Workspace resolver — given an imageId, returns a PresentationWorkspace or null.
+ * Provided by the client (local or remote) to decouple from runtime internals.
+ */
+export type WorkspaceResolver = (imageId: string) => Promise<PresentationWorkspace | null>;
 
 export function createPresentations(
   agentx: AgentX,
-  sessionNs: SessionNamespace
+  sessionNs: SessionNamespace,
+  workspaceResolver?: WorkspaceResolver
 ): PresentationNamespace {
   const instances = new Map<string, Presentation>();
 
@@ -26,10 +34,13 @@ export function createPresentations(
         return existing;
       }
 
+      // Resolve workspace for this image
+      const workspace = workspaceResolver ? await workspaceResolver(imageId) : null;
+
       // Create new from history
       const messages = await sessionNs.getMessages(imageId);
       const conversations = messagesToConversations(messages);
-      const presentation = new Presentation(agentx, imageId, options, conversations);
+      const presentation = new Presentation(agentx, imageId, options, conversations, workspace);
 
       instances.set(imageId, presentation);
 

@@ -94,6 +94,11 @@
       "types": "./dist/media/index.d.ts",
       "import": "./dist/media/index.js",
       "default": "./dist/media/index.js"
+    },
+    "./workspace": {
+      "types": "./dist/workspace/index.d.ts",
+      "import": "./dist/workspace/index.js",
+      "default": "./dist/workspace/index.js"
     }
   },
   "files": [

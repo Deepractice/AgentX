@@ -426,7 +426,7 @@ export interface SystemError
        */
       details?: unknown;
     },
-    "agent" | "container" | "driver" | "session" | "sandbox" | "command",
+    "agent" | "container" | "driver" | "session" | "command",
     "error",
     "notification"
   > {}

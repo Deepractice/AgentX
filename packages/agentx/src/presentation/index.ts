@@ -23,9 +23,11 @@ export type {
   Conversation,
   ErrorConversation,
   FileBlock,
+  FileTreeEntry,
   ImageBlock,
   PresentationMetrics,
   PresentationState,
+  PresentationWorkspace,
   SessionMetrics,
   TextBlock,
   ThinkingBlock,
@@ -33,5 +35,6 @@ export type {
   ToolBlock,
   TurnMetrics,
   UserConversation,
+  WorkspaceState,
 } from "./types";
 export { initialMetrics, initialPresentationState, initialSessionMetrics } from "./types";

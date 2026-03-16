@@ -29,6 +29,7 @@ import type { ChannelClientFactory } from "../network/RpcClient";
 import type { ChannelServer } from "../network/types";
 import type { PrototypeRepository } from "../persistence/types";
 import type { SessionRepository } from "../session/types";
+import type { WorkspaceProvider } from "../workspace/types";
 
 // ============================================================================
 // AgentXPlatform - Dependency Injection
@@ -102,6 +103,16 @@ export interface AgentXPlatform {
    * Node.js platform provides child_process based implementation.
    */
   readonly bashProvider?: BashProvider;
+
+  /**
+   * Workspace provider for file operations
+   *
+   * Optional — not all platforms need file system access.
+   * When provided and Image has a workspaceId, workspace tools
+   * (read/write/edit/grep/glob/list) are automatically injected into agents.
+   * Each Image gets its own isolated workspace directory.
+   */
+  readonly workspaceProvider?: WorkspaceProvider;
 
   /**
    * Channel server for accepting client connections (server-side)

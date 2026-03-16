@@ -5,7 +5,6 @@
  * Different platforms provide different implementations:
  * - Node.js: child_process based
  * - Docker: Container exec
- * - Sandbox: Isolated environment
  *
  * ```
  * ┌─────────────────────────────────────────────────────┐
@@ -20,8 +19,8 @@
  *          ┌────────────────┼────────────────┐
  *          ▼                ▼                ▼
  *   ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
- *   │ platform-node│ │platform-docker│ │platform-sandbox│
- *   │ ChildProcess │ │ ContainerExec│ │ SandboxExec  │
+ *   │ platform-node│ │platform-docker│ │  (future)    │
+ *   │ ChildProcess │ │ ContainerExec│ │              │
  *   └──────────────┘ └──────────────┘ └──────────────┘
  * ```
  */
@@ -93,7 +92,7 @@ export interface BashOptions {
  */
 export interface BashProvider {
   /**
-   * Provider type (e.g., "child-process", "docker", "sandbox")
+   * Provider type (e.g., "child-process", "docker")
    */
   readonly type: string;
 

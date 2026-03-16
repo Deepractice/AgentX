@@ -41,7 +41,23 @@ export class LocalClient implements AgentX {
     const instance = createLocalInstances(agentxRuntime);
     const session = createLocalSessions(agentxRuntime);
     const llm = createLocalLLM(platform);
-    const present = createPresentations(this, session);
+    // Workspace resolver: imageId → PresentationWorkspace
+    const workspaceResolver = async (imageId: string) => {
+      const wp = platform.workspaceProvider;
+      if (!wp) return null;
+      const img = await platform.imageRepository.findImageById(imageId);
+      if (!img?.workspaceId) return null;
+      const ws = await wp.create(img.workspaceId);
+      return {
+        read: (path: string) => ws.read(path),
+        write: (path: string, content: string) => ws.write(path, content),
+        list: async (path?: string) => {
+          const entries = await ws.list(path);
+          return entries.map((e) => ({ name: e.name, path: e.path, type: e.type }));
+        },
+      };
+    };
+    const present = createPresentations(this, session, workspaceResolver);
 
     this.runtime = { image, instance, session, present, llm };
     this.provider = llm;

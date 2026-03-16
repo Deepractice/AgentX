@@ -9,7 +9,7 @@ import type { UserContentPart } from "@agentxjs/core/agent";
 import type { BusEvent, Unsubscribe } from "@agentxjs/core/event";
 import type { AgentX } from "../types";
 import { addUserConversation, createInitialState, presentationReducer } from "./reducer";
-import type { Conversation, PresentationState } from "./types";
+import type { Conversation, PresentationState, PresentationWorkspace } from "./types";
 import { initialPresentationState } from "./types";
 
 /**
@@ -48,14 +48,22 @@ export class Presentation {
   private errorHandlers: Set<PresentationErrorHandler> = new Set();
   private eventUnsubscribe: Unsubscribe | null = null;
 
+  /**
+   * Workspace operations — read, write, list files in the agent's workspace.
+   * null when the agent has no workspace.
+   */
+  readonly workspace: PresentationWorkspace | null;
+
   constructor(
     agentx: AgentX,
     instanceId: string,
     options?: PresentationOptions,
-    initialConversations?: Conversation[]
+    initialConversations?: Conversation[],
+    workspace?: PresentationWorkspace | null
   ) {
     this.agentx = agentx;
     this.instanceId = instanceId;
+    this.workspace = workspace ?? null;
     this.state = initialConversations?.length
       ? { ...initialPresentationState, conversations: initialConversations }
       : createInitialState();

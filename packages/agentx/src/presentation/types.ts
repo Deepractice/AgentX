@@ -145,6 +145,52 @@ export interface PresentationMetrics extends TurnMetrics {
 }
 
 // ============================================================================
+// Workspace State
+// ============================================================================
+
+/**
+ * File tree entry — recursive structure for rendering directory tree
+ */
+export interface FileTreeEntry {
+  /** File or directory name */
+  name: string;
+  /** Path relative to workspace root */
+  path: string;
+  /** File or directory */
+  type: "file" | "directory";
+  /** Children (only for directories) */
+  children?: FileTreeEntry[];
+}
+
+/**
+ * Workspace state — real-time workspace view
+ */
+export interface WorkspaceState {
+  /**
+   * Current file tree (recursive).
+   * Frontend just renders this tree directly.
+   */
+  files: FileTreeEntry[];
+}
+
+// ============================================================================
+// Presentation Workspace Operations
+// ============================================================================
+
+/**
+ * PresentationWorkspace — file operations exposed to the consumer.
+ * Wraps the underlying Workspace with a simple API.
+ */
+export interface PresentationWorkspace {
+  /** Read file content */
+  read(path: string): Promise<string>;
+  /** Write content to a file */
+  write(path: string, content: string): Promise<void>;
+  /** List directory entries */
+  list(path?: string): Promise<FileTreeEntry[]>;
+}
+
+// ============================================================================
 // Presentation State
 // ============================================================================
 
@@ -178,6 +224,12 @@ export interface PresentationState {
    * Real-time metrics for the current turn
    */
   metrics: PresentationMetrics;
+
+  /**
+   * Workspace state — real-time file tree.
+   * null when agent has no workspace.
+   */
+  workspace: WorkspaceState | null;
 }
 
 /**
@@ -204,4 +256,5 @@ export const initialPresentationState: PresentationState = {
   status: "idle",
   connection: "connected",
   metrics: initialMetrics,
+  workspace: null,
 };

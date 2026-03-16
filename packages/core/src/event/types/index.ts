@@ -12,7 +12,7 @@ export * from "./base";
 export * from "./bus";
 // Command events (request/response)
 export * from "./command";
-// Container events (lifecycle, sandbox)
+// Container events (lifecycle)
 export * from "./container";
 // Driver events (DriveableEvent, ConnectionEvent, StopReason, ErrorEvent)
 export * from "./driver";

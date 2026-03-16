@@ -30,6 +30,7 @@ import type {
   Block,
   ConnectionState,
   Conversation,
+  FileTreeEntry,
   PresentationState,
   TextBlock,
   TokenUsage,
@@ -135,6 +136,10 @@ export function presentationReducer(state: PresentationState, event: BusEvent): 
     // Connection state
     case "connection_state":
       return handleConnectionState(state, event.data as { state: string });
+
+    // Workspace file tree
+    case "workspace_tree":
+      return handleWorkspaceTree(state, event.data as { files: FileTreeEntry[] });
 
     default:
       return state;
@@ -459,6 +464,16 @@ function handleConnectionState(
   const connection = data.state as ConnectionState;
   if (connection === state.connection) return state;
   return { ...state, connection };
+}
+
+function handleWorkspaceTree(
+  state: PresentationState,
+  data: { files: FileTreeEntry[] }
+): PresentationState {
+  return {
+    ...state,
+    workspace: { files: data.files },
+  };
 }
 
 // ============================================================================

@@ -24,6 +24,11 @@
       "types": "./dist/network/index.d.ts",
       "import": "./dist/network/index.js",
       "default": "./dist/network/index.js"
+    },
+    "./workspace": {
+      "types": "./dist/workspace/index.d.ts",
+      "import": "./dist/workspace/index.js",
+      "default": "./dist/workspace/index.js"
     }
   },
   "files": [

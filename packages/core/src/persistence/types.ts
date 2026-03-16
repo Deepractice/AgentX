@@ -133,6 +133,9 @@ export interface ImageRecord {
   /** Context ID — identifies the cognitive context (e.g. RoleX individual). The soul. */
   contextId?: string;
 
+  /** Workspace ID — identifies the agent's working directory. */
+  workspaceId?: string;
+
   /** Embodiment — runtime configuration (model, systemPrompt, mcpServers). The body. */
   embody?: Embodiment;
 

@@ -17,6 +17,7 @@ import { join } from "node:path";
 import type { ContextProvider } from "@agentxjs/core/context";
 import { EventBusImpl } from "@agentxjs/core/event";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
+import type { WorkspaceProvider } from "@agentxjs/core/workspace";
 import type { LogLevel } from "commonxjs/logger";
 import { ConsoleLogger, setLoggerFactory } from "commonxjs/logger";
 import { NodeBashProvider } from "./bash/NodeBashProvider";
@@ -51,6 +52,14 @@ export interface NodePlatformOptions {
    * If not provided, agents run without cognitive context.
    */
   contextProvider?: ContextProvider;
+
+  /**
+   * Workspace provider for file operations.
+   * If provided, workspace tools (read/write/edit/grep/glob/list) are injected into agents.
+   * Each Image gets its own isolated workspace directory.
+   * @default auto-created under dataPath/workspaces when not specified
+   */
+  workspaceProvider?: WorkspaceProvider;
 }
 
 /**
@@ -141,6 +150,11 @@ export async function createNodePlatform(
     contextProvider,
     eventBus,
     bashProvider,
+    workspaceProvider:
+      options.workspaceProvider ??
+      new (await import("./workspace/LocalWorkspaceProvider")).LocalWorkspaceProvider(
+        join(dataPath, "workspaces")
+      ),
     channelServer,
     channelClient: createNodeWebSocket,
   };
@@ -170,3 +184,5 @@ export { OffsetGenerator, SqliteMessageQueue } from "./mq";
 export { WebSocketConnection, WebSocketServer } from "./network";
 // Re-export persistence
 export * from "./persistence";
+// Re-export workspace
+export { LocalWorkspace, LocalWorkspaceProvider } from "./workspace";

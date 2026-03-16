@@ -60,7 +60,6 @@ export type EventSource =
   | "agent" // Agent internal
   | "session" // Session operations
   | "container" // Container operations
-  | "sandbox" // Sandbox resources (Workspace, MCP)
   | "command"; // Command request/response (API operations)
 
 /**
@@ -87,9 +86,6 @@ export type EventCategory =
   | "lifecycle" // Creation/destruction
   | "persist" // Persistence operations
   | "action" // User actions (resume, fork)
-  // Sandbox categories
-  | "workdir" // File operations
-  | "mcp" // MCP tool operations
   // Command categories (API request/response)
   | "request" // Request to perform action
   | "response"; // Response with result

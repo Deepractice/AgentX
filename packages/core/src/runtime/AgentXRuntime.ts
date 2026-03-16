@@ -119,6 +119,42 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     if (this.platform.bashProvider) {
       defaultTools.push(createBashTool(this.platform.bashProvider));
     }
+    if (imageRecord.workspaceId && this.platform.workspaceProvider) {
+      const workspace = await this.platform.workspaceProvider.create(imageRecord.workspaceId);
+      const { createWorkspaceTools } = await import("../workspace/tools");
+      defaultTools.push(...createWorkspaceTools(workspace));
+
+      // Start workspace watcher — emit file tree on changes
+      const { isWatchable } = await import("../workspace/types");
+      if (isWatchable(workspace)) {
+        const scanTree = async () => {
+          try {
+            const files = await workspace.list(".");
+            this.platform.eventBus.emit({
+              type: "workspace_tree",
+              timestamp: Date.now(),
+              data: { imageId, files },
+              source: "container",
+              category: "lifecycle",
+              intent: "notification",
+              context: { instanceId, imageId },
+            } as any);
+          } catch {
+            // Ignore scan errors
+          }
+        };
+
+        // Emit initial tree
+        await scanTree();
+
+        // Debounced watcher
+        let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+        workspace.watch(() => {
+          if (debounceTimer) clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(scanTree, 200);
+        });
+      }
+    }
 
     // Create context if Image has a contextId and platform provides a ContextProvider
     let context: import("../context/types").Context | undefined;
