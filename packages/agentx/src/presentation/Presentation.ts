@@ -221,9 +221,13 @@ export class Presentation {
       const eventWithContext = event as BusEvent & { context?: { instanceId?: string } };
       const eventAgentId = eventWithContext.context?.instanceId;
 
-      // Only filter if event has instanceId and it doesn't match
+      // Only filter if event has context and neither instanceId nor imageId matches
       if (eventAgentId && eventAgentId !== this.instanceId) {
-        return;
+        // Also check imageId in context
+        const eventImageId = (eventWithContext.context as any)?.imageId;
+        if (!eventImageId || eventImageId !== this.instanceId) {
+          return;
+        }
       }
 
       // Reduce event into state
