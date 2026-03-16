@@ -97,17 +97,39 @@ export function toVercelUserContent(content: string | UserContentPart[]) {
 }
 
 /**
- * Convert a UserContentPart to Vercel AI SDK content part
+ * Convert a UserContentPart to Vercel AI SDK content part.
+ *
+ * Text-based files (text/plain, text/csv, etc.) are decoded and sent as text parts
+ * since many LLM providers don't support file-type content parts.
  */
 function toVercelContentPart(part: UserContentPart) {
   switch (part.type) {
     case "image":
       return { type: "image" as const, image: part.data, mediaType: part.mediaType };
-    case "file":
+    case "file": {
+      // Text-based files → decode to text part for broad LLM compatibility
+      if (part.mediaType.startsWith("text/")) {
+        const text = decodeBase64(part.data);
+        const label = part.filename ? `[File: ${part.filename}]\n` : "";
+        return { type: "text" as const, text: `${label}${text}` };
+      }
       return { type: "file" as const, data: part.data, mediaType: part.mediaType };
+    }
     default:
       return { type: "text" as const, text: part.text };
   }
+}
+
+/**
+ * Decode base64 string to UTF-8 text
+ */
+function decodeBase64(base64: string): string {
+  if (typeof atob === "function") {
+    // Browser / modern Node
+    return atob(base64);
+  }
+  // Node.js Buffer fallback
+  return Buffer.from(base64, "base64").toString("utf-8");
 }
 
 /**
