@@ -42,7 +42,6 @@ export function createLocalImages(platform: AgentXPlatform): ImageNamespace {
 
       return {
         record: image.toRecord(),
-        __subscriptions: [image.sessionId],
         requestId: "",
       };
     },
@@ -51,7 +50,6 @@ export function createLocalImages(platform: AgentXPlatform): ImageNamespace {
       const record = await platform.imageRepository.findImageById(imageId);
       return {
         record,
-        __subscriptions: record?.sessionId ? [record.sessionId] : undefined,
         requestId: "",
       };
     },
@@ -61,7 +59,6 @@ export function createLocalImages(platform: AgentXPlatform): ImageNamespace {
 
       return {
         records,
-        __subscriptions: records.map((r) => r.sessionId),
         requestId: "",
       };
     },
@@ -109,50 +106,23 @@ export function createLocalImages(platform: AgentXPlatform): ImageNamespace {
 /**
  * Create remote image namespace backed by RPC client
  */
-export function createRemoteImages(
-  rpcClient: RpcClient,
-  subscribeFn: (sessionId: string) => void
-): ImageNamespace {
+export function createRemoteImages(rpcClient: RpcClient): ImageNamespace {
   return {
     async create(params: AgentConfig): Promise<ImageCreateResponse> {
       const result = await rpcClient.call<ImageCreateResponse>("image.create", {
         ...params,
         containerId: DEFAULT_CONTAINER_ID,
       });
-
-      // Auto subscribe to session events
-      if (result.__subscriptions) {
-        for (const sessionId of result.__subscriptions) {
-          subscribeFn(sessionId);
-        }
-      }
-
       return { ...result, requestId: "" };
     },
 
     async get(imageId: string): Promise<ImageGetResponse> {
       const result = await rpcClient.call<ImageGetResponse>("image.get", { imageId });
-
-      // Auto subscribe
-      if (result.__subscriptions) {
-        for (const sessionId of result.__subscriptions) {
-          subscribeFn(sessionId);
-        }
-      }
-
       return { ...result, requestId: "" };
     },
 
     async list(): Promise<ImageListResponse> {
       const result = await rpcClient.call<ImageListResponse>("image.list", {});
-
-      // Auto subscribe
-      if (result.__subscriptions) {
-        for (const sessionId of result.__subscriptions) {
-          subscribeFn(sessionId);
-        }
-      }
-
       return { ...result, requestId: "" };
     },
 

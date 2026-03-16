@@ -127,7 +127,6 @@ export interface InstanceListResponse extends BaseResponse {
  */
 export interface ImageCreateResponse extends BaseResponse {
   record: ImageRecord;
-  __subscriptions?: string[];
 }
 
 /**
@@ -135,7 +134,6 @@ export interface ImageCreateResponse extends BaseResponse {
  */
 export interface ImageGetResponse extends BaseResponse {
   record: ImageRecord | null;
-  __subscriptions?: string[];
 }
 
 /**
@@ -143,7 +141,6 @@ export interface ImageGetResponse extends BaseResponse {
  */
 export interface ImageListResponse extends BaseResponse {
   records: ImageRecord[];
-  __subscriptions?: string[];
 }
 
 /**
@@ -534,7 +531,6 @@ export interface AgentX {
 
   on<T extends string>(type: T, handler: BusEventHandler<BusEvent & { type: T }>): Unsubscribe;
   onAny(handler: BusEventHandler): Unsubscribe;
-  subscribe(sessionId: string): void;
 
   // ==================== Error Handling ====================
 

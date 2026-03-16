@@ -156,10 +156,6 @@ export function createAgentX(config?: PlatformConfig): AgentXBuilder {
       return getLocalClient().onAny(handler);
     },
 
-    subscribe(sessionId) {
-      getLocalClient().subscribe(sessionId);
-    },
-
     onError(handler) {
       return getLocalClient().onError(handler);
     },

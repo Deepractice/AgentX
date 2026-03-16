@@ -161,7 +161,6 @@ export class CommandHandler {
 
     return ok({
       record: image.toRecord(),
-      __subscriptions: [image.sessionId],
     });
   }
 
@@ -170,7 +169,6 @@ export class CommandHandler {
     const record = await this.runtime.platform.imageRepository.findImageById(imageId);
     return ok({
       record,
-      __subscriptions: record?.sessionId ? [record.sessionId] : undefined,
     });
   }
 
@@ -182,7 +180,6 @@ export class CommandHandler {
 
     return ok({
       records,
-      __subscriptions: records.map((r) => r.sessionId),
     });
   }
 

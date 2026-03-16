@@ -62,11 +62,6 @@ export interface AgentXResponse {
    * Error message if the request failed
    */
   error?: string;
-
-  /**
-   * Session IDs that the client should subscribe to
-   */
-  __subscriptions?: string[];
 }
 
 // ============================================================================
@@ -132,7 +127,6 @@ interface BaseCommandRequest<T extends string, D = unknown>
  *
  * All response data types must extend AgentXResponse to ensure:
  * - Consistent structure (requestId, error)
- * - Automatic client-side handling (__subscriptions, etc.)
  */
 interface BaseCommandResponse<T extends string, D extends AgentXResponse = AgentXResponse>
   extends SystemEvent<T, D, "command", "response", "result"> {}
@@ -393,7 +387,6 @@ export interface ImageCreateRequest
 /**
  * Response to image creation
  *
- * Includes __subscriptions with the new image's sessionId for auto-subscription.
  * Note: record is optional because it may be undefined on error.
  */
 export interface ImageCreateResponse
@@ -498,7 +491,6 @@ export interface ImageListRequest
 /**
  * Response to image list
  *
- * Includes __subscriptions with all images' sessionIds for auto-subscription.
  */
 export interface ImageListResponse
   extends BaseCommandResponse<
@@ -523,7 +515,6 @@ export interface ImageGetRequest
 /**
  * Response to image get
  *
- * Includes __subscriptions with the image's sessionId for auto-subscription.
  */
 export interface ImageGetResponse
   extends BaseCommandResponse<

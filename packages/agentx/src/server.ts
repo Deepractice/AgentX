@@ -37,7 +37,6 @@ const logger = createLogger("server/Server");
  */
 interface ConnectionState {
   connection: ChannelConnection;
-  subscribedTopics: Set<string>;
 }
 
 /**
@@ -103,39 +102,18 @@ export async function createServer(config: ServerConfig): Promise<AgentXServer> 
   const connections = new Map<string, ConnectionState>();
 
   /**
-   * Subscribe connection to a topic
+   * Check if event should be sent to connection.
+   * All broadcastable events are sent to all connections — no topic filtering.
+   * Client-side Presentation filters by instanceId/imageId.
    */
-  function subscribeToTopic(connectionId: string, topic: string): void {
-    const state = connections.get(connectionId);
-    if (!state || state.subscribedTopics.has(topic)) return;
-
-    state.subscribedTopics.add(topic);
-    logger.debug("Connection subscribed to topic", { connectionId, topic });
-  }
-
-  /**
-   * Check if event should be sent to connection based on subscriptions
-   */
-  function shouldSendToConnection(state: ConnectionState, event: BusEvent): boolean {
-    // Skip internal driver events
+  function shouldSendToConnection(_state: ConnectionState, event: BusEvent): boolean {
     if (event.source === "driver" && event.intent !== "notification") {
       return false;
     }
-
-    // Skip command events (they are handled via RPC, not broadcast)
     if (event.source === "command") {
       return false;
     }
-
-    // Check if subscribed to event's session
-    const eventWithContext = event as BusEvent & { context?: { sessionId?: string } };
-    const sessionId = eventWithContext.context?.sessionId;
-    if (sessionId && state.subscribedTopics.has(sessionId)) {
-      return true;
-    }
-
-    // Send to global subscribers
-    return state.subscribedTopics.has("global");
+    return true;
   }
 
   /**
@@ -163,7 +141,6 @@ export async function createServer(config: ServerConfig): Promise<AgentXServer> 
   wsServer.onConnection((connection) => {
     const state: ConnectionState = {
       connection,
-      subscribedTopics: new Set(["global"]),
     };
     connections.set(connection.id, state);
 
@@ -207,7 +184,7 @@ export async function createServer(config: ServerConfig): Promise<AgentXServer> 
    */
   async function handleParsedMessage(
     connection: ChannelConnection,
-    state: ConnectionState,
+    _state: ConnectionState,
     parsed: import("jsonrpc-lite").IParsedObject
   ): Promise<void> {
     if (isRequest(parsed)) {
@@ -230,23 +207,15 @@ export async function createServer(config: ServerConfig): Promise<AgentXServer> 
         sendError(connection, id, result.code, result.message);
       }
     } else if (isNotification(parsed)) {
-      // JSON-RPC Notification - control messages
       const payload = parsed.payload as {
         method: string;
         params: unknown;
       };
-      const { method, params } = payload;
+      const { method } = payload;
 
       logger.debug("Received notification", { method });
 
-      if (method === "subscribe") {
-        const { topic } = params as { topic: string };
-        subscribeToTopic(connection.id, topic);
-      } else if (method === "unsubscribe") {
-        const { topic } = params as { topic: string };
-        state.subscribedTopics.delete(topic);
-        logger.debug("Connection unsubscribed from topic", { connectionId: connection.id, topic });
-      } else if (method === "control.ack") {
+      if (method === "control.ack") {
         // ACK for reliable delivery - handled by network layer
         logger.debug("Received ACK notification");
       }
@@ -256,18 +225,15 @@ export async function createServer(config: ServerConfig): Promise<AgentXServer> 
     }
   }
 
-  // Route internal events to connected clients as JSON-RPC notifications
+  // Broadcast all broadcastable events to all connected clients
   platform.eventBus.onAny((event) => {
-    // Only broadcast broadcastable events
     if (!shouldBroadcastEvent(event)) {
       return;
     }
 
-    // Get topic from event context
     const eventWithContext = event as BusEvent & { context?: { sessionId?: string } };
     const topic = eventWithContext.context?.sessionId || "global";
 
-    // Wrap as JSON-RPC notification
     const notification = createStreamEvent(topic, event as SystemEvent);
     const message = JSON.stringify(notification);
 

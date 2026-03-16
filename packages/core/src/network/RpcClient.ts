@@ -348,20 +348,6 @@ export class RpcClient {
     this.ws.send(JSON.stringify(notification));
   }
 
-  /**
-   * Subscribe to a topic (convenience method)
-   */
-  subscribe(topic: string): void {
-    this.notify("subscribe", { topic });
-  }
-
-  /**
-   * Unsubscribe from a topic (convenience method)
-   */
-  unsubscribe(topic: string): void {
-    this.notify("unsubscribe", { topic });
-  }
-
   // ==================== Event Handlers ====================
 
   /**

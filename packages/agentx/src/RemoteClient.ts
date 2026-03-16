@@ -59,7 +59,7 @@ export class RemoteClient implements AgentX {
     });
 
     // Assemble namespaces
-    const image = createRemoteImages(this.rpcClient, (sessionId) => this.subscribe(sessionId));
+    const image = createRemoteImages(this.rpcClient);
     const instance = createRemoteInstances(this.rpcClient);
     const session = createRemoteSessions(this.rpcClient);
     const llm = createRemoteLLM(this.rpcClient);
@@ -106,11 +106,6 @@ export class RemoteClient implements AgentX {
 
   onAny(handler: BusEventHandler): Unsubscribe {
     return this.eventBus.onAny(handler);
-  }
-
-  subscribe(sessionId: string): void {
-    this.rpcClient.subscribe(sessionId);
-    logger.debug("Subscribed to session", { sessionId });
   }
 
   // ==================== Error Handling ====================

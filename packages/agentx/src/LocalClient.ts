@@ -70,10 +70,6 @@ export class LocalClient implements AgentX {
     return this._runtime.platform.eventBus.onAny(handler);
   }
 
-  subscribe(_sessionId: string): void {
-    // No-op for local mode - already subscribed via eventBus
-  }
-
   // ==================== Error Handling ====================
 
   onError(handler: (error: AgentXError) => void): Unsubscribe {
