@@ -554,17 +554,30 @@ export function messagesToConversations(messages: Message[]): Conversation[] {
       case "user": {
         flushAssistant();
         const m = msg as UserMessage;
-        const text =
+        const blocks: Block[] =
           typeof m.content === "string"
-            ? m.content
-            : m.content
-                .filter((p): p is { type: "text"; text: string } => p.type === "text")
-                .map((p) => p.text)
-                .join("");
-        conversations.push({
-          role: "user",
-          blocks: [{ type: "text", content: text }],
-        });
+            ? [{ type: "text", content: m.content }]
+            : m.content.map((part): Block => {
+                switch (part.type) {
+                  case "text":
+                    return { type: "text", content: part.text };
+                  case "image":
+                    return {
+                      type: "image",
+                      url: `data:${part.mediaType};base64,${part.data}`,
+                      alt: part.name,
+                    };
+                  case "file":
+                    return {
+                      type: "file",
+                      filename: part.filename ?? "file",
+                      mediaType: part.mediaType,
+                    };
+                  default:
+                    return { type: "text", content: String(part) };
+                }
+              });
+        conversations.push({ role: "user", blocks });
         break;
       }
 
@@ -578,11 +591,18 @@ export function messagesToConversations(messages: Message[]): Conversation[] {
             currentAssistant.blocks.push({ type: "text", content: m.content } as TextBlock);
           }
         } else {
-          // Extract text and tool call parts from content
+          // Extract all content parts — must match what real-time streaming produces
           for (const part of m.content) {
             if (part.type === "text") {
               if (part.text) {
                 currentAssistant.blocks.push({ type: "text", content: part.text } as TextBlock);
+              }
+            } else if (part.type === "thinking") {
+              if (part.reasoning) {
+                currentAssistant.blocks.push({
+                  type: "thinking",
+                  content: part.reasoning,
+                } as Block);
               }
             } else if (part.type === "tool-call") {
               const tc = part as ToolCallPart;
@@ -593,6 +613,12 @@ export function messagesToConversations(messages: Message[]): Conversation[] {
                 toolInput: tc.input,
                 status: "completed",
               } as ToolBlock);
+            } else if (part.type === "file") {
+              currentAssistant.blocks.push({
+                type: "file",
+                filename: (part as any).filename ?? "file",
+                mediaType: (part as any).mediaType ?? "application/octet-stream",
+              } as Block);
             }
           }
         }
