@@ -550,6 +550,10 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       );
       throw error;
     } finally {
+      // Flush any pending partial content from MealyMachine (e.g. interrupted stream)
+      // This produces an assistant_message that gets persisted via the presenter pipeline
+      state.engine.flush();
+
       // Flush all pending message persists before returning
       if (state.pendingPersists.length > 0) {
         await Promise.all(state.pendingPersists);

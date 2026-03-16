@@ -410,6 +410,15 @@ class AgentEngineImpl implements AgentEngine {
     };
   }
 
+  flush(): AgentOutput[] {
+    const outputs = this.machine.flush(this.instanceId);
+    // Emit flushed outputs through presenter pipeline (for persistence)
+    for (const output of outputs) {
+      this.emitOutput(output);
+    }
+    return outputs;
+  }
+
   interrupt(): void {
     if (this.state === "idle" || this.isDestroyed) {
       return;

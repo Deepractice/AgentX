@@ -276,6 +276,17 @@ export interface AgentEngine {
   interrupt(): void;
 
   /**
+   * Flush pending state — assemble any partial content into a message.
+   *
+   * Called at behavior boundaries (interrupt, error, turn end) to ensure
+   * all accumulated content is persisted. Returns assembled outputs
+   * (typically an assistant_message with partial content).
+   *
+   * Safe to call multiple times — returns empty after first flush.
+   */
+  flush(): AgentOutput[];
+
+  /**
    * Destroy - Clean up resources
    */
   destroy(): Promise<void>;

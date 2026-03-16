@@ -52,6 +52,7 @@ import {
   agentProcessor,
   createInitialAgentEngineState,
 } from "./AgentProcessor";
+import { createInitialMessageAssemblerState } from "./internal/messageAssemblerProcessor";
 import { MemoryStore } from "./mealy";
 
 const logger = createLogger("engine/MealyMachine");
@@ -156,6 +157,96 @@ export class MealyMachine {
     }
 
     return [currentState, allOutputs];
+  }
+
+  /**
+   * Flush pending state and produce any remaining outputs.
+   *
+   * Called at behavior boundaries (interrupt, error, session end) to ensure
+   * all accumulated content is assembled into messages for persistence.
+   *
+   * If there are pending contents (e.g. partial text from an interrupted stream),
+   * this produces an assistant_message with what's been accumulated so far.
+   * If nothing is pending, returns empty array.
+   *
+   * Safe to call multiple times — second call returns empty (state already reset).
+   */
+  flush(instanceId: string): AgentOutput[] {
+    const state = this.store.get(instanceId);
+    if (!state) return [];
+
+    const assemblerState = (state as AgentEngineState).messageAssembler;
+    if (!assemblerState?.currentMessageId || assemblerState.pendingContents.length === 0) {
+      return [];
+    }
+
+    // Build content parts from pendingContents (same logic as handleMessageStop)
+    const contentParts: Array<{
+      type: string;
+      text?: string;
+      id?: string;
+      name?: string;
+      input?: Record<string, unknown>;
+    }> = [];
+
+    for (const pending of assemblerState.pendingContents) {
+      if (pending.type === "text" && pending.textDeltas) {
+        const text = pending.textDeltas.join("");
+        if (text.trim().length > 0) {
+          contentParts.push({ type: "text", text });
+        }
+      } else if (pending.type === "tool_use") {
+        // For interrupted tool_use, try to parse whatever JSON we have so far
+        let toolInput: Record<string, unknown> = {};
+        if (pending.assembled && pending.parsedInput) {
+          toolInput = pending.parsedInput;
+        } else if (pending.toolInputJson) {
+          try {
+            toolInput = JSON.parse(pending.toolInputJson);
+          } catch {
+            toolInput = {};
+          }
+        }
+        contentParts.push({
+          type: "tool-call",
+          id: pending.toolId || "",
+          name: pending.toolName || "",
+          input: toolInput,
+        });
+      }
+    }
+
+    if (contentParts.length === 0) return [];
+
+    // Create partial AssistantMessage
+    const timestamp = assemblerState.messageStartTime || Date.now();
+    const assistantMessage = {
+      id: assemblerState.currentMessageId,
+      role: "assistant" as const,
+      subtype: "assistant" as const,
+      content: contentParts,
+      timestamp,
+    };
+
+    const assistantEvent = {
+      type: "assistant_message",
+      timestamp,
+      data: assistantMessage,
+    } as AgentOutput;
+
+    // Reset assembler state (safe for repeated flush — next call sees empty state)
+    const newState: AgentEngineState = {
+      ...(state as AgentEngineState),
+      messageAssembler: createInitialMessageAssemblerState(),
+    };
+    this.store.set(instanceId, newState);
+
+    logger.info("Flushed pending content", {
+      instanceId,
+      contentParts: contentParts.length,
+    });
+
+    return [assistantEvent];
   }
 
   /**
