@@ -381,7 +381,12 @@ function handleToolResult(
   data: { toolCallId: string; result: unknown; isError: boolean }
 ): PresentationState {
   const { toolCallId, result, isError } = data;
-  const resultStr = typeof result === "string" ? result : JSON.stringify(result);
+  const resultStr =
+    typeof result === "string"
+      ? result
+      : result instanceof Error
+        ? result.message
+        : JSON.stringify(result);
 
   const conversations = state.conversations.map((conv): Conversation => {
     if (conv.role !== "assistant") return conv;

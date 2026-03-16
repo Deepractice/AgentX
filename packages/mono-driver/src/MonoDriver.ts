@@ -299,7 +299,7 @@ export class MonoDriver implements Driver {
             }
             yield createEvent("tool_result", {
               toolCallId: part.toolCallId,
-              result: part.error,
+              result: part.error instanceof Error ? part.error.message : String(part.error),
               isError: true,
             });
             break;
