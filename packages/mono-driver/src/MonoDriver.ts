@@ -431,6 +431,7 @@ export class MonoDriver implements Driver {
           name: this.compatibleConfig.name,
           baseURL: this.compatibleConfig.baseURL,
           apiKey: this.compatibleConfig.apiKey ?? apiKey,
+          includeUsage: true,
         });
         return provider.chatModel(modelId);
       }
