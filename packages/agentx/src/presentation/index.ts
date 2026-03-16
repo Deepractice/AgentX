@@ -25,6 +25,7 @@ export type {
   ImageBlock,
   PresentationState,
   TextBlock,
+  ThinkingBlock,
   TokenUsage,
   ToolBlock,
   UserConversation,

@@ -241,6 +241,13 @@ export class MonoDriver implements Driver {
             hasToolCallsInStep = false;
             break;
 
+          case "reasoning-start":
+            break;
+
+          case "reasoning-delta":
+            yield createEvent("thinking_delta", { text: part.text });
+            break;
+
           case "text-delta":
             yield createEvent("text_delta", { text: part.text });
             break;

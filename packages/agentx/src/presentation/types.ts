@@ -50,9 +50,17 @@ export interface FileBlock {
 }
 
 /**
+ * Thinking/reasoning block — AI's internal reasoning process
+ */
+export interface ThinkingBlock {
+  type: "thinking";
+  content: string;
+}
+
+/**
  * All block types
  */
-export type Block = TextBlock | ToolBlock | ImageBlock | FileBlock;
+export type Block = TextBlock | ToolBlock | ImageBlock | FileBlock | ThinkingBlock;
 
 // ============================================================================
 // Conversation Types - A single turn in the conversation

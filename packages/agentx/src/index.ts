@@ -233,6 +233,7 @@ export type {
   PresentationState,
   PresentationUpdateHandler,
   TextBlock,
+  ThinkingBlock,
   ToolBlock,
   UserConversation,
 } from "./presentation";

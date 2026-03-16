@@ -94,6 +94,9 @@ export function presentationReducer(state: PresentationState, event: BusEvent): 
     case "message_start":
       return handleMessageStart(state, event.data as MessageStartData);
 
+    case "thinking_delta":
+      return handleThinkingDelta(state, event.data as TextDeltaData);
+
     case "text_delta":
       return handleTextDelta(state, event.data as TextDeltaData);
 
@@ -187,6 +190,28 @@ function handleMessageStart(state: PresentationState, _data: MessageStartData): 
     streaming: null,
     status: "thinking",
   };
+}
+
+function handleThinkingDelta(state: PresentationState, data: TextDeltaData): PresentationState {
+  return updateLastConv(
+    state,
+    (conv) => {
+      const blocks = [...conv.blocks];
+      const lastBlock = blocks[blocks.length - 1];
+
+      if (lastBlock && lastBlock.type === "thinking") {
+        blocks[blocks.length - 1] = {
+          ...lastBlock,
+          content: (lastBlock as any).content + data.text,
+        };
+      } else {
+        blocks.push({ type: "thinking", content: data.text } as Block);
+      }
+
+      return { ...conv, blocks };
+    },
+    { status: "thinking" }
+  );
 }
 
 function handleTextDelta(state: PresentationState, data: TextDeltaData): PresentationState {

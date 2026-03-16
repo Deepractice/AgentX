@@ -253,6 +253,14 @@ export interface MessageDeltaEvent
     }
   > {}
 
+export interface ThinkingDeltaEvent
+  extends StreamEvent<
+    "thinking_delta",
+    {
+      text: string;
+    }
+  > {}
+
 export interface InterruptedEvent
   extends StreamEvent<
     "interrupted",
@@ -274,6 +282,7 @@ export type DriverStreamEvent =
   | ToolUseStopEvent
   | ToolResultEvent
   | ErrorEvent
+  | ThinkingDeltaEvent
   | InterruptedEvent;
 
 /**
