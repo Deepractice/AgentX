@@ -132,14 +132,11 @@ export interface PresentationMetrics {
  */
 export interface PresentationState {
   /**
-   * All completed conversations
+   * All conversations including the currently streaming one.
+   * The streaming conversation is the last item with `isStreaming: true`.
+   * Frontend just does `conversations.map(...)` — no merging needed.
    */
   conversations: Conversation[];
-
-  /**
-   * Current streaming conversation (null if not streaming)
-   */
-  streaming: AssistantConversation | null;
 
   /**
    * Current status
@@ -166,7 +163,6 @@ export const initialMetrics: PresentationMetrics = {
  */
 export const initialPresentationState: PresentationState = {
   conversations: [],
-  streaming: null,
   status: "idle",
   metrics: initialMetrics,
 };

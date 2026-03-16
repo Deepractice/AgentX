@@ -172,7 +172,7 @@ export class Presentation {
     }
 
     // Update local presentation state
-    this.state = { ...this.state, conversations: kept, streaming: null, status: "idle" };
+    this.state = { ...this.state, conversations: kept, status: "idle" };
     this.notify();
   }
 

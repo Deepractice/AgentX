@@ -335,7 +335,7 @@ When(
       const timeout = setTimeout(() => reject(new Error("Presentation send timed out")), 110000);
       const checkDone = () => {
         const ps = state.presentation!.getState();
-        if (ps.status === "idle" && !ps.streaming) {
+        if (ps.status === "idle") {
           clearTimeout(timeout);
           resolve();
         } else {

@@ -40,8 +40,6 @@ describe("Text streaming in conversations", () => {
     expect(state.conversations[0].role).toBe("assistant");
     expect((state.conversations[0] as AssistantConversation).isStreaming).toBe(true);
     expect(state.status).toBe("thinking");
-    // streaming field should be null — content is in conversations
-    expect(state.streaming).toBeNull();
   });
 
   test("text_delta updates last conversation's text block", () => {
@@ -58,7 +56,6 @@ describe("Text streaming in conversations", () => {
     expect(conv.blocks).toHaveLength(1);
     expect((conv.blocks[0] as TextBlock).content).toBe("Hello world");
     expect(state.status).toBe("responding");
-    expect(state.streaming).toBeNull();
   });
 
   test("message_stop sets isStreaming to false", () => {
@@ -74,7 +71,6 @@ describe("Text streaming in conversations", () => {
     expect(conv.isStreaming).toBe(false);
     expect((conv.blocks[0] as TextBlock).content).toBe("Done");
     expect(state.status).toBe("idle");
-    expect(state.streaming).toBeNull();
   });
 });
 
@@ -102,7 +98,6 @@ describe("Tool call streaming in conversations", () => {
     expect(conv.blocks[1].type).toBe("tool");
     expect((conv.blocks[1] as ToolBlock).toolName).toBe("search");
     expect((conv.blocks[1] as ToolBlock).status).toBe("pending");
-    expect(state.streaming).toBeNull();
   });
 
   test("input_json_delta updates tool block partialInput", () => {
@@ -204,7 +199,6 @@ describe("Interrupt during streaming", () => {
     expect(conv.isStreaming).toBe(false);
     expect((conv.blocks[0] as TextBlock).content).toBe("partial response");
     expect(state.status).toBe("idle");
-    expect(state.streaming).toBeNull();
   });
 });
 
@@ -226,7 +220,6 @@ describe("Error during streaming", () => {
     const lastC = state.conversations[state.conversations.length - 1];
     expect(lastC.role).toBe("error");
     expect(state.status).toBe("idle");
-    expect(state.streaming).toBeNull();
   });
 });
 
@@ -259,7 +252,6 @@ describe("Multi-turn conversations", () => {
     expect(state.conversations).toHaveLength(2);
     expect((state.conversations[0] as AssistantConversation).isStreaming).toBe(false);
     expect((state.conversations[1] as AssistantConversation).isStreaming).toBe(true);
-    expect(state.streaming).toBeNull();
   });
 });
 
@@ -288,7 +280,6 @@ describe("Multi-step tool use", () => {
 
     // Conversation should be visible the whole time
     expect(state.conversations.length).toBeGreaterThanOrEqual(1);
-    expect(state.streaming).toBeNull();
 
     // message_stop with tool_use
     state = presentationReducer(state, event("message_stop", { stopReason: "tool_use" }));
@@ -308,7 +299,6 @@ describe("Multi-step tool use", () => {
     state = presentationReducer(state, event("message_stop", { stopReason: "end_turn" }));
 
     // All content should be in conversations, nothing in streaming
-    expect(state.streaming).toBeNull();
     const allBlocks = state.conversations
       .filter((c) => c.role === "assistant")
       .flatMap((c) => (c as AssistantConversation).blocks);

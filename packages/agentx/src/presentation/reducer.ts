@@ -166,7 +166,7 @@ function updateLastConv(
   const conversations = [...state.conversations];
   conversations[conversations.length - 1] = updated;
 
-  return { ...state, conversations, streaming: null, ...extraState };
+  return { ...state, conversations, ...extraState };
 }
 
 interface InputJsonDeltaData {
@@ -174,7 +174,7 @@ interface InputJsonDeltaData {
 }
 
 // ============================================================================
-// Handlers — all operate on conversations[], streaming is always null
+// Handlers — all operate on conversations[]
 // ============================================================================
 
 function handleMessageStart(state: PresentationState, _data: MessageStartData): PresentationState {
@@ -187,7 +187,6 @@ function handleMessageStart(state: PresentationState, _data: MessageStartData): 
   return {
     ...state,
     conversations: [...state.conversations, newConv],
-    streaming: null,
     status: "thinking",
     metrics: {
       ...initialMetrics,
@@ -398,7 +397,6 @@ function handleError(state: PresentationState, data: ErrorData): PresentationSta
   return {
     ...state,
     conversations: [...conversations, { role: "error", message: data.message }],
-    streaming: null,
     status: "idle",
   };
 }
