@@ -225,6 +225,7 @@ export type {
   FileBlock,
   ImageBlock,
   PresentationErrorHandler,
+  PresentationMetrics,
   PresentationOptions,
   PresentationState,
   PresentationUpdateHandler,
@@ -236,6 +237,7 @@ export type {
 export {
   addUserConversation,
   createInitialState,
+  initialMetrics,
   initialPresentationState,
   messagesToConversations,
   Presentation,

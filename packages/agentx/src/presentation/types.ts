@@ -107,6 +107,23 @@ export interface ErrorConversation {
 export type Conversation = UserConversation | AssistantConversation | ErrorConversation;
 
 // ============================================================================
+// Presentation Metrics
+// ============================================================================
+
+/**
+ * Real-time metrics for the current turn.
+ * Reset at the start of each turn, preserved after turn ends.
+ */
+export interface PresentationMetrics {
+  /** Timestamp when the current turn started (null when idle before first turn) */
+  turnStartedAt: number | null;
+  /** Input tokens consumed in the current turn */
+  inputTokens: number;
+  /** Output tokens generated in the current turn */
+  outputTokens: number;
+}
+
+// ============================================================================
 // Presentation State
 // ============================================================================
 
@@ -128,7 +145,21 @@ export interface PresentationState {
    * Current status
    */
   status: "idle" | "thinking" | "responding" | "executing";
+
+  /**
+   * Real-time metrics for the current turn
+   */
+  metrics: PresentationMetrics;
 }
+
+/**
+ * Initial presentation metrics
+ */
+export const initialMetrics: PresentationMetrics = {
+  turnStartedAt: null,
+  inputTokens: 0,
+  outputTokens: 0,
+};
 
 /**
  * Initial presentation state
@@ -137,4 +168,5 @@ export const initialPresentationState: PresentationState = {
   conversations: [],
   streaming: null,
   status: "idle",
+  metrics: initialMetrics,
 };

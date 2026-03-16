@@ -34,7 +34,7 @@ import type {
   TokenUsage,
   ToolBlock,
 } from "./types";
-import { initialPresentationState } from "./types";
+import { initialMetrics, initialPresentationState } from "./types";
 
 // ============================================================================
 // Event Data Types
@@ -189,6 +189,10 @@ function handleMessageStart(state: PresentationState, _data: MessageStartData): 
     conversations: [...state.conversations, newConv],
     streaming: null,
     status: "thinking",
+    metrics: {
+      ...initialMetrics,
+      turnStartedAt: Date.now(),
+    },
   };
 }
 
@@ -287,7 +291,7 @@ function handleToolUseStop(state: PresentationState, data: ToolUseStopData): Pre
 function handleMessageDelta(state: PresentationState, data: MessageDeltaData): PresentationState {
   if (!data.usage) return state;
 
-  return updateLastConv(state, (conv) => {
+  const newState = updateLastConv(state, (conv) => {
     const prev = conv.usage;
     const usage: TokenUsage = {
       inputTokens: (prev?.inputTokens ?? 0) + data.usage!.inputTokens,
@@ -295,6 +299,15 @@ function handleMessageDelta(state: PresentationState, data: MessageDeltaData): P
     };
     return { ...conv, usage };
   });
+
+  return {
+    ...newState,
+    metrics: {
+      ...newState.metrics,
+      inputTokens: newState.metrics.inputTokens + data.usage.inputTokens,
+      outputTokens: newState.metrics.outputTokens + data.usage.outputTokens,
+    },
+  };
 }
 
 function handleMessageStop(state: PresentationState, data: MessageStopData): PresentationState {
@@ -303,8 +316,11 @@ function handleMessageStop(state: PresentationState, data: MessageStopData): Pre
     return { ...state, status: "executing" };
   }
 
-  // end_turn / max_tokens → mark completed
-  return updateLastConv(state, (conv) => ({ ...conv, isStreaming: false }), { status: "idle" });
+  // end_turn / max_tokens → mark completed, clear turnStartedAt
+  return updateLastConv(state, (conv) => ({ ...conv, isStreaming: false }), {
+    status: "idle",
+    metrics: { ...state.metrics, turnStartedAt: null },
+  });
 }
 
 function handleToolResultMessage(

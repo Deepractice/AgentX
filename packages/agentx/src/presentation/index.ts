@@ -23,6 +23,7 @@ export type {
   ErrorConversation,
   FileBlock,
   ImageBlock,
+  PresentationMetrics,
   PresentationState,
   TextBlock,
   ThinkingBlock,
@@ -30,4 +31,4 @@ export type {
   ToolBlock,
   UserConversation,
 } from "./types";
-export { initialPresentationState } from "./types";
+export { initialMetrics, initialPresentationState } from "./types";
