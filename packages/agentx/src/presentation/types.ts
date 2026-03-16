@@ -26,6 +26,8 @@ export interface ToolBlock {
   toolName: string;
   toolInput: Record<string, unknown>;
   toolResult?: string;
+  /** Partial JSON input being streamed (visible during input-streaming phase) */
+  partialInput?: string;
   status: "pending" | "running" | "completed" | "error";
 }
 

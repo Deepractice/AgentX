@@ -103,6 +103,9 @@ export function presentationReducer(state: PresentationState, event: BusEvent): 
     case "tool_use_stop":
       return handleToolUseStop(state, event.data as ToolUseStopData);
 
+    case "input_json_delta":
+      return handleInputJsonDelta(state, event.data as { partialJson: string });
+
     case "message_delta":
       return handleMessageDelta(state, event.data as MessageDeltaData);
 
@@ -112,6 +115,12 @@ export function presentationReducer(state: PresentationState, event: BusEvent): 
     // Message layer — tool results from Engine
     case "tool_result_message":
       return handleToolResultMessage(state, event.data as ToolResultMessage);
+
+    case "tool_result":
+      return handleToolResult(
+        state,
+        event.data as { toolCallId: string; result: unknown; isError: boolean }
+      );
 
     case "error":
       return handleError(state, event.data as ErrorData);
@@ -125,17 +134,48 @@ export function presentationReducer(state: PresentationState, event: BusEvent): 
 }
 
 // ============================================================================
-// Handlers
+// Helpers — operate on the last assistant conversation in conversations[]
+// ============================================================================
+
+/**
+ * Get the last conversation if it's a streaming assistant conversation.
+ */
+function getStreamingConv(state: PresentationState): AssistantConversation | null {
+  const last = state.conversations[state.conversations.length - 1];
+  if (last?.role === "assistant" && (last as AssistantConversation).isStreaming) {
+    return last as AssistantConversation;
+  }
+  return null;
+}
+
+/**
+ * Update the last conversation in the array (must be streaming assistant).
+ */
+function updateLastConv(
+  state: PresentationState,
+  updater: (conv: AssistantConversation) => AssistantConversation,
+  extraState?: Partial<PresentationState>
+): PresentationState {
+  const conv = getStreamingConv(state);
+  if (!conv) return state;
+
+  const updated = updater(conv);
+  const conversations = [...state.conversations];
+  conversations[conversations.length - 1] = updated;
+
+  return { ...state, conversations, streaming: null, ...extraState };
+}
+
+interface InputJsonDeltaData {
+  partialJson: string;
+}
+
+// ============================================================================
+// Handlers — all operate on conversations[], streaming is always null
 // ============================================================================
 
 function handleMessageStart(state: PresentationState, _data: MessageStartData): PresentationState {
-  // If streaming already exists (e.g. tool_use turn not yet flushed), flush it first
-  let conversations = state.conversations;
-  if (state.streaming && state.streaming.blocks.length > 0) {
-    conversations = [...conversations, { ...state.streaming, isStreaming: false }];
-  }
-
-  const streaming: AssistantConversation = {
+  const newConv: AssistantConversation = {
     role: "assistant",
     blocks: [],
     isStreaming: true,
@@ -143,48 +183,35 @@ function handleMessageStart(state: PresentationState, _data: MessageStartData): 
 
   return {
     ...state,
-    conversations,
-    streaming,
+    conversations: [...state.conversations, newConv],
+    streaming: null,
     status: "thinking",
   };
 }
 
 function handleTextDelta(state: PresentationState, data: TextDeltaData): PresentationState {
-  if (!state.streaming) {
-    return state;
-  }
+  return updateLastConv(
+    state,
+    (conv) => {
+      const blocks = [...conv.blocks];
+      const lastBlock = blocks[blocks.length - 1];
 
-  const blocks = [...state.streaming.blocks];
-  const lastBlock = blocks[blocks.length - 1];
+      if (lastBlock && lastBlock.type === "text") {
+        blocks[blocks.length - 1] = {
+          ...lastBlock,
+          content: lastBlock.content + data.text,
+        };
+      } else {
+        blocks.push({ type: "text", content: data.text } as TextBlock);
+      }
 
-  if (lastBlock && lastBlock.type === "text") {
-    blocks[blocks.length - 1] = {
-      ...lastBlock,
-      content: lastBlock.content + data.text,
-    };
-  } else {
-    blocks.push({
-      type: "text",
-      content: data.text,
-    } as TextBlock);
-  }
-
-  return {
-    ...state,
-    streaming: {
-      ...state.streaming,
-      blocks,
+      return { ...conv, blocks };
     },
-    status: "responding",
-  };
+    { status: "responding" }
+  );
 }
 
 function handleToolUseStart(state: PresentationState, data: ToolUseStartData): PresentationState {
-  if (!state.streaming) {
-    return state;
-  }
-
-  // Create a pending tool block — toolInput will be filled by tool_use_stop
   const toolBlock: ToolBlock = {
     type: "tool",
     toolUseId: data.toolCallId,
@@ -193,163 +220,150 @@ function handleToolUseStart(state: PresentationState, data: ToolUseStartData): P
     status: "pending",
   };
 
-  return {
-    ...state,
-    streaming: {
-      ...state.streaming,
-      blocks: [...state.streaming.blocks, toolBlock],
-    },
+  return updateLastConv(state, (conv) => ({ ...conv, blocks: [...conv.blocks, toolBlock] }), {
     status: "executing",
-  };
+  });
 }
 
-/**
- * Handle tool_use_stop from stream layer.
- * Fills in the complete toolInput for the matching pending tool block.
- * The stream event carries the fully assembled input.
- */
-function handleToolUseStop(state: PresentationState, data: ToolUseStopData): PresentationState {
-  if (!state.streaming) {
-    return state;
-  }
-
-  const blocks = state.streaming.blocks.map((block): Block => {
-    if (block.type === "tool" && block.toolUseId === data.toolCallId) {
-      return {
-        ...block,
-        toolInput: data.input,
-        status: "running",
-      };
-    }
-    return block;
+function handleInputJsonDelta(
+  state: PresentationState,
+  data: InputJsonDeltaData
+): PresentationState {
+  return updateLastConv(state, (conv) => {
+    const blocks = conv.blocks.map((block): Block => {
+      if (block.type === "tool" && block.status === "pending") {
+        return {
+          ...block,
+          partialInput: ((block as any).partialInput || "") + data.partialJson,
+        } as ToolBlock;
+      }
+      return block;
+    });
+    return { ...conv, blocks };
   });
+}
 
-  return {
-    ...state,
-    streaming: {
-      ...state.streaming,
-      blocks,
+function handleToolUseStop(state: PresentationState, data: ToolUseStopData): PresentationState {
+  return updateLastConv(
+    state,
+    (conv) => {
+      const blocks = conv.blocks.map((block): Block => {
+        if (block.type === "tool" && block.toolUseId === data.toolCallId) {
+          return { ...block, toolInput: data.input, status: "running" };
+        }
+        return block;
+      });
+      return { ...conv, blocks };
     },
-  };
+    { status: "executing" }
+  );
 }
 
 function handleMessageDelta(state: PresentationState, data: MessageDeltaData): PresentationState {
-  if (!state.streaming || !data.usage) {
-    return state;
-  }
+  if (!data.usage) return state;
 
-  const prev = state.streaming.usage;
-  const usage: TokenUsage = {
-    inputTokens: (prev?.inputTokens ?? 0) + data.usage.inputTokens,
-    outputTokens: (prev?.outputTokens ?? 0) + data.usage.outputTokens,
-  };
-
-  return {
-    ...state,
-    streaming: {
-      ...state.streaming,
-      usage,
-    },
-  };
+  return updateLastConv(state, (conv) => {
+    const prev = conv.usage;
+    const usage: TokenUsage = {
+      inputTokens: (prev?.inputTokens ?? 0) + data.usage!.inputTokens,
+      outputTokens: (prev?.outputTokens ?? 0) + data.usage!.outputTokens,
+    };
+    return { ...conv, usage };
+  });
 }
 
 function handleMessageStop(state: PresentationState, data: MessageStopData): PresentationState {
-  if (!state.streaming) {
-    return state;
-  }
-
-  // tool_use stop → don't flush, tool results are still incoming
+  // tool_use stop → keep streaming, tool results are still incoming
   if (data.stopReason === "tool_use") {
-    return {
-      ...state,
-      status: "executing",
-    };
+    return { ...state, status: "executing" };
   }
 
-  // end_turn / max_tokens / etc → flush streaming to conversations
-  const completedConversation: AssistantConversation = {
-    ...state.streaming,
-    isStreaming: false,
-  };
-
-  return {
-    ...state,
-    conversations: [...state.conversations, completedConversation],
-    streaming: null,
-    status: "idle",
-  };
+  // end_turn / max_tokens → mark completed
+  return updateLastConv(state, (conv) => ({ ...conv, isStreaming: false }), { status: "idle" });
 }
 
-/**
- * Handle tool_result_message from Engine layer.
- * Fills in the toolResult for the matching tool block.
- *
- * Note: tool_result_message arrives after message_stop(tool_use),
- * but streaming is kept alive (not flushed) during tool_use turns.
- */
 function handleToolResultMessage(
   state: PresentationState,
   data: ToolResultMessage
 ): PresentationState {
-  if (!state.streaming) {
-    return state;
-  }
-
   const toolCallId = data.toolCallId;
-  const blocks = state.streaming.blocks.map((block): Block => {
-    if (block.type === "tool" && block.toolUseId === toolCallId) {
-      return {
-        ...block,
-        toolResult: formatToolResultOutput(data.toolResult.output),
-        status:
-          data.toolResult.output.type === "error-text" ||
-          data.toolResult.output.type === "error-json" ||
-          data.toolResult.output.type === "execution-denied"
-            ? "error"
-            : "completed",
-      };
-    }
-    return block;
+
+  // Find tool block in any conversation (could be in last streaming or already completed)
+  const conversations = state.conversations.map((conv): Conversation => {
+    if (conv.role !== "assistant") return conv;
+    const ac = conv as AssistantConversation;
+    const hasMatch = ac.blocks.some((b) => b.type === "tool" && b.toolUseId === toolCallId);
+    if (!hasMatch) return conv;
+
+    const blocks = ac.blocks.map((block): Block => {
+      if (block.type === "tool" && block.toolUseId === toolCallId) {
+        return {
+          ...block,
+          toolResult: formatToolResultOutput(data.toolResult.output),
+          status:
+            data.toolResult.output.type === "error-text" ||
+            data.toolResult.output.type === "error-json" ||
+            data.toolResult.output.type === "execution-denied"
+              ? "error"
+              : "completed",
+        };
+      }
+      return block;
+    });
+    return { ...ac, blocks };
   });
 
-  return {
-    ...state,
-    streaming: {
-      ...state.streaming,
-      blocks,
-    },
-    status: "responding",
-  };
+  return { ...state, conversations, status: "responding" };
+}
+
+/**
+ * Handle tool_result from stream layer (raw driver event).
+ */
+function handleToolResult(
+  state: PresentationState,
+  data: { toolCallId: string; result: unknown; isError: boolean }
+): PresentationState {
+  const { toolCallId, result, isError } = data;
+  const resultStr = typeof result === "string" ? result : JSON.stringify(result);
+
+  const conversations = state.conversations.map((conv): Conversation => {
+    if (conv.role !== "assistant") return conv;
+    const ac = conv as AssistantConversation;
+    const hasMatch = ac.blocks.some((b) => b.type === "tool" && b.toolUseId === toolCallId);
+    if (!hasMatch) return conv;
+
+    const blocks = ac.blocks.map((block): Block => {
+      if (block.type === "tool" && block.toolUseId === toolCallId) {
+        return { ...block, toolResult: resultStr, status: isError ? "error" : "completed" };
+      }
+      return block;
+    });
+    return { ...ac, blocks };
+  });
+
+  return { ...state, conversations, status: "responding" };
 }
 
 function handleError(state: PresentationState, data: ErrorData): PresentationState {
+  // If there's a streaming conversation with content, keep it
+  const conv = getStreamingConv(state);
+  let conversations = state.conversations;
+  if (conv && conv.blocks.length > 0) {
+    // Mark streaming conv as completed before adding error
+    conversations = [...state.conversations];
+    conversations[conversations.length - 1] = { ...conv, isStreaming: false };
+  }
+
   return {
     ...state,
-    conversations: [
-      ...state.conversations,
-      {
-        role: "error",
-        message: data.message,
-      },
-    ],
+    conversations: [...conversations, { role: "error", message: data.message }],
     streaming: null,
     status: "idle",
   };
 }
 
 function handleInterrupted(state: PresentationState): PresentationState {
-  // Flush any streaming content to conversations (preserve partial response)
-  let conversations = state.conversations;
-  if (state.streaming && state.streaming.blocks.length > 0) {
-    conversations = [...conversations, { ...state.streaming, isStreaming: false }];
-  }
-
-  return {
-    ...state,
-    conversations,
-    streaming: null,
-    status: "idle",
-  };
+  return updateLastConv(state, (conv) => ({ ...conv, isStreaming: false }), { status: "idle" });
 }
 
 // ============================================================================
