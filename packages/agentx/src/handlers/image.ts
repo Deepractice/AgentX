@@ -3,7 +3,6 @@
  */
 
 import { DEFAULT_CONTAINER_ID } from "@agentxjs/core/container";
-import type { Embodiment } from "@agentxjs/core/persistence";
 import type { RpcHandlerRegistry } from "../RpcHandlerRegistry";
 import { err, ok } from "../RpcHandlerRegistry";
 
@@ -34,13 +33,19 @@ export function registerImageHandlers(registry: RpcHandlerRegistry): void {
     const { imageRepository, sessionRepository } = runtime.platform;
     const { createImage } = await import("@agentxjs/core/image");
 
-    const embody =
-      model || systemPrompt || mcpServers || thinking || providerOptions
-        ? ({ model, systemPrompt, mcpServers, thinking, providerOptions } as Embodiment)
-        : undefined;
-
     const image = await createImage(
-      { containerId: DEFAULT_CONTAINER_ID, name, description, contextId, embody, customData },
+      {
+        containerId: DEFAULT_CONTAINER_ID,
+        name,
+        description,
+        contextId,
+        model,
+        systemPrompt,
+        mcpServers: mcpServers as any,
+        thinking: thinking as any,
+        providerOptions,
+        customData,
+      },
       { imageRepository, sessionRepository }
     );
 
@@ -127,35 +132,24 @@ export function registerImageHandlers(registry: RpcHandlerRegistry): void {
     const imageRecord = await runtime.platform.imageRepository.findImageById(imageId);
     if (!imageRecord) return err(404, `Image not found: ${imageId}`);
 
-    const { model, systemPrompt, mcpServers, thinking, providerOptions, ...otherUpdates } = updates;
-    const hasEmbodyChanges =
-      model !== undefined ||
-      systemPrompt !== undefined ||
-      mcpServers !== undefined ||
-      thinking !== undefined ||
-      providerOptions !== undefined;
-    const embodyUpdates = hasEmbodyChanges
-      ? ({
-          ...imageRecord.embody,
-          model,
-          systemPrompt,
-          mcpServers,
-          thinking,
-          providerOptions,
-        } as Embodiment)
-      : imageRecord.embody;
-
     const updatedRecord = {
       ...imageRecord,
-      ...otherUpdates,
-      embody: embodyUpdates,
+      ...updates,
       updatedAt: Date.now(),
     };
 
     await runtime.platform.imageRepository.saveImage(updatedRecord);
 
-    // If embody changed, restart the running agent so new config takes effect
-    if (hasEmbodyChanges) {
+    // If runtime config changed, restart the running agent
+    const { model, systemPrompt, mcpServers, thinking, providerOptions } = updates;
+    const hasRuntimeChanges =
+      model !== undefined ||
+      systemPrompt !== undefined ||
+      mcpServers !== undefined ||
+      thinking !== undefined ||
+      providerOptions !== undefined;
+
+    if (hasRuntimeChanges) {
       const runningAgent = runtime
         .getAgents()
         .find((a) => a.imageId === imageId && a.lifecycle === "running");

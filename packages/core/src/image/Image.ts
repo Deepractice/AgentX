@@ -6,6 +6,7 @@
  */
 
 import { createLogger } from "commonxjs/logger";
+import type { McpServerConfig } from "../persistence/types";
 import type { Image, ImageContext, ImageCreateConfig, ImageRecord } from "./types";
 
 const logger = createLogger("image/Image");
@@ -45,8 +46,24 @@ export class ImageImpl implements Image {
     return this.record.contextId;
   }
 
-  get embody() {
-    return this.record.embody;
+  get model(): string | undefined {
+    return this.record.model;
+  }
+
+  get systemPrompt(): string | undefined {
+    return this.record.systemPrompt;
+  }
+
+  get mcpServers(): Record<string, McpServerConfig> | undefined {
+    return this.record.mcpServers;
+  }
+
+  get thinking(): "disabled" | "low" | "medium" | "high" | undefined {
+    return this.record.thinking;
+  }
+
+  get providerOptions(): Record<string, unknown> | undefined {
+    return this.record.providerOptions;
   }
 
   get customData(): Record<string, unknown> | undefined {
@@ -81,7 +98,11 @@ export class ImageImpl implements Image {
       name: config.name ?? "New Conversation",
       description: config.description,
       contextId: config.contextId,
-      embody: config.embody,
+      model: config.model,
+      systemPrompt: config.systemPrompt,
+      mcpServers: config.mcpServers,
+      thinking: config.thinking,
+      providerOptions: config.providerOptions,
       customData: config.customData,
       createdAt: now,
       updatedAt: now,
@@ -145,7 +166,11 @@ export class ImageImpl implements Image {
   async update(updates: {
     name?: string;
     description?: string;
-    embody?: import("../persistence/types").Embodiment;
+    model?: string;
+    systemPrompt?: string;
+    mcpServers?: Record<string, McpServerConfig>;
+    thinking?: "disabled" | "low" | "medium" | "high";
+    providerOptions?: Record<string, unknown>;
     customData?: Record<string, unknown>;
   }): Promise<Image> {
     const now = Date.now();
@@ -153,10 +178,15 @@ export class ImageImpl implements Image {
       ...this.record,
       name: updates.name ?? this.record.name,
       description: updates.description ?? this.record.description,
-      embody:
-        updates.embody !== undefined
-          ? { ...this.record.embody, ...updates.embody }
-          : this.record.embody,
+      model: updates.model !== undefined ? updates.model : this.record.model,
+      systemPrompt:
+        updates.systemPrompt !== undefined ? updates.systemPrompt : this.record.systemPrompt,
+      mcpServers: updates.mcpServers !== undefined ? updates.mcpServers : this.record.mcpServers,
+      thinking: updates.thinking !== undefined ? updates.thinking : this.record.thinking,
+      providerOptions:
+        updates.providerOptions !== undefined
+          ? updates.providerOptions
+          : this.record.providerOptions,
       customData: updates.customData !== undefined ? updates.customData : this.record.customData,
       updatedAt: now,
     };

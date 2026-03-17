@@ -25,6 +25,7 @@
  */
 
 import type { UserContentPart } from "../agent/types";
+import type { SendOptions } from "../driver/types";
 import type { BusEvent } from "../event/types";
 import type { AgentXPlatform } from "../platform/types";
 
@@ -143,7 +144,8 @@ export interface AgentXRuntime {
   receive(
     instanceId: string,
     content: string | UserContentPart[],
-    requestId?: string
+    requestId?: string,
+    options?: SendOptions
   ): Promise<void>;
 
   /**

@@ -30,7 +30,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import type { CreateDriver, Driver, DriverConfig } from "@agentxjs/core/driver";
+import type { AgentContext, CreateDriver, Driver } from "@agentxjs/core/driver";
 import { createLogger } from "commonxjs/logger";
 import { MockDriver } from "./mock/MockDriver";
 import { RecordingDriver } from "./recorder/RecordingDriver";
@@ -149,7 +149,7 @@ export class Devtools {
     const content = readFileSync(this.getFixturePath(fixturePath), "utf-8");
     const fixture = JSON.parse(content) as Fixture;
 
-    return (_config: DriverConfig) => {
+    return (_config: AgentContext) => {
       return new MockDriver({ fixture });
     };
   }
@@ -162,8 +162,8 @@ export class Devtools {
 
     const instanceId = `record-${name}`;
 
-    // Create driver config
-    const driverConfig: DriverConfig = {
+    // Create agent context
+    const agentContext: AgentContext = {
       apiKey: this.config.apiKey!,
       baseUrl: this.config.baseUrl,
       instanceId,
@@ -174,7 +174,7 @@ export class Devtools {
     };
 
     // Create real driver
-    const realDriver = createDriver(driverConfig);
+    const realDriver = createDriver(agentContext);
 
     // Wrap with recorder
     const recorder = new RecordingDriver({
@@ -399,7 +399,7 @@ export function createVcrCreateDriver(config: VcrCreateDriverConfig): CreateDriv
   // Real driver factory (must be provided or pre-loaded)
   const realCreateDriver: CreateDriver | null = config.createRealDriver || null;
 
-  return (driverConfig: DriverConfig): Driver => {
+  return (driverConfig: AgentContext): Driver => {
     const fixtureName = getFixtureName();
 
     // No fixture name → use real driver without VCR

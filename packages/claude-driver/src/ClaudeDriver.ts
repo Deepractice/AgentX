@@ -26,8 +26,8 @@
 
 import type { UserMessage } from "@agentxjs/core/agent";
 import type {
+  AgentContext,
   Driver,
-  DriverConfig,
   DriverState,
   DriverStreamEvent,
   StopReason,
@@ -89,9 +89,9 @@ export interface ClaudeDriverOptions {
 }
 
 /**
- * ClaudeDriverConfig - DriverConfig with ClaudeDriverOptions
+ * ClaudeDriverConfig - AgentContext with ClaudeDriverOptions
  */
-export type ClaudeDriverConfig = DriverConfig<ClaudeDriverOptions>;
+export type ClaudeDriverConfig = AgentContext & ClaudeDriverOptions;
 
 /**
  * ClaudeDriver - Driver implementation for Claude SDK

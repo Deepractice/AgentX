@@ -18,7 +18,6 @@ export type {
   ContainerRecord,
   // Repository interfaces
   ContainerRepository,
-  Embodiment,
   ImageMetadata,
   ImageRecord,
   ImageRepository,

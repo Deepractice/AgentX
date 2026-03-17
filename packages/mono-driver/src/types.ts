@@ -6,7 +6,7 @@
  * - Powered by Vercel AI SDK
  */
 
-import type { DriverConfig } from "@agentxjs/core/driver";
+import type { AgentContext } from "@agentxjs/core/driver";
 
 /**
  * Built-in LLM providers
@@ -29,28 +29,13 @@ export type MonoProvider = MonoBuiltinProvider | "openai-compatible";
 
 /**
  * OpenAI-compatible provider configuration
- *
- * For providers that expose an OpenAI-compatible API:
- * - Kimi (Moonshot AI): baseURL = "https://api.moonshot.cn/v1"
- * - GLM (Zhipu AI): baseURL = "https://open.bigmodel.cn/api/paas/v4"
- * - 豆包 (Volcengine): baseURL = "https://ark.cn-beijing.volces.com/api/v3"
- * - Ollama: baseURL = "http://localhost:11434/v1"
- * - LM Studio: baseURL = "http://localhost:1234/v1"
  */
 export interface OpenAICompatibleConfig {
-  /**
-   * Provider name (for logging and identification)
-   */
+  /** Provider name (for logging and identification) */
   name: string;
-
-  /**
-   * Base URL of the OpenAI-compatible API
-   */
+  /** Base URL of the OpenAI-compatible API */
   baseURL: string;
-
-  /**
-   * API key
-   */
+  /** API key */
   apiKey?: string;
 }
 
@@ -58,27 +43,15 @@ export interface OpenAICompatibleConfig {
  * MonoDriver-specific options
  */
 export interface MonoDriverOptions {
-  /**
-   * LLM Provider
-   * @default 'anthropic'
-   */
+  /** LLM Provider @default 'anthropic' */
   provider?: MonoProvider;
-
-  /**
-   * Max agentic steps for tool calling
-   * @default 10
-   */
+  /** Max agentic steps for tool calling @default 10 */
   maxSteps?: number;
-
-  /**
-   * Configuration for openai-compatible provider
-   *
-   * Required when provider is "openai-compatible"
-   */
+  /** Configuration for openai-compatible provider */
   compatibleConfig?: OpenAICompatibleConfig;
 }
 
 /**
- * MonoDriverConfig - DriverConfig with MonoDriverOptions
+ * MonoDriverConfig - AgentContext with MonoDriverOptions
  */
-export type MonoDriverConfig = DriverConfig<MonoDriverOptions>;
+export type MonoDriverConfig = AgentContext & MonoDriverOptions;

@@ -12,9 +12,9 @@
 
 import type {
   Agent,
-  Embodiment,
   ImageRecord,
   ImageRepository,
+  McpServerConfig,
   SessionRepository,
 } from "../persistence/types";
 
@@ -24,7 +24,6 @@ import type {
 
 export type {
   Agent,
-  Embodiment,
   ImageMetadata,
   ImageRecord,
   ImageRepository,
@@ -44,7 +43,11 @@ export interface Image {
   readonly name: string;
   readonly description: string | undefined;
   readonly contextId: string | undefined;
-  readonly embody: Embodiment | undefined;
+  readonly model: string | undefined;
+  readonly systemPrompt: string | undefined;
+  readonly mcpServers: Record<string, McpServerConfig> | undefined;
+  readonly thinking: "disabled" | "low" | "medium" | "high" | undefined;
+  readonly providerOptions: Record<string, unknown> | undefined;
   readonly customData: Record<string, unknown> | undefined;
   readonly createdAt: number;
   readonly updatedAt: number;
@@ -52,12 +55,21 @@ export interface Image {
   /**
    * Update image
    */
-  update(updates: {
-    name?: string;
-    description?: string;
-    embody?: Embodiment;
-    customData?: Record<string, unknown>;
-  }): Promise<Image>;
+  update(
+    updates: Partial<
+      Pick<
+        Agent,
+        | "name"
+        | "description"
+        | "model"
+        | "systemPrompt"
+        | "mcpServers"
+        | "thinking"
+        | "providerOptions"
+        | "customData"
+      >
+    >
+  ): Promise<Image>;
 
   /**
    * Delete this image and its session

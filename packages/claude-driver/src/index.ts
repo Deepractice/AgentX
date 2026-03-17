@@ -34,9 +34,9 @@
 
 // Re-export types from core for convenience
 export type {
+  AgentContext,
   CreateDriver,
   Driver,
-  DriverConfig,
   DriverState,
   DriverStreamEvent,
   StopReason,

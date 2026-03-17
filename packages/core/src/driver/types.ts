@@ -295,165 +295,101 @@ import type { Context } from "../context/types";
 export type { Context };
 
 // ============================================================================
-// Driver Configuration
+// SendOptions — per-request overridable fields
 // ============================================================================
 
 /**
- * DriverConfig - All configuration for creating a Driver
+ * SendOptions — fields that can be overridden per-request.
  *
- * This is our capability boundary - we define what we support.
- * Specific implementations (Claude, OpenAI) must work within this.
+ * These are passed with each send() call and merged with
+ * the agent's base configuration at runtime.
  *
- * @typeParam TOptions - Driver-specific options type. Each driver implementation
- * can define its own options interface and pass it as a type parameter.
- *
- * @example
- * ```typescript
- * // Define driver-specific options
- * interface ClaudeDriverOptions {
- *   claudeCodePath?: string;
- *   maxTurns?: number;
- * }
- *
- * // Use with type parameter
- * const config: DriverConfig<ClaudeDriverOptions> = {
- *   apiKey: "...",
- *   instanceId: "my-agent",
- *   options: {
- *     claudeCodePath: "/usr/local/bin/claude"
- *   }
- * };
- * ```
+ * Classification rule: if changing the field does NOT break
+ * conversation continuity, it belongs in SendOptions.
  */
-/**
- * Base driver configuration fields shared by all drivers
- */
-export interface DriverConfigBase {
-  // === Provider Configuration ===
-
-  /**
-   * API key for authentication
-   */
-  apiKey: string;
-
-  /**
-   * Base URL for API endpoint (optional, for custom deployments)
-   */
-  baseUrl?: string;
-
-  /**
-   * Model identifier (e.g., "claude-sonnet-4-20250514")
-   */
+export interface SendOptions {
+  /** Override model for this request */
   model?: string;
 
-  /**
-   * Request timeout in milliseconds (default: 600000 = 10 minutes)
-   */
+  /** Override thinking depth for this request */
+  thinking?: "disabled" | "low" | "medium" | "high";
+
+  /** Override provider options for this request */
+  providerOptions?: Record<string, unknown>;
+}
+
+// ============================================================================
+// AgentContext — merged configuration consumed by Driver
+// ============================================================================
+
+/**
+ * AgentContext — the final merged configuration object passed to Driver.
+ *
+ * Created by Runtime by merging:
+ * - ImageRecord fields (static, from persistence)
+ * - LLMProvider config (apiKey, baseUrl, default model)
+ * - SendOptions (per-request overrides)
+ * - Runtime-assembled tools and context
+ *
+ * This replaces DriverConfig as the primary configuration contract
+ * between Runtime and Driver.
+ */
+export interface AgentContext {
+  // === Provider Configuration ===
+
+  /** API key for authentication */
+  apiKey: string;
+
+  /** Base URL for API endpoint */
+  baseUrl?: string;
+
+  /** Model identifier */
+  model?: string;
+
+  /** Request timeout in milliseconds */
   timeout?: number;
 
   // === Agent Configuration ===
 
-  /**
-   * Agent ID (for identification and logging)
-   */
+  /** Agent instance ID */
   instanceId: string;
 
-  /**
-   * System prompt for the agent (Layer 1 — fixed)
-   */
+  /** System prompt (Layer 1 — fixed) */
   systemPrompt?: string;
 
-  /**
-   * Dynamic context provider (Layer 2 — refreshed each turn)
-   *
-   * Provides cognitive context like role identity, world instructions,
-   * and current state projection. Separate from systemPrompt.
-   *
-   * @example
-   * ```typescript
-   * context: new RolexContext({ platform, roleId: "nuwa" })
-   * ```
-   */
+  /** Dynamic context provider (Layer 2 — refreshed each turn) */
   context?: Context;
 
-  /**
-   * Current working directory for tool execution
-   */
+  /** Current working directory for tool execution */
   cwd?: string;
 
-  /**
-   * MCP servers configuration
-   */
+  /** MCP servers configuration */
   mcpServers?: Record<string, McpServerConfig>;
 
-  /**
-   * Tool definitions for LLM tool calling
-   */
+  /** Tool definitions for LLM tool calling */
   tools?: ToolDefinition[];
 
-  /**
-   * Thinking/reasoning depth
-   */
+  /** Thinking/reasoning depth */
   thinking?: "disabled" | "low" | "medium" | "high";
 
-  /**
-   * Provider-specific options — passed directly to LLM SDK (e.g. Vercel AI SDK providerOptions)
-   */
+  /** Provider-specific options */
   providerOptions?: Record<string, unknown>;
 
   // === Session Configuration ===
 
-  /**
-   * Session for message history access
-   *
-   * Stateless drivers (like MonoDriver) use this to read conversation history.
-   * Stateful drivers (like ClaudeDriver) may ignore this as they manage
-   * history internally via SDK.
-   */
+  /** Session for message history access */
   session?: Session;
 
-  /**
-   * Session ID to resume (for conversation continuity)
-   *
-   * If provided, Driver will attempt to resume this session.
-   * If not provided, a new session is created.
-   */
+  /** Session ID to resume */
   resumeSessionId?: string;
 
-  /**
-   * Callback when SDK session ID is captured
-   *
-   * Called once when the session ID becomes available.
-   * Save this ID to enable session resume later.
-   */
+  /** Callback when SDK session ID is captured */
   onSessionIdCaptured?: (sessionId: string) => void;
 }
 
-/**
- * DriverConfig - All configuration for creating a Driver
- *
- * Base fields are shared by all drivers. The type parameter TOptions
- * adds driver-specific fields directly onto the config (flat, no nesting).
- *
- * @typeParam TOptions - Driver-specific fields merged into the config.
- *
- * @example
- * ```typescript
- * interface MonoDriverOptions {
- *   provider?: string;
- *   maxSteps?: number;
- * }
- *
- * // MonoDriverConfig = DriverConfigBase & MonoDriverOptions
- * const config: DriverConfig<MonoDriverOptions> = {
- *   apiKey: "...",
- *   instanceId: "my-agent",
- *   provider: "anthropic",  // flat, not nested under options
- *   maxSteps: 10,
- * };
- * ```
- */
-export type DriverConfig<TOptions = Record<string, unknown>> = DriverConfigBase & TOptions;
+// ============================================================================
+// CreateDriver Configuration
+// ============================================================================
 
 // ============================================================================
 // Driver State
@@ -531,9 +467,10 @@ export interface Driver {
    * Receive a user message and return stream of events
    *
    * @param message - User message to send
+   * @param options - Per-request overrides (model, thinking, providerOptions)
    * @returns AsyncIterable of stream events
    */
-  receive(message: UserMessage): AsyncIterable<DriverStreamEvent>;
+  receive(message: UserMessage, options?: SendOptions): AsyncIterable<DriverStreamEvent>;
 
   /**
    * Interrupt current operation
@@ -569,16 +506,14 @@ export interface Driver {
  *
  * Each implementation package exports a function of this type.
  *
- * @typeParam TOptions - Driver-specific options type
+ * @typeParam TOptions - Driver-specific options merged with AgentContext
  *
  * @example
  * ```typescript
- * // @agentxjs/claude-driver
- * export const createClaudeDriver: CreateDriver<ClaudeDriverOptions> = (config) => {
- *   return new ClaudeDriver(config);
+ * // @agentxjs/mono-driver
+ * export const createMonoDriver: CreateDriver<MonoDriverOptions> = (config) => {
+ *   return new MonoDriver(config);
  * };
  * ```
  */
-export type CreateDriver<TOptions = Record<string, unknown>> = (
-  config: DriverConfig<TOptions>
-) => Driver;
+export type CreateDriver<TOptions = {}> = (config: AgentContext & TOptions) => Driver;

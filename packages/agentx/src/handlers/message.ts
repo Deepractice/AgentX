@@ -9,13 +9,14 @@ import { resolveInstanceId } from "./instance";
 
 export function registerMessageHandlers(registry: RpcHandlerRegistry): void {
   registry.register("message.send", async (runtime, params) => {
-    const { instanceId, imageId, content } = params as {
+    const { instanceId, imageId, content, options } = params as {
       instanceId?: string;
       imageId?: string;
       content: string | UserContentPart[];
+      options?: import("@agentxjs/core/driver").SendOptions;
     };
     const resolved = await resolveInstanceId(runtime, { instanceId, imageId });
-    await runtime.receive(resolved, content);
+    await runtime.receive(resolved, content, undefined, options);
     return ok({ instanceId: resolved, imageId });
   });
 

@@ -213,6 +213,8 @@ export function createAgentX(config?: PlatformConfig): AgentXBuilder {
 
 // Re-export context interfaces
 export type { Capability, Context, ContextProvider } from "@agentxjs/core/context";
+// Re-export driver types
+export type { SendOptions } from "@agentxjs/core/driver";
 // Re-export error types
 export type { AgentXErrorCategory, AgentXErrorContext } from "@agentxjs/core/error";
 export { AgentXError, AgentXErrorCode } from "@agentxjs/core/error";

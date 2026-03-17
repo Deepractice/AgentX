@@ -3,6 +3,7 @@
  */
 
 import type { Message } from "@agentxjs/core/agent";
+import type { SendOptions } from "@agentxjs/core/driver";
 import type { AgentXError } from "@agentxjs/core/error";
 import type { BusEvent, BusEventHandler, EventBus, Unsubscribe } from "@agentxjs/core/event";
 import type { LLMProtocol, LLMProviderRecord } from "@agentxjs/core/persistence";
@@ -263,7 +264,11 @@ export interface SessionNamespace {
    * Accepts imageId (recommended) or instanceId.
    * With imageId, the server auto-creates agent if needed.
    */
-  send(imageId: string, content: string | unknown[]): Promise<MessageSendResponse>;
+  send(
+    imageId: string,
+    content: string | unknown[],
+    options?: SendOptions
+  ): Promise<MessageSendResponse>;
 
   /**
    * Interrupt agent.
@@ -400,7 +405,7 @@ export interface AgentHandle {
   /**
    * Send a message to this agent
    */
-  send(content: string | unknown[]): Promise<MessageSendResponse>;
+  send(content: string | unknown[], options?: SendOptions): Promise<MessageSendResponse>;
 
   /**
    * Interrupt this agent's current response

@@ -23,7 +23,7 @@
  */
 
 import type { UserMessage } from "@agentxjs/core/agent";
-import type { Driver, DriverConfig, DriverState, DriverStreamEvent } from "@agentxjs/core/driver";
+import type { AgentContext, Driver, DriverState, DriverStreamEvent } from "@agentxjs/core/driver";
 import { createLogger } from "commonxjs/logger";
 import { BUILTIN_FIXTURES } from "../../fixtures";
 import type { Fixture, FixtureEvent, MockDriverOptions } from "../types";
@@ -44,7 +44,7 @@ export class MockDriver implements Driver {
   private _sessionId: string | null = null;
   private _state: DriverState = "idle";
 
-  private readonly config: DriverConfig | null;
+  private readonly config: AgentContext | null;
   private readonly options: MockDriverOptions;
   private readonly fixtures: Map<string, Fixture>;
   private currentFixture: Fixture;
@@ -61,11 +61,11 @@ export class MockDriver implements Driver {
    * @param options - MockDriverOptions or DriverConfig
    * @param mockOptions - MockDriverOptions if first param is DriverConfig
    */
-  constructor(optionsOrConfig: MockDriverOptions | DriverConfig, mockOptions?: MockDriverOptions) {
+  constructor(optionsOrConfig: MockDriverOptions | AgentContext, mockOptions?: MockDriverOptions) {
     // Detect which constructor form is being used
     if (mockOptions !== undefined || "apiKey" in optionsOrConfig) {
-      // Factory mode: (DriverConfig, MockDriverOptions)
-      this.config = optionsOrConfig as DriverConfig;
+      // Factory mode: (AgentContext, MockDriverOptions)
+      this.config = optionsOrConfig as AgentContext;
       const opts = mockOptions || {};
       this.options = {
         defaultDelay: 10,
@@ -401,6 +401,6 @@ export class MockDriver implements Driver {
  */
 export function createMockDriver(
   mockOptions: MockDriverOptions = {}
-): (config: DriverConfig) => Driver {
-  return (config: DriverConfig) => new MockDriver(config, mockOptions);
+): (config: AgentContext) => Driver {
+  return (config: AgentContext) => new MockDriver(config, mockOptions);
 }

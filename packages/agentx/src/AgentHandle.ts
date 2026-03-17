@@ -5,6 +5,7 @@
  */
 
 import type { Message } from "@agentxjs/core/agent";
+import type { SendOptions } from "@agentxjs/core/driver";
 import type { Presentation, PresentationOptions } from "./presentation";
 import type {
   AgentConfig,
@@ -33,8 +34,8 @@ export class AgentHandleImpl implements AgentHandle {
     this.ns = ns;
   }
 
-  async send(content: string | unknown[]): Promise<MessageSendResponse> {
-    return this.ns.session.send(this.instanceId, content);
+  async send(content: string | unknown[], options?: SendOptions): Promise<MessageSendResponse> {
+    return this.ns.session.send(this.instanceId, content, options);
   }
 
   async interrupt(): Promise<BaseResponse> {

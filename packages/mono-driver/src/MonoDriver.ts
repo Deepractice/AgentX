@@ -24,7 +24,7 @@
  */
 
 import type { UserMessage } from "@agentxjs/core/agent";
-import type { Driver, DriverState, DriverStreamEvent } from "@agentxjs/core/driver";
+import type { Driver, DriverState, DriverStreamEvent, SendOptions } from "@agentxjs/core/driver";
 import { createMediaResolver, passthrough, textExtract } from "@agentxjs/core/media";
 import type { Session } from "@agentxjs/core/session";
 import { createAnthropic } from "@ai-sdk/anthropic";
@@ -129,7 +129,7 @@ export class MonoDriver implements Driver {
   // Core Methods
   // ============================================================================
 
-  async *receive(message: UserMessage): AsyncIterable<DriverStreamEvent> {
+  async *receive(message: UserMessage, options?: SendOptions): AsyncIterable<DriverStreamEvent> {
     if (this._state === "disposed") {
       throw new Error("Cannot receive: Driver is disposed");
     }
@@ -145,8 +145,13 @@ export class MonoDriver implements Driver {
       // Get history from Session
       const history = this.session ? await this.session.getMessages() : [];
 
+      // Merge per-request overrides
+      const effectiveModel = options?.model ?? this.config.model;
+      const effectiveThinking = options?.thinking ?? this.config.thinking;
+      const effectiveProviderOptions = options?.providerOptions ?? this.config.providerOptions;
+
       // Create media resolver with current model + baseUrl
-      const model = this.config.model ?? this.getDefaultModel();
+      const model = effectiveModel ?? this.getDefaultModel();
       const mediaResolver = createMediaResolver(
         getMediaStrategies(this.provider, model, this.config.baseUrl)
       );
@@ -204,12 +209,15 @@ export class MonoDriver implements Driver {
       // Layer 3: Message Context (conversation history, already in messages)
       const systemPrompt = await this.buildSystemPrompt();
 
-      // Build provider options (thinking + user-provided)
-      const providerOptions = this.buildProviderOptions();
+      // Build provider options (thinking + user-provided) with per-request overrides
+      const providerOptions = this.buildProviderOptions(
+        effectiveThinking,
+        effectiveProviderOptions
+      );
 
       // Call Vercel AI SDK (v6)
       const result = streamText({
-        model: this.getModel(),
+        model: this.getModel(effectiveModel),
         system: systemPrompt,
         messages,
         tools: this.getTools(),
@@ -238,7 +246,7 @@ export class MonoDriver implements Driver {
           case "start-step":
             if (!messageStartEmitted) {
               const messageId = `msg_${Date.now()}`;
-              const model = this.config.model ?? this.getDefaultModel();
+              const model = effectiveModel ?? this.getDefaultModel();
               yield createEvent("message_start", { messageId, model });
               messageStartEmitted = true;
             }
@@ -383,10 +391,10 @@ export class MonoDriver implements Driver {
    * - Anthropic: low=5000, medium=10000, high=32000 budgetTokens
    * - OpenAI: low→auto, medium→auto, high→detailed reasoningSummary
    */
-  private buildProviderOptions(): Record<string, unknown> | undefined {
-    const thinking = this.config.thinking;
-    const userOptions = this.config.providerOptions;
-
+  private buildProviderOptions(
+    thinking?: "disabled" | "low" | "medium" | "high",
+    userOptions?: Record<string, unknown>
+  ): Record<string, unknown> | undefined {
     if (!thinking && !userOptions) return undefined;
 
     // User-provided options take priority
@@ -450,8 +458,8 @@ export class MonoDriver implements Driver {
     return parts.length > 0 ? parts.join("\n\n") : undefined;
   }
 
-  private getModel() {
-    const modelId = this.config.model ?? this.getDefaultModel();
+  private getModel(overrideModel?: string) {
+    const modelId = overrideModel ?? this.config.model ?? this.getDefaultModel();
     const { apiKey } = this.config;
     const baseURL = this.getBaseURL();
 

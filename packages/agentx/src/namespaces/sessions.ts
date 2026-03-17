@@ -3,9 +3,10 @@
  */
 
 import type { Message, UserContentPart } from "@agentxjs/core/agent";
+import type { SendOptions } from "@agentxjs/core/driver";
 import type { RpcClient } from "@agentxjs/core/network";
 import type { AgentXRuntime } from "@agentxjs/core/runtime";
-import type { BaseResponse, InstanceInfo, MessageSendResponse, SessionNamespace } from "../types";
+import type { BaseResponse, MessageSendResponse, SessionNamespace } from "../types";
 
 /**
  * Create local session namespace backed by embedded runtime
@@ -34,9 +35,13 @@ async function resolveLocal(runtime: AgentXRuntime, id: string): Promise<string>
 
 export function createLocalSessions(runtime: AgentXRuntime): SessionNamespace {
   return {
-    async send(id: string, content: string | unknown[]): Promise<MessageSendResponse> {
+    async send(
+      id: string,
+      content: string | unknown[],
+      options?: SendOptions
+    ): Promise<MessageSendResponse> {
       const instanceId = await resolveLocal(runtime, id);
-      await runtime.receive(instanceId, content as string | UserContentPart[]);
+      await runtime.receive(instanceId, content as string | UserContentPart[], undefined, options);
       return { instanceId, requestId: "" };
     },
 
@@ -74,10 +79,15 @@ function resolveId(id: string): { imageId?: string; instanceId?: string } {
 
 export function createRemoteSessions(rpcClient: RpcClient): SessionNamespace {
   return {
-    async send(id: string, content: string | unknown[]): Promise<MessageSendResponse> {
+    async send(
+      id: string,
+      content: string | unknown[],
+      options?: SendOptions
+    ): Promise<MessageSendResponse> {
       const result = await rpcClient.call<MessageSendResponse>("message.send", {
         ...resolveId(id),
         content,
+        options,
       });
       return { ...result, requestId: "" };
     },

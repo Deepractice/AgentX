@@ -43,16 +43,27 @@ export interface ContainerRecord {
 }
 
 // ============================================================================
-// Embodiment
+// Agent Blueprint
 // ============================================================================
 
 /**
- * Embodiment — runtime configuration for an agent's "body".
+ * Agent — the blueprint for creating an Image.
  *
- * contextId defines WHO the agent is (soul),
- * embody defines HOW the agent runs (body).
+ * Like a Dockerfile defines how to build an image,
+ * Agent defines what an agent looks like before it becomes a persistent Image.
+ *
+ * All runtime configuration fields are flat — no wrapper needed.
  */
-export interface Embodiment {
+export interface Agent {
+  /** Display name */
+  name?: string;
+
+  /** Description */
+  description?: string;
+
+  /** Context ID — identifies the cognitive context (e.g. RoleX individual). The soul. */
+  contextId?: string;
+
   /** LLM model identifier (e.g. "claude-sonnet-4-6"). Overrides container default. */
   model?: string;
 
@@ -67,32 +78,6 @@ export interface Embodiment {
 
   /** Provider-specific options — passed directly to Vercel AI SDK providerOptions */
   providerOptions?: Record<string, unknown>;
-}
-
-// ============================================================================
-// Agent Blueprint
-// ============================================================================
-
-/**
- * Agent — the blueprint for creating an Image.
- *
- * Like a Dockerfile defines how to build an image,
- * Agent defines what an agent looks like before it becomes a persistent Image.
- *
- * Agent = contextId (soul) + Embodiment (body) + metadata (name, description).
- */
-export interface Agent {
-  /** Display name */
-  name?: string;
-
-  /** Description */
-  description?: string;
-
-  /** Context ID — identifies the cognitive context (e.g. RoleX individual). The soul. */
-  contextId?: string;
-
-  /** Embodiment — runtime configuration (model, systemPrompt, mcpServers). The body. */
-  embody?: Embodiment;
 
   /** Application-specific custom data */
   customData?: Record<string, unknown>;
@@ -142,8 +127,20 @@ export interface ImageRecord {
   /** Workspace ID — identifies the agent's working directory. */
   workspaceId?: string;
 
-  /** Embodiment — runtime configuration (model, systemPrompt, mcpServers). The body. */
-  embody?: Embodiment;
+  /** LLM model identifier (e.g. "claude-sonnet-4-6"). Overrides container default. */
+  model?: string;
+
+  /** System prompt — controls agent behavior */
+  systemPrompt?: string;
+
+  /** MCP servers configuration — tool capabilities */
+  mcpServers?: Record<string, McpServerConfig>;
+
+  /** Thinking/reasoning depth. "disabled" turns off thinking. */
+  thinking?: "disabled" | "low" | "medium" | "high";
+
+  /** Provider-specific options — passed directly to Vercel AI SDK providerOptions */
+  providerOptions?: Record<string, unknown>;
 
   /** Prototype ID — tracks which prototype this image was created from */
   prototypeId?: string;
@@ -275,8 +272,20 @@ export interface PrototypeRecord {
   /** Context ID — identifies the cognitive context (e.g. RoleX individual). The soul. */
   contextId?: string;
 
-  /** Embodiment — runtime configuration (model, systemPrompt, mcpServers). The body. */
-  embody?: Embodiment;
+  /** LLM model identifier */
+  model?: string;
+
+  /** System prompt */
+  systemPrompt?: string;
+
+  /** MCP servers configuration */
+  mcpServers?: Record<string, McpServerConfig>;
+
+  /** Thinking/reasoning depth */
+  thinking?: "disabled" | "low" | "medium" | "high";
+
+  /** Provider-specific options */
+  providerOptions?: Record<string, unknown>;
 
   /** Application-specific custom data */
   customData?: Record<string, unknown>;

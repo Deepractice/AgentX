@@ -25,10 +25,11 @@ import type {
 } from "../agent/types";
 import { createBashTool } from "../bash/tool";
 import type {
+  AgentContext,
   CreateDriver,
   Driver,
-  DriverConfig,
   DriverStreamEvent,
+  SendOptions,
   ToolDefinition,
 } from "../driver/types";
 import { AgentXError } from "../error/AgentXError";
@@ -173,54 +174,36 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       }
     }
 
-    // Resolve embodiment
-    const embody = imageRecord.embody;
-    const systemPrompt = embody?.systemPrompt;
-    const mcpServers = embody?.mcpServers;
-    const imageModel = embody?.model;
-    const thinking = embody?.thinking;
-    const providerOptions = embody?.providerOptions;
-
-    // Create driver config
-    const driverConfig: DriverConfig = {
-      apiKey: "",
-      instanceId,
-      systemPrompt,
-      mcpServers,
-      thinking,
-      providerOptions,
-      context,
-      tools: defaultTools.length > 0 ? defaultTools : undefined,
-      session, // Inject Session for stateless drivers
-      resumeSessionId: imageRecord.metadata?.driverSessionId as string | undefined,
-      onSessionIdCaptured: async (driverSessionId: string) => {
-        // Persist driver session ID for resume
-        await this.platform.imageRepository.updateMetadata(imageId, { driverSessionId });
-      },
-    };
-
-    // Inject LLM provider config (apiKey, baseUrl, model) from container's default provider
+    // Resolve LLM provider config from container's default provider
     const defaultProvider = this.platform.llmProviderRepository
       ? await this.platform.llmProviderRepository.findDefaultLLMProvider(imageRecord.containerId)
       : null;
 
-    if (defaultProvider) {
-      driverConfig.apiKey = defaultProvider.apiKey;
-      if (defaultProvider.baseUrl) {
-        driverConfig.baseUrl = defaultProvider.baseUrl;
-      }
-      if (defaultProvider.model) {
-        driverConfig.model = defaultProvider.model;
-      }
-    }
-
-    // Image-level model overrides container default
-    if (imageModel) {
-      driverConfig.model = imageModel;
-    }
+    // Build AgentContext — merge ImageRecord + LLMProvider + Runtime resources
+    const agentContext: AgentContext = {
+      // Provider config (from container default)
+      apiKey: defaultProvider?.apiKey ?? "",
+      baseUrl: defaultProvider?.baseUrl,
+      // Model: Image-level overrides provider default
+      model: imageRecord.model ?? defaultProvider?.model,
+      // Agent config (flat from ImageRecord)
+      instanceId,
+      systemPrompt: imageRecord.systemPrompt,
+      mcpServers: imageRecord.mcpServers,
+      thinking: imageRecord.thinking,
+      providerOptions: imageRecord.providerOptions,
+      // Runtime-assembled resources
+      context,
+      tools: defaultTools.length > 0 ? defaultTools : undefined,
+      session,
+      resumeSessionId: imageRecord.metadata?.driverSessionId as string | undefined,
+      onSessionIdCaptured: async (driverSessionId: string) => {
+        await this.platform.imageRepository.updateMetadata(imageId, { driverSessionId });
+      },
+    };
 
     // Create driver using the injected CreateDriver function
-    const driver = this.createDriver(driverConfig);
+    const driver = this.createDriver(agentContext);
 
     // Validate LLM provider protocol against driver's supported protocols
     if (defaultProvider) {
@@ -504,7 +487,8 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
   async receive(
     instanceId: string,
     content: string | UserContentPart[],
-    requestId?: string
+    requestId?: string,
+    options?: SendOptions
   ): Promise<void> {
     const state = this.agents.get(instanceId);
     if (!state) {
@@ -568,7 +552,7 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
 
     try {
       // Call driver.receive() and process the AsyncIterable
-      for await (const event of state.driver.receive(userMessage)) {
+      for await (const event of state.driver.receive(userMessage, options)) {
         // Convert DriverStreamEvent to BusEvent and emit
         this.handleDriverEvent(state, event, actualRequestId);
       }

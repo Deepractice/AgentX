@@ -22,6 +22,7 @@
  */
 
 import type { UserContentPart } from "@agentxjs/core/agent";
+import type { SendOptions } from "@agentxjs/core/driver";
 import type { BusEvent } from "@agentxjs/core/event";
 import type { AgentX } from "../types";
 import { addUserConversation, createInitialState, presentationReducer } from "./reducer";
@@ -168,7 +169,7 @@ export class Presentation {
   // ==================== Actions ====================
 
   /** Send a message */
-  async send(content: string | UserContentPart[]): Promise<void> {
+  async send(content: string | UserContentPart[], options?: SendOptions): Promise<void> {
     this._state = addUserConversation(this._state, content);
     this._notify();
 
@@ -176,7 +177,7 @@ export class Presentation {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     try {
-      await this._agentx.runtime.session.send(this._instanceId, content);
+      await this._agentx.runtime.session.send(this._instanceId, content, options);
     } catch (error) {
       console.error("Presentation send error:", error);
     }
