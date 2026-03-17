@@ -16,7 +16,7 @@ export function createReadTool(os: AgentOS): ToolDefinition {
       properties: {
         path: {
           type: "string",
-          description: "File path relative to workspace root",
+          description: "File path (relative or absolute within the OS)",
         },
         offset: {
           type: "number",

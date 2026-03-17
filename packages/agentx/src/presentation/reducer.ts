@@ -490,7 +490,7 @@ function handleWorkspaceTree(
 ): PresentationState {
   return {
     ...state,
-    workspace: { files: data.files },
+    os: { files: data.files },
   };
 }
 

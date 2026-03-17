@@ -196,7 +196,7 @@ export interface AgentOS {
 /**
  * OSProvider — factory that creates AgentOS instances by ID.
  *
- * Each agent image has an osId (formerly workspaceId).
+ * Each agent image has an osId.
  * The provider creates an isolated OS environment for each agent.
  *
  * Platform packages provide implementations:

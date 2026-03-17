@@ -87,14 +87,14 @@ export class ImageImpl implements Image {
     const now = Date.now();
     const imageId = ImageImpl.generateImageId();
     const sessionId = ImageImpl.generateSessionId();
-    const workspaceId = ImageImpl.generateWorkspaceId();
+    const osId = ImageImpl.generateOsId();
 
     // Create image record
     const record: ImageRecord = {
       imageId,
       containerId: config.containerId,
       sessionId,
-      workspaceId,
+      osId,
       name: config.name ?? "New Conversation",
       description: config.description,
       contextId: config.contextId,
@@ -231,10 +231,10 @@ export class ImageImpl implements Image {
     return `sess_${timestamp}_${random}`;
   }
 
-  private static generateWorkspaceId(): string {
+  private static generateOsId(): string {
     const timestamp = Date.now().toString(36);
     const random = Math.random().toString(36).substring(2, 8);
-    return `ws_${timestamp}_${random}`;
+    return `os_${timestamp}_${random}`;
   }
 }
 

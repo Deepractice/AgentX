@@ -124,8 +124,8 @@ export interface ImageRecord {
   /** Context ID — identifies the cognitive context (e.g. RoleX individual). The soul. */
   contextId?: string;
 
-  /** Workspace ID — identifies the agent's working directory. */
-  workspaceId?: string;
+  /** OS ID — identifies the agent's isolated OS environment. */
+  osId?: string;
 
   /** LLM model identifier (e.g. "claude-sonnet-4-6"). Overrides container default. */
   model?: string;

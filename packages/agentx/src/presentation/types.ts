@@ -163,9 +163,9 @@ export interface FileTreeEntry {
 }
 
 /**
- * Workspace state — real-time workspace view
+ * OS state — real-time file tree view
  */
-export interface WorkspaceState {
+export interface OSState {
   /**
    * Current file tree (recursive).
    * Frontend just renders this tree directly.
@@ -174,14 +174,14 @@ export interface WorkspaceState {
 }
 
 // ============================================================================
-// Presentation Workspace Operations
+// Presentation OS Operations
 // ============================================================================
 
 /**
- * PresentationWorkspace — file operations exposed to the consumer.
- * Wraps the underlying Workspace with a simple API.
+ * PresentationOS — file operations exposed to the consumer.
+ * Wraps the underlying AgentOS with a simple API.
  */
-export interface PresentationWorkspace {
+export interface PresentationOS {
   /** Read file content */
   read(path: string): Promise<string>;
   /** Write content to a file */
@@ -232,10 +232,10 @@ export interface PresentationState {
   metrics: PresentationMetrics;
 
   /**
-   * Workspace state — real-time file tree.
-   * null when agent has no workspace.
+   * OS state — real-time file tree.
+   * null when agent has no OS.
    */
-  workspace: WorkspaceState | null;
+  os: OSState | null;
 }
 
 /**
@@ -262,5 +262,5 @@ export const initialPresentationState: PresentationState = {
   status: "idle",
   connection: "connected",
   metrics: initialMetrics,
-  workspace: null,
+  os: null,
 };

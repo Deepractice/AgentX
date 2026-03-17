@@ -1,10 +1,10 @@
 /**
- * Presentation Workspace Tests
+ * Presentation OS Tests
  *
- * Tests the workspace integration in the Presentation layer:
- * 1. Reducer handles workspace_tree events → updates PresentationState.workspace
- * 2. PresentationWorkspace operations (read/write/list)
- * 3. Initial state has workspace: null
+ * Tests the OS integration in the Presentation layer:
+ * 1. Reducer handles workspace_tree events → updates PresentationState.os
+ * 2. PresentationOS operations (read/write/list)
+ * 3. Initial state has os: null
  */
 
 import { describe, expect, test } from "bun:test";
@@ -15,13 +15,13 @@ import type { FileTreeEntry, PresentationState } from "../types";
 // Reducer: workspace_tree event
 // ============================================================================
 
-describe("Presentation Workspace Reducer", () => {
-  test("initial state has workspace: null", () => {
+describe("Presentation OS Reducer", () => {
+  test("initial state has os: null", () => {
     const state = createInitialState();
-    expect(state.workspace).toBeNull();
+    expect(state.os).toBeNull();
   });
 
-  test("workspace_tree event sets workspace.files", () => {
+  test("workspace_tree event sets os.files", () => {
     const state = createInitialState();
     const files: FileTreeEntry[] = [
       { name: "src", path: "src", type: "directory" },
@@ -35,14 +35,14 @@ describe("Presentation Workspace Reducer", () => {
     };
 
     const newState = presentationReducer(state, event as any);
-    expect(newState.workspace).not.toBeNull();
-    expect(newState.workspace!.files).toEqual(files);
+    expect(newState.os).not.toBeNull();
+    expect(newState.os!.files).toEqual(files);
   });
 
   test("workspace_tree event replaces previous files", () => {
     const state: PresentationState = {
       ...createInitialState(),
-      workspace: {
+      os: {
         files: [{ name: "old.txt", path: "old.txt", type: "file" }],
       },
     };
@@ -59,8 +59,8 @@ describe("Presentation Workspace Reducer", () => {
     };
 
     const newState = presentationReducer(state, event as any);
-    expect(newState.workspace!.files).toEqual(newFiles);
-    expect(newState.workspace!.files).not.toContainEqual({
+    expect(newState.os!.files).toEqual(newFiles);
+    expect(newState.os!.files).not.toContainEqual({
       name: "old.txt",
       path: "old.txt",
       type: "file",
@@ -80,10 +80,10 @@ describe("Presentation Workspace Reducer", () => {
     const newState = presentationReducer(state, event as any);
     expect(newState.status).toBe("responding");
     expect(newState.conversations).toEqual([]);
-    expect(newState.workspace).toEqual({ files: [] });
+    expect(newState.os).toEqual({ files: [] });
   });
 
-  test("unknown event does not create workspace state", () => {
+  test("unknown event does not create os state", () => {
     const state = createInitialState();
     const event = {
       type: "some_unknown_event",
@@ -92,7 +92,7 @@ describe("Presentation Workspace Reducer", () => {
     };
 
     const newState = presentationReducer(state, event as any);
-    expect(newState.workspace).toBeNull();
+    expect(newState.os).toBeNull();
     expect(newState).toBe(state); // Same reference = no change
   });
 });

@@ -24,7 +24,7 @@ export function createShTool(os: AgentOS): ToolDefinition {
         },
         cwd: {
           type: "string",
-          description: "Working directory relative to workspace root (optional)",
+          description: "Working directory (optional, defaults to OS root)",
         },
         timeout: {
           type: "number",

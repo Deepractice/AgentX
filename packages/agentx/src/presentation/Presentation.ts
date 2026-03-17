@@ -9,7 +9,7 @@
  * // Read state
  * pres.conversations  // message history
  * pres.status         // "idle" | "submitted" | "thinking" | "responding" | "executing"
- * pres.workspace      // { files, read, write, list } or null
+ * pres.os             // { files, read, write, list } or null
  *
  * // Subscribe (works with useSyncExternalStore)
  * const unsub = pres.subscribe(() => rerender());
@@ -30,8 +30,8 @@ import type {
   ConnectionState,
   Conversation,
   PresentationMetrics,
+  PresentationOS,
   PresentationState,
-  PresentationWorkspace,
 } from "./types";
 import { initialPresentationState } from "./types";
 
@@ -40,9 +40,9 @@ import { initialPresentationState } from "./types";
 // ============================================================================
 
 /**
- * Workspace — file tree + operations, unified.
+ * OS view — file tree + operations, unified.
  */
-export interface Workspace {
+export interface OS {
   /** Current file tree (real-time updates) */
   readonly files: readonly import("./types").FileTreeEntry[];
   /** Read file content */
@@ -72,18 +72,18 @@ export class Presentation {
   private _listeners = new Set<() => void>();
   private _legacyHandlers = new Set<(state: PresentationState) => void>();
   private _eventUnsubscribe: (() => void) | null = null;
-  private _workspaceOps: PresentationWorkspace | null;
+  private _osOps: PresentationOS | null;
 
   constructor(
     agentx: AgentX,
     instanceId: string,
     options?: PresentationOptions,
     initialConversations?: Conversation[],
-    workspace?: PresentationWorkspace | null
+    os?: PresentationOS | null
   ) {
     this._agentx = agentx;
     this._instanceId = instanceId;
-    this._workspaceOps = workspace ?? null;
+    this._osOps = os ?? null;
     this._state = initialConversations?.length
       ? { ...initialPresentationState, conversations: initialConversations }
       : createInitialState();
@@ -97,9 +97,9 @@ export class Presentation {
     this._subscribeToEvents();
 
     // Load initial workspace file tree
-    if (this._workspaceOps) {
-      this._workspaceOps.list(".").then((files) => {
-        this._state = { ...this._state, workspace: { files } };
+    if (this._osOps) {
+      this._osOps.list(".").then((files) => {
+        this._state = { ...this._state, os: { files } };
         this._notify();
       });
     }
@@ -127,14 +127,14 @@ export class Presentation {
     return this._state.metrics;
   }
 
-  /** Workspace — file tree + operations. null if agent has no workspace. */
-  get workspace(): Workspace | null {
-    if (!this._workspaceOps) return null;
-    const ops = this._workspaceOps;
-    const wsState = this._state.workspace;
+  /** OS — file tree + operations. null if agent has no OS. */
+  get os(): OS | null {
+    if (!this._osOps) return null;
+    const ops = this._osOps;
+    const osState = this._state.os;
     return {
       get files() {
-        return wsState?.files ?? [];
+        return osState?.files ?? [];
       },
       read: (path: string) => ops.read(path),
       write: (path: string, content: string) => ops.write(path, content),

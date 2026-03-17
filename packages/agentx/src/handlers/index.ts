@@ -12,7 +12,7 @@ import { registerImageHandlers } from "./image";
 import { registerInstanceHandlers } from "./instance";
 import { registerLLMHandlers } from "./llm";
 import { registerMessageHandlers } from "./message";
-import { registerWorkspaceHandlers } from "./workspace";
+import { registerOSHandlers } from "./workspace";
 
 /**
  * Register all RPC handlers on the registry
@@ -22,5 +22,5 @@ export function registerAll(registry: RpcHandlerRegistry): void {
   registerInstanceHandlers(registry);
   registerMessageHandlers(registry);
   registerLLMHandlers(registry);
-  registerWorkspaceHandlers(registry);
+  registerOSHandlers(registry);
 }

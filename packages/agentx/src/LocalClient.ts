@@ -40,13 +40,13 @@ export class LocalClient implements AgentX {
     const image = createLocalImages(platform, agentxRuntime);
     const session = createLocalSessions(agentxRuntime);
     const llm = createLocalLLM(platform);
-    // Workspace resolver: imageId → PresentationWorkspace (via AgentOS)
-    const workspaceResolver = async (imageId: string) => {
+    // OS resolver: imageId → PresentationOS (via AgentOS)
+    const osResolver = async (imageId: string) => {
       const op = platform.osProvider;
       if (!op) return null;
       const img = await platform.imageRepository.findImageById(imageId);
-      if (!img?.workspaceId) return null;
-      const os = await op.create(img.workspaceId);
+      if (!img?.osId) return null;
+      const os = await op.create(img.osId);
       return {
         read: (path: string) => os.fs.read(path),
         write: (path: string, content: string) => os.fs.write(path, content),
@@ -56,7 +56,7 @@ export class LocalClient implements AgentX {
         },
       };
     };
-    const present = createPresentations(this, session, workspaceResolver);
+    const present = createPresentations(this, session, osResolver);
 
     this.runtime = { image, session, present, llm };
     this.provider = llm;

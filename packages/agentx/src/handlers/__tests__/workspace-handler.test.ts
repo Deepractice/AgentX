@@ -1,7 +1,7 @@
 /**
- * Workspace RPC Handler Tests
+ * OS RPC Handler Tests
  *
- * Verifies the server-side workspace.list/read/write handlers
+ * Verifies the server-side os.list/read/write handlers
  * work correctly through the RpcHandlerRegistry.
  */
 
@@ -10,23 +10,23 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { RpcHandlerRegistry } from "../../RpcHandlerRegistry";
-import { registerWorkspaceHandlers } from "../workspace";
+import { registerOSHandlers } from "../workspace";
 
 let tempDir: string;
 let registry: RpcHandlerRegistry;
 
-// Minimal runtime mock with real workspace
-function createMockRuntime(workspacesDir: string) {
-  const { LocalWorkspaceProvider } = require("@agentxjs/node-platform/workspace");
-  const workspaceProvider = new LocalWorkspaceProvider(workspacesDir);
+// Minimal runtime mock with real OS
+function createMockRuntime(basePath: string) {
+  const { LocalOSProvider } = require("@agentxjs/node-platform");
+  const osProvider = new LocalOSProvider(basePath);
 
   return {
     platform: {
-      workspaceProvider,
+      osProvider,
       imageRepository: {
         findImageById: async (imageId: string) => {
           if (imageId === "img_test") {
-            return { imageId: "img_test", workspaceId: "ws_test" };
+            return { imageId: "img_test", osId: "os_test" };
           }
           return null;
         },
@@ -36,26 +36,26 @@ function createMockRuntime(workspacesDir: string) {
 }
 
 beforeEach(async () => {
-  tempDir = await mkdtemp(join(tmpdir(), "agentx-ws-handler-test-"));
+  tempDir = await mkdtemp(join(tmpdir(), "agentx-os-handler-test-"));
   registry = new RpcHandlerRegistry();
-  registerWorkspaceHandlers(registry);
+  registerOSHandlers(registry);
 });
 
 afterEach(async () => {
   await rm(tempDir, { recursive: true, force: true });
 });
 
-describe("workspace.list RPC handler", () => {
-  test("returns files from workspace directory", async () => {
-    // Create workspace dir and files
-    const wsDir = join(tempDir, "ws_test");
+describe("os.list RPC handler", () => {
+  test("returns files from OS directory", async () => {
+    // Create OS dir and files
+    const osDir = join(tempDir, "os_test");
     const { mkdir } = await import("node:fs/promises");
-    await mkdir(wsDir, { recursive: true });
-    await writeFile(join(wsDir, "hello.txt"), "world");
-    await writeFile(join(wsDir, "test.js"), "console.log('hi')");
+    await mkdir(osDir, { recursive: true });
+    await writeFile(join(osDir, "hello.txt"), "world");
+    await writeFile(join(osDir, "test.js"), "console.log('hi')");
 
     const runtime = createMockRuntime(tempDir);
-    const result = await registry.handle(runtime, "workspace.list", {
+    const result = await registry.handle(runtime, "os.list", {
       imageId: "img_test",
       path: ".",
     });
@@ -69,13 +69,13 @@ describe("workspace.list RPC handler", () => {
     }
   });
 
-  test("returns empty array for empty workspace", async () => {
-    const wsDir = join(tempDir, "ws_test");
+  test("returns empty array for empty OS directory", async () => {
+    const osDir = join(tempDir, "os_test");
     const { mkdir } = await import("node:fs/promises");
-    await mkdir(wsDir, { recursive: true });
+    await mkdir(osDir, { recursive: true });
 
     const runtime = createMockRuntime(tempDir);
-    const result = await registry.handle(runtime, "workspace.list", {
+    const result = await registry.handle(runtime, "os.list", {
       imageId: "img_test",
     });
 
@@ -87,7 +87,7 @@ describe("workspace.list RPC handler", () => {
 
   test("returns error for unknown imageId", async () => {
     const runtime = createMockRuntime(tempDir);
-    const result = await registry.handle(runtime, "workspace.list", {
+    const result = await registry.handle(runtime, "os.list", {
       imageId: "img_unknown",
     });
 
@@ -95,15 +95,15 @@ describe("workspace.list RPC handler", () => {
   });
 });
 
-describe("workspace.read RPC handler", () => {
+describe("os.read RPC handler", () => {
   test("reads file content", async () => {
-    const wsDir = join(tempDir, "ws_test");
+    const osDir = join(tempDir, "os_test");
     const { mkdir } = await import("node:fs/promises");
-    await mkdir(wsDir, { recursive: true });
-    await writeFile(join(wsDir, "data.txt"), "hello world");
+    await mkdir(osDir, { recursive: true });
+    await writeFile(join(osDir, "data.txt"), "hello world");
 
     const runtime = createMockRuntime(tempDir);
-    const result = await registry.handle(runtime, "workspace.read", {
+    const result = await registry.handle(runtime, "os.read", {
       imageId: "img_test",
       path: "data.txt",
     });
@@ -115,16 +115,16 @@ describe("workspace.read RPC handler", () => {
   });
 });
 
-describe("workspace.write RPC handler", () => {
+describe("os.write RPC handler", () => {
   test("writes file and can read it back", async () => {
-    const wsDir = join(tempDir, "ws_test");
+    const osDir = join(tempDir, "os_test");
     const { mkdir } = await import("node:fs/promises");
-    await mkdir(wsDir, { recursive: true });
+    await mkdir(osDir, { recursive: true });
 
     const runtime = createMockRuntime(tempDir);
 
     // Write
-    const writeResult = await registry.handle(runtime, "workspace.write", {
+    const writeResult = await registry.handle(runtime, "os.write", {
       imageId: "img_test",
       path: "output.txt",
       content: "written via RPC",
@@ -132,7 +132,7 @@ describe("workspace.write RPC handler", () => {
     expect(writeResult.success).toBe(true);
 
     // Read back
-    const readResult = await registry.handle(runtime, "workspace.read", {
+    const readResult = await registry.handle(runtime, "os.read", {
       imageId: "img_test",
       path: "output.txt",
     });

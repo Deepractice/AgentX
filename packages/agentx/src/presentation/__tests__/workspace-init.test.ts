@@ -1,10 +1,10 @@
 /**
- * Workspace Initialization Tests — New Presentation API
+ * OS Initialization Tests — New Presentation API
  */
 
 import { describe, expect, mock, test } from "bun:test";
 import { Presentation } from "../Presentation";
-import type { PresentationWorkspace } from "../types";
+import type { PresentationOS } from "../types";
 
 function createMockAgentX() {
   return {
@@ -19,41 +19,41 @@ function createMockAgentX() {
   } as any;
 }
 
-describe("Workspace initialization in Presentation", () => {
-  test("constructor calls workspace.list('.') and populates workspace.files", async () => {
+describe("OS initialization in Presentation", () => {
+  test("constructor calls os.list('.') and populates os.files", async () => {
     const mockFiles = [
       { name: "src", path: "src", type: "directory" as const },
       { name: "package.json", path: "package.json", type: "file" as const },
     ];
 
-    const mockWorkspace: PresentationWorkspace = {
+    const mockOS: PresentationOS = {
       read: mock(() => Promise.resolve("")),
       write: mock(() => Promise.resolve()),
       list: mock(() => Promise.resolve(mockFiles)),
     };
 
     const ax = createMockAgentX();
-    const pres = new Presentation(ax, "img_test", undefined, undefined, mockWorkspace);
+    const pres = new Presentation(ax, "img_test", undefined, undefined, mockOS);
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(mockWorkspace.list).toHaveBeenCalledWith(".");
-    expect(pres.workspace).not.toBeNull();
-    expect(pres.workspace!.files).toEqual(mockFiles);
+    expect(mockOS.list).toHaveBeenCalledWith(".");
+    expect(pres.os).not.toBeNull();
+    expect(pres.os!.files).toEqual(mockFiles);
   });
 
-  test("workspace is null when no workspace provided", async () => {
+  test("os is null when no OS provided", async () => {
     const ax = createMockAgentX();
     const pres = new Presentation(ax, "img_test", undefined, undefined, null);
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(pres.workspace).toBeNull();
+    expect(pres.os).toBeNull();
   });
 
-  test("subscribe fires on workspace update", async () => {
+  test("subscribe fires on OS update", async () => {
     const mockFiles = [{ name: "test.txt", path: "test.txt", type: "file" as const }];
-    const mockWorkspace: PresentationWorkspace = {
+    const mockOS: PresentationOS = {
       read: mock(() => Promise.resolve("")),
       write: mock(() => Promise.resolve()),
       list: mock(() => Promise.resolve(mockFiles)),
@@ -61,7 +61,7 @@ describe("Workspace initialization in Presentation", () => {
 
     let notified = false;
     const ax = createMockAgentX();
-    const pres = new Presentation(ax, "img_test", undefined, undefined, mockWorkspace);
+    const pres = new Presentation(ax, "img_test", undefined, undefined, mockOS);
     pres.subscribe(() => {
       notified = true;
     });
@@ -69,12 +69,12 @@ describe("Workspace initialization in Presentation", () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(notified).toBe(true);
-    expect(pres.workspace!.files).toEqual(mockFiles);
+    expect(pres.os!.files).toEqual(mockFiles);
   });
 
-  test("workspace_tree event updates workspace.files", async () => {
+  test("workspace_tree event updates os.files", async () => {
     const initialFiles = [{ name: "init.txt", path: "init.txt", type: "file" as const }];
-    const mockWorkspace: PresentationWorkspace = {
+    const mockOS: PresentationOS = {
       read: mock(() => Promise.resolve("")),
       write: mock(() => Promise.resolve()),
       list: mock(() => Promise.resolve(initialFiles)),
@@ -87,10 +87,10 @@ describe("Workspace initialization in Presentation", () => {
       return () => {};
     });
 
-    const pres = new Presentation(ax, "img_test", undefined, undefined, mockWorkspace);
+    const pres = new Presentation(ax, "img_test", undefined, undefined, mockOS);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(pres.workspace!.files).toEqual(initialFiles);
+    expect(pres.os!.files).toEqual(initialFiles);
 
     // Simulate workspace_tree event
     const updatedFiles = [
@@ -99,6 +99,6 @@ describe("Workspace initialization in Presentation", () => {
     ];
     eventHandler!({ type: "workspace_tree", timestamp: Date.now(), data: { files: updatedFiles } });
 
-    expect(pres.workspace!.files).toEqual(updatedFiles);
+    expect(pres.os!.files).toEqual(updatedFiles);
   });
 });

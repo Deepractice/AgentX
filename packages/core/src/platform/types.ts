@@ -98,7 +98,7 @@ export interface AgentXPlatform {
   /**
    * OS provider — unified file system + shell for agents.
    *
-   * When provided and Image has a workspaceId, OS tools
+   * When provided and Image has an osId, OS tools
    * (read/write/edit/sh/start) are automatically injected into agents.
    * Each Image gets its own isolated OS environment.
    */

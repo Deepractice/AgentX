@@ -5,9 +5,9 @@
  */
 
 export {
+  type OS,
   Presentation,
   type PresentationOptions,
-  type Workspace,
 } from "./Presentation";
 export {
   addUserConversation,
@@ -24,9 +24,10 @@ export type {
   FileBlock,
   FileTreeEntry,
   ImageBlock,
+  OSState,
   PresentationMetrics,
+  PresentationOS,
   PresentationState,
-  PresentationWorkspace,
   SessionMetrics,
   TextBlock,
   ThinkingBlock,
@@ -34,6 +35,5 @@ export type {
   ToolBlock,
   TurnMetrics,
   UserConversation,
-  WorkspaceState,
 } from "./types";
 export { initialMetrics, initialPresentationState, initialSessionMetrics } from "./types";

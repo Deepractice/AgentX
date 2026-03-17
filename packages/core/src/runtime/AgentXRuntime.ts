@@ -117,8 +117,8 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
 
     // Assemble platform-provided default tools via AgentOS
     const defaultTools: ToolDefinition[] = [];
-    if (imageRecord.workspaceId && this.platform.osProvider) {
-      const os = await this.platform.osProvider.create(imageRecord.workspaceId);
+    if (imageRecord.osId && this.platform.osProvider) {
+      const os = await this.platform.osProvider.create(imageRecord.osId);
       defaultTools.push(...createOSTools(os));
 
       // Start file watcher if the OS supports it
