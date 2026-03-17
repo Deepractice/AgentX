@@ -147,7 +147,7 @@ export async function createNodePlatform(
     eventBus,
     osProvider:
       options.osProvider ??
-      new (await import("./os/LocalOSProvider")).LocalOSProvider(join(dataPath, "workspaces")),
+      new (await import("./os/LocalOSProvider")).LocalOSProvider(join(dataPath, "os")),
     channelServer,
     channelClient: createNodeWebSocket,
   };
