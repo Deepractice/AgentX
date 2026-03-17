@@ -2,7 +2,7 @@
  * Agent namespace factories
  */
 
-import type { RpcClient, RpcMethod } from "@agentxjs/core/network";
+import type { RpcClient } from "@agentxjs/core/network";
 import type { AgentXRuntime } from "@agentxjs/core/runtime";
 import type {
   BaseResponse,
@@ -102,7 +102,7 @@ export function createRemoteInstances(rpcClient: RpcClient): InstanceNamespace {
       instanceId?: string;
     }): Promise<InstanceCreateResponse> {
       // Agent creation via image.run RPC
-      const result = await rpcClient.call<InstanceCreateResponse>("image.run" as RpcMethod, {
+      const result = await rpcClient.call<InstanceCreateResponse>("image.run", {
         imageId: params.imageId,
         instanceId: params.instanceId,
       });

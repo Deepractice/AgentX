@@ -30,7 +30,6 @@ export {
   createRequest,
   createStreamEvent,
   createSuccessResponse,
-  eventTypeToRpcMethod,
   isControlAck,
   isErrorResponse,
   isInvalid,
@@ -42,7 +41,6 @@ export {
   parseMessage,
   parseMessageObject,
   RpcErrorCodes,
-  rpcMethodToResponseType,
 } from "./jsonrpc";
 // Protocol (reliable delivery)
 export type { AckMessage, ReliableWrapper } from "./protocol";

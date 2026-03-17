@@ -3,7 +3,7 @@
  *
  * Creates a WebSocket server that:
  * 1. Accepts client connections
- * 2. Handles JSON-RPC requests directly via CommandHandler
+ * 2. Handles JSON-RPC requests via RpcHandlerRegistry
  * 3. Broadcasts stream events as JSON-RPC notifications
  *
  * Message Types:
@@ -22,12 +22,12 @@ import {
   isRequest,
   parseMessage,
   RpcErrorCodes,
-  type RpcMethod,
 } from "@agentxjs/core/network";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import { createAgentXRuntime } from "@agentxjs/core/runtime";
 import { createLogger } from "@deepracticex/logger";
-import { CommandHandler } from "./CommandHandler";
+import { registerAll } from "./handlers";
+import { RpcHandlerRegistry } from "./RpcHandlerRegistry";
 import type { AgentXServer } from "./types";
 
 const logger = createLogger("server/Server");
@@ -95,8 +95,9 @@ export async function createServer(config: ServerConfig): Promise<AgentXServer> 
     throw new Error("Platform must provide channelServer for server mode");
   }
 
-  // Create command handler (no longer needs eventBus)
-  const commandHandler = new CommandHandler(runtime);
+  // Create RPC handler registry
+  const registry = new RpcHandlerRegistry();
+  registerAll(registry);
 
   // Track connections
   const connections = new Map<string, ConnectionState>();
@@ -199,7 +200,7 @@ export async function createServer(config: ServerConfig): Promise<AgentXServer> 
       logger.debug("Received RPC request", { id, method });
 
       // Call command handler
-      const result = await commandHandler.handle(method as RpcMethod, params);
+      const result = await registry.handle(runtime, method, params);
 
       if (result.success) {
         sendResponse(connection, id, result.data);
@@ -304,7 +305,7 @@ export async function createServer(config: ServerConfig): Promise<AgentXServer> 
     async dispose() {
       // Cleanup in order
       await wsServer.dispose();
-      commandHandler.dispose();
+      // registry is stateless, no dispose needed
       await runtime.shutdown();
       logger.info("Server disposed");
     },

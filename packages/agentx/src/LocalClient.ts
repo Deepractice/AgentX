@@ -7,16 +7,17 @@
 
 import type { AgentXError } from "@agentxjs/core/error";
 import type { BusEvent, BusEventHandler, EventBus, Unsubscribe } from "@agentxjs/core/event";
-import type { RpcMethod } from "@agentxjs/core/network";
+
 import type { AgentXRuntime } from "@agentxjs/core/runtime";
 import { createLogger } from "commonxjs/logger";
 import { AgentHandleImpl } from "./AgentHandle";
-import { CommandHandler } from "./CommandHandler";
+import { registerAll } from "./handlers";
 import { createLocalInstances } from "./namespaces/agents";
 import { createLocalImages } from "./namespaces/images";
 import { createLocalLLM } from "./namespaces/llm";
 import { createPresentations } from "./namespaces/presentations";
 import { createLocalSessions } from "./namespaces/sessions";
+import { RpcHandlerRegistry } from "./RpcHandlerRegistry";
 import type { AgentX, ChatNamespace, LLMNamespace, RuntimeNamespace } from "./types";
 
 const logger = createLogger("agentx/LocalClient");
@@ -26,7 +27,7 @@ const logger = createLogger("agentx/LocalClient");
  */
 export class LocalClient implements AgentX {
   private readonly _runtime: AgentXRuntime;
-  private commandHandler: CommandHandler | null = null;
+  private registry: RpcHandlerRegistry | null = null;
   private isDisposed = false;
 
   readonly chat: ChatNamespace;
@@ -97,10 +98,11 @@ export class LocalClient implements AgentX {
   // ==================== RPC ====================
 
   async rpc<T = unknown>(method: string, params?: unknown): Promise<T> {
-    if (!this.commandHandler) {
-      this.commandHandler = new CommandHandler(this._runtime);
+    if (!this.registry) {
+      this.registry = new RpcHandlerRegistry();
+      registerAll(this.registry);
     }
-    const result = await this.commandHandler.handle(method as RpcMethod, params);
+    const result = await this.registry.handle(this._runtime, method, params);
     if (result.success) {
       return result.data as T;
     }

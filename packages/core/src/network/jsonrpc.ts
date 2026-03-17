@@ -35,43 +35,12 @@ export type { IParsedObject, JsonRpc };
 // ============================================================================
 
 /**
- * All RPC method names supported by AgentX
+ * RPC method name — "namespace.action" format.
+ *
+ * The protocol layer does not enumerate methods.
+ * Concrete methods are registered in RpcHandlerRegistry (SDK layer).
  */
-export type RpcMethod =
-  // Container
-  | "container.create"
-  | "container.get"
-  | "container.list"
-  // Image
-  | "image.create"
-  | "image.get"
-  | "image.list"
-  | "image.delete"
-  | "image.run"
-  | "image.stop"
-  | "image.update"
-  | "image.messages"
-  // Instance
-  | "instance.get"
-  | "instance.list"
-  | "instance.destroy"
-  | "instance.destroyAll"
-  | "instance.interrupt"
-  // Message
-  | "message.send"
-  // Prototype
-  | "prototype.create"
-  | "prototype.get"
-  | "prototype.list"
-  | "prototype.update"
-  | "prototype.delete"
-  // LLM Provider
-  | "llm.create"
-  | "llm.get"
-  | "llm.list"
-  | "llm.update"
-  | "llm.delete"
-  | "llm.default";
+export type RpcMethod = string;
 
 /**
  * Notification method names (server push)
@@ -289,87 +258,3 @@ export function isControlAck(parsed: IParsedObject): parsed is IParsedObject & {
   const payload = parsed.payload as RpcNotification;
   return payload.method === "control.ack";
 }
-
-// ============================================================================
-// Method Name Mapping (for backward compatibility)
-// ============================================================================
-
-/**
- * Map old event type names to new RPC method names
- */
-export const eventTypeToRpcMethod: Record<string, RpcMethod> = {
-  // Container
-  container_create_request: "container.create",
-  container_get_request: "container.get",
-  container_list_request: "container.list",
-  // Image
-  image_create_request: "image.create",
-  image_get_request: "image.get",
-  image_list_request: "image.list",
-  image_delete_request: "image.delete",
-  image_run_request: "image.run",
-  image_stop_request: "image.stop",
-  image_update_request: "image.update",
-  image_messages_request: "image.messages",
-  // Instance
-  instance_get_request: "instance.get",
-  instance_list_request: "instance.list",
-  instance_destroy_request: "instance.destroy",
-  instance_destroy_all_request: "instance.destroyAll",
-  instance_interrupt_request: "instance.interrupt",
-  // Message
-  message_send_request: "message.send",
-  // Prototype
-  prototype_create_request: "prototype.create",
-  prototype_get_request: "prototype.get",
-  prototype_list_request: "prototype.list",
-  prototype_update_request: "prototype.update",
-  prototype_delete_request: "prototype.delete",
-  // LLM Provider
-  llm_create_request: "llm.create",
-  llm_get_request: "llm.get",
-  llm_list_request: "llm.list",
-  llm_update_request: "llm.update",
-  llm_delete_request: "llm.delete",
-  llm_default_request: "llm.default",
-};
-
-/**
- * Map RPC method names back to response event types
- */
-export const rpcMethodToResponseType: Record<RpcMethod, string> = {
-  // Container
-  "container.create": "container_create_response",
-  "container.get": "container_get_response",
-  "container.list": "container_list_response",
-  // Image
-  "image.create": "image_create_response",
-  "image.get": "image_get_response",
-  "image.list": "image_list_response",
-  "image.delete": "image_delete_response",
-  "image.run": "image_run_response",
-  "image.stop": "image_stop_response",
-  "image.update": "image_update_response",
-  "image.messages": "image_messages_response",
-  // Instance
-  "instance.get": "instance_get_response",
-  "instance.list": "instance_list_response",
-  "instance.destroy": "instance_destroy_response",
-  "instance.destroyAll": "instance_destroy_all_response",
-  "instance.interrupt": "instance_interrupt_response",
-  // Message
-  "message.send": "message_send_response",
-  // Prototype
-  "prototype.create": "prototype_create_response",
-  "prototype.get": "prototype_get_response",
-  "prototype.list": "prototype_list_response",
-  "prototype.update": "prototype_update_response",
-  "prototype.delete": "prototype_delete_response",
-  // LLM Provider
-  "llm.create": "llm_create_response",
-  "llm.get": "llm_get_response",
-  "llm.list": "llm_list_response",
-  "llm.update": "llm_update_response",
-  "llm.delete": "llm_delete_response",
-  "llm.default": "llm_default_response",
-};

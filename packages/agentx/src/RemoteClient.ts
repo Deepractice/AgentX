@@ -8,7 +8,7 @@
 import type { AgentXError } from "@agentxjs/core/error";
 import type { BusEvent, BusEventHandler, EventBus, Unsubscribe } from "@agentxjs/core/event";
 import { EventBusImpl } from "@agentxjs/core/event";
-import { RpcClient, type RpcMethod } from "@agentxjs/core/network";
+import { RpcClient } from "@agentxjs/core/network";
 import { createLogger } from "commonxjs/logger";
 import { AgentHandleImpl } from "./AgentHandle";
 import { createRemoteInstances } from "./namespaces/agents";
@@ -72,7 +72,26 @@ export class RemoteClient implements AgentX {
     const instance = createRemoteInstances(this.rpcClient);
     const session = createRemoteSessions(this.rpcClient);
     const llm = createRemoteLLM(this.rpcClient);
-    const present = createPresentations(this, session);
+    // Workspace resolver via RPC — server handles workspace access
+    const workspaceResolver = async (imageId: string) => {
+      const rpc = this.rpcClient;
+      return {
+        read: async (path: string) => {
+          const res = await rpc.call<{ content: string }>("workspace.read", { imageId, path });
+          return res.content;
+        },
+        write: async (path: string, content: string) => {
+          await rpc.call("workspace.write", { imageId, path, content });
+        },
+        list: async (path?: string) => {
+          const res = await rpc.call<{
+            files: Array<{ name: string; path: string; type: "file" | "directory" }>;
+          }>("workspace.list", { imageId, path });
+          return res.files;
+        },
+      };
+    };
+    const present = createPresentations(this, session, workspaceResolver);
 
     this.runtime = { image, instance, session, present, llm };
     this.provider = llm;
@@ -128,7 +147,7 @@ export class RemoteClient implements AgentX {
   // ==================== RPC ====================
 
   async rpc<T = unknown>(method: string, params?: unknown): Promise<T> {
-    return this.rpcClient.call<T>(method as RpcMethod, params);
+    return this.rpcClient.call<T>(method, params);
   }
 
   // ==================== Private ====================
