@@ -121,12 +121,15 @@ export class Presentation {
    * Send a message (text or content parts with files/images)
    */
   async send(content: string | UserContentPart[]): Promise<void> {
-    // Add user conversation
+    // Set submitted state and notify
     this.state = addUserConversation(this.state, content);
     this.notify();
 
+    // Yield to allow UI frameworks (React, etc.) to render submitted state
+    // before stream events arrive and transition to thinking/responding
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
     try {
-      // Send message via agentx
       await this.agentx.runtime.session.send(this.instanceId, content);
     } catch (error) {
       this.notifyError(error instanceof Error ? error : new Error(String(error)));
