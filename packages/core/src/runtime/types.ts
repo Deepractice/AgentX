@@ -151,6 +151,16 @@ export interface AgentXRuntime {
    */
   interrupt(instanceId: string, requestId?: string): void;
 
+  /**
+   * Rewind an agent's conversation to a specific message.
+   *
+   * System-level operation — all layers participate:
+   * 1. Session: truncate messages after messageId
+   * 2. CircuitBreaker: reset (user is correcting, old failures are irrelevant)
+   * 3. EventBus: emit "rewind" event (Presentation updates state)
+   */
+  rewind(instanceId: string, messageId: string, requestId?: string): Promise<void>;
+
   // ==================== Event Subscription ====================
 
   /**

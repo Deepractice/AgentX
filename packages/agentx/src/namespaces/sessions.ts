@@ -57,29 +57,6 @@ export function createLocalSessions(runtime: AgentXRuntime): SessionNamespace {
       if (!agent) return [];
       return runtime.platform.sessionRepository.getMessages(agent.sessionId);
     },
-
-    async truncateAfter(id: string, messageId: string): Promise<BaseResponse> {
-      // Resolve to sessionId
-      let sessionId: string;
-      if (id.startsWith("img_")) {
-        const image = await runtime.platform.imageRepository.findImageById(id);
-        if (!image) throw new Error(`Image not found: ${id}`);
-        sessionId = image.sessionId;
-      } else {
-        const agent = runtime.getAgent(id);
-        if (!agent) throw new Error(`Agent not found: ${id}`);
-        sessionId = agent.sessionId;
-      }
-      const messages = await runtime.platform.sessionRepository.getMessages(sessionId);
-      const idx = messages.findIndex((m) => m.id === messageId);
-      if (idx === -1) throw new Error(`Message not found: ${messageId}`);
-      const kept = messages.slice(0, idx + 1);
-      await runtime.platform.sessionRepository.clearMessages(sessionId);
-      for (const msg of kept) {
-        await runtime.platform.sessionRepository.addMessage(sessionId, msg);
-      }
-      return { requestId: "" };
-    },
   };
 }
 
@@ -126,11 +103,6 @@ export function createRemoteSessions(rpcClient: RpcClient): SessionNamespace {
         imageId: id,
       });
       return msgRes.messages ?? [];
-    },
-
-    async truncateAfter(id: string, messageId: string): Promise<BaseResponse> {
-      await rpcClient.call("message.truncateAfter", { ...resolveId(id), messageId });
-      return { requestId: "" };
     },
   };
 }

@@ -286,12 +286,6 @@ export interface SessionNamespace {
    * Accepts imageId or instanceId.
    */
   getMessages(imageId: string): Promise<Message[]>;
-
-  /**
-   * Truncate message history after a specific message.
-   * Accepts imageId or instanceId.
-   */
-  truncateAfter(imageId: string, messageId: string): Promise<BaseResponse>;
 }
 
 /**

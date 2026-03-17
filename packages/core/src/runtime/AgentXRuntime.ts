@@ -614,6 +614,44 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     logger.debug("Interrupt sent", { instanceId, requestId });
   }
 
+  async rewind(instanceId: string, messageId: string, requestId?: string): Promise<void> {
+    const state = this.agents.get(instanceId);
+    if (!state) {
+      throw new Error(`Agent not found: ${instanceId}`);
+    }
+
+    const actualRequestId = requestId ?? this.generateRequestId();
+
+    // 1. Truncate session messages
+    const messages = await this.platform.sessionRepository.getMessages(state.agent.sessionId);
+    const idx = messages.findIndex((m) => m.id === messageId);
+    if (idx === -1) {
+      throw new Error(`Message not found: ${messageId}`);
+    }
+    const kept = messages.slice(0, idx + 1);
+    await this.platform.sessionRepository.clearMessages(state.agent.sessionId);
+    for (const msg of kept) {
+      await this.platform.sessionRepository.addMessage(state.agent.sessionId, msg);
+    }
+
+    // 2. Reset circuit breaker — user is correcting, old failures are irrelevant
+    state.circuitBreaker.reset();
+
+    // 3. Emit rewind event
+    this.emitEvent(
+      state,
+      "rewind",
+      { instanceId, messageId, truncatedCount: messages.length - kept.length },
+      actualRequestId
+    );
+
+    logger.info("Rewind completed", {
+      instanceId,
+      messageId,
+      truncatedCount: messages.length - kept.length,
+    });
+  }
+
   // ==================== Event Subscription ====================
 
   subscribe(instanceId: string, handler: AgentEventHandler): Subscription {

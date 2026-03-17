@@ -141,6 +141,10 @@ export function presentationReducer(state: PresentationState, event: BusEvent): 
     case "workspace_tree":
       return handleWorkspaceTree(state, event.data as { files: FileTreeEntry[] });
 
+    // Rewind — runtime-level operation
+    case "rewind":
+      return handleRewind(state, event.data as { truncatedCount: number });
+
     default:
       return state;
   }
@@ -464,6 +468,20 @@ function handleConnectionState(
   const connection = data.state as ConnectionState;
   if (connection === state.connection) return state;
   return { ...state, connection };
+}
+
+function handleRewind(
+  state: PresentationState,
+  data: { truncatedCount: number }
+): PresentationState {
+  // Remove the last N conversations (truncatedCount maps roughly to messages, not conversations)
+  // Simplest: re-derive from the event — just drop conversations from the end
+  const toRemove = Math.max(1, Math.ceil(data.truncatedCount / 2));
+  const conversations = state.conversations.slice(
+    0,
+    Math.max(0, state.conversations.length - toRemove)
+  );
+  return { ...state, conversations, status: "idle" };
 }
 
 function handleWorkspaceTree(
