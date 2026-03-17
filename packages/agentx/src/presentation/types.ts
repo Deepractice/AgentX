@@ -212,8 +212,14 @@ export interface PresentationState {
 
   /**
    * Current agent status
+   *
+   * - idle: No active request
+   * - submitted: Message sent, waiting for first token
+   * - thinking: LLM outputting thinking/reasoning content
+   * - responding: LLM outputting text content
+   * - executing: Tool call in progress
    */
-  status: "idle" | "thinking" | "responding" | "executing";
+  status: "idle" | "submitted" | "thinking" | "responding" | "executing";
 
   /**
    * WebSocket connection state
