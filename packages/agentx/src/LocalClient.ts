@@ -12,7 +12,6 @@ import type { AgentXRuntime } from "@agentxjs/core/runtime";
 import { createLogger } from "commonxjs/logger";
 import { AgentHandleImpl } from "./AgentHandle";
 import { registerAll } from "./handlers";
-import { createLocalInstances } from "./namespaces/agents";
 import { createLocalImages } from "./namespaces/images";
 import { createLocalLLM } from "./namespaces/llm";
 import { createPresentations } from "./namespaces/presentations";
@@ -38,8 +37,7 @@ export class LocalClient implements AgentX {
     this._runtime = agentxRuntime;
     const platform = agentxRuntime.platform;
 
-    const image = createLocalImages(platform);
-    const instance = createLocalInstances(agentxRuntime);
+    const image = createLocalImages(platform, agentxRuntime);
     const session = createLocalSessions(agentxRuntime);
     const llm = createLocalLLM(platform);
     // Workspace resolver: imageId → PresentationWorkspace
@@ -60,7 +58,7 @@ export class LocalClient implements AgentX {
     };
     const present = createPresentations(this, session, workspaceResolver);
 
-    this.runtime = { image, instance, session, present, llm };
+    this.runtime = { image, session, present, llm };
     this.provider = llm;
     this.chat = this.createChatNamespace();
 
@@ -116,13 +114,13 @@ export class LocalClient implements AgentX {
     return {
       async create(params) {
         const imgRes = await rt.image.create(params);
-        const instRes = await rt.instance.create({ imageId: imgRes.record.imageId });
+        const runRes = await rt.image.run(imgRes.record.imageId);
         return new AgentHandleImpl(
           {
-            instanceId: instRes.instanceId,
-            imageId: instRes.imageId,
-            containerId: instRes.containerId,
-            sessionId: instRes.sessionId,
+            instanceId: runRes.instanceId,
+            imageId: runRes.imageId,
+            containerId: runRes.containerId,
+            sessionId: runRes.sessionId,
           },
           rt
         );
@@ -133,14 +131,13 @@ export class LocalClient implements AgentX {
       async get(id) {
         const res = await rt.image.get(id);
         if (!res.record) return null;
-        const r = res.record;
-        const instRes = await rt.instance.create({ imageId: r.imageId });
+        const runRes = await rt.image.run(res.record.imageId);
         return new AgentHandleImpl(
           {
-            instanceId: instRes.instanceId,
-            imageId: instRes.imageId,
-            containerId: instRes.containerId,
-            sessionId: instRes.sessionId,
+            instanceId: runRes.instanceId,
+            imageId: runRes.imageId,
+            containerId: runRes.containerId,
+            sessionId: runRes.sessionId,
           },
           rt
         );

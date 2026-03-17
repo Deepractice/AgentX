@@ -263,7 +263,6 @@ export type {
   InstanceGetResponse,
   InstanceInfo,
   InstanceListResponse,
-  InstanceNamespace,
   LLMNamespace,
   LLMProviderCreateResponse,
   LLMProviderDefaultResponse,

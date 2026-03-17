@@ -5,7 +5,7 @@
 import type { Message } from "@agentxjs/core/agent";
 import { DEFAULT_CONTAINER_ID } from "@agentxjs/core/container";
 import type { RpcClient } from "@agentxjs/core/network";
-import type { AgentXPlatform } from "@agentxjs/core/runtime";
+import type { AgentXPlatform, AgentXRuntime } from "@agentxjs/core/runtime";
 import type {
   AgentConfig,
   BaseResponse,
@@ -14,12 +14,16 @@ import type {
   ImageListResponse,
   ImageNamespace,
   ImageUpdateResponse,
+  InstanceCreateResponse,
 } from "../types";
 
 /**
  * Create local image namespace backed by embedded runtime
  */
-export function createLocalImages(platform: AgentXPlatform): ImageNamespace {
+export function createLocalImages(
+  platform: AgentXPlatform,
+  runtime?: AgentXRuntime
+): ImageNamespace {
   return {
     async create(params: AgentConfig): Promise<ImageCreateResponse> {
       const { imageRepository, sessionRepository } = platform;
@@ -100,6 +104,39 @@ export function createLocalImages(platform: AgentXPlatform): ImageNamespace {
       if (!imageRecord) return [];
       return platform.sessionRepository.getMessages(imageRecord.sessionId);
     },
+
+    async run(imageId: string): Promise<InstanceCreateResponse> {
+      if (!runtime) throw new Error("Runtime not available");
+      const existing = runtime
+        .getAgents()
+        .find((a) => a.imageId === imageId && a.lifecycle === "running");
+      if (existing) {
+        return {
+          instanceId: existing.instanceId,
+          imageId: existing.imageId,
+          containerId: existing.containerId,
+          sessionId: existing.sessionId,
+          requestId: "",
+        };
+      }
+      const agent = await runtime.createAgent({ imageId });
+      return {
+        instanceId: agent.instanceId,
+        imageId: agent.imageId,
+        containerId: agent.containerId,
+        sessionId: agent.sessionId,
+        requestId: "",
+      };
+    },
+
+    async stop(imageId: string): Promise<BaseResponse> {
+      if (!runtime) throw new Error("Runtime not available");
+      const agent = runtime
+        .getAgents()
+        .find((a) => a.imageId === imageId && a.lifecycle === "running");
+      if (agent) await runtime.stopAgent(agent.instanceId);
+      return { requestId: "" };
+    },
   };
 }
 
@@ -149,6 +186,16 @@ export function createRemoteImages(rpcClient: RpcClient): ImageNamespace {
     async getMessages(imageId: string): Promise<Message[]> {
       const result = await rpcClient.call<{ messages: Message[] }>("image.messages", { imageId });
       return result.messages ?? [];
+    },
+
+    async run(imageId: string): Promise<InstanceCreateResponse> {
+      const result = await rpcClient.call<InstanceCreateResponse>("image.run", { imageId });
+      return { ...result, requestId: "" };
+    },
+
+    async stop(imageId: string): Promise<BaseResponse> {
+      const result = await rpcClient.call<BaseResponse>("image.stop", { imageId });
+      return { ...result, requestId: "" };
     },
   };
 }

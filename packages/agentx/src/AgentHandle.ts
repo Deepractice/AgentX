@@ -61,7 +61,7 @@ export class AgentHandleImpl implements AgentHandle {
   }
 
   async delete(): Promise<void> {
-    await this.ns.instance.destroy(this.instanceId);
+    await this.ns.image.stop(this.imageId);
     await this.ns.image.delete(this.imageId);
   }
 }

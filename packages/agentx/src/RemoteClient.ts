@@ -11,7 +11,6 @@ import { EventBusImpl } from "@agentxjs/core/event";
 import { RpcClient } from "@agentxjs/core/network";
 import { createLogger } from "commonxjs/logger";
 import { AgentHandleImpl } from "./AgentHandle";
-import { createRemoteInstances } from "./namespaces/agents";
 import { createRemoteImages } from "./namespaces/images";
 import { createRemoteLLM } from "./namespaces/llm";
 import { createPresentations } from "./namespaces/presentations";
@@ -69,7 +68,6 @@ export class RemoteClient implements AgentX {
 
     // Assemble namespaces
     const image = createRemoteImages(this.rpcClient);
-    const instance = createRemoteInstances(this.rpcClient);
     const session = createRemoteSessions(this.rpcClient);
     const llm = createRemoteLLM(this.rpcClient);
     // Workspace resolver via RPC — server handles workspace access
@@ -93,7 +91,7 @@ export class RemoteClient implements AgentX {
     };
     const present = createPresentations(this, session, workspaceResolver);
 
-    this.runtime = { image, instance, session, present, llm };
+    this.runtime = { image, session, present, llm };
     this.provider = llm;
     this.chat = this.createChatNamespace();
   }
@@ -157,13 +155,13 @@ export class RemoteClient implements AgentX {
     return {
       async create(params) {
         const imgRes = await rt.image.create(params);
-        const instRes = await rt.instance.create({ imageId: imgRes.record.imageId });
+        const runRes = await rt.image.run(imgRes.record.imageId);
         return new AgentHandleImpl(
           {
-            instanceId: instRes.instanceId,
-            imageId: instRes.imageId,
-            containerId: instRes.containerId,
-            sessionId: instRes.sessionId,
+            instanceId: runRes.instanceId,
+            imageId: runRes.imageId,
+            containerId: runRes.containerId,
+            sessionId: runRes.sessionId,
           },
           rt
         );
@@ -174,14 +172,13 @@ export class RemoteClient implements AgentX {
       async get(id) {
         const res = await rt.image.get(id);
         if (!res.record) return null;
-        const r = res.record;
-        const instRes = await rt.instance.create({ imageId: r.imageId });
+        const runRes = await rt.image.run(res.record.imageId);
         return new AgentHandleImpl(
           {
-            instanceId: instRes.instanceId,
-            imageId: instRes.imageId,
-            containerId: instRes.containerId,
-            sessionId: instRes.sessionId,
+            instanceId: runRes.instanceId,
+            imageId: runRes.imageId,
+            containerId: runRes.containerId,
+            sessionId: runRes.sessionId,
           },
           rt
         );

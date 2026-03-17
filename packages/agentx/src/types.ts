@@ -237,31 +237,17 @@ export interface ImageNamespace {
    * Get message history for an image
    */
   getMessages(imageId: string): Promise<Message[]>;
-}
-
-/**
- * Agent operations namespace
- */
-export interface InstanceNamespace {
-  /**
-   * Create a new agent
-   */
-  create(params: { imageId: string; instanceId?: string }): Promise<InstanceCreateResponse>;
 
   /**
-   * Get agent by ID
+   * Run an agent from this image.
+   * Reuses existing running agent if available.
    */
-  get(instanceId: string): Promise<InstanceGetResponse>;
+  run(imageId: string): Promise<InstanceCreateResponse>;
 
   /**
-   * List agents
+   * Stop the agent for this image.
    */
-  list(): Promise<InstanceListResponse>;
-
-  /**
-   * Destroy an agent
-   */
-  destroy(instanceId: string): Promise<BaseResponse>;
+  stop(imageId: string): Promise<BaseResponse>;
 }
 
 /**
@@ -379,7 +365,6 @@ export interface PresentationNamespace {
  */
 export interface RuntimeNamespace {
   readonly image: ImageNamespace;
-  readonly instance: InstanceNamespace;
   readonly session: SessionNamespace;
   readonly present: PresentationNamespace;
   readonly llm: LLMNamespace;
