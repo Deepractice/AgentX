@@ -1,58 +1,77 @@
 /**
- * Presentation Class
+ * Presentation — a live chat session.
  *
- * High-level API for UI integration.
- * Wraps AgentX client and provides presentation state management.
+ * Read state directly as properties. Subscribe for re-renders.
+ * Take actions with send/interrupt/rewind.
+ *
+ * @example
+ * ```typescript
+ * // Read state
+ * pres.conversations  // message history
+ * pres.status         // "idle" | "submitted" | "thinking" | "responding" | "executing"
+ * pres.workspace      // { files, read, write, list } or null
+ *
+ * // Subscribe (works with useSyncExternalStore)
+ * const unsub = pres.subscribe(() => rerender());
+ *
+ * // Actions
+ * await pres.send("Hello");
+ * await pres.interrupt();
+ * await pres.rewind(2);
+ * ```
  */
 
 import type { UserContentPart } from "@agentxjs/core/agent";
-import type { BusEvent, Unsubscribe } from "@agentxjs/core/event";
+import type { BusEvent } from "@agentxjs/core/event";
 import type { AgentX } from "../types";
 import { addUserConversation, createInitialState, presentationReducer } from "./reducer";
-import type { Conversation, PresentationState, PresentationWorkspace } from "./types";
+import type {
+  ConnectionState,
+  Conversation,
+  PresentationMetrics,
+  PresentationState,
+  PresentationWorkspace,
+} from "./types";
 import { initialPresentationState } from "./types";
 
-/**
- * Presentation update handler
- */
-export type PresentationUpdateHandler = (state: PresentationState) => void;
+// ============================================================================
+// Types
+// ============================================================================
 
 /**
- * Presentation error handler
+ * Workspace — file tree + operations, unified.
  */
-export type PresentationErrorHandler = (error: Error) => void;
-
-/**
- * Presentation options
- */
-export interface PresentationOptions {
-  /**
-   * Called on every state update
-   */
-  onUpdate?: PresentationUpdateHandler;
-
-  /**
-   * Called on errors
-   */
-  onError?: PresentationErrorHandler;
+export interface Workspace {
+  /** Current file tree (real-time updates) */
+  readonly files: readonly import("./types").FileTreeEntry[];
+  /** Read file content */
+  read(path: string): Promise<string>;
+  /** Write content to file */
+  write(path: string, content: string): Promise<void>;
+  /** List directory entries */
+  list(path?: string): Promise<import("./types").FileTreeEntry[]>;
 }
 
 /**
- * Presentation - UI-friendly wrapper for AgentX
+ * Options for creating a Presentation
  */
-export class Presentation {
-  private agentx: AgentX;
-  private instanceId: string;
-  private state: PresentationState;
-  private updateHandlers: Set<PresentationUpdateHandler> = new Set();
-  private errorHandlers: Set<PresentationErrorHandler> = new Set();
-  private eventUnsubscribe: Unsubscribe | null = null;
+export interface PresentationOptions {
+  /** Called on every state change (legacy — prefer subscribe) */
+  onUpdate?: (state: PresentationState) => void;
+}
 
-  /**
-   * Workspace operations — read, write, list files in the agent's workspace.
-   * null when the agent has no workspace.
-   */
-  readonly workspace: PresentationWorkspace | null;
+// ============================================================================
+// Presentation
+// ============================================================================
+
+export class Presentation {
+  private _agentx: AgentX;
+  private _instanceId: string;
+  private _state: PresentationState;
+  private _listeners = new Set<() => void>();
+  private _legacyHandlers = new Set<(state: PresentationState) => void>();
+  private _eventUnsubscribe: (() => void) | null = null;
+  private _workspaceOps: PresentationWorkspace | null;
 
   constructor(
     agentx: AgentX,
@@ -61,119 +80,132 @@ export class Presentation {
     initialConversations?: Conversation[],
     workspace?: PresentationWorkspace | null
   ) {
-    this.agentx = agentx;
-    this.instanceId = instanceId;
-    this.workspace = workspace ?? null;
-    this.state = initialConversations?.length
+    this._agentx = agentx;
+    this._instanceId = instanceId;
+    this._workspaceOps = workspace ?? null;
+    this._state = initialConversations?.length
       ? { ...initialPresentationState, conversations: initialConversations }
       : createInitialState();
 
-    // Register initial handlers
+    // Legacy onUpdate support
     if (options?.onUpdate) {
-      this.updateHandlers.add(options.onUpdate);
-    }
-    if (options?.onError) {
-      this.errorHandlers.add(options.onError);
+      this._legacyHandlers.add(options.onUpdate);
     }
 
-    // Subscribe to all events
-    this.subscribeToEvents();
+    // Subscribe to EventBus
+    this._subscribeToEvents();
 
     // Load initial workspace file tree
-    if (this.workspace) {
-      this.workspace.list(".").then((files) => {
-        this.state = { ...this.state, workspace: { files } };
-        this.notify();
+    if (this._workspaceOps) {
+      this._workspaceOps.list(".").then((files) => {
+        this._state = { ...this._state, workspace: { files } };
+        this._notify();
       });
     }
   }
 
-  /**
-   * Get current state
-   */
-  getState(): PresentationState {
-    return this.state;
+  // ==================== State (direct properties) ====================
+
+  /** All conversations (user, assistant, error) */
+  get conversations(): readonly Conversation[] {
+    return this._state.conversations;
   }
 
+  /** Current agent status */
+  get status(): PresentationState["status"] {
+    return this._state.status;
+  }
+
+  /** WebSocket connection state */
+  get connection(): ConnectionState {
+    return this._state.connection;
+  }
+
+  /** Token usage and context metrics */
+  get metrics(): PresentationMetrics {
+    return this._state.metrics;
+  }
+
+  /** Workspace — file tree + operations. null if agent has no workspace. */
+  get workspace(): Workspace | null {
+    if (!this._workspaceOps) return null;
+    const ops = this._workspaceOps;
+    const wsState = this._state.workspace;
+    return {
+      get files() {
+        return wsState?.files ?? [];
+      },
+      read: (path: string) => ops.read(path),
+      write: (path: string, content: string) => ops.write(path, content),
+      list: (path?: string) => ops.list(path),
+    };
+  }
+
+  // ==================== Subscribe ====================
+
   /**
-   * Subscribe to state updates
+   * Subscribe to state changes.
+   * Compatible with React's useSyncExternalStore.
+   * Does NOT call listener immediately.
+   *
+   * @returns Unsubscribe function
    */
-  onUpdate(handler: PresentationUpdateHandler): Unsubscribe {
-    this.updateHandlers.add(handler);
-    // Immediately call with current state
-    handler(this.state);
+  subscribe(listener: () => void): () => void {
+    this._listeners.add(listener);
     return () => {
-      this.updateHandlers.delete(handler);
+      this._listeners.delete(listener);
     };
   }
 
   /**
-   * Subscribe to errors
+   * Get state snapshot.
+   * Compatible with React's useSyncExternalStore.
    */
-  onError(handler: PresentationErrorHandler): Unsubscribe {
-    this.errorHandlers.add(handler);
-    return () => {
-      this.errorHandlers.delete(handler);
-    };
+  getSnapshot(): PresentationState {
+    return this._state;
   }
 
-  /**
-   * Send a message (text or content parts with files/images)
-   */
+  // ==================== Actions ====================
+
+  /** Send a message */
   async send(content: string | UserContentPart[]): Promise<void> {
-    // Set submitted state and notify
-    this.state = addUserConversation(this.state, content);
-    this.notify();
+    this._state = addUserConversation(this._state, content);
+    this._notify();
 
-    // Yield to allow UI frameworks (React, etc.) to render submitted state
-    // before stream events arrive and transition to thinking/responding
+    // Yield to allow UI to render submitted state
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     try {
-      await this.agentx.runtime.session.send(this.instanceId, content);
+      await this._agentx.runtime.session.send(this._instanceId, content);
     } catch (error) {
-      this.notifyError(error instanceof Error ? error : new Error(String(error)));
+      console.error("Presentation send error:", error);
     }
   }
 
-  /**
-   * Interrupt current response
-   */
+  /** Interrupt current response */
   async interrupt(): Promise<void> {
     try {
-      await this.agentx.runtime.session.interrupt(this.instanceId);
+      await this._agentx.runtime.session.interrupt(this._instanceId);
     } catch (error) {
-      this.notifyError(error instanceof Error ? error : new Error(String(error)));
+      console.error("Presentation interrupt error:", error);
     }
   }
 
-  /**
-   * Rewind conversation to a specific index.
-   *
-   * Calls runtime.rewind — a system-level operation that:
-   * 1. Truncates session messages
-   * 2. Resets circuit breaker
-   * 3. Emits rewind event → reducer updates state
-   *
-   * @param index - conversation index to rewind to (0-based, removes this index and after)
-   */
+  /** Rewind conversation to a specific index (removes index and everything after) */
   async rewind(index: number): Promise<void> {
-    const conversations = this.state.conversations;
+    const conversations = this._state.conversations;
     if (index < 0 || index >= conversations.length) return;
 
     try {
-      // Map conversation index to message ID
-      const messages = await this.agentx.runtime.session.getMessages(this.instanceId);
+      const messages = await this._agentx.runtime.session.getMessages(this._instanceId);
       if (messages.length === 0) return;
 
       if (index === 0) {
-        // Rewind to beginning — use first message
-        await this.agentx.rpc("runtime.rewind", {
-          imageId: this.instanceId,
+        await this._agentx.rpc("runtime.rewind", {
+          imageId: this._instanceId,
           messageId: messages[0].id,
         });
       } else {
-        // Find the message that corresponds to the conversation before rewind point
         let msgIndex = -1;
         let convCount = 0;
         for (let i = 0; i < messages.length; i++) {
@@ -186,96 +218,66 @@ export class Presentation {
           }
         }
         if (msgIndex >= 0 && msgIndex < messages.length) {
-          await this.agentx.rpc("runtime.rewind", {
-            imageId: this.instanceId,
+          await this._agentx.rpc("runtime.rewind", {
+            imageId: this._instanceId,
             messageId: messages[msgIndex].id,
           });
         }
       }
     } catch (error) {
-      this.notifyError(error instanceof Error ? error : new Error(String(error)));
+      console.error("Presentation rewind error:", error);
     }
   }
 
-  /**
-   * Edit a user message and resend.
-   * Rewinds to the message, replaces it, and sends the new content.
-   *
-   * @param index - conversation index of the user message to edit (0-based)
-   * @param content - new content to send
-   */
-  async editAndResend(index: number, content: string | UserContentPart[]): Promise<void> {
-    // Rewind to before this message
-    await this.rewind(index);
-
-    // Send the new content
-    await this.send(content);
-  }
-
-  /**
-   * Reset state
-   */
-  reset(): void {
-    this.state = createInitialState();
-    this.notify();
-  }
-
-  /**
-   * Dispose and cleanup
-   */
+  /** Dispose and cleanup all subscriptions */
   dispose(): void {
-    if (this.eventUnsubscribe) {
-      this.eventUnsubscribe();
-      this.eventUnsubscribe = null;
+    if (this._eventUnsubscribe) {
+      this._eventUnsubscribe();
+      this._eventUnsubscribe = null;
     }
-    this.updateHandlers.clear();
-    this.errorHandlers.clear();
+    this._listeners.clear();
+    this._legacyHandlers.clear();
   }
 
   // ==================== Private ====================
 
-  private subscribeToEvents(): void {
-    // Subscribe to all events and filter by instanceId
-    this.eventUnsubscribe = this.agentx.onAny((event: BusEvent) => {
-      // Filter events for this agent (if context is available)
-      // Note: Events from server may or may not include context with instanceId
-      const eventWithContext = event as BusEvent & { context?: { instanceId?: string } };
+  private _subscribeToEvents(): void {
+    this._eventUnsubscribe = this._agentx.onAny((event: BusEvent) => {
+      const eventWithContext = event as BusEvent & {
+        context?: { instanceId?: string; imageId?: string };
+      };
       const eventAgentId = eventWithContext.context?.instanceId;
 
-      // Only filter if event has context and neither instanceId nor imageId matches
-      if (eventAgentId && eventAgentId !== this.instanceId) {
-        // Also check imageId in context
-        const eventImageId = (eventWithContext.context as any)?.imageId;
-        if (!eventImageId || eventImageId !== this.instanceId) {
+      if (eventAgentId && eventAgentId !== this._instanceId) {
+        const eventImageId = eventWithContext.context?.imageId;
+        if (!eventImageId || eventImageId !== this._instanceId) {
           return;
         }
       }
 
-      // Reduce event into state
-      const newState = presentationReducer(this.state, event);
-      if (newState !== this.state) {
-        this.state = newState;
-        this.notify();
+      const newState = presentationReducer(this._state, event);
+      if (newState !== this._state) {
+        this._state = newState;
+        this._notify();
       }
     });
   }
 
-  private notify(): void {
-    for (const handler of this.updateHandlers) {
+  private _notify(): void {
+    // New API: bare listeners (for useSyncExternalStore)
+    for (const listener of this._listeners) {
       try {
-        handler(this.state);
+        listener();
       } catch (error) {
-        console.error("Presentation update handler error:", error);
+        console.error("Presentation listener error:", error);
       }
     }
-  }
-
-  private notifyError(error: Error): void {
-    for (const handler of this.errorHandlers) {
+    // Legacy API: handlers that receive state
+    for (const handler of this._legacyHandlers) {
       try {
-        handler(error);
-      } catch (e) {
-        console.error("Presentation error handler error:", e);
+        handler(this._state);
+      } catch (error) {
+        console.error("Presentation handler error:", error);
       }
     }
   }

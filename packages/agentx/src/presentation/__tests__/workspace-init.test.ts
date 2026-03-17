@@ -1,16 +1,11 @@
 /**
- * Workspace Initialization Tests
- *
- * Verifies that Presentation correctly loads initial workspace file tree.
- * Covers the timing issue: workspace_tree event may be lost if Presentation
- * hasn't subscribed yet, so the constructor must call workspace.list(".").
+ * Workspace Initialization Tests — New Presentation API
  */
 
 import { describe, expect, mock, test } from "bun:test";
 import { Presentation } from "../Presentation";
 import type { PresentationWorkspace } from "../types";
 
-// Minimal AgentX mock
 function createMockAgentX() {
   return {
     runtime: {
@@ -25,7 +20,7 @@ function createMockAgentX() {
 }
 
 describe("Workspace initialization in Presentation", () => {
-  test("constructor calls workspace.list('.') when workspace is provided", async () => {
+  test("constructor calls workspace.list('.') and populates workspace.files", async () => {
     const mockFiles = [
       { name: "src", path: "src", type: "directory" as const },
       { name: "package.json", path: "package.json", type: "file" as const },
@@ -40,24 +35,23 @@ describe("Workspace initialization in Presentation", () => {
     const ax = createMockAgentX();
     const pres = new Presentation(ax, "img_test", undefined, undefined, mockWorkspace);
 
-    // Wait for async list to complete
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(mockWorkspace.list).toHaveBeenCalledWith(".");
-    expect(pres.getState().workspace).not.toBeNull();
-    expect(pres.getState().workspace!.files).toEqual(mockFiles);
+    expect(pres.workspace).not.toBeNull();
+    expect(pres.workspace!.files).toEqual(mockFiles);
   });
 
-  test("constructor does NOT call list when workspace is null", async () => {
+  test("workspace is null when no workspace provided", async () => {
     const ax = createMockAgentX();
     const pres = new Presentation(ax, "img_test", undefined, undefined, null);
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(pres.getState().workspace).toBeNull();
+    expect(pres.workspace).toBeNull();
   });
 
-  test("onUpdate receives workspace state after initial load", async () => {
+  test("subscribe fires on workspace update", async () => {
     const mockFiles = [{ name: "test.txt", path: "test.txt", type: "file" as const }];
     const mockWorkspace: PresentationWorkspace = {
       read: mock(() => Promise.resolve("")),
@@ -65,30 +59,20 @@ describe("Workspace initialization in Presentation", () => {
       list: mock(() => Promise.resolve(mockFiles)),
     };
 
-    const states: any[] = [];
+    let notified = false;
     const ax = createMockAgentX();
-    const pres = new Presentation(
-      ax,
-      "img_test",
-      {
-        onUpdate: (state) => {
-          states.push(state);
-        },
-      },
-      undefined,
-      mockWorkspace
-    );
+    const pres = new Presentation(ax, "img_test", undefined, undefined, mockWorkspace);
+    pres.subscribe(() => {
+      notified = true;
+    });
 
-    // Wait for async list + notify
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    // Should have received at least one update with workspace files
-    const withWorkspace = states.find((s) => s.workspace !== null);
-    expect(withWorkspace).toBeDefined();
-    expect(withWorkspace.workspace.files).toEqual(mockFiles);
+    expect(notified).toBe(true);
+    expect(pres.workspace!.files).toEqual(mockFiles);
   });
 
-  test("workspace_tree event still works after initial load", async () => {
+  test("workspace_tree event updates workspace.files", async () => {
     const initialFiles = [{ name: "init.txt", path: "init.txt", type: "file" as const }];
     const mockWorkspace: PresentationWorkspace = {
       read: mock(() => Promise.resolve("")),
@@ -96,7 +80,6 @@ describe("Workspace initialization in Presentation", () => {
       list: mock(() => Promise.resolve(initialFiles)),
     };
 
-    // Capture the onAny handler
     let eventHandler: ((event: any) => void) | null = null;
     const ax = createMockAgentX();
     ax.onAny = mock((handler: any) => {
@@ -107,22 +90,15 @@ describe("Workspace initialization in Presentation", () => {
     const pres = new Presentation(ax, "img_test", undefined, undefined, mockWorkspace);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    // Initial load should have files
-    expect(pres.getState().workspace!.files).toEqual(initialFiles);
+    expect(pres.workspace!.files).toEqual(initialFiles);
 
-    // Now simulate a workspace_tree event (e.g. from watcher)
+    // Simulate workspace_tree event
     const updatedFiles = [
       { name: "init.txt", path: "init.txt", type: "file" as const },
       { name: "new.txt", path: "new.txt", type: "file" as const },
     ];
+    eventHandler!({ type: "workspace_tree", timestamp: Date.now(), data: { files: updatedFiles } });
 
-    eventHandler!({
-      type: "workspace_tree",
-      timestamp: Date.now(),
-      data: { files: updatedFiles },
-    });
-
-    // State should reflect the new files
-    expect(pres.getState().workspace!.files).toEqual(updatedFiles);
+    expect(pres.workspace!.files).toEqual(updatedFiles);
   });
 });

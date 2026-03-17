@@ -6,9 +6,8 @@
 
 export {
   Presentation,
-  type PresentationErrorHandler,
   type PresentationOptions,
-  type PresentationUpdateHandler,
+  type Workspace,
 } from "./Presentation";
 export {
   addUserConversation,
