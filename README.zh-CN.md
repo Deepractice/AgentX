@@ -47,7 +47,7 @@ const ax = createAgentX({ platform, createDriver });
 // 创建对话并聊天
 const agent = await ax.chat.create({
   name: "我的助手",
-  embody: { systemPrompt: "你是一个有帮助的助手。" },
+  systemPrompt: "你是一个有帮助的助手。",
 });
 
 ax.on("text_delta", (e) => process.stdout.write(e.data.text));
@@ -102,38 +102,34 @@ Prototype（原型）  →  Image（持久化）  →  Agent（运行时）
    类似 Dockerfile     类似 Docker 镜像     类似容器实例
 ```
 
-- **Prototype** — 可复用的已注册智能体定义（名称、embody 等）
-- **Embodiment** — 智能体"身体"的运行时配置：模型、系统提示、MCP 服务器
-- **Image** — 从原型创建的持久化记录，包含会话和消息历史
+- **Image** — 持久化智能体记录，配置字段平铺（model、systemPrompt、mcpServers 等）
 - **Chat** — 由 Image 支撑的对话，通过 `AgentHandle` 访问
+- **AgentContext** — Runtime 合并后传给 Driver 的最终配置对象
+- **SendOptions** — 每次请求可覆盖的字段（model、thinking、providerOptions）
 
 ### API 架构
 
 ```typescript
 ax.chat.*           // 对话管理（create, list, get → AgentHandle）
-ax.prototype.*      // 原型注册中心（create, list, get, update, delete）
 ax.provider.*       // LLM Provider 配置
-ax.runtime.*        // 底层子系统（image, agent, session, container, prototype）
+ax.runtime.*        // 底层子系统（image, session, container）
 ```
 
-### Prototype — 可复用的 Agent 模板
+### SendOptions — 每次请求可覆盖配置
 
-注册一次原型，创建多个对话：
+在每次 send 时覆盖 model、thinking 或 provider 选项：
 
 ```typescript
-// 注册原型
-const proto = await ax.prototype.create({
-  containerId: "default",
+// 创建时设置默认配置
+const agent = await ax.chat.create({
   name: "代码审查助手",
-  embody: {
-    model: "claude-sonnet-4-6",
-    systemPrompt: "你是一个代码审查助手。",
-  },
+  model: "claude-sonnet-4-6",
+  systemPrompt: "你是一个代码审查助手。",
 });
 
-// 从原型创建对话
-const agent = await ax.chat.create({ prototypeId: proto.record.prototypeId });
-await agent.send("请审查这个 PR...");
+// 每次请求可覆盖
+await agent.send("请审查这个 PR...", { thinking: "high" });
+await agent.send("简单问个问题", { model: "claude-haiku-4-5" });
 ```
 
 ---

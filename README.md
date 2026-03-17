@@ -47,7 +47,7 @@ const ax = createAgentX({ platform, createDriver });
 // Create a conversation and chat
 const agent = await ax.chat.create({
   name: "My Assistant",
-  embody: { systemPrompt: "You are a helpful assistant." },
+  systemPrompt: "You are a helpful assistant.",
 });
 
 ax.on("text_delta", (e) => process.stdout.write(e.data.text));
@@ -102,38 +102,34 @@ Prototype (template)  →  Image (persistent)  →  Agent (runtime)
   Like Dockerfile         Like Docker image     Like container
 ```
 
-- **Prototype** — a reusable, registered agent definition (name, embody, etc.)
-- **Embodiment** — runtime config for an agent's "body": model, system prompt, MCP servers
-- **Image** — persistent record created from a prototype, with session and message history
+- **Image** — persistent agent record with flat config (model, systemPrompt, mcpServers, etc.)
 - **Chat** — a conversation backed by an Image, accessed via `AgentHandle`
+- **AgentContext** — merged runtime configuration passed from Runtime to Driver
+- **SendOptions** — per-request overrides (model, thinking, providerOptions)
 
 ### API Architecture
 
 ```typescript
 ax.chat.*           // Conversation management (create, list, get → AgentHandle)
-ax.prototype.*      // Prototype registry (create, list, get, update, delete)
 ax.provider.*       // LLM provider configuration
-ax.runtime.*        // Low-level subsystems (image, agent, session, container, prototype)
+ax.runtime.*        // Low-level subsystems (image, session, container)
 ```
 
-### Prototype — Reusable Agent Templates
+### Per-Request Overrides with SendOptions
 
-Register a prototype once, create many conversations from it:
+Override model, thinking, or provider options on each send:
 
 ```typescript
-// Register a prototype
-const proto = await ax.prototype.create({
-  containerId: "default",
+// Create with default config
+const agent = await ax.chat.create({
   name: "Code Reviewer",
-  embody: {
-    model: "claude-sonnet-4-6",
-    systemPrompt: "You are a code review assistant.",
-  },
+  model: "claude-sonnet-4-6",
+  systemPrompt: "You are a code review assistant.",
 });
 
-// Create conversations from the prototype
-const agent = await ax.chat.create({ prototypeId: proto.record.prototypeId });
-await agent.send("Review this pull request...");
+// Override per-request
+await agent.send("Review this PR...", { thinking: "high" });
+await agent.send("Quick question", { model: "claude-haiku-4-5" });
 ```
 
 ---
