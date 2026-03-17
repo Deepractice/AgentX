@@ -1,11 +1,11 @@
 /**
- * Write Tool — Create or overwrite a file in workspace
+ * Write Tool — Create or overwrite a file in the OS filesystem
  */
 
 import type { ToolDefinition } from "../../driver/types";
-import type { Workspace } from "../types";
+import type { AgentOS } from "../types";
 
-export function createWriteTool(workspace: Workspace): ToolDefinition {
+export function createWriteTool(os: AgentOS): ToolDefinition {
   return {
     name: "write",
     description:
@@ -26,7 +26,7 @@ export function createWriteTool(workspace: Workspace): ToolDefinition {
       required: ["path", "content"],
     },
     execute: async (params) => {
-      await workspace.write(params.path as string, params.content as string);
+      await os.fs.write(params.path as string, params.content as string);
       return { success: true };
     },
   };

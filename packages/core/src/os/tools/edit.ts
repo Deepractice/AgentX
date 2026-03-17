@@ -3,9 +3,9 @@
  */
 
 import type { ToolDefinition } from "../../driver/types";
-import type { Workspace } from "../types";
+import type { AgentOS } from "../types";
 
-export function createEditTool(workspace: Workspace): ToolDefinition {
+export function createEditTool(os: AgentOS): ToolDefinition {
   return {
     name: "edit",
     description:
@@ -40,10 +40,9 @@ export function createEditTool(workspace: Workspace): ToolDefinition {
       const newString = params.new_string as string;
       const replaceAll = (params.replace_all as boolean) ?? false;
 
-      const content = await workspace.read(path);
+      const content = await os.fs.read(path);
 
       if (!replaceAll) {
-        // Ensure exactly one occurrence
         const firstIndex = content.indexOf(oldString);
         if (firstIndex === -1) {
           throw new Error(`old_string not found in ${path}`);
@@ -61,7 +60,7 @@ export function createEditTool(workspace: Workspace): ToolDefinition {
         ? content.replaceAll(oldString, newString)
         : content.replace(oldString, newString);
 
-      await workspace.write(path, newContent);
+      await os.fs.write(path, newContent);
       return { success: true };
     },
   };

@@ -19,7 +19,6 @@
  * ```
  */
 
-import type { BashProvider } from "../bash/types";
 import type { ContainerRepository } from "../container/types";
 import type { ContextProvider } from "../context/types";
 import type { EventBus } from "../event/types";
@@ -27,9 +26,9 @@ import type { ImageRepository } from "../image/types";
 import type { LLMProviderRepository } from "../llm/types";
 import type { ChannelClientFactory } from "../network/RpcClient";
 import type { ChannelServer } from "../network/types";
+import type { OSProvider } from "../os/types";
 import type { PrototypeRepository } from "../persistence/types";
 import type { SessionRepository } from "../session/types";
-import type { WorkspaceProvider } from "../workspace/types";
 
 // ============================================================================
 // AgentXPlatform - Dependency Injection
@@ -97,22 +96,13 @@ export interface AgentXPlatform {
   // === Optional Providers ===
 
   /**
-   * Bash provider for command execution
+   * OS provider — unified file system + shell for agents.
    *
-   * Optional — not all platforms support shell execution.
-   * Node.js platform provides child_process based implementation.
+   * When provided and Image has a workspaceId, OS tools
+   * (read/write/edit/sh/start) are automatically injected into agents.
+   * Each Image gets its own isolated OS environment.
    */
-  readonly bashProvider?: BashProvider;
-
-  /**
-   * Workspace provider for file operations
-   *
-   * Optional — not all platforms need file system access.
-   * When provided and Image has a workspaceId, workspace tools
-   * (read/write/edit/grep/glob/list) are automatically injected into agents.
-   * Each Image gets its own isolated workspace directory.
-   */
-  readonly workspaceProvider?: WorkspaceProvider;
+  readonly osProvider?: OSProvider;
 
   /**
    * Channel server for accepting client connections (server-side)

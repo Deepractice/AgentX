@@ -1,11 +1,11 @@
 /**
- * Read Tool — Read file content from workspace
+ * Read Tool — Read file content from the OS filesystem
  */
 
 import type { ToolDefinition } from "../../driver/types";
-import type { Workspace } from "../types";
+import type { AgentOS } from "../types";
 
-export function createReadTool(workspace: Workspace): ToolDefinition {
+export function createReadTool(os: AgentOS): ToolDefinition {
   return {
     name: "read",
     description:
@@ -30,7 +30,7 @@ export function createReadTool(workspace: Workspace): ToolDefinition {
       required: ["path"],
     },
     execute: async (params) => {
-      const content = await workspace.read(params.path as string, {
+      const content = await os.fs.read(params.path as string, {
         offset: params.offset as number | undefined,
         limit: params.limit as number | undefined,
       });

@@ -13,7 +13,7 @@
  *   imageRepository,
  *   sessionRepository,
  *   eventBus,
- *   bashProvider, // optional
+ *   osProvider, // optional
  * };
  * ```
  */

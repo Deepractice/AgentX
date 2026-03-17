@@ -16,11 +16,10 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ContextProvider } from "@agentxjs/core/context";
 import { EventBusImpl } from "@agentxjs/core/event";
+import type { OSProvider } from "@agentxjs/core/os";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
-import type { WorkspaceProvider } from "@agentxjs/core/workspace";
 import type { LogLevel } from "commonxjs/logger";
 import { ConsoleLogger, setLoggerFactory } from "commonxjs/logger";
-import { NodeBashProvider } from "./bash/NodeBashProvider";
 import { FileLoggerFactory } from "./logger";
 import { createPersistence, sqliteDriver } from "./persistence";
 
@@ -54,12 +53,12 @@ export interface NodePlatformOptions {
   contextProvider?: ContextProvider;
 
   /**
-   * Workspace provider for file operations.
-   * If provided, workspace tools (read/write/edit/grep/glob/list) are injected into agents.
-   * Each Image gets its own isolated workspace directory.
+   * OS provider for unified file system + shell.
+   * If provided, OS tools (read/write/edit/sh/start) are injected into agents.
+   * Each Image gets its own isolated OS environment.
    * @default auto-created under dataPath/workspaces when not specified
    */
-  workspaceProvider?: WorkspaceProvider;
+  osProvider?: OSProvider;
 }
 
 /**
@@ -125,9 +124,6 @@ export async function createNodePlatform(
   // Context provider — externally injected, no default
   const contextProvider = options.contextProvider;
 
-  // Create bash provider
-  const bashProvider = new NodeBashProvider();
-
   // Create event bus
   const eventBus = new EventBusImpl();
 
@@ -149,12 +145,9 @@ export async function createNodePlatform(
     prototypeRepository: persistence.prototypes,
     contextProvider,
     eventBus,
-    bashProvider,
-    workspaceProvider:
-      options.workspaceProvider ??
-      new (await import("./workspace/LocalWorkspaceProvider")).LocalWorkspaceProvider(
-        join(dataPath, "workspaces")
-      ),
+    osProvider:
+      options.osProvider ??
+      new (await import("./os/LocalOSProvider")).LocalOSProvider(join(dataPath, "workspaces")),
     channelServer,
     channelClient: createNodeWebSocket,
   };
@@ -172,8 +165,6 @@ export function isDeferredPlatform(value: unknown): value is DeferredPlatformCon
   );
 }
 
-// Re-export bash
-export { NodeBashProvider } from "./bash/NodeBashProvider";
 // Re-export logger
 export { FileLoggerFactory, type FileLoggerFactoryOptions } from "./logger";
 
@@ -182,7 +173,7 @@ export { OffsetGenerator, SqliteMessageQueue } from "./mq";
 
 // Re-export network
 export { WebSocketConnection, WebSocketServer } from "./network";
+// Re-export OS
+export { LocalOS, LocalOSProvider } from "./os";
 // Re-export persistence
 export * from "./persistence";
-// Re-export workspace
-export { LocalWorkspace, LocalWorkspaceProvider } from "./workspace";

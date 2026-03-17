@@ -23,7 +23,6 @@ import type {
   UserContentPart,
   UserMessage,
 } from "../agent/types";
-import { createBashTool } from "../bash/tool";
 import type {
   AgentContext,
   CreateDriver,
@@ -35,6 +34,7 @@ import type {
 import { AgentXError } from "../error/AgentXError";
 import { CircuitBreaker } from "../error/CircuitBreaker";
 import type { BusEvent } from "../event/types";
+import { createOSTools } from "../os/tools";
 import { createSession } from "../session/Session";
 import type {
   AgentEventHandler,
@@ -115,22 +115,17 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       repository: this.platform.sessionRepository,
     });
 
-    // Assemble platform-provided default tools
+    // Assemble platform-provided default tools via AgentOS
     const defaultTools: ToolDefinition[] = [];
-    if (this.platform.bashProvider) {
-      defaultTools.push(createBashTool(this.platform.bashProvider));
-    }
-    if (imageRecord.workspaceId && this.platform.workspaceProvider) {
-      const workspace = await this.platform.workspaceProvider.create(imageRecord.workspaceId);
-      const { createWorkspaceTools } = await import("../workspace/tools");
-      defaultTools.push(...createWorkspaceTools(workspace));
+    if (imageRecord.workspaceId && this.platform.osProvider) {
+      const os = await this.platform.osProvider.create(imageRecord.workspaceId);
+      defaultTools.push(...createOSTools(os));
 
-      // Start workspace watcher — emit file tree on changes
-      const { isWatchable } = await import("../workspace/types");
-      if (isWatchable(workspace)) {
+      // Start file watcher if the OS supports it
+      if ("watch" in os && typeof (os as any).watch === "function") {
         const scanTree = async () => {
           try {
-            const files = await workspace.list(".");
+            const files = await os.fs.list(".");
             this.platform.eventBus.emit({
               type: "workspace_tree",
               timestamp: Date.now(),
@@ -145,12 +140,10 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
           }
         };
 
-        // Emit initial tree
         await scanTree();
 
-        // Debounced watcher
         let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-        workspace.watch(() => {
+        (os as any).watch(() => {
           if (debounceTimer) clearTimeout(debounceTimer);
           debounceTimer = setTimeout(scanTree, 200);
         });
