@@ -27,6 +27,9 @@ const INDEX_BY_CONTAINER = "idx:sessions:container";
  * StorageSessionRepository - unstorage implementation
  */
 export class StorageSessionRepository implements SessionRepository {
+  /** Per-session write lock to prevent concurrent addMessage race conditions */
+  private writeLocks = new Map<string, Promise<void>>();
+
   constructor(private readonly storage: Storage) {}
 
   private key(sessionId: string): string {
@@ -143,10 +146,21 @@ export class StorageSessionRepository implements SessionRepository {
   // ==================== Message Operations ====================
 
   async addMessage(sessionId: string, message: Message): Promise<void> {
-    const messages = await this.getMessages(sessionId);
-    messages.push(message);
-    await this.storage.setItem(this.messagesKey(sessionId), messages);
-    logger.debug("Message added to session", { sessionId, subtype: message.subtype });
+    // Serialize writes per session to prevent race conditions.
+    // Without this, concurrent addMessage calls (e.g. assistant_message + tool_result_message)
+    // do read-modify-write simultaneously and the later write overwrites the earlier one.
+    const prev = this.writeLocks.get(sessionId) ?? Promise.resolve();
+    const current = prev.then(async () => {
+      const messages = await this.getMessages(sessionId);
+      messages.push(message);
+      await this.storage.setItem(this.messagesKey(sessionId), messages);
+      logger.debug("Message added to session", { sessionId, subtype: message.subtype });
+    });
+    this.writeLocks.set(
+      sessionId,
+      current.catch(() => {})
+    );
+    await current;
   }
 
   async getMessages(sessionId: string): Promise<Message[]> {
