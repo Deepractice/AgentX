@@ -388,12 +388,18 @@ export interface DriverConfigBase {
 
   /**
    * Tool definitions for LLM tool calling
-   *
-   * Tools are passed to the LLM provider and executed when the LLM
-   * requests a tool call. Each tool includes its JSON Schema (sent to
-   * the LLM) and an execute function (called at runtime).
    */
   tools?: ToolDefinition[];
+
+  /**
+   * Thinking/reasoning depth
+   */
+  thinking?: "disabled" | "low" | "medium" | "high";
+
+  /**
+   * Provider-specific options — passed directly to LLM SDK (e.g. Vercel AI SDK providerOptions)
+   */
+  providerOptions?: Record<string, unknown>;
 
   // === Session Configuration ===
 

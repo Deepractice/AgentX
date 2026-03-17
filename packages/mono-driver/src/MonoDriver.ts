@@ -204,6 +204,9 @@ export class MonoDriver implements Driver {
       // Layer 3: Message Context (conversation history, already in messages)
       const systemPrompt = await this.buildSystemPrompt();
 
+      // Build provider options (thinking + user-provided)
+      const providerOptions = this.buildProviderOptions();
+
       // Call Vercel AI SDK (v6)
       const result = streamText({
         model: this.getModel(),
@@ -212,6 +215,7 @@ export class MonoDriver implements Driver {
         tools: this.getTools(),
         stopWhen: stepCountIs(this.maxSteps),
         abortSignal: this.abortController.signal,
+        ...(providerOptions ? { providerOptions: providerOptions as any } : {}),
       });
 
       // Track state for event conversion
@@ -370,6 +374,47 @@ export class MonoDriver implements Driver {
     const tools = this.config.tools;
     if (!tools || tools.length === 0) return undefined;
     return toVercelTools(tools);
+  }
+
+  /**
+   * Build providerOptions from thinking effort + user-provided options.
+   *
+   * Thinking effort mapping:
+   * - Anthropic: low=5000, medium=10000, high=32000 budgetTokens
+   * - OpenAI: low→auto, medium→auto, high→detailed reasoningSummary
+   */
+  private buildProviderOptions(): Record<string, unknown> | undefined {
+    const thinking = this.config.thinking;
+    const userOptions = this.config.providerOptions;
+
+    if (!thinking && !userOptions) return undefined;
+
+    // User-provided options take priority
+    if (userOptions) return userOptions;
+
+    // Map thinking effort to provider-specific options
+    if (thinking === "disabled" || !thinking) return undefined;
+
+    const budgetMap = { low: 5000, medium: 10000, high: 32000 };
+
+    if (this.provider === "anthropic") {
+      return {
+        anthropic: {
+          thinking: { type: "enabled", budgetTokens: budgetMap[thinking] },
+        },
+      };
+    }
+
+    if (this.provider === "openai") {
+      return {
+        openai: {
+          reasoningSummary: thinking === "high" ? "detailed" : "auto",
+        },
+      };
+    }
+
+    // Other providers: no thinking support
+    return undefined;
   }
 
   /**

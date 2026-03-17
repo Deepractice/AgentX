@@ -178,6 +178,8 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
     const systemPrompt = embody?.systemPrompt;
     const mcpServers = embody?.mcpServers;
     const imageModel = embody?.model;
+    const thinking = embody?.thinking;
+    const providerOptions = embody?.providerOptions;
 
     // Create driver config
     const driverConfig: DriverConfig = {
@@ -185,6 +187,8 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       instanceId,
       systemPrompt,
       mcpServers,
+      thinking,
+      providerOptions,
       context,
       tools: defaultTools.length > 0 ? defaultTools : undefined,
       session, // Inject Session for stateless drivers

@@ -29,10 +29,10 @@ export function createLocalImages(
       const { imageRepository, sessionRepository } = platform;
       const { createImage } = await import("@agentxjs/core/image");
 
-      const { model, systemPrompt, mcpServers, ...rest } = params;
+      const { model, systemPrompt, mcpServers, thinking, providerOptions, ...rest } = params;
       const embody =
-        model || systemPrompt || mcpServers
-          ? { model, systemPrompt, mcpServers: mcpServers as any }
+        model || systemPrompt || mcpServers || thinking || providerOptions
+          ? { model, systemPrompt, mcpServers: mcpServers as any, thinking, providerOptions }
           : undefined;
 
       const image = await createImage(

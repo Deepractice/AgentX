@@ -61,6 +61,12 @@ export interface Embodiment {
 
   /** MCP servers configuration — tool capabilities */
   mcpServers?: Record<string, McpServerConfig>;
+
+  /** Thinking/reasoning depth. "disabled" turns off thinking. */
+  thinking?: "disabled" | "low" | "medium" | "high";
+
+  /** Provider-specific options — passed directly to Vercel AI SDK providerOptions */
+  providerOptions?: Record<string, unknown>;
 }
 
 // ============================================================================

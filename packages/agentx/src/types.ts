@@ -57,6 +57,10 @@ export interface AgentConfig {
   systemPrompt?: string;
   /** MCP server configurations for tool access */
   mcpServers?: Record<string, unknown>;
+  /** Thinking/reasoning depth */
+  thinking?: "disabled" | "low" | "medium" | "high";
+  /** Provider-specific options — passed directly to Vercel AI SDK */
+  providerOptions?: Record<string, unknown>;
   /** Context provider ID (e.g. RoleX individual) */
   contextId?: string;
   /** Display name */

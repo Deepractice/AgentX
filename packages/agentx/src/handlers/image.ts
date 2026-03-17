@@ -9,23 +9,34 @@ import { err, ok } from "../RpcHandlerRegistry";
 
 export function registerImageHandlers(registry: RpcHandlerRegistry): void {
   registry.register("image.create", async (runtime, params) => {
-    const { name, description, contextId, model, systemPrompt, mcpServers, customData } =
-      params as {
-        name?: string;
-        description?: string;
-        contextId?: string;
-        model?: string;
-        systemPrompt?: string;
-        mcpServers?: Record<string, unknown>;
-        customData?: Record<string, unknown>;
-      };
+    const {
+      name,
+      description,
+      contextId,
+      model,
+      systemPrompt,
+      mcpServers,
+      thinking,
+      providerOptions,
+      customData,
+    } = params as {
+      name?: string;
+      description?: string;
+      contextId?: string;
+      model?: string;
+      systemPrompt?: string;
+      mcpServers?: Record<string, unknown>;
+      thinking?: string;
+      providerOptions?: Record<string, unknown>;
+      customData?: Record<string, unknown>;
+    };
 
     const { imageRepository, sessionRepository } = runtime.platform;
     const { createImage } = await import("@agentxjs/core/image");
 
     const embody =
-      model || systemPrompt || mcpServers
-        ? ({ model, systemPrompt, mcpServers } as Embodiment)
+      model || systemPrompt || mcpServers || thinking || providerOptions
+        ? ({ model, systemPrompt, mcpServers, thinking, providerOptions } as Embodiment)
         : undefined;
 
     const image = await createImage(
