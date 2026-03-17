@@ -118,6 +118,8 @@ export function registerImageHandlers(registry: RpcHandlerRegistry): void {
         model?: string;
         systemPrompt?: string;
         mcpServers?: Record<string, unknown>;
+        thinking?: string;
+        providerOptions?: Record<string, unknown>;
         customData?: Record<string, unknown>;
       };
     };
@@ -125,11 +127,23 @@ export function registerImageHandlers(registry: RpcHandlerRegistry): void {
     const imageRecord = await runtime.platform.imageRepository.findImageById(imageId);
     if (!imageRecord) return err(404, `Image not found: ${imageId}`);
 
-    const { model, systemPrompt, mcpServers, ...otherUpdates } = updates;
-    const embodyUpdates =
-      model !== undefined || systemPrompt !== undefined || mcpServers !== undefined
-        ? ({ ...imageRecord.embody, model, systemPrompt, mcpServers } as Embodiment)
-        : imageRecord.embody;
+    const { model, systemPrompt, mcpServers, thinking, providerOptions, ...otherUpdates } = updates;
+    const hasEmbodyChanges =
+      model !== undefined ||
+      systemPrompt !== undefined ||
+      mcpServers !== undefined ||
+      thinking !== undefined ||
+      providerOptions !== undefined;
+    const embodyUpdates = hasEmbodyChanges
+      ? ({
+          ...imageRecord.embody,
+          model,
+          systemPrompt,
+          mcpServers,
+          thinking,
+          providerOptions,
+        } as Embodiment)
+      : imageRecord.embody;
 
     const updatedRecord = {
       ...imageRecord,
@@ -139,6 +153,17 @@ export function registerImageHandlers(registry: RpcHandlerRegistry): void {
     };
 
     await runtime.platform.imageRepository.saveImage(updatedRecord);
+
+    // If embody changed, restart the running agent so new config takes effect
+    if (hasEmbodyChanges) {
+      const runningAgent = runtime
+        .getAgents()
+        .find((a) => a.imageId === imageId && a.lifecycle === "running");
+      if (runningAgent) {
+        await runtime.destroyAgent(runningAgent.instanceId);
+        await runtime.createAgent({ imageId });
+      }
+    }
     return ok({ record: updatedRecord });
   });
 
