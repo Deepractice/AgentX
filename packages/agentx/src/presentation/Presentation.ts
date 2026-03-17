@@ -78,6 +78,14 @@ export class Presentation {
 
     // Subscribe to all events
     this.subscribeToEvents();
+
+    // Load initial workspace file tree
+    if (this.workspace) {
+      this.workspace.list(".").then((files) => {
+        this.state = { ...this.state, workspace: { files } };
+        this.notify();
+      });
+    }
   }
 
   /**
