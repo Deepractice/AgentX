@@ -70,21 +70,21 @@ export class RemoteClient implements AgentX {
     const image = createRemoteImages(this.rpcClient);
     const session = createRemoteSessions(this.rpcClient);
     const llm = createRemoteLLM(this.rpcClient);
-    // Workspace resolver via RPC — server handles workspace access
+    // OS resolver via RPC — server handles file system access
     const workspaceResolver = async (imageId: string) => {
       const rpc = this.rpcClient;
       return {
         read: async (path: string) => {
-          const res = await rpc.call<{ content: string }>("workspace.read", { imageId, path });
+          const res = await rpc.call<{ content: string }>("os.read", { imageId, path });
           return res.content;
         },
         write: async (path: string, content: string) => {
-          await rpc.call("workspace.write", { imageId, path, content });
+          await rpc.call("os.write", { imageId, path, content });
         },
         list: async (path?: string) => {
           const res = await rpc.call<{
             files: Array<{ name: string; path: string; type: "file" | "directory" }>;
-          }>("workspace.list", { imageId, path });
+          }>("os.list", { imageId, path });
           return res.files;
         },
       };
