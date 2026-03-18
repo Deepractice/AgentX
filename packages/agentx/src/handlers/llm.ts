@@ -2,7 +2,6 @@
  * LLM Provider RPC Handlers
  */
 
-import { DEFAULT_CONTAINER_ID } from "@agentxjs/core/container";
 import type { RpcHandlerRegistry } from "../RpcHandlerRegistry";
 import { err, ok } from "../RpcHandlerRegistry";
 
@@ -24,7 +23,7 @@ export function registerLLMHandlers(registry: RpcHandlerRegistry): void {
     const now = Date.now();
     const record = {
       id: generateId("llm"),
-      containerId: DEFAULT_CONTAINER_ID,
+      containerId: runtime.platform.containerId,
       name,
       vendor,
       protocol: protocol as "anthropic" | "openai",
@@ -48,11 +47,10 @@ export function registerLLMHandlers(registry: RpcHandlerRegistry): void {
     return ok({ record });
   });
 
-  registry.register("llm.list", async (runtime, params) => {
-    const { containerId } = params as { containerId: string };
+  registry.register("llm.list", async (runtime) => {
     const repo = runtime.platform.llmProviderRepository;
     if (!repo) return err(-32000, "LLM provider repository not available");
-    const records = await repo.findLLMProvidersByContainerId(containerId);
+    const records = await repo.findLLMProvidersByContainerId(runtime.platform.containerId);
     return ok({ records });
   });
 
@@ -86,7 +84,7 @@ export function registerLLMHandlers(registry: RpcHandlerRegistry): void {
   });
 
   registry.register("llm.default", async (runtime, params) => {
-    const { id, containerId } = params as { id?: string; containerId?: string };
+    const { id } = params as { id?: string };
     const repo = runtime.platform.llmProviderRepository;
     if (!repo) return err(-32000, "LLM provider repository not available");
 
@@ -94,10 +92,7 @@ export function registerLLMHandlers(registry: RpcHandlerRegistry): void {
       await repo.setDefaultLLMProvider(id);
       return ok({ id });
     }
-    if (containerId) {
-      const record = await repo.findDefaultLLMProvider(containerId);
-      return ok({ record });
-    }
-    return err(-32602, "Either id or containerId is required");
+    const record = await repo.findDefaultLLMProvider(runtime.platform.containerId);
+    return ok({ record });
   });
 }

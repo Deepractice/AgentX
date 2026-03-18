@@ -2,7 +2,6 @@
  * Image RPC Handlers
  */
 
-import { DEFAULT_CONTAINER_ID } from "@agentxjs/core/container";
 import type { RpcHandlerRegistry } from "../RpcHandlerRegistry";
 import { err, ok } from "../RpcHandlerRegistry";
 
@@ -35,7 +34,7 @@ export function registerImageHandlers(registry: RpcHandlerRegistry): void {
 
     const image = await createImage(
       {
-        containerId: DEFAULT_CONTAINER_ID,
+        containerId: runtime.platform.containerId,
         name,
         description,
         roleId,

@@ -49,6 +49,12 @@ import type { SessionRepository } from "../session/types";
  */
 export interface AgentXPlatform {
   /**
+   * Container ID — product-level isolation boundary.
+   * All images, sessions, LLM providers are scoped to this container.
+   */
+  readonly containerId: string;
+
+  /**
    * Container repository for persistence
    */
   readonly containerRepository: ContainerRepository;

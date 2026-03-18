@@ -14,6 +14,7 @@
 
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { DEFAULT_CONTAINER_ID } from "@agentxjs/core/container";
 import type { ContextProvider } from "@agentxjs/core/context";
 import { EventBusImpl } from "@agentxjs/core/event";
 import type { OSProvider } from "@agentxjs/core/os";
@@ -59,6 +60,12 @@ export interface NodePlatformOptions {
    * @default auto-created under dataPath/workspaces when not specified
    */
   osProvider?: OSProvider;
+
+  /**
+   * Container ID — product-level isolation boundary.
+   * @default "default"
+   */
+  containerId?: string;
 }
 
 /**
@@ -138,6 +145,7 @@ export async function createNodePlatform(
   });
 
   return {
+    containerId: options.containerId ?? DEFAULT_CONTAINER_ID,
     containerRepository: persistence.containers,
     imageRepository: persistence.images,
     sessionRepository: persistence.sessions,

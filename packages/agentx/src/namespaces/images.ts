@@ -3,7 +3,6 @@
  */
 
 import type { Message } from "@agentxjs/core/agent";
-import { DEFAULT_CONTAINER_ID } from "@agentxjs/core/container";
 import type { RpcClient } from "@agentxjs/core/network";
 import type { AgentXPlatform, AgentXRuntime } from "@agentxjs/core/runtime";
 import type {
@@ -31,7 +30,7 @@ export function createLocalImages(
 
       const image = await createImage(
         {
-          containerId: DEFAULT_CONTAINER_ID,
+          containerId: platform.containerId,
           ...params,
           mcpServers: params.mcpServers as any,
           thinking: params.thinking,
@@ -141,10 +140,7 @@ export function createLocalImages(
 export function createRemoteImages(rpcClient: RpcClient): ImageNamespace {
   return {
     async create(params: AgentConfig): Promise<ImageCreateResponse> {
-      const result = await rpcClient.call<ImageCreateResponse>("image.create", {
-        ...params,
-        containerId: DEFAULT_CONTAINER_ID,
-      });
+      const result = await rpcClient.call<ImageCreateResponse>("image.create", params);
       return { ...result, requestId: "" };
     },
 
