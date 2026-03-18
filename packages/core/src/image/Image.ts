@@ -42,8 +42,8 @@ export class ImageImpl implements Image {
     return this.record.description;
   }
 
-  get contextId(): string | undefined {
-    return this.record.contextId;
+  get roleId(): string | undefined {
+    return this.record.roleId;
   }
 
   get model(): string | undefined {
@@ -97,7 +97,7 @@ export class ImageImpl implements Image {
       osId,
       name: config.name ?? "New Conversation",
       description: config.description,
-      contextId: config.contextId,
+      roleId: config.roleId,
       model: config.model,
       systemPrompt: config.systemPrompt,
       mcpServers: config.mcpServers,

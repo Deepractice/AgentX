@@ -61,8 +61,8 @@ export interface Agent {
   /** Description */
   description?: string;
 
-  /** Context ID — identifies the cognitive context (e.g. RoleX individual). The soul. */
-  contextId?: string;
+  /** Role ID — identifies the agent's role (e.g. RoleX individual). The soul. */
+  roleId?: string;
 
   /** LLM model identifier (e.g. "claude-sonnet-4-6"). Overrides container default. */
   model?: string;
@@ -121,8 +121,8 @@ export interface ImageRecord {
   /** Conversation description (optional) */
   description?: string;
 
-  /** Context ID — identifies the cognitive context (e.g. RoleX individual). The soul. */
-  contextId?: string;
+  /** Role ID — identifies the agent's role (e.g. RoleX individual). The soul. */
+  roleId?: string;
 
   /** OS ID — identifies the agent's isolated OS environment. */
   osId?: string;
@@ -269,8 +269,8 @@ export interface PrototypeRecord {
   /** Description */
   description?: string;
 
-  /** Context ID — identifies the cognitive context (e.g. RoleX individual). The soul. */
-  contextId?: string;
+  /** Role ID — identifies the agent's role (e.g. RoleX individual). The soul. */
+  roleId?: string;
 
   /** LLM model identifier */
   model?: string;

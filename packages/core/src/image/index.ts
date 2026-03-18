@@ -10,7 +10,7 @@
  * const image = await createImage({
  *   containerId: "container-1",
  *   name: "My Agent",
- *   contextId: "aristotle",
+ *   roleId: "aristotle",
  *   model: "claude-sonnet-4-6",
  *   systemPrompt: "You are helpful",
  * }, context);

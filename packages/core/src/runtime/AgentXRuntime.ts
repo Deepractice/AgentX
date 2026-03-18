@@ -150,10 +150,10 @@ export class AgentXRuntimeImpl implements AgentXRuntime {
       }
     }
 
-    // Create context if Image has a contextId and platform provides a ContextProvider
+    // Create context if Image has a roleId and platform provides a ContextProvider
     let context: import("../context/types").Context | undefined;
-    if (imageRecord.contextId && this.platform.contextProvider) {
-      context = await this.platform.contextProvider.create(imageRecord.contextId);
+    if (imageRecord.roleId && this.platform.contextProvider) {
+      context = await this.platform.contextProvider.create(imageRecord.roleId);
       // Merge context capabilities into default tools
       for (const cap of context.capabilities()) {
         if (cap.type === "tool") {

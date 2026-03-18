@@ -60,15 +60,15 @@ export interface Context {
 /**
  * ContextProvider — factory for creating Context instances.
  *
- * Registered on AgentXPlatform. The runtime calls create(contextId)
- * when an Image with a contextId is run.
+ * Registered on AgentXPlatform. The runtime calls create(roleId)
+ * when an Image with a roleId is run.
  */
 export interface ContextProvider {
   /**
    * Create and initialize a Context for the given context ID.
    *
-   * @param contextId - Identifier for the context (e.g. RoleX individual ID)
+   * @param roleId - Identifier for the role (e.g. RoleX individual ID)
    * @returns Initialized Context ready for use
    */
-  create(contextId: string): Promise<Context>;
+  create(roleId: string): Promise<Context>;
 }

@@ -87,7 +87,7 @@ export interface AgentXPlatform {
   /**
    * Context provider for cognitive context (Layer 2)
    *
-   * Optional — when provided, Images with a contextId will have
+   * Optional — when provided, Images with a roleId will have
    * their context automatically created and injected into the Driver.
    * RolexContext is the primary implementation.
    */

@@ -42,7 +42,7 @@ export interface Image {
   readonly sessionId: string;
   readonly name: string;
   readonly description: string | undefined;
-  readonly contextId: string | undefined;
+  readonly roleId: string | undefined;
   readonly model: string | undefined;
   readonly systemPrompt: string | undefined;
   readonly mcpServers: Record<string, McpServerConfig> | undefined;

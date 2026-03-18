@@ -11,7 +11,7 @@ export function registerImageHandlers(registry: RpcHandlerRegistry): void {
     const {
       name,
       description,
-      contextId,
+      roleId,
       model,
       systemPrompt,
       mcpServers,
@@ -21,7 +21,7 @@ export function registerImageHandlers(registry: RpcHandlerRegistry): void {
     } = params as {
       name?: string;
       description?: string;
-      contextId?: string;
+      roleId?: string;
       model?: string;
       systemPrompt?: string;
       mcpServers?: Record<string, unknown>;
@@ -38,7 +38,7 @@ export function registerImageHandlers(registry: RpcHandlerRegistry): void {
         containerId: DEFAULT_CONTAINER_ID,
         name,
         description,
-        contextId,
+        roleId,
         model,
         systemPrompt,
         mcpServers: mcpServers as any,

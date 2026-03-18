@@ -338,7 +338,7 @@ export function isWatchable(workspace: Workspace): workspace is WatchableWorkspa
 /**
  * WorkspaceProvider — factory that creates Workspace instances by ID.
  *
- * Like ContextProvider creates Context from contextId,
+ * Like ContextProvider creates Context from roleId,
  * WorkspaceProvider creates Workspace from workspaceId.
  *
  * Platform packages provide implementations:

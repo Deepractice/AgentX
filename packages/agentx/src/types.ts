@@ -62,8 +62,8 @@ export interface AgentConfig {
   thinking?: "disabled" | "low" | "medium" | "high";
   /** Provider-specific options — passed directly to Vercel AI SDK */
   providerOptions?: Record<string, unknown>;
-  /** Context provider ID (e.g. RoleX individual) */
-  contextId?: string;
+  /** Role ID — identifies the agent's role (e.g. RoleX individual) */
+  roleId?: string;
   /** Display name */
   name?: string;
   /** Description */
@@ -81,7 +81,7 @@ export interface ImageRecord {
   sessionId: string;
   name?: string;
   description?: string;
-  contextId?: string;
+  roleId?: string;
   model?: string;
   systemPrompt?: string;
   mcpServers?: Record<string, unknown>;
