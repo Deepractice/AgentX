@@ -1,5 +1,86 @@
 # @agentxjs/node-platform
 
+## 2.9.0
+
+### Minor Changes
+
+- 6cf3504: feat!: introduce AgentOS — unified fs + shell for agents
+
+  ### What changed
+
+  - **New `AgentOS`** — unified operating system abstraction combining FileSystem + Shell + Environment
+  - **5 tools replace 7**: `read`, `write`, `edit`, `sh`, `start` (removed `bash`, `grep`, `glob`, `list`)
+  - **`sh` replaces `bash`** — shares filesystem with `read`/`write`/`edit`
+  - **`start` is new** — launch background processes, get pid for lifecycle management
+  - **`OSProvider`** replaces `WorkspaceProvider` + `BashProvider` on `AgentXPlatform`
+  - **`LocalOS`** implementation for Node.js (fs/promises + execa)
+
+  ### Migration
+
+  ```typescript
+  // Before
+  platform.bashProvider;
+  platform.workspaceProvider;
+
+  // After
+  platform.osProvider;
+
+  // Before: 7 tools (read, write, edit, list, grep, glob, bash)
+  // After:  5 tools (read, write, edit, sh, start)
+  // grep/glob/list/ps/kill all go through sh tool
+  ```
+
+- 5fcc46e: feat!: make containerId configurable on AgentXPlatform
+
+  ### What changed
+
+  - `AgentXPlatform.containerId` is now a required field
+  - All handlers and namespaces read containerId from platform instead of hardcoding `DEFAULT_CONTAINER_ID`
+  - Remote clients no longer send containerId in RPC params — server uses its own platform config
+  - `NodePlatformOptions.containerId` added (defaults to "default")
+
+  ### Why
+
+  Different products (monogent, admin playground, etc.) sharing the same Actor DO
+  can now isolate their data via different container IDs.
+
+  ### Migration
+
+  ```typescript
+  // Before — containerId was always "default"
+  const platform: AgentXPlatform = {
+    containerRepository,
+    imageRepository,
+    // ...
+  };
+
+  // After — containerId is required
+  const platform: AgentXPlatform = {
+    containerId: "monogent", // or DEFAULT_CONTAINER_ID for "default"
+    containerRepository,
+    imageRepository,
+    // ...
+  };
+  ```
+
+- bee5231: feat(workspace): add Workspace abstraction with file operations, watcher, and Presentation integration
+
+  Each agent now gets an isolated workspace directory (auto-assigned workspaceId). Workspace tools (read/write/edit/grep/glob/list) are automatically injected when a workspace is available. File tree changes are pushed to PresentationState in real-time via fs.watch. Consumers can operate on the workspace through `presentation.workspace.read/write/list`.
+
+### Patch Changes
+
+- Updated dependencies [6cf3504]
+- Updated dependencies [c2ccfa7]
+- Updated dependencies [5fcc46e]
+- Updated dependencies [e00d2fc]
+- Updated dependencies [3ded673]
+- Updated dependencies [6957af0]
+- Updated dependencies [366fb38]
+- Updated dependencies [b13f9c3]
+- Updated dependencies [24bab4c]
+- Updated dependencies [bee5231]
+  - @agentxjs/core@2.9.0
+
 ## 2.8.0
 
 ### Patch Changes

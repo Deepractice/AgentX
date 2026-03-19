@@ -1,5 +1,52 @@
 # @agentxjs/claude-driver
 
+## 2.9.0
+
+### Minor Changes
+
+- c2ccfa7: refactor!: replace Embodiment + DriverConfig with AgentContext + SendOptions
+
+  **BREAKING CHANGE**: Configuration architecture restructured into a 3-layer model.
+
+  ### What changed
+
+  - **Deleted `Embodiment`** — `model`, `systemPrompt`, `mcpServers`, `thinking`, `providerOptions` are now flat fields on `ImageRecord`, `Agent`, and `PrototypeRecord`
+  - **Deleted `DriverConfigBase` / `DriverConfig`** — replaced by `AgentContext`
+  - **New `AgentContext`** — the merged configuration object passed from Runtime to Driver
+  - **New `SendOptions`** — per-request overrides for `model`, `thinking`, `providerOptions`
+  - **Full-chain `SendOptions`**: `Presentation.send()` → `Session.send()` → `Runtime.receive()` → `Driver.receive()`
+  - **`CreateDriver` signature**: `(config: AgentContext & TOptions) => Driver`
+
+  ### Migration
+
+  ```typescript
+  // Before
+  const config: DriverConfig<MonoDriverOptions> = { ... };
+  imageRecord.embody?.model
+
+  // After
+  const config: AgentContext & MonoDriverOptions = { ... };
+  imageRecord.model
+
+  // Per-request overrides (new!)
+  await agent.send("Hello", { thinking: "high", model: "claude-opus-4-6" });
+  await presentation.send("Hello", { thinking: "disabled" });
+  ```
+
+### Patch Changes
+
+- Updated dependencies [6cf3504]
+- Updated dependencies [c2ccfa7]
+- Updated dependencies [5fcc46e]
+- Updated dependencies [e00d2fc]
+- Updated dependencies [3ded673]
+- Updated dependencies [6957af0]
+- Updated dependencies [366fb38]
+- Updated dependencies [b13f9c3]
+- Updated dependencies [24bab4c]
+- Updated dependencies [bee5231]
+  - @agentxjs/core@2.9.0
+
 ## 2.8.0
 
 ### Patch Changes
