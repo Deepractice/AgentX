@@ -9,7 +9,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { DriverConfig } from "@agentxjs/core/driver";
+import type { AgentContext } from "@agentxjs/core/driver";
 import { EventBusImpl } from "@agentxjs/core/event";
 import { createAgentXRuntime } from "@agentxjs/core/runtime";
 import { createMonoDriver } from "@agentxjs/mono-driver";
@@ -38,7 +38,7 @@ describe("Thinking E2E", () => {
       return;
     }
 
-    const createDriver = (config: DriverConfig) =>
+    const createDriver = (config: AgentContext) =>
       createMonoDriver({
         ...config,
         apiKey: apiKey!,
@@ -51,6 +51,7 @@ describe("Thinking E2E", () => {
     const eventBus = new EventBusImpl();
     const runtime = createAgentXRuntime(
       {
+        containerId: "default",
         containerRepository: persistence.containers,
         imageRepository: persistence.images,
         sessionRepository: persistence.sessions,
@@ -65,10 +66,8 @@ describe("Thinking E2E", () => {
       {
         containerId: "default",
         name: "Thinking Agent",
-        embody: {
-          systemPrompt: "You are a helpful assistant. Think carefully before answering.",
-          thinking: "high",
-        },
+        systemPrompt: "You are a helpful assistant. Think carefully before answering.",
+        thinking: "high",
       },
       {
         imageRepository: persistence.images,

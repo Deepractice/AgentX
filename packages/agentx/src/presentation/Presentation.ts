@@ -59,6 +59,8 @@ export interface OS {
 export interface PresentationOptions {
   /** Called on every state change (legacy — prefer subscribe) */
   onUpdate?: (state: PresentationState) => void;
+  /** Called on errors */
+  onError?: (error: unknown) => void;
 }
 
 // ============================================================================
@@ -71,6 +73,7 @@ export class Presentation {
   private _state: PresentationState;
   private _listeners = new Set<() => void>();
   private _legacyHandlers = new Set<(state: PresentationState) => void>();
+  private _errorHandlers = new Set<(error: unknown) => void>();
   private _eventUnsubscribe: (() => void) | null = null;
   private _osOps: PresentationOS | null;
 
@@ -91,6 +94,9 @@ export class Presentation {
     // Legacy onUpdate support
     if (options?.onUpdate) {
       this._legacyHandlers.add(options.onUpdate);
+    }
+    if (options?.onError) {
+      this._errorHandlers.add(options.onError);
     }
 
     // Subscribe to EventBus
@@ -140,6 +146,18 @@ export class Presentation {
       write: (path: string, content: string) => ops.write(path, content),
       list: (path?: string) => ops.list(path),
     };
+  }
+
+  // ==================== Handler Registration ====================
+
+  /** Add a legacy onUpdate handler */
+  onUpdate(handler: (state: PresentationState) => void): void {
+    this._legacyHandlers.add(handler);
+  }
+
+  /** Add an error handler */
+  onError(handler: (error: unknown) => void): void {
+    this._errorHandlers.add(handler);
   }
 
   // ==================== Subscribe ====================
@@ -255,6 +273,7 @@ export class Presentation {
     }
     this._listeners.clear();
     this._legacyHandlers.clear();
+    this._errorHandlers.clear();
   }
 
   // ==================== Private ====================

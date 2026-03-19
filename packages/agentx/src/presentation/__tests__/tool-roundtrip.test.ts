@@ -17,20 +17,21 @@ import {
   createInitialMessageAssemblerState,
   messageAssemblerProcessor,
 } from "@agentxjs/core/agent";
+import type { StreamEvent } from "@agentxjs/core/agent";
 import { messagesToConversations } from "../reducer";
 import type { AssistantConversation, ToolBlock } from "../types";
 
 /**
- * Helper: create a stream event
+ * Helper: create a stream event (test helper — casts to union type)
  */
-function streamEvent(type: string, data: Record<string, unknown>) {
-  return { type, timestamp: Date.now(), data };
+function streamEvent(type: string, data: Record<string, unknown>): StreamEvent {
+  return { type, timestamp: Date.now(), data } as StreamEvent;
 }
 
 /**
  * Helper: process events through MessageAssembler, collect output messages
  */
-function processEvents(events: Array<{ type: string; timestamp: number; data: any }>) {
+function processEvents(events: StreamEvent[]) {
   let state = createInitialMessageAssemblerState();
   const allMessages: Message[] = [];
 

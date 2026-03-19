@@ -12,8 +12,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { Message } from "@agentxjs/core/agent";
-import type { DriverConfig } from "@agentxjs/core/driver";
+import type { AgentContext } from "@agentxjs/core/driver";
 import { EventBusImpl } from "@agentxjs/core/event";
 import { createAgentXRuntime } from "@agentxjs/core/runtime";
 import { createMonoDriver } from "@agentxjs/mono-driver";
@@ -44,7 +43,7 @@ describe("Tool call E2E round-trip", () => {
     }
 
     // Create runtime with a simple bash tool
-    const createDriver = (config: DriverConfig) =>
+    const createDriver = (config: AgentContext) =>
       createMonoDriver({
         ...config,
         apiKey: apiKey!,
@@ -57,18 +56,11 @@ describe("Tool call E2E round-trip", () => {
     const eventBus = new EventBusImpl();
     const runtime = createAgentXRuntime(
       {
+        containerId: "default",
         containerRepository: persistence.containers,
         imageRepository: persistence.images,
         sessionRepository: persistence.sessions,
         eventBus,
-        bashProvider: {
-          type: "test",
-          execute: async (cmd: string) => ({
-            stdout: `executed: ${cmd}`,
-            stderr: "",
-            exitCode: 0,
-          }),
-        },
       },
       createDriver
     );
@@ -79,10 +71,8 @@ describe("Tool call E2E round-trip", () => {
       {
         containerId: "default",
         name: "Tool Test Agent",
-        embody: {
-          systemPrompt:
-            "You have a bash tool. When asked to run a command, use the bash tool. Be brief.",
-        },
+        systemPrompt:
+          "You have a bash tool. When asked to run a command, use the bash tool. Be brief.",
       },
       {
         imageRepository: persistence.images,
@@ -154,10 +144,10 @@ describe("Tool call E2E round-trip", () => {
     );
 
     // Verify assistant message has tool-call content parts
-    const assistantWithToolCall = assistantMsgs.find((m) => {
-      const content = (m as any).content;
+    const assistantWithToolCall = assistantMsgs.find((m: any) => {
+      const content = m.content;
       if (Array.isArray(content)) {
-        return content.some((p: any) => p.type === "tool-call");
+        return content.some((p: { type: string }) => p.type === "tool-call");
       }
       return false;
     });

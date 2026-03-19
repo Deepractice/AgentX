@@ -9,11 +9,12 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { RpcHandlerRegistry } from "../../RpcHandlerRegistry";
+import type { AgentXRuntime } from "@agentxjs/core/runtime";
+import { RpcHandlerRegistry } from "@deepracticex/rpc";
 import { registerOSHandlers } from "../workspace";
 
 let tempDir: string;
-let registry: RpcHandlerRegistry;
+let registry: RpcHandlerRegistry<AgentXRuntime>;
 
 // Minimal runtime mock with real OS
 function createMockRuntime(basePath: string) {
@@ -37,7 +38,7 @@ function createMockRuntime(basePath: string) {
 
 beforeEach(async () => {
   tempDir = await mkdtemp(join(tmpdir(), "agentx-os-handler-test-"));
-  registry = new RpcHandlerRegistry();
+  registry = new RpcHandlerRegistry<AgentXRuntime>();
   registerOSHandlers(registry);
 });
 
@@ -62,7 +63,7 @@ describe("os.list RPC handler", () => {
 
     expect(result.success).toBe(true);
     if (result.success) {
-      const files = result.data.files as Array<{ name: string; type: string }>;
+      const files = (result.data as any).files as Array<{ name: string; type: string }>;
       expect(files.length).toBe(2);
       const names = files.map((f) => f.name).sort();
       expect(names).toEqual(["hello.txt", "test.js"]);
@@ -81,7 +82,7 @@ describe("os.list RPC handler", () => {
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.files).toEqual([]);
+      expect((result.data as any).files).toEqual([]);
     }
   });
 
@@ -110,7 +111,7 @@ describe("os.read RPC handler", () => {
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.content).toBe("hello world");
+      expect((result.data as any).content).toBe("hello world");
     }
   });
 });
@@ -138,7 +139,7 @@ describe("os.write RPC handler", () => {
     });
     expect(readResult.success).toBe(true);
     if (readResult.success) {
-      expect(readResult.data.content).toBe("written via RPC");
+      expect((readResult.data as any).content).toBe("written via RPC");
     }
   });
 });

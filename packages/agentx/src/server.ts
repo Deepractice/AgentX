@@ -186,7 +186,7 @@ export async function createServer(config: ServerConfig): Promise<AgentXServer> 
   async function handleParsedMessage(
     connection: ChannelConnection,
     _state: ConnectionState,
-    parsed: import("jsonrpc-lite").IParsedObject
+    parsed: Parameters<typeof isRequest>[0]
   ): Promise<void> {
     if (isRequest(parsed)) {
       // JSON-RPC Request - handle and respond directly

@@ -9,7 +9,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { DriverConfig } from "@agentxjs/core/driver";
+import type { AgentContext } from "@agentxjs/core/driver";
 import { EventBusImpl } from "@agentxjs/core/event";
 import { createAgentXRuntime } from "@agentxjs/core/runtime";
 import { createMonoDriver } from "@agentxjs/mono-driver";
@@ -34,7 +34,7 @@ afterAll(async () => {
 async function runWithThinking(
   thinkingLevel: "disabled" | "low" | "medium" | "high" | undefined
 ): Promise<{ thinkingCount: number; textCount: number; events: string[] }> {
-  const createDriver = (config: DriverConfig) =>
+  const createDriver = (config: AgentContext) =>
     createMonoDriver({
       ...config,
       apiKey: apiKey!,
@@ -47,6 +47,7 @@ async function runWithThinking(
   const eventBus = new EventBusImpl();
   const runtime = createAgentXRuntime(
     {
+      containerId: "default",
       containerRepository: persistence.containers,
       imageRepository: persistence.images,
       sessionRepository: persistence.sessions,
@@ -60,10 +61,8 @@ async function runWithThinking(
     {
       containerId: "default",
       name: `Thinking ${thinkingLevel ?? "default"}`,
-      embody: {
-        systemPrompt: "Answer briefly.",
-        thinking: thinkingLevel,
-      },
+      systemPrompt: "Answer briefly.",
+      thinking: thinkingLevel,
     },
     {
       imageRepository: persistence.images,
