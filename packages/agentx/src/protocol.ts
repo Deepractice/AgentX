@@ -8,7 +8,7 @@
 import type { RpcProtocol } from "@deepracticex/rpc";
 
 export const protocol: RpcProtocol = {
-  namespace: "agentx",
+  namespace: "runtime",
   version: "2.9.0",
   methods: [
     // Image
