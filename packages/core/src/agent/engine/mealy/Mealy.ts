@@ -31,7 +31,7 @@
  * ```
  */
 
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import type { Processor } from "./Processor";
 import type { Sink, SinkDefinition } from "./Sink";
 import type { Store } from "./Store";

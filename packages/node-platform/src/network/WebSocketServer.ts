@@ -13,7 +13,7 @@ import type {
   MinimalHTTPServer,
   Unsubscribe,
 } from "@agentxjs/core/network";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import type { WebSocket as WS, WebSocketServer as WSS } from "ws";
 import { WebSocketConnection } from "./WebSocketConnection";
 

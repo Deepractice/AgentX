@@ -2,8 +2,7 @@
  * Image RPC Handlers
  */
 
-import type { RpcHandlerRegistry } from "../RpcHandlerRegistry";
-import { err, ok } from "../RpcHandlerRegistry";
+import { type RpcHandlerRegistry, err, ok } from "@deepracticex/rpc";
 
 export function registerImageHandlers(registry: RpcHandlerRegistry): void {
   registry.register("image.create", "Create a new agent image", async (runtime, params) => {

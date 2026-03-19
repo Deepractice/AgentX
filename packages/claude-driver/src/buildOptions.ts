@@ -6,7 +6,7 @@
 
 import { createRequire } from "node:module";
 import type { McpServerConfig, Options } from "@anthropic-ai/claude-agent-sdk";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 
 const logger = createLogger("claude-driver/buildOptions");
 

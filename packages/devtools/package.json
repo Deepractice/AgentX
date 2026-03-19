@@ -48,7 +48,7 @@
   },
   "dependencies": {
     "@agentxjs/core": "workspace:*",
-    "commonxjs": "^0.1.1"
+    "@deepracticex/logger": "^1.2.0"
   },
   "devDependencies": {
     "@agentxjs/claude-driver": "workspace:*",

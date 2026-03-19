@@ -36,7 +36,7 @@ import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { createXai } from "@ai-sdk/xai";
 import type { ToolSet } from "ai";
 import { stepCountIs, streamText } from "ai";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import {
   createEvent,
   toStopReason,

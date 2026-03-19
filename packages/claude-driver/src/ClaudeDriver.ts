@@ -33,7 +33,7 @@ import type {
   StopReason,
 } from "@agentxjs/core/driver";
 import type { SDKMessage, SDKPartialAssistantMessage } from "@anthropic-ai/claude-agent-sdk";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import { Subject } from "rxjs";
 import { buildSDKUserMessage } from "./helpers";
 import { SDKQueryLifecycle } from "./SDKQueryLifecycle";

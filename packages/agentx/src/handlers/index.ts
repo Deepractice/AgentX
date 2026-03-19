@@ -7,7 +7,7 @@
  * That's it. No types, mappings, or switch cases to update.
  */
 
-import type { RpcHandlerRegistry } from "../RpcHandlerRegistry";
+import type { RpcHandlerRegistry } from "@deepracticex/rpc";
 import { registerImageHandlers } from "./image";
 import { registerInstanceHandlers } from "./instance";
 import { registerLLMHandlers } from "./llm";

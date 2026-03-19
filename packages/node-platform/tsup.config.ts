@@ -12,5 +12,5 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   clean: true,
-  external: ["@agentxjs/core", "commonxjs", "rxjs", "unstorage", "ws"],
+  external: ["@agentxjs/core", "@deepracticex/logger", "rxjs", "unstorage", "ws"],
 });

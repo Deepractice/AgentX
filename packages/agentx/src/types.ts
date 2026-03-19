@@ -520,7 +520,7 @@ export interface AgentX {
   /**
    * Get all registered RPC methods with metadata
    */
-  rpcMethods(): import("./RpcHandlerRegistry").RpcMethodSchema[];
+  rpcMethods(): import("@deepracticex/rpc").RpcMethodSchema[];
 
   // ==================== Lifecycle ====================
 

@@ -27,7 +27,7 @@ import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import { createAgentXRuntime } from "@agentxjs/core/runtime";
 import { createLogger } from "@deepracticex/logger";
 import { registerAll } from "./handlers";
-import { RpcHandlerRegistry } from "./RpcHandlerRegistry";
+import { RpcHandlerRegistry } from "@deepracticex/rpc";
 import type { AgentXServer } from "./types";
 
 const logger = createLogger("server/Server");

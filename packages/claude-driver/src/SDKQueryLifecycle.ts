@@ -17,7 +17,7 @@ import {
   type SDKMessage,
   type SDKUserMessage,
 } from "@anthropic-ai/claude-agent-sdk";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import { Subject } from "rxjs";
 import { buildOptions, type EnvironmentContext } from "./buildOptions";
 import { observableToAsyncIterable } from "./observableToAsyncIterable";

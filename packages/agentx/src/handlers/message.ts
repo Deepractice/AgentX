@@ -3,8 +3,7 @@
  */
 
 import type { UserContentPart } from "@agentxjs/core/agent";
-import type { RpcHandlerRegistry } from "../RpcHandlerRegistry";
-import { err, ok } from "../RpcHandlerRegistry";
+import { type RpcHandlerRegistry, err, ok } from "@deepracticex/rpc";
 import { resolveInstanceId } from "./instance";
 
 export function registerMessageHandlers(registry: RpcHandlerRegistry): void {

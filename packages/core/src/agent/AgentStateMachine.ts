@@ -13,7 +13,7 @@
  * - Notify state change subscribers
  */
 
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import type {
   AgentOutput,
   AgentState,

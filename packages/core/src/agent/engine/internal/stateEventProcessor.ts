@@ -18,7 +18,7 @@
  * - tool_executing
  */
 
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import type {
   ConversationEndEvent,
   ConversationInterruptedEvent,

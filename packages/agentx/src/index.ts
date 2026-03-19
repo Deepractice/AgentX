@@ -29,7 +29,7 @@
 import type { CreateDriver } from "@agentxjs/core/driver";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import { createAgentXRuntime } from "@agentxjs/core/runtime";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import { AgentXClient } from "./AgentXClient";
 import type { AgentX, AgentXBuilder, AgentXServer, ConnectOptions, ServeConfig } from "./types";
 
@@ -246,8 +246,10 @@ export {
   Presentation,
   presentationReducer,
 } from "./presentation";
-// Re-export RPC types
-export type { RpcMethodSchema } from "./RpcHandlerRegistry";
+// Re-export RPC
+export type { RpcMethodSchema, RpcProtocol, RpcResponse, RpcHandler } from "@deepracticex/rpc";
+export { RpcHandlerRegistry, ok, err, ErrorCodes } from "@deepracticex/rpc";
+export { protocol } from "./protocol";
 // Re-export types
 export type {
   AgentConfig,

@@ -31,7 +31,7 @@
     "@ai-sdk/openai-compatible": "2.0.27",
     "@ai-sdk/xai": "3.0.47",
     "ai": "^6.0.70",
-    "commonxjs": "^0.1.1"
+    "@deepracticex/logger": "^1.2.0"
   },
   "devDependencies": {
     "typescript": "^5.3.3"

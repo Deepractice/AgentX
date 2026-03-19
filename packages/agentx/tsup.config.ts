@@ -14,7 +14,7 @@ export default defineConfig({
     "@deepracticex/logger",
     "reconnecting-websocket",
     "ws",
-    "commonxjs",
+    "@deepracticex/logger",
     "jsonrpc-lite",
   ],
 });

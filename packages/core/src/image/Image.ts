@@ -5,7 +5,7 @@
  * Agent is a transient runtime instance created from Image.
  */
 
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import type { McpServerConfig } from "../persistence/types";
 import type { Image, ImageContext, ImageCreateConfig, ImageRecord } from "./types";
 

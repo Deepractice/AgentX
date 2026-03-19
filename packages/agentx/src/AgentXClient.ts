@@ -12,11 +12,11 @@ import type { BusEvent, BusEventHandler, EventBus, Unsubscribe } from "@agentxjs
 import { EventBusImpl } from "@agentxjs/core/event";
 import { RpcClient } from "@agentxjs/core/network";
 import type { AgentXRuntime } from "@agentxjs/core/runtime";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import { AgentHandleImpl } from "./AgentHandle";
 import { registerAll } from "./handlers";
 import { createPresentations, type OSResolver } from "./namespaces/presentations";
-import { RpcHandlerRegistry, type RpcMethodSchema } from "./RpcHandlerRegistry";
+import { RpcHandlerRegistry, type RpcMethodSchema } from "@deepracticex/rpc";
 import type {
   AgentX,
   ChatNamespace,

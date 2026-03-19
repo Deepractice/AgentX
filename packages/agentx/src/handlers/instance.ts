@@ -3,8 +3,7 @@
  */
 
 import type { AgentXRuntime } from "@agentxjs/core/runtime";
-import type { RpcHandlerRegistry } from "../RpcHandlerRegistry";
-import { ok } from "../RpcHandlerRegistry";
+import { type RpcHandlerRegistry, ok } from "@deepracticex/rpc";
 
 async function resolveInstanceId(
   runtime: AgentXRuntime,

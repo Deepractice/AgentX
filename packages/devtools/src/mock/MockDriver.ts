@@ -24,7 +24,7 @@
 
 import type { UserMessage } from "@agentxjs/core/agent";
 import type { AgentContext, Driver, DriverState, DriverStreamEvent } from "@agentxjs/core/driver";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import { BUILTIN_FIXTURES } from "../../fixtures";
 import type { Fixture, FixtureEvent, MockDriverOptions } from "../types";
 

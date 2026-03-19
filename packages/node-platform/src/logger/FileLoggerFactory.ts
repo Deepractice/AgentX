@@ -10,7 +10,7 @@
 
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { LogContext, Logger, LoggerFactory, LogLevel } from "commonxjs/logger";
+import type { LogContext, Logger, LoggerFactory, LogLevel } from "@deepracticex/logger";
 
 export interface FileLoggerOptions {
   level?: LogLevel;

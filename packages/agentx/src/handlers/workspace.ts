@@ -2,8 +2,7 @@
  * OS RPC Handlers — exposes AgentOS file operations via RPC
  */
 
-import type { RpcHandlerRegistry } from "../RpcHandlerRegistry";
-import { err, ok } from "../RpcHandlerRegistry";
+import { type RpcHandlerRegistry, err, ok } from "@deepracticex/rpc";
 
 export function registerOSHandlers(registry: RpcHandlerRegistry): void {
   registry.register("os.read", "Read a file from the agent's OS", async (runtime, params) => {

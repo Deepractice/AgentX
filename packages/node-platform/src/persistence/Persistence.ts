@@ -5,7 +5,7 @@
  * Each driver provides a createStorage() method that returns an unstorage Storage instance.
  */
 
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import type { Storage } from "unstorage";
 import { StorageContainerRepository } from "./StorageContainerRepository";
 import { StorageImageRepository } from "./StorageImageRepository";

@@ -6,7 +6,7 @@
 
 import type { Message } from "@agentxjs/core/agent";
 import type { SessionRecord, SessionRepository } from "@agentxjs/core/persistence";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import type { Storage } from "unstorage";
 
 const logger = createLogger("node-platform/SessionRepository");

@@ -7,7 +7,7 @@
  */
 
 import type { MessageQueue, QueueConfig, QueueEntry, Unsubscribe } from "@agentxjs/core/mq";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import { type Database, openDatabase } from "commonxjs/sqlite";
 import { Subject } from "rxjs";
 import { filter } from "rxjs/operators";

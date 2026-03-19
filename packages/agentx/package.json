@@ -25,7 +25,8 @@
   "dependencies": {
     "@agentxjs/core": "workspace:*",
     "@deepracticex/id": "^0.2.0",
-    "@deepracticex/logger": "^1.2.0"
+    "@deepracticex/logger": "^1.2.0",
+    "@deepracticex/rpc": "^1.0.0"
   },
   "devDependencies": {
     "@agentxjs/devtools": "workspace:*",

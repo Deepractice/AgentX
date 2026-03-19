@@ -21,7 +21,7 @@
  * ```
  */
 
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import { isDriveableEvent } from "../event";
 import { AgentStateMachine } from "./AgentStateMachine";
 import { MealyMachine } from "./engine/MealyMachine";

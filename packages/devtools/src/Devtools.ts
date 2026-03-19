@@ -31,7 +31,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { AgentContext, CreateDriver, Driver } from "@agentxjs/core/driver";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import { MockDriver } from "./mock/MockDriver";
 import { RecordingDriver } from "./recorder/RecordingDriver";
 import type { Fixture } from "./types";

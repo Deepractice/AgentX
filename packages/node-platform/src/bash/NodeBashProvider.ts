@@ -6,7 +6,7 @@
  */
 
 import type { BashOptions, BashProvider, BashResult } from "@agentxjs/core/bash";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import { execa } from "execa";
 
 const logger = createLogger("node-platform/NodeBashProvider");

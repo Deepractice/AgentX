@@ -5,7 +5,7 @@
  * Uses RxJS Subject for reactive event distribution.
  */
 
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import { Subject } from "rxjs";
 import type {
   BusEvent,

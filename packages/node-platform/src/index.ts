@@ -19,8 +19,8 @@ import type { ContextProvider } from "@agentxjs/core/context";
 import { EventBusImpl } from "@agentxjs/core/event";
 import type { OSProvider } from "@agentxjs/core/os";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
-import type { LogLevel } from "commonxjs/logger";
-import { ConsoleLogger, setLoggerFactory } from "commonxjs/logger";
+import type { LogLevel } from "@deepracticex/logger";
+import { ConsoleLogger, setLoggerFactory } from "@deepracticex/logger";
 import { FileLoggerFactory } from "./logger";
 import { createPersistence, sqliteDriver } from "./persistence";
 

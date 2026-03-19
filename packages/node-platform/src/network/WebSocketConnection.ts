@@ -14,7 +14,7 @@ import type {
   Unsubscribe,
 } from "@agentxjs/core/network";
 import { isAckMessage, type ReliableWrapper } from "@agentxjs/core/network";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import type { WebSocket as WS } from "ws";
 
 const logger = createLogger("node-platform/WebSocketConnection");

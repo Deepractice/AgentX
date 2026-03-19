@@ -29,7 +29,7 @@ import type {
   Shell,
   StartOptions,
 } from "@agentxjs/core/os";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import { execa } from "execa";
 
 const logger = createLogger("node-platform/LocalOS");

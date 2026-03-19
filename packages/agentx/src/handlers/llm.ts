@@ -2,8 +2,7 @@
  * LLM Provider RPC Handlers
  */
 
-import type { RpcHandlerRegistry } from "../RpcHandlerRegistry";
-import { err, ok } from "../RpcHandlerRegistry";
+import { type RpcHandlerRegistry, err, ok } from "@deepracticex/rpc";
 
 export function registerLLMHandlers(registry: RpcHandlerRegistry): void {
   registry.register(

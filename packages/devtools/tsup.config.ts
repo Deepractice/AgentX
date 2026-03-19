@@ -17,7 +17,7 @@ export default defineConfig({
     "@agentxjs/core",
     "@agentxjs/claude-driver",
     "agentxjs",
-    "commonxjs",
+    "@deepracticex/logger",
     "@playwright/test",
     "@cucumber/cucumber",
   ],

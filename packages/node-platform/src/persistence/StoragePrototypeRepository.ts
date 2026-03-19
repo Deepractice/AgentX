@@ -5,7 +5,7 @@
  */
 
 import type { PrototypeRecord, PrototypeRepository } from "@agentxjs/core/persistence";
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import type { Storage } from "unstorage";
 
 const logger = createLogger("node-platform/PrototypeRepository");

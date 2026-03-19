@@ -11,7 +11,7 @@
  * - Presenter emits message/state/turn events and persists messages
  */
 
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import { createAgent as createAgentEngine } from "../agent/createAgent";
 import type {
   AgentEngine,

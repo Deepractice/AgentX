@@ -5,7 +5,7 @@
  * Each container can have multiple Images (conversations).
  */
 
-import { createLogger } from "commonxjs/logger";
+import { createLogger } from "@deepracticex/logger";
 import type { ContainerRecord } from "../persistence/types";
 import type { Container, ContainerContext, ContainerCreateConfig } from "./types";
 

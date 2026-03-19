@@ -6,5 +6,5 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   clean: true,
-  external: ["commonxjs", "jsonrpc-lite", "rxjs"],
+  external: ["@deepracticex/logger", "jsonrpc-lite", "rxjs"],
 });
