@@ -2,33 +2,33 @@
   "name": "@agentxjs/node-platform",
   "version": "2.9.0",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
     },
     "./persistence": {
-      "types": "./dist/persistence/index.d.ts",
-      "import": "./dist/persistence/index.js",
-      "default": "./dist/persistence/index.js"
+      "types": "./src/persistence/index.ts",
+      "import": "./src/persistence/index.ts",
+      "default": "./src/persistence/index.ts"
     },
     "./mq": {
-      "types": "./dist/mq/index.d.ts",
-      "import": "./dist/mq/index.js",
-      "default": "./dist/mq/index.js"
+      "types": "./src/mq/index.ts",
+      "import": "./src/mq/index.ts",
+      "default": "./src/mq/index.ts"
     },
     "./network": {
-      "types": "./dist/network/index.d.ts",
-      "import": "./dist/network/index.js",
-      "default": "./dist/network/index.js"
+      "types": "./src/network/index.ts",
+      "import": "./src/network/index.ts",
+      "default": "./src/network/index.ts"
     },
     "./workspace": {
-      "types": "./dist/workspace/index.d.ts",
-      "import": "./dist/workspace/index.js",
-      "default": "./dist/workspace/index.js"
+      "types": "./src/workspace/index.ts",
+      "import": "./src/workspace/index.ts",
+      "default": "./src/workspace/index.ts"
     }
   },
   "files": [
@@ -51,5 +51,36 @@
   "devDependencies": {
     "@types/ws": "^8.5.10",
     "typescript": "^5.3.3"
+  },
+  "publishConfig": {
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "default": "./dist/index.js"
+      },
+      "./persistence": {
+        "types": "./dist/persistence/index.d.ts",
+        "import": "./dist/persistence/index.js",
+        "default": "./dist/persistence/index.js"
+      },
+      "./mq": {
+        "types": "./dist/mq/index.d.ts",
+        "import": "./dist/mq/index.js",
+        "default": "./dist/mq/index.js"
+      },
+      "./network": {
+        "types": "./dist/network/index.d.ts",
+        "import": "./dist/network/index.js",
+        "default": "./dist/network/index.js"
+      },
+      "./workspace": {
+        "types": "./dist/workspace/index.d.ts",
+        "import": "./dist/workspace/index.js",
+        "default": "./dist/workspace/index.js"
+      }
+    }
   }
 }

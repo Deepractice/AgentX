@@ -3,36 +3,36 @@
   "version": "2.3.0",
   "description": "Development tools for AgentX - MockDriver, RecordingDriver, Fixtures",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "bin": {
     "bdd": "./dist/bdd/cli.js"
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
     },
     "./mock": {
-      "types": "./dist/mock/index.d.ts",
-      "import": "./dist/mock/index.js",
-      "default": "./dist/mock/index.js"
+      "types": "./src/mock/index.ts",
+      "import": "./src/mock/index.ts",
+      "default": "./src/mock/index.ts"
     },
     "./recorder": {
-      "types": "./dist/recorder/index.d.ts",
-      "import": "./dist/recorder/index.js",
-      "default": "./dist/recorder/index.js"
+      "types": "./src/recorder/index.ts",
+      "import": "./src/recorder/index.ts",
+      "default": "./src/recorder/index.ts"
     },
     "./fixtures": {
-      "types": "./dist/fixtures/index.d.ts",
-      "import": "./dist/fixtures/index.js",
-      "default": "./dist/fixtures/index.js"
+      "types": "./src/fixtures/index.ts",
+      "import": "./src/fixtures/index.ts",
+      "default": "./src/fixtures/index.ts"
     },
     "./bdd": {
-      "types": "./dist/bdd/index.d.ts",
-      "import": "./dist/bdd/index.js",
-      "default": "./dist/bdd/index.js"
+      "types": "./src/bdd/index.ts",
+      "import": "./src/bdd/index.ts",
+      "default": "./src/bdd/index.ts"
     }
   },
   "files": [
@@ -75,6 +75,37 @@
     },
     "@cucumber/cucumber": {
       "optional": true
+    }
+  },
+  "publishConfig": {
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "default": "./dist/index.js"
+      },
+      "./mock": {
+        "types": "./dist/mock/index.d.ts",
+        "import": "./dist/mock/index.js",
+        "default": "./dist/mock/index.js"
+      },
+      "./recorder": {
+        "types": "./dist/recorder/index.d.ts",
+        "import": "./dist/recorder/index.js",
+        "default": "./dist/recorder/index.js"
+      },
+      "./fixtures": {
+        "types": "./dist/fixtures/index.d.ts",
+        "import": "./dist/fixtures/index.js",
+        "default": "./dist/fixtures/index.js"
+      },
+      "./bdd": {
+        "types": "./dist/bdd/index.d.ts",
+        "import": "./dist/bdd/index.js",
+        "default": "./dist/bdd/index.js"
+      }
     }
   }
 }

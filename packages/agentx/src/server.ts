@@ -23,7 +23,7 @@ import {
   parseMessage,
   RpcErrorCodes,
 } from "@agentxjs/core/network";
-import type { AgentXPlatform } from "@agentxjs/core/runtime";
+import type { AgentXPlatform, AgentXRuntime } from "@agentxjs/core/runtime";
 import { createAgentXRuntime } from "@agentxjs/core/runtime";
 import { createLogger } from "@deepracticex/logger";
 import { registerAll } from "./handlers";
@@ -96,7 +96,7 @@ export async function createServer(config: ServerConfig): Promise<AgentXServer> 
   }
 
   // Create RPC handler registry
-  const registry = new RpcHandlerRegistry();
+  const registry = new RpcHandlerRegistry<AgentXRuntime>();
   registerAll(registry);
 
   // Track connections

@@ -6,5 +6,5 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   clean: true,
-  external: ["@agentxjs/core", "@anthropic-ai/claude-agent-sdk", "rxjs"],
+  external: ["@agentxjs/core", "@anthropic-ai/claude-agent-sdk", "@deepracticex/logger", "rxjs"],
 });

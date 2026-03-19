@@ -28,7 +28,7 @@ async function resolveInstanceId(
   throw new Error("Either instanceId or imageId is required");
 }
 
-export function registerInstanceHandlers(registry: RpcHandlerRegistry): void {
+export function registerInstanceHandlers(registry: RpcHandlerRegistry<AgentXRuntime>): void {
   registry.register("instance.get", "Get a running agent instance", async (runtime, params) => {
     const { instanceId } = params as { instanceId: string };
     const agent = runtime.getAgent(instanceId);

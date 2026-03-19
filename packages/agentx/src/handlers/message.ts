@@ -3,10 +3,11 @@
  */
 
 import type { UserContentPart } from "@agentxjs/core/agent";
+import type { AgentXRuntime } from "@agentxjs/core/runtime";
 import { type RpcHandlerRegistry, err, ok } from "@deepracticex/rpc";
 import { resolveInstanceId } from "./instance";
 
-export function registerMessageHandlers(registry: RpcHandlerRegistry): void {
+export function registerMessageHandlers(registry: RpcHandlerRegistry<AgentXRuntime>): void {
   registry.register("message.send", "Send a message to an agent", async (runtime, params) => {
     const { instanceId, imageId, content, options } = params as {
       instanceId?: string;

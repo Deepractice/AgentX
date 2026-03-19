@@ -2,108 +2,108 @@
   "name": "@agentxjs/core",
   "version": "2.9.0",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
     },
     "./common": {
-      "types": "./dist/common/index.d.ts",
-      "import": "./dist/common/index.js",
-      "default": "./dist/common/index.js"
+      "types": "./src/common/index.ts",
+      "import": "./src/common/index.ts",
+      "default": "./src/common/index.ts"
     },
     "./agent": {
-      "types": "./dist/agent/index.d.ts",
-      "import": "./dist/agent/index.js",
-      "default": "./dist/agent/index.js"
+      "types": "./src/agent/index.ts",
+      "import": "./src/agent/index.ts",
+      "default": "./src/agent/index.ts"
     },
     "./driver": {
-      "types": "./dist/driver/index.d.ts",
-      "import": "./dist/driver/index.js",
-      "default": "./dist/driver/index.js"
+      "types": "./src/driver/index.ts",
+      "import": "./src/driver/index.ts",
+      "default": "./src/driver/index.ts"
     },
     "./event": {
-      "types": "./dist/event/index.d.ts",
-      "import": "./dist/event/index.js",
-      "default": "./dist/event/index.js"
+      "types": "./src/event/index.ts",
+      "import": "./src/event/index.ts",
+      "default": "./src/event/index.ts"
     },
     "./session": {
-      "types": "./dist/session/index.d.ts",
-      "import": "./dist/session/index.js",
-      "default": "./dist/session/index.js"
+      "types": "./src/session/index.ts",
+      "import": "./src/session/index.ts",
+      "default": "./src/session/index.ts"
     },
     "./image": {
-      "types": "./dist/image/index.d.ts",
-      "import": "./dist/image/index.js",
-      "default": "./dist/image/index.js"
+      "types": "./src/image/index.ts",
+      "import": "./src/image/index.ts",
+      "default": "./src/image/index.ts"
     },
     "./container": {
-      "types": "./dist/container/index.d.ts",
-      "import": "./dist/container/index.js",
-      "default": "./dist/container/index.js"
+      "types": "./src/container/index.ts",
+      "import": "./src/container/index.ts",
+      "default": "./src/container/index.ts"
     },
     "./bash": {
-      "types": "./dist/bash/index.d.ts",
-      "import": "./dist/bash/index.js",
-      "default": "./dist/bash/index.js"
+      "types": "./src/bash/index.ts",
+      "import": "./src/bash/index.ts",
+      "default": "./src/bash/index.ts"
     },
     "./platform": {
-      "types": "./dist/platform/index.d.ts",
-      "import": "./dist/platform/index.js",
-      "default": "./dist/platform/index.js"
+      "types": "./src/platform/index.ts",
+      "import": "./src/platform/index.ts",
+      "default": "./src/platform/index.ts"
     },
     "./runtime": {
-      "types": "./dist/runtime/index.d.ts",
-      "import": "./dist/runtime/index.js",
-      "default": "./dist/runtime/index.js"
+      "types": "./src/runtime/index.ts",
+      "import": "./src/runtime/index.ts",
+      "default": "./src/runtime/index.ts"
     },
     "./mq": {
-      "types": "./dist/mq/index.d.ts",
-      "import": "./dist/mq/index.js",
-      "default": "./dist/mq/index.js"
+      "types": "./src/mq/index.ts",
+      "import": "./src/mq/index.ts",
+      "default": "./src/mq/index.ts"
     },
     "./persistence": {
-      "types": "./dist/persistence/index.d.ts",
-      "import": "./dist/persistence/index.js",
-      "default": "./dist/persistence/index.js"
+      "types": "./src/persistence/index.ts",
+      "import": "./src/persistence/index.ts",
+      "default": "./src/persistence/index.ts"
     },
     "./error": {
-      "types": "./dist/error/index.d.ts",
-      "import": "./dist/error/index.js",
-      "default": "./dist/error/index.js"
+      "types": "./src/error/index.ts",
+      "import": "./src/error/index.ts",
+      "default": "./src/error/index.ts"
     },
     "./network": {
-      "types": "./dist/network/index.d.ts",
-      "import": "./dist/network/index.js",
-      "default": "./dist/network/index.js"
+      "types": "./src/network/index.ts",
+      "import": "./src/network/index.ts",
+      "default": "./src/network/index.ts"
     },
     "./llm": {
-      "types": "./dist/llm/index.d.ts",
-      "import": "./dist/llm/index.js",
-      "default": "./dist/llm/index.js"
+      "types": "./src/llm/index.ts",
+      "import": "./src/llm/index.ts",
+      "default": "./src/llm/index.ts"
     },
     "./context": {
-      "types": "./dist/context/index.d.ts",
-      "import": "./dist/context/index.js",
-      "default": "./dist/context/index.js"
+      "types": "./src/context/index.ts",
+      "import": "./src/context/index.ts",
+      "default": "./src/context/index.ts"
     },
     "./media": {
-      "types": "./dist/media/index.d.ts",
-      "import": "./dist/media/index.js",
-      "default": "./dist/media/index.js"
+      "types": "./src/media/index.ts",
+      "import": "./src/media/index.ts",
+      "default": "./src/media/index.ts"
     },
     "./workspace": {
-      "types": "./dist/workspace/index.d.ts",
-      "import": "./dist/workspace/index.js",
-      "default": "./dist/workspace/index.js"
+      "types": "./src/workspace/index.ts",
+      "import": "./src/workspace/index.ts",
+      "default": "./src/workspace/index.ts"
     },
     "./os": {
-      "types": "./dist/os/index.d.ts",
-      "import": "./dist/os/index.js",
-      "default": "./dist/os/index.js"
+      "types": "./src/os/index.ts",
+      "import": "./src/os/index.ts",
+      "default": "./src/os/index.ts"
     }
   },
   "files": [
@@ -122,5 +122,111 @@
   },
   "devDependencies": {
     "typescript": "^5.3.3"
+  },
+  "publishConfig": {
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "default": "./dist/index.js"
+      },
+      "./common": {
+        "types": "./dist/common/index.d.ts",
+        "import": "./dist/common/index.js",
+        "default": "./dist/common/index.js"
+      },
+      "./agent": {
+        "types": "./dist/agent/index.d.ts",
+        "import": "./dist/agent/index.js",
+        "default": "./dist/agent/index.js"
+      },
+      "./driver": {
+        "types": "./dist/driver/index.d.ts",
+        "import": "./dist/driver/index.js",
+        "default": "./dist/driver/index.js"
+      },
+      "./event": {
+        "types": "./dist/event/index.d.ts",
+        "import": "./dist/event/index.js",
+        "default": "./dist/event/index.js"
+      },
+      "./session": {
+        "types": "./dist/session/index.d.ts",
+        "import": "./dist/session/index.js",
+        "default": "./dist/session/index.js"
+      },
+      "./image": {
+        "types": "./dist/image/index.d.ts",
+        "import": "./dist/image/index.js",
+        "default": "./dist/image/index.js"
+      },
+      "./container": {
+        "types": "./dist/container/index.d.ts",
+        "import": "./dist/container/index.js",
+        "default": "./dist/container/index.js"
+      },
+      "./bash": {
+        "types": "./dist/bash/index.d.ts",
+        "import": "./dist/bash/index.js",
+        "default": "./dist/bash/index.js"
+      },
+      "./platform": {
+        "types": "./dist/platform/index.d.ts",
+        "import": "./dist/platform/index.js",
+        "default": "./dist/platform/index.js"
+      },
+      "./runtime": {
+        "types": "./dist/runtime/index.d.ts",
+        "import": "./dist/runtime/index.js",
+        "default": "./dist/runtime/index.js"
+      },
+      "./mq": {
+        "types": "./dist/mq/index.d.ts",
+        "import": "./dist/mq/index.js",
+        "default": "./dist/mq/index.js"
+      },
+      "./persistence": {
+        "types": "./dist/persistence/index.d.ts",
+        "import": "./dist/persistence/index.js",
+        "default": "./dist/persistence/index.js"
+      },
+      "./error": {
+        "types": "./dist/error/index.d.ts",
+        "import": "./dist/error/index.js",
+        "default": "./dist/error/index.js"
+      },
+      "./network": {
+        "types": "./dist/network/index.d.ts",
+        "import": "./dist/network/index.js",
+        "default": "./dist/network/index.js"
+      },
+      "./llm": {
+        "types": "./dist/llm/index.d.ts",
+        "import": "./dist/llm/index.js",
+        "default": "./dist/llm/index.js"
+      },
+      "./context": {
+        "types": "./dist/context/index.d.ts",
+        "import": "./dist/context/index.js",
+        "default": "./dist/context/index.js"
+      },
+      "./media": {
+        "types": "./dist/media/index.d.ts",
+        "import": "./dist/media/index.js",
+        "default": "./dist/media/index.js"
+      },
+      "./workspace": {
+        "types": "./dist/workspace/index.d.ts",
+        "import": "./dist/workspace/index.js",
+        "default": "./dist/workspace/index.js"
+      },
+      "./os": {
+        "types": "./dist/os/index.d.ts",
+        "import": "./dist/os/index.js",
+        "default": "./dist/os/index.js"
+      }
+    }
   }
 }

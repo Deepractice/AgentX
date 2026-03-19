@@ -2,9 +2,10 @@
  * LLM Provider RPC Handlers
  */
 
+import type { AgentXRuntime } from "@agentxjs/core/runtime";
 import { type RpcHandlerRegistry, err, ok } from "@deepracticex/rpc";
 
-export function registerLLMHandlers(registry: RpcHandlerRegistry): void {
+export function registerLLMHandlers(registry: RpcHandlerRegistry<AgentXRuntime>): void {
   registry.register(
     "llm.create",
     "Create a new LLM provider configuration",

@@ -2,9 +2,10 @@
  * OS RPC Handlers — exposes AgentOS file operations via RPC
  */
 
+import type { AgentXRuntime } from "@agentxjs/core/runtime";
 import { type RpcHandlerRegistry, err, ok } from "@deepracticex/rpc";
 
-export function registerOSHandlers(registry: RpcHandlerRegistry): void {
+export function registerOSHandlers(registry: RpcHandlerRegistry<AgentXRuntime>): void {
   registry.register("os.read", "Read a file from the agent's OS", async (runtime, params) => {
     const { imageId, path } = params as { imageId: string; path: string };
     const op = runtime.platform.osProvider;

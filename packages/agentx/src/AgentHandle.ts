@@ -7,7 +7,7 @@
 import type { Message } from "@agentxjs/core/agent";
 import type { SendOptions } from "@agentxjs/core/driver";
 import type { Presentation, PresentationOptions } from "./presentation";
-import type { AgentConfig, AgentHandle, BaseResponse } from "./types";
+import type { AgentConfig, AgentHandle, BaseResponse, MessageSendResponse } from "./types";
 
 interface AgentXRpc {
   rpc<T = unknown>(method: string, params?: unknown): Promise<T>;
@@ -33,8 +33,8 @@ export class AgentHandleImpl implements AgentHandle {
     this.ax = ax;
   }
 
-  async send(content: string | unknown[], options?: SendOptions) {
-    return this.ax.rpc("message.send", { instanceId: this.instanceId, content, options });
+  async send(content: string | unknown[], options?: SendOptions): Promise<MessageSendResponse> {
+    return this.ax.rpc<MessageSendResponse>("message.send", { instanceId: this.instanceId, content, options });
   }
 
   async interrupt(): Promise<BaseResponse> {

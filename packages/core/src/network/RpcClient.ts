@@ -91,6 +91,12 @@ export interface RpcClientConfig {
    * Debug logging
    */
   debug?: boolean;
+
+  /**
+   * Namespace prefix for RPC method names.
+   * When set, all call() methods are prefixed: `{namespace}.{method}`
+   */
+  namespace?: string;
 }
 
 /**
@@ -310,7 +316,8 @@ export class RpcClient {
     }
 
     const id = ++this.requestId;
-    const request = createRequest(id, method, params);
+    const wireMethod = this.config.namespace ? `${this.config.namespace}.${method}` : method;
+    const request = createRequest(id, wireMethod, params);
 
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {

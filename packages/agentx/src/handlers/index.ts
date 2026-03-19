@@ -7,6 +7,7 @@
  * That's it. No types, mappings, or switch cases to update.
  */
 
+import type { AgentXRuntime } from "@agentxjs/core/runtime";
 import type { RpcHandlerRegistry } from "@deepracticex/rpc";
 import { registerImageHandlers } from "./image";
 import { registerInstanceHandlers } from "./instance";
@@ -17,7 +18,7 @@ import { registerOSHandlers } from "./workspace";
 /**
  * Register all RPC handlers on the registry
  */
-export function registerAll(registry: RpcHandlerRegistry): void {
+export function registerAll(registry: RpcHandlerRegistry<AgentXRuntime>): void {
   registerImageHandlers(registry);
   registerInstanceHandlers(registry);
   registerMessageHandlers(registry);

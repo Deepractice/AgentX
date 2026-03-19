@@ -2,9 +2,11 @@
  * Image RPC Handlers
  */
 
+import type { ImageRecord } from "@agentxjs/core/image";
+import type { AgentXRuntime } from "@agentxjs/core/runtime";
 import { type RpcHandlerRegistry, err, ok } from "@deepracticex/rpc";
 
-export function registerImageHandlers(registry: RpcHandlerRegistry): void {
+export function registerImageHandlers(registry: RpcHandlerRegistry<AgentXRuntime>): void {
   registry.register("image.create", "Create a new agent image", async (runtime, params) => {
     const {
       name,
@@ -137,7 +139,7 @@ export function registerImageHandlers(registry: RpcHandlerRegistry): void {
         ...imageRecord,
         ...updates,
         updatedAt: Date.now(),
-      };
+      } as ImageRecord;
 
       await runtime.platform.imageRepository.saveImage(updatedRecord);
 

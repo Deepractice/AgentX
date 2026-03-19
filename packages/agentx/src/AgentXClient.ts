@@ -16,6 +16,7 @@ import { createLogger } from "@deepracticex/logger";
 import { AgentHandleImpl } from "./AgentHandle";
 import { registerAll } from "./handlers";
 import { createPresentations, type OSResolver } from "./namespaces/presentations";
+import { protocol } from "./protocol";
 import { RpcHandlerRegistry, type RpcMethodSchema } from "@deepracticex/rpc";
 import type {
   AgentX,
@@ -33,7 +34,7 @@ const logger = createLogger("agentx/AgentXClient");
 export class AgentXClient implements AgentX {
   private readonly _engine?: AgentXRuntime;
   private readonly _rpcClient?: RpcClient;
-  private _registry?: RpcHandlerRegistry;
+  private _registry?: RpcHandlerRegistry<AgentXRuntime>;
   private readonly _eventBus: EventBus;
   private _disposed = false;
 
@@ -106,6 +107,7 @@ export class AgentXClient implements AgentX {
         timeout: init.config.timeout ?? 30000,
         autoReconnect: init.config.autoReconnect ?? true,
         headers: init.config.headers as Record<string, string> | undefined,
+        namespace: protocol.namespace,
         debug: false,
       });
 
@@ -234,7 +236,7 @@ export class AgentXClient implements AgentX {
 
   private _ensureRegistry(): void {
     if (!this._registry) {
-      this._registry = new RpcHandlerRegistry();
+      this._registry = new RpcHandlerRegistry<AgentXRuntime>();
       registerAll(this._registry);
     }
   }
