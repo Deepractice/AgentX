@@ -177,7 +177,10 @@ export class Presentation {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     try {
-      await this._agentx.runtime.session.send(this._instanceId, content, options);
+      const resolved = this._instanceId.startsWith("inst_")
+        ? { instanceId: this._instanceId }
+        : { imageId: this._instanceId };
+      await this._agentx.rpc("message.send", { ...resolved, content, options });
     } catch (error) {
       console.error("Presentation send error:", error);
     }
@@ -186,7 +189,10 @@ export class Presentation {
   /** Interrupt current response */
   async interrupt(): Promise<void> {
     try {
-      await this._agentx.runtime.session.interrupt(this._instanceId);
+      const resolved = this._instanceId.startsWith("inst_")
+        ? { instanceId: this._instanceId }
+        : { imageId: this._instanceId };
+      await this._agentx.rpc("instance.interrupt", resolved);
     } catch (error) {
       console.error("Presentation interrupt error:", error);
     }
@@ -198,7 +204,18 @@ export class Presentation {
     if (index < 0 || index >= conversations.length) return;
 
     try {
-      const messages = await this._agentx.runtime.session.getMessages(this._instanceId);
+      let imageId = this._instanceId;
+      if (imageId.startsWith("inst_")) {
+        const res = await this._agentx.rpc<{ agent: { imageId: string } | null }>("instance.get", {
+          instanceId: imageId,
+        });
+        if (!res.agent) return;
+        imageId = res.agent.imageId;
+      }
+      const msgRes = await this._agentx.rpc<{
+        messages: { id: string; subtype?: string }[];
+      }>("image.messages", { imageId });
+      const messages = msgRes.messages ?? [];
       if (messages.length === 0) return;
 
       if (index === 0) {

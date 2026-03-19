@@ -372,13 +372,6 @@ export interface PresentationNamespace {
  * Instance exposes the underlying image, agent, session, llm,
  * and presentation subsystems for advanced use cases.
  */
-export interface RuntimeNamespace {
-  readonly image: ImageNamespace;
-  readonly session: SessionNamespace;
-  readonly present: PresentationNamespace;
-  readonly llm: LLMNamespace;
-}
-
 // ============================================================================
 // Agent Handle
 // ============================================================================
@@ -494,26 +487,19 @@ export interface AgentX {
    */
   readonly events: EventBus;
 
-  // ==================== Chat (conversation) ====================
+  // ==================== Chat (high-level) ====================
 
   /**
-   * Conversation management — create, list, and open conversations.
+   * High-level conversation API — create, list, get agents.
    */
   readonly chat: ChatNamespace;
 
-  // ==================== Instance (low-level) ====================
+  // ==================== Present (UI layer) ====================
 
   /**
-   * Low-level access to internal subsystems (image, agent, session, llm).
+   * Presentation state management for UI clients.
    */
-  readonly runtime: RuntimeNamespace;
-
-  // ==================== LLM Provider (system-level) ====================
-
-  /**
-   * LLM provider management (system-level, not per-agent)
-   */
-  readonly provider: LLMNamespace;
+  readonly present: PresentationNamespace;
 
   // ==================== Event Subscription ====================
 
@@ -530,6 +516,11 @@ export interface AgentX {
    * Universal JSON-RPC entry point
    */
   rpc<T = unknown>(method: string, params?: unknown): Promise<T>;
+
+  /**
+   * Get all registered RPC methods with metadata
+   */
+  rpcMethods(): import("./RpcHandlerRegistry").RpcMethodSchema[];
 
   // ==================== Lifecycle ====================
 

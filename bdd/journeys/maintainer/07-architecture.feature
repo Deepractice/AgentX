@@ -72,24 +72,25 @@ Feature: Monorepo Architecture
 
   Scenario: SDK uses RpcHandlerRegistry for RPC dispatch
     Given the agentxjs SDK
-    Then RPC handlers are registered via RpcHandlerRegistry:
+    Then RPC handlers are registered via RpcHandlerRegistry with description:
       | handler file   | methods                                          |
       | image.ts       | image.create/get/list/delete/run/stop/update/messages |
       | instance.ts    | instance.get/list/destroy/destroyAll/interrupt     |
       | message.ts     | message.send, runtime.rewind                      |
       | llm.ts         | llm.create/get/list/update/delete/default          |
-      | workspace.ts   | workspace.read/write/list                         |
+      | workspace.ts   | os.read/write/list                                |
     And adding a new RPC method only requires writing a handler and registering it
-    And no types, mappings, or switch cases need updating
+    And registry is the single source of truth for method discovery
+    And ax.rpcMethods() returns all registered methods with descriptions
 
-  Scenario: Public API does not expose Instance concept
+  Scenario: Three-layer API design
     Given the agentxjs SDK public API
-    Then only Image is exposed to external consumers:
-      | operation  | method               |
-      | start agent | image.run(imageId)  |
-      | stop agent  | image.stop(imageId) |
-    And Instance is internal to the Runtime layer
-    And RuntimeNamespace does not include InstanceNamespace
+    Then the API has three layers:
+      | layer      | access       | purpose                              |
+      | chat       | ax.chat      | High-level: create/list/get agents   |
+      | present    | ax.present   | UI layer: Presentation state mgmt    |
+      | rpc        | ax.rpc()     | Low-level: raw RPC dispatch          |
+    And AgentXClient is the unified client for both local and remote modes
 
   Scenario: Runtime has three first-class operations
     Given the AgentXRuntime interface
@@ -100,12 +101,12 @@ Feature: Monorepo Architecture
       | rewind    | rewind(instanceId, messageId)   | Rewind + reset circuit breaker |
     And all three are system-level — all layers participate
 
-  Scenario: Node platform provides default workspace
+  Scenario: Node platform provides default OS
     Given the @agentxjs/node-platform package
-    Then it automatically creates a LocalWorkspaceProvider
-    And workspaces are stored under dataPath/workspaces/{workspaceId}/
-    And each Image auto-generates a workspaceId on creation
-    And workspace tools (read/write/edit/grep/glob/list) are auto-injected
+    Then it automatically creates a LocalOSProvider
+    And OS data is stored under dataPath/os/{osId}/
+    And each Image auto-generates an osId on creation
+    And OS tools (read/write/edit/grep/glob/list) are auto-injected
 
   Scenario: All packages share base TypeScript config
     Given the file "tsconfig.base.json"

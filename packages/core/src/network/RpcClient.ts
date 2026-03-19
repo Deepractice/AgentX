@@ -35,7 +35,6 @@ import {
   isSuccessResponse,
   type NotificationMethod,
   parseMessage,
-  type RpcMethod,
   type StreamEventParams,
 } from "./jsonrpc";
 
@@ -305,7 +304,7 @@ export class RpcClient {
   /**
    * Call an RPC method and wait for response
    */
-  async call<T = unknown>(method: RpcMethod, params: unknown): Promise<T> {
+  async call<T = unknown>(method: string, params: unknown): Promise<T> {
     if (!this.connected || !this.ws) {
       throw new Error("Not connected to server");
     }

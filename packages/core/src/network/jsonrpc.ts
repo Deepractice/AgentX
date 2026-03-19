@@ -30,48 +30,6 @@ import type { SystemEvent } from "../event/types/base";
 export { JsonRpcError };
 export type { IParsedObject, JsonRpc };
 
-// ============================================================================
-// RPC Method Names
-// ============================================================================
-
-/**
- * RPC method name — "namespace.action" format.
- *
- * All valid methods are enumerated here as the single source of truth.
- * Handlers register these, clients call these — any mismatch is a compile error.
- */
-export type RpcMethod =
-  // Image lifecycle
-  | "image.create"
-  | "image.get"
-  | "image.list"
-  | "image.delete"
-  | "image.run"
-  | "image.stop"
-  | "image.update"
-  | "image.messages"
-  // Instance (runtime agents)
-  | "instance.get"
-  | "instance.list"
-  | "instance.destroy"
-  | "instance.destroyAll"
-  | "instance.interrupt"
-  // Message
-  | "message.send"
-  // Runtime operations
-  | "runtime.rewind"
-  // LLM provider management
-  | "llm.create"
-  | "llm.get"
-  | "llm.list"
-  | "llm.update"
-  | "llm.delete"
-  | "llm.default"
-  // OS (file system + shell)
-  | "os.read"
-  | "os.write"
-  | "os.list";
-
 /**
  * Notification method names (server push)
  */
@@ -86,9 +44,9 @@ export type NotificationMethod =
 /**
  * JSON-RPC Request structure
  */
-export interface RpcRequest<M extends RpcMethod = RpcMethod, P = unknown> {
+export interface RpcRequest<P = unknown> {
   jsonrpc: "2.0";
-  method: M;
+  method: string;
   params: P;
   id: string | number;
 }
@@ -166,11 +124,7 @@ export const RpcErrorCodes = {
 /**
  * Create a JSON-RPC request
  */
-export function createRequest(
-  id: string | number,
-  method: RpcMethod | string,
-  params: unknown
-): JsonRpc {
+export function createRequest(id: string | number, method: string, params: unknown): JsonRpc {
   return jsonrpcRequest(id, method, params as Record<string, unknown>);
 }
 

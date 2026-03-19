@@ -6,7 +6,7 @@ import type { RpcHandlerRegistry } from "../RpcHandlerRegistry";
 import { err, ok } from "../RpcHandlerRegistry";
 
 export function registerImageHandlers(registry: RpcHandlerRegistry): void {
-  registry.register("image.create", async (runtime, params) => {
+  registry.register("image.create", "Create a new agent image", async (runtime, params) => {
     const {
       name,
       description,
@@ -51,13 +51,13 @@ export function registerImageHandlers(registry: RpcHandlerRegistry): void {
     return ok({ record: image.toRecord() });
   });
 
-  registry.register("image.get", async (runtime, params) => {
+  registry.register("image.get", "Get an agent image by ID", async (runtime, params) => {
     const { imageId } = params as { imageId: string };
     const record = await runtime.platform.imageRepository.findImageById(imageId);
     return ok({ record });
   });
 
-  registry.register("image.list", async (runtime, params) => {
+  registry.register("image.list", "List all agent images", async (runtime, params) => {
     const { containerId } = params as { containerId?: string };
     const records = containerId
       ? await runtime.platform.imageRepository.findImagesByContainerId(containerId)
@@ -65,7 +65,7 @@ export function registerImageHandlers(registry: RpcHandlerRegistry): void {
     return ok({ records });
   });
 
-  registry.register("image.delete", async (runtime, params) => {
+  registry.register("image.delete", "Delete an agent image", async (runtime, params) => {
     const { imageId } = params as { imageId: string };
     const { loadImage } = await import("@agentxjs/core/image");
     const { imageRepository, sessionRepository } = runtime.platform;
@@ -74,7 +74,7 @@ export function registerImageHandlers(registry: RpcHandlerRegistry): void {
     return ok({ imageId });
   });
 
-  registry.register("image.run", async (runtime, params) => {
+  registry.register("image.run", "Start an agent from an image", async (runtime, params) => {
     const { imageId, instanceId: requestedInstanceId } = params as {
       imageId: string;
       instanceId?: string;
@@ -104,7 +104,7 @@ export function registerImageHandlers(registry: RpcHandlerRegistry): void {
     });
   });
 
-  registry.register("image.stop", async (runtime, params) => {
+  registry.register("image.stop", "Stop a running agent by image ID", async (runtime, params) => {
     const { imageId } = params as { imageId: string };
     const agent = runtime
       .getAgents()
@@ -113,58 +113,66 @@ export function registerImageHandlers(registry: RpcHandlerRegistry): void {
     return ok({ imageId });
   });
 
-  registry.register("image.update", async (runtime, params) => {
-    const { imageId, updates } = params as {
-      imageId: string;
-      updates: {
-        name?: string;
-        description?: string;
-        model?: string;
-        systemPrompt?: string;
-        mcpServers?: Record<string, unknown>;
-        thinking?: string;
-        providerOptions?: Record<string, unknown>;
-        customData?: Record<string, unknown>;
+  registry.register(
+    "image.update",
+    "Update an agent image configuration",
+    async (runtime, params) => {
+      const { imageId, updates } = params as {
+        imageId: string;
+        updates: {
+          name?: string;
+          description?: string;
+          model?: string;
+          systemPrompt?: string;
+          mcpServers?: Record<string, unknown>;
+          thinking?: string;
+          providerOptions?: Record<string, unknown>;
+          customData?: Record<string, unknown>;
+        };
       };
-    };
 
-    const imageRecord = await runtime.platform.imageRepository.findImageById(imageId);
-    if (!imageRecord) return err(404, `Image not found: ${imageId}`);
+      const imageRecord = await runtime.platform.imageRepository.findImageById(imageId);
+      if (!imageRecord) return err(404, `Image not found: ${imageId}`);
 
-    const updatedRecord = {
-      ...imageRecord,
-      ...updates,
-      updatedAt: Date.now(),
-    };
+      const updatedRecord = {
+        ...imageRecord,
+        ...updates,
+        updatedAt: Date.now(),
+      };
 
-    await runtime.platform.imageRepository.saveImage(updatedRecord);
+      await runtime.platform.imageRepository.saveImage(updatedRecord);
 
-    // If runtime config changed, restart the running agent
-    const { model, systemPrompt, mcpServers, thinking, providerOptions } = updates;
-    const hasRuntimeChanges =
-      model !== undefined ||
-      systemPrompt !== undefined ||
-      mcpServers !== undefined ||
-      thinking !== undefined ||
-      providerOptions !== undefined;
+      // If runtime config changed, restart the running agent
+      const { model, systemPrompt, mcpServers, thinking, providerOptions } = updates;
+      const hasRuntimeChanges =
+        model !== undefined ||
+        systemPrompt !== undefined ||
+        mcpServers !== undefined ||
+        thinking !== undefined ||
+        providerOptions !== undefined;
 
-    if (hasRuntimeChanges) {
-      const runningAgent = runtime
-        .getAgents()
-        .find((a) => a.imageId === imageId && a.lifecycle === "running");
-      if (runningAgent) {
-        await runtime.destroyAgent(runningAgent.instanceId);
-        await runtime.createAgent({ imageId });
+      if (hasRuntimeChanges) {
+        const runningAgent = runtime
+          .getAgents()
+          .find((a) => a.imageId === imageId && a.lifecycle === "running");
+        if (runningAgent) {
+          await runtime.destroyAgent(runningAgent.instanceId);
+          await runtime.createAgent({ imageId });
+        }
       }
+      return ok({ record: updatedRecord });
     }
-    return ok({ record: updatedRecord });
-  });
+  );
 
-  registry.register("image.messages", async (runtime, params) => {
-    const { imageId } = params as { imageId: string };
-    const imageRecord = await runtime.platform.imageRepository.findImageById(imageId);
-    if (!imageRecord) return err(404, `Image not found: ${imageId}`);
-    const messages = await runtime.platform.sessionRepository.getMessages(imageRecord.sessionId);
-    return ok({ imageId, messages });
-  });
+  registry.register(
+    "image.messages",
+    "Get all messages for an agent image",
+    async (runtime, params) => {
+      const { imageId } = params as { imageId: string };
+      const imageRecord = await runtime.platform.imageRepository.findImageById(imageId);
+      if (!imageRecord) return err(404, `Image not found: ${imageId}`);
+      const messages = await runtime.platform.sessionRepository.getMessages(imageRecord.sessionId);
+      return ok({ imageId, messages });
+    }
+  );
 }

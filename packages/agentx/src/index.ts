@@ -30,8 +30,7 @@ import type { CreateDriver } from "@agentxjs/core/driver";
 import type { AgentXPlatform } from "@agentxjs/core/runtime";
 import { createAgentXRuntime } from "@agentxjs/core/runtime";
 import { createLogger } from "commonxjs/logger";
-import { LocalClient } from "./LocalClient";
-import { RemoteClient } from "./RemoteClient";
+import { AgentXClient } from "./AgentXClient";
 import type { AgentX, AgentXBuilder, AgentXServer, ConnectOptions, ServeConfig } from "./types";
 
 const poolLogger = createLogger("agentx/connection-pool");
@@ -45,13 +44,13 @@ const poolLogger = createLogger("agentx/connection-pool");
 // ============================================================================
 
 interface PoolEntry {
-  client: RemoteClient;
+  client: AgentXClient;
   refCount: number;
 }
 
 const connectionPool = new Map<string, PoolEntry>();
 
-function pooledConnect(serverUrl: string, factory: () => Promise<RemoteClient>): Promise<AgentX> {
+function pooledConnect(serverUrl: string, factory: () => Promise<AgentXClient>): Promise<AgentX> {
   const existing = connectionPool.get(serverUrl);
   if (existing && existing.client.connected) {
     existing.refCount++;
@@ -109,9 +108,9 @@ export interface PlatformConfig {
  * @returns AgentXBuilder — local AgentX + connect() + serve()
  */
 export function createAgentX(config?: PlatformConfig): AgentXBuilder {
-  let localClient: LocalClient | null = null;
+  let localClient: AgentXClient | null = null;
 
-  function getLocalClient(): LocalClient {
+  function getLocalClient(): AgentXClient {
     if (localClient) return localClient;
     if (!config) {
       throw new Error(
@@ -119,7 +118,7 @@ export function createAgentX(config?: PlatformConfig): AgentXBuilder {
       );
     }
     const runtime = createAgentXRuntime(config.platform, config.createDriver);
-    localClient = new LocalClient(runtime);
+    localClient = AgentXClient.local(runtime);
     return localClient;
   }
 
@@ -136,16 +135,12 @@ export function createAgentX(config?: PlatformConfig): AgentXBuilder {
       return getLocalClient().events;
     },
 
-    get runtime() {
-      return getLocalClient().runtime;
-    },
-
-    get provider() {
-      return getLocalClient().provider;
-    },
-
     get chat() {
       return getLocalClient().chat;
+    },
+
+    get present() {
+      return getLocalClient().present;
     },
 
     on(type, handler) {
@@ -171,7 +166,7 @@ export function createAgentX(config?: PlatformConfig): AgentXBuilder {
 
     async connect(serverUrl: string, options?: ConnectOptions): Promise<AgentX> {
       return pooledConnect(serverUrl, async () => {
-        const remoteClient = new RemoteClient({
+        const client = AgentXClient.remote({
           serverUrl,
           headers: options?.headers as Record<string, string> | undefined,
           context: options?.context,
@@ -179,8 +174,8 @@ export function createAgentX(config?: PlatformConfig): AgentXBuilder {
           autoReconnect: options?.autoReconnect,
           customPlatform: config?.platform,
         });
-        await remoteClient.connect();
-        return remoteClient;
+        await client.connect();
+        return client;
       });
     },
 
@@ -207,6 +202,10 @@ export function createAgentX(config?: PlatformConfig): AgentXBuilder {
 
     async rpc<T = unknown>(method: string, params?: unknown): Promise<T> {
       return getLocalClient().rpc<T>(method, params);
+    },
+
+    rpcMethods() {
+      return getLocalClient().rpcMethods();
     },
   };
 }
@@ -247,6 +246,8 @@ export {
   Presentation,
   presentationReducer,
 } from "./presentation";
+// Re-export RPC types
+export type { RpcMethodSchema } from "./RpcHandlerRegistry";
 // Re-export types
 export type {
   AgentConfig,
@@ -257,26 +258,7 @@ export type {
   BaseResponse,
   ChatNamespace,
   ConnectOptions,
-  ImageCreateResponse,
-  ImageGetResponse,
-  ImageListResponse,
-  ImageNamespace,
   ImageRecord,
-  ImageUpdateResponse,
-  InstanceCreateResponse,
-  InstanceGetResponse,
-  InstanceInfo,
-  InstanceListResponse,
-  LLMNamespace,
-  LLMProviderCreateResponse,
-  LLMProviderDefaultResponse,
-  LLMProviderGetResponse,
-  LLMProviderListResponse,
-  LLMProviderUpdateResponse,
-  MaybeAsync,
-  MessageSendResponse,
   PresentationNamespace,
-  RuntimeNamespace,
   ServeConfig,
-  SessionNamespace,
 } from "./types";

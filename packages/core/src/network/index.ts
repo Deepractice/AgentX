@@ -17,7 +17,6 @@ export type {
   ControlAckParams,
   NotificationMethod,
   RpcErrorResponse,
-  RpcMethod,
   RpcNotification,
   RpcRequest,
   RpcSuccessResponse,

@@ -40,6 +40,18 @@ export type RpcResponse<T = unknown> = RpcResult<T> | RpcError;
 /** Handler function: receives runtime + params, returns response */
 export type RpcHandler = (runtime: AgentXRuntime, params: unknown) => Promise<RpcResponse>;
 
+/** Method definition: handler + metadata */
+export interface RpcMethodDefinition {
+  handler: RpcHandler;
+  description: string;
+}
+
+/** Method schema returned by rpcMethods() */
+export interface RpcMethodSchema {
+  name: string;
+  description: string;
+}
+
 /** Helper to create success result */
 export function ok<T>(data: T): RpcResult<T> {
   return { success: true, data };
@@ -55,16 +67,16 @@ export function err(code: number, message: string): RpcError {
 // ============================================================================
 
 export class RpcHandlerRegistry {
-  private readonly handlers = new Map<string, RpcHandler>();
+  private readonly definitions = new Map<string, RpcMethodDefinition>();
 
   /**
-   * Register an RPC method handler
+   * Register an RPC method handler with description
    */
-  register(method: string, handler: RpcHandler): this {
-    if (this.handlers.has(method)) {
+  register(method: string, description: string, handler: RpcHandler): this {
+    if (this.definitions.has(method)) {
       logger.warn("Overwriting existing handler", { method });
     }
-    this.handlers.set(method, handler);
+    this.definitions.set(method, { handler, description });
     return this;
   }
 
@@ -72,27 +84,37 @@ export class RpcHandlerRegistry {
    * Check if a method is registered
    */
   has(method: string): boolean {
-    return this.handlers.has(method);
+    return this.definitions.has(method);
   }
 
   /**
    * Get all registered method names
    */
   methods(): string[] {
-    return [...this.handlers.keys()];
+    return [...this.definitions.keys()];
+  }
+
+  /**
+   * Get all registered methods with metadata
+   */
+  rpcMethods(): RpcMethodSchema[] {
+    return [...this.definitions.entries()].map(([name, def]) => ({
+      name,
+      description: def.description,
+    }));
   }
 
   /**
    * Handle an RPC request — dispatch to registered handler
    */
   async handle(runtime: AgentXRuntime, method: string, params: unknown): Promise<RpcResponse> {
-    const handler = this.handlers.get(method);
-    if (!handler) {
+    const def = this.definitions.get(method);
+    if (!def) {
       return err(-32601, `Method not found: ${method}`);
     }
 
     try {
-      return await handler(runtime, params);
+      return await def.handler(runtime, params);
     } catch (error) {
       logger.error("RPC handler error", { method, error });
       return err(-32000, error instanceof Error ? error.message : String(error));

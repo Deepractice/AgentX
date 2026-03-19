@@ -8,7 +8,7 @@ import { err, ok } from "../RpcHandlerRegistry";
 import { resolveInstanceId } from "./instance";
 
 export function registerMessageHandlers(registry: RpcHandlerRegistry): void {
-  registry.register("message.send", async (runtime, params) => {
+  registry.register("message.send", "Send a message to an agent", async (runtime, params) => {
     const { instanceId, imageId, content, options } = params as {
       instanceId?: string;
       imageId?: string;
@@ -20,17 +20,21 @@ export function registerMessageHandlers(registry: RpcHandlerRegistry): void {
     return ok({ instanceId: resolved, imageId });
   });
 
-  registry.register("runtime.rewind", async (runtime, params) => {
-    const { instanceId, imageId, messageId } = params as {
-      instanceId?: string;
-      imageId?: string;
-      messageId: string;
-    };
+  registry.register(
+    "runtime.rewind",
+    "Rewind conversation to a specific message",
+    async (runtime, params) => {
+      const { instanceId, imageId, messageId } = params as {
+        instanceId?: string;
+        imageId?: string;
+        messageId: string;
+      };
 
-    if (!messageId) return err(-32602, "messageId is required");
+      if (!messageId) return err(-32602, "messageId is required");
 
-    const resolved = await resolveInstanceId(runtime, { instanceId, imageId });
-    await runtime.rewind(resolved, messageId);
-    return ok({ instanceId: resolved });
-  });
+      const resolved = await resolveInstanceId(runtime, { instanceId, imageId });
+      await runtime.rewind(resolved, messageId);
+      return ok({ instanceId: resolved });
+    }
+  );
 }

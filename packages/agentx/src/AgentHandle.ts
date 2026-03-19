@@ -1,19 +1,18 @@
 /**
  * AgentHandle — live reference to a created agent.
  *
- * Wraps identity (IDs) + delegates operations to instance namespaces.
+ * Wraps identity (IDs) + delegates operations via rpc().
  */
 
 import type { Message } from "@agentxjs/core/agent";
 import type { SendOptions } from "@agentxjs/core/driver";
 import type { Presentation, PresentationOptions } from "./presentation";
-import type {
-  AgentConfig,
-  AgentHandle,
-  BaseResponse,
-  MessageSendResponse,
-  RuntimeNamespace,
-} from "./types";
+import type { AgentConfig, AgentHandle, BaseResponse } from "./types";
+
+interface AgentXRpc {
+  rpc<T = unknown>(method: string, params?: unknown): Promise<T>;
+  present: { create(imageId: string, options?: PresentationOptions): Promise<Presentation> };
+}
 
 export class AgentHandleImpl implements AgentHandle {
   readonly instanceId: string;
@@ -21,33 +20,36 @@ export class AgentHandleImpl implements AgentHandle {
   readonly containerId: string;
   readonly sessionId: string;
 
-  private readonly ns: RuntimeNamespace;
+  private readonly ax: AgentXRpc;
 
   constructor(
     ids: { instanceId: string; imageId: string; containerId: string; sessionId: string },
-    ns: RuntimeNamespace
+    ax: AgentXRpc
   ) {
     this.instanceId = ids.instanceId;
     this.imageId = ids.imageId;
     this.containerId = ids.containerId;
     this.sessionId = ids.sessionId;
-    this.ns = ns;
+    this.ax = ax;
   }
 
-  async send(content: string | unknown[], options?: SendOptions): Promise<MessageSendResponse> {
-    return this.ns.session.send(this.instanceId, content, options);
+  async send(content: string | unknown[], options?: SendOptions) {
+    return this.ax.rpc("message.send", { instanceId: this.instanceId, content, options });
   }
 
   async interrupt(): Promise<BaseResponse> {
-    return this.ns.session.interrupt(this.instanceId);
+    return this.ax.rpc("instance.interrupt", { instanceId: this.instanceId });
   }
 
   async history(): Promise<Message[]> {
-    return this.ns.image.getMessages(this.imageId);
+    const res = await this.ax.rpc<{ messages: Message[] }>("image.messages", {
+      imageId: this.imageId,
+    });
+    return res.messages ?? [];
   }
 
   async present(options?: PresentationOptions): Promise<Presentation> {
-    return this.ns.present.create(this.instanceId, options);
+    return this.ax.present.create(this.imageId, options);
   }
 
   async update(
@@ -58,11 +60,11 @@ export class AgentHandleImpl implements AgentHandle {
       >
     >
   ): Promise<void> {
-    await this.ns.image.update(this.imageId, updates);
+    await this.ax.rpc("image.update", { imageId: this.imageId, updates });
   }
 
   async delete(): Promise<void> {
-    await this.ns.image.stop(this.imageId);
-    await this.ns.image.delete(this.imageId);
+    await this.ax.rpc("image.stop", { imageId: this.imageId });
+    await this.ax.rpc("image.delete", { imageId: this.imageId });
   }
 }
